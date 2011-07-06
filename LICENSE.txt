@@ -1,0 +1,90 @@
+SHADOWGROUNDS & SHADOWGROUNDS SURVIVOR SOURCE CODE LICENSE
+
+THE COMPUTER CODE ("SOURCE CODE") CONTAINED HEREIN IS THE SOLE PROPERTY OF FROZENBYTE LTD. ("FROZENBYTE").
+FROZENBYTE GRANTS TO END-USERS A ROYALTY-FREE, PERPETUAL LICENSE TO USE, DISPLAY, MODIFY, DISTRIBUTE AND 
+CREATE DERIVATIVE WORKS OF THE SOURCE CODE, SO LONG AS SUCH ACTION IS FOR NON-COMMERCIAL, ROYALTY-FREE
+AND REVENUE-FREE PURPOSES. IN NO EVENT SHALL THE END-USER TAKE ANY ACTION WHEREBY THE SOURCE CODE CONTAINED
+HEREIN WOULD BE USED FOR REVENUE-BEARING PURPOSES. THE END-USER UNDERSTANDS AND AGREES TO THE TERMS HEREIN
+AND ACCEPTS THE SAME BY USING THE SOURCE CODE IN ANY WAY. 
+
+THE SOURCE CODE IS PROVIDED AS-IS AND FROZENBYTE MAKES NO WARRANTY AS TO THE USABILITY OR CORRECTNESS
+OF THE SOURCE CODE. ANY USE IS AT YOUR OWN RISK. 
+
+FROZENBYTE RETAINS THE RIGHT TO ALTER THESE LICENSE TERMS AT ANY TIME FOR ANY REASON. 
+
+
+
+SOURCE CODE README AND FURTHER LICENSE NOTES
+-------------------------------------------------
+Last update to this file: 21st of April 2011 (v1)
+
+This source code package allows you to compile the game and develop it further if you wish (for non-commercial purposes). All other files, including the art assets and the level editor, remain the sole property and copyright of Frozenbyte. You may not distribute any of the files not included in the source code package. Should the source code include any 3rd party files or software, the copyright remains with the original owner and you are not allowed to distribute or modify such files or software. It is also forbidden to distribute Shadowgrounds or Shadowgrounds Survivor, or any direct derivative, in any way (e.g. not even for free), in any "app stores" such as the Mac App Store or similar, or in any distribution channel that has authorization control by a third party. 
+
+If you have a question about the license or a specific file, please don't hesitate to contact us. We're mostly just covering our legal base with this stuff. 
+
+Please note that we cannot provide any official support for this source code release. You can however visit the Frozenbyte Community at http://www.frozenbyte.com/board/ to discuss the games and the source. 
+
+
+
+WHAT YOU NEED
+-------------
+
+The source code as it is packaged will not compile properly. The following libraries have been deleted from the source code:
+
+Boost 1.39.0
+zlib 1.2.3
+FMOD 3.75
+DirectX SDK
+PhysX SDK
+Windows Media Format 9 Series SDK
+
+Some of these are required in order to build the executables. If/when you encounter errors, they should be reasonably easy to fix. 
+
+Shadowgrounds specific code is under /shadowgrounds, and Shadowgrounds Survivor under /survivor . 
+
+The Shadowgrounds games use FMOD 3.7.5.0 for sound and the dll is distributed with the game files. No source code for FMOD can be distributed. If you require low-level access to the sound libraries, it's recommended you obtain a license to FMOD ( http://www.fmod.org ), or integrate OpenAL or other free sound library. 
+
+DirectX SDK And Windows Media Format 9 Series SDK can be obtained from Microsoft.
+
+Shadowgrounds does not use PhysX, but Shadowgrounds Survivor does.
+
+PhysX SDK can be obtained from NVIDIA - see http://developer.nvidia.com/physx/ or
+http://supportcenteronline.com/ics/support/default.asp?deptID=1949
+
+More PhysX help: http://physxinfo.com/news/901/how-to-register-developer-account-to-get-physx-sdk-access/
+and http://knol.google.com/k/introduction-to-the-nvidia-physx-api
+
+To get the game assets, you need a copy of each game. 
+
+
+
+SPECIAL NOTES
+-------------
+
+The Shadowgrounds games are quite old and possibly very messy - these sources have not been cleaned too much.
+
+There may also be references to older projects, such as "Disposable" or "DH", which mean our very first game, an (RTS) prototype from 2001-2003. (It should be possible to enable several RTS commands such as unit groups, switching sides to aliens and so on.)
+
+It's also worth noting that the source code has a lot of "hacks" and "todos". It is in many ways messy and could be hard to understand. 
+
+We haven't had a commercial name for the game engine, but internally it's been called "Storm3D". Storm3D is partially based on work by the awesome Finnish programmer Sebastian Aaltonen, from whom we bought the original code in 2000/2001. 
+
+Good luck! :)
+
+
+
+THANKS
+------
+
+Thanks to all of the Frozenbyte / Shadowgrounds / Shadowgrounds Survivor team(s).
+
+Thanks to Parallax Software for license inspiration.
+
+
+
+Frozenbyte team - 2011
+http://www.frozenbyte.com/
+http://www.shadowgroundsgame.com/
+http://www.shadowgroundssurvivor.com/
+
+

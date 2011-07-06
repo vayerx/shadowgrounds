@@ -1,0 +1,210 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_RENDER DIALOG  0, 0, 186, 95
+STYLE DS_SETFONT | WS_CHILD | WS_VISIBLE
+FONT 8, "MS Sans Serif"
+BEGIN
+END
+
+IDD_MAIN DIALOGEX 0, 0, 153, 536
+STYLE DS_SETFONT | WS_CHILD | WS_VISIBLE
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    GROUPBOX        "Model",IDC_STATIC,7,7,139,70
+    PUSHBUTTON      "Load geometry",IDC_GEOMETRY,15,22,60,14
+    PUSHBUTTON      "Load bones",IDC_BONES,15,39,60,14
+    PUSHBUTTON      "Reload",IDC_RELOAD,15,287,60,14
+    GROUPBOX        "Animations",IDC_STATIC,7,81,139,172
+    LISTBOX         IDC_ANIMATIONS,15,107,122,81,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Base",IDC_BASE,"Button",BS_AUTORADIOBUTTON | BS_PUSHLIKE,15,94,60,12
+    PUSHBUTTON      "Play",IDC_PLAY,15,217,40,12
+    PUSHBUTTON      "Loop",IDC_LOOP,56,217,40,12
+    PUSHBUTTON      "Stop",IDC_STOP,97,217,40,12
+    CONTROL         "Draw bones",IDC_DRAW_BONES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,60,55,10
+    GROUPBOX        "Options",IDC_STATIC,7,257,139,49
+    PUSHBUTTON      "Load",IDC_LOAD,77,271,60,14
+    PUSHBUTTON      "Save",IDC_SAVE,15,271,60,14
+    CONTROL         "Blend with",IDC_BLEND,"Button",BS_AUTORADIOBUTTON | BS_PUSHLIKE,76,94,60,12
+    PUSHBUTTON      "Insert",IDC_INSERT,15,205,54,11
+    PUSHBUTTON      "Remove",IDC_REMOVE,82,205,54,11
+    PUSHBUTTON      "Add geometry",IDC_ADD,76,22,60,14
+    PUSHBUTTON      "Attach items",IDC_ATTACH,76,39,60,14,WS_DISABLED
+    GROUPBOX        "Background",IDC_STATIC,7,311,139,34
+    PUSHBUTTON      "Color",IDC_COLOR,14,323,47,14
+    GROUPBOX        "Renderer",IDC_STATIC,7,348,139,69
+    GROUPBOX        "Lipsync",IDC_STATIC,7,421,139,59
+    PUSHBUTTON      "Reset camera",IDC_RESET_CAMERA,76,58,60,14
+    COMBOBOX        IDC_IDLES,60,433,79,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_EXPRESSIONS,60,447,79,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Idle",IDC_STATIC,15,436,30,9
+    LTEXT           "Expression",IDC_STATIC,15,448,36,9
+    PUSHBUTTON      "Choose wav",IDC_WAV,15,464,87,13
+    PUSHBUTTON      "Play",IDC_PLAYW,108,464,30,13
+    LTEXT           "Ambient",IDC_STATIC,14,380,29,12
+    CONTROL         "Slider1",IDC_AMBIENT,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,52,379,86,12
+    CONTROL         "Glow",IDC_GLOW,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,356,30,11
+    LTEXT           "Point light",IDC_STATIC,14,391,32,12
+    CONTROL         "Slider1",IDC_POINT_LIGHT,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,52,391,86,12
+    LTEXT           "Model scale",IDC_STATIC,14,403,38,12
+    CONTROL         "Slider1",IDC_MODEL_SCALE,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,52,402,86,12
+    CONTROL         "Wireframe",IDC_WIREFRAME,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,57,365,45,11
+    CONTROL         "Distortion",IDC_DISTORTION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,57,356,43,11
+    CONTROL         "Improved",IDC_IMPROVED_GLOW,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,366,43,11
+    CONTROL         "Aniso",IDC_ANISO,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,106,356,35,11
+    CONTROL         "Reflect.",IDC_GLOW_DEBUG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,106,365,35,11
+    GROUPBOX        "Glow",IDC_STATIC,7,484,139,29
+    CONTROL         "",IDC_GLOW_FACTOR,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,10,496,82,12
+    CONTROL         "POP",IDC_POP_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,94,494,27,14
+    EDITTEXT        IDC_BLENDTIME,57,190,80,12,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Blend time",IDC_STATIC,15,193,36,9
+    CONTROL         "½",IDC_HALF_RENDERING,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,124,494,20,14
+    CONTROL         "Slowed anim.",IDC_HALF_SPEED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,78,288,58,11
+    EDITTEXT        IDC_ANIMTIMER,74,234,63,13,ES_AUTOHSCROLL
+    LTEXT           "Stop animation at",IDC_STATIC,15,237,58,10
+END
+
+IDD_ITEMS DIALOG  0, 0, 240, 101
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Attach items"
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Bone helpers",IDC_STATIC,7,7,226,87
+    LISTBOX         IDC_HELPERS,13,19,129,69,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Insert",IDC_ITEM_INSERT,150,77,35,12,WS_DISABLED
+    LISTBOX         IDC_ITEMS,150,19,76,56,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Remove",IDC_ITEM_REMOVE,191,77,35,12,WS_DISABLED
+END
+
+IDD_COLORPICK DIALOG  0, 0, 182, 49
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Choose color"
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL         "Slider1",IDC_COLOR_R,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,35,7,82,9
+    LTEXT           "Red",IDC_STATIC,7,7,25,9
+    CONTROL         "Slider1",IDC_COLOR_G,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,35,19,82,9
+    LTEXT           "Green",IDC_STATIC,7,19,25,9
+    CONTROL         "Slider1",IDC_COLOR_B,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,35,33,82,9
+    LTEXT           "Blue",IDC_STATIC,7,33,25,9
+    DEFPUSHBUTTON   "Select",IDC_CPICK_OK,129,26,46,16
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_RENDER, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 88
+    END
+
+    IDD_MAIN, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 146
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 529
+    END
+
+    IDD_ITEMS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 233
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 94
+    END
+
+    IDD_COLORPICK, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 175
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 42
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON1               ICON                    "icon1.ico"
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

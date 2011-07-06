@@ -1,0 +1,58 @@
+num_systems 1
+system0
+{
+	class = spray
+	spread1 = 0
+	spread2 = 0
+	emit_rate
+	{
+		num_keys = 1
+		key0.time = 0
+		key0.value = 10
+	}
+	emit_time = 5
+	die_after_emission = 1
+	launch_speed = 1
+	launch_speed_var = 1
+	particle_life = 1
+	particle_life_var = 1
+	particle_color
+	{
+		num_keys = 2
+		key0.time = 0
+		key0.value = 1,1,1
+		key1.time = 1
+		key1.value = 1,1,1
+	}
+	particle_alpha
+	{
+		num_keys = 2
+		key0.time = 0
+		key0.value = 1
+		key1.time = 1
+		key1.value = 0
+	}
+	particle_size
+	{
+		num_keys = 2
+		key0.time = 0
+		key0.value = 1
+		key1.time = 1
+		key1.value = 1
+	}
+	particle_start_angle = 0
+	particle_start_angle_var = 0
+	particle_spin = 0
+	particle_spin_var = 0
+	particle_texture = flare.jpg
+	particle_texture_alpha_type = 0
+	particle_texture_sub_div_u = 1
+	particle_texture_sub_div_v = 1
+	particle_animation_frame_count = 0
+	particle_animation_start_frame = 0
+	particle_animation_start_frame_var = 0
+	particle_animation_fps = 18
+	
+	// no forces:
+	num_forces = 0
+}

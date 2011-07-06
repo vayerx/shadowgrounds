@@ -1,0 +1,200 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "editor", "..\editor\workspace\editor.vcproj", "{E516F2AD-1AD2-4F07-B65C-178180CC05BE}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E51E797B-E20E-476C-8206-7AA9CF270541} = {E51E797B-E20E-476C-8206-7AA9CF270541}
+		{4C263DF5-39CC-4F01-9CC5-23F264196838} = {4C263DF5-39CC-4F01-9CC5-23F264196838}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "keyb3", "..\storm\keyb3\keyb3.vcproj", "{9EE0ADDB-144B-4E3E-BA47-4750214526E2}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "particle_editor", "..\particle_editor2\particle_editor.vcproj", "{8E67D288-FEA9-4C6D-B095-0C6F3725404C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E51E797B-E20E-476C-8206-7AA9CF270541} = {E51E797B-E20E-476C-8206-7AA9CF270541}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "scriptdev", "..\util\executables\scriptdev\scriptdev.vcproj", "{4C263DF5-39CC-4F01-9CC5-23F264196838}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "storm3dv2", "..\storm\storm3dv2\storm3dv2.vcproj", "{E51E797B-E20E-476C-8206-7AA9CF270541}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shadowgrounds", "shadowgrounds.vcproj", "{5C78ED70-84DB-4568-AD42-A5142199F9F5}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E51E797B-E20E-476C-8206-7AA9CF270541} = {E51E797B-E20E-476C-8206-7AA9CF270541}
+		{4C263DF5-39CC-4F01-9CC5-23F264196838} = {4C263DF5-39CC-4F01-9CC5-23F264196838}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "viewer", "..\editor\workspace\viewer\viewer.vcproj", "{1AF46AE6-AF6B-4F7B-BA1F-2D473A345F57}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E51E797B-E20E-476C-8206-7AA9CF270541} = {E51E797B-E20E-476C-8206-7AA9CF270541}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		editor and storm debug|Win32 = editor and storm debug|Win32
+		editor debug|Win32 = editor debug|Win32
+		editor release|Win32 = editor release|Win32
+		Fast|Win32 = Fast|Win32
+		Profile|Win32 = Profile|Win32
+		Release|Win32 = Release|Win32
+		shadowground no physics|Win32 = shadowground no physics|Win32
+		shadowgrounds and storm debug|Win32 = shadowgrounds and storm debug|Win32
+		shadowgrounds debug|Win32 = shadowgrounds debug|Win32
+		shadowgrounds release|Win32 = shadowgrounds release|Win32
+		shadowgrounds test|Win32 = shadowgrounds test|Win32
+		Test|Win32 = Test|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E516F2AD-1AD2-4F07-B65C-178180CC05BE}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E516F2AD-1AD2-4F07-B65C-178180CC05BE}.Debug|Win32.Build.0 = Debug|Win32
+		{E516F2AD-1AD2-4F07-B65C-178180CC05BE}.editor and storm debug|Win32.ActiveCfg = Debug|Win32
+		{E516F2AD-1AD2-4F07-B65C-178180CC05BE}.editor and storm debug|Win32.Build.0 = Debug|Win32
+		{E516F2AD-1AD2-4F07-B65C-178180CC05BE}.editor debug|Win32.ActiveCfg = Debug|Win32
+		{E516F2AD-1AD2-4F07-B65C-178180CC05BE}.editor debug|Win32.Build.0 = Debug|Win32
+		{E516F2AD-1AD2-4F07-B65C-178180CC05BE}.editor release|Win32.ActiveCfg = Release|Win32
+		{E516F2AD-1AD2-4F07-B65C-178180CC05BE}.editor release|Win32.Build.0 = Release|Win32
+		{E516F2AD-1AD2-4F07-B65C-178180CC05BE}.Fast|Win32.ActiveCfg = Debug|Win32
+		{E516F2AD-1AD2-4F07-B65C-178180CC05BE}.Fast|Win32.Build.0 = Debug|Win32
+		{E516F2AD-1AD2-4F07-B65C-178180CC05BE}.Profile|Win32.ActiveCfg = Profile|Win32
+		{E516F2AD-1AD2-4F07-B65C-178180CC05BE}.Profile|Win32.Build.0 = Profile|Win32
+		{E516F2AD-1AD2-4F07-B65C-178180CC05BE}.Release|Win32.ActiveCfg = Release|Win32
+		{E516F2AD-1AD2-4F07-B65C-178180CC05BE}.Release|Win32.Build.0 = Release|Win32
+		{E516F2AD-1AD2-4F07-B65C-178180CC05BE}.shadowground no physics|Win32.ActiveCfg = Release|Win32
+		{E516F2AD-1AD2-4F07-B65C-178180CC05BE}.shadowgrounds and storm debug|Win32.ActiveCfg = Debug|Win32
+		{E516F2AD-1AD2-4F07-B65C-178180CC05BE}.shadowgrounds debug|Win32.ActiveCfg = Debug|Win32
+		{E516F2AD-1AD2-4F07-B65C-178180CC05BE}.shadowgrounds release|Win32.ActiveCfg = Release|Win32
+		{E516F2AD-1AD2-4F07-B65C-178180CC05BE}.shadowgrounds test|Win32.ActiveCfg = Debug|Win32
+		{E516F2AD-1AD2-4F07-B65C-178180CC05BE}.Test|Win32.ActiveCfg = Debug|Win32
+		{E516F2AD-1AD2-4F07-B65C-178180CC05BE}.Test|Win32.Build.0 = Debug|Win32
+		{9EE0ADDB-144B-4E3E-BA47-4750214526E2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9EE0ADDB-144B-4E3E-BA47-4750214526E2}.Debug|Win32.Build.0 = Debug|Win32
+		{9EE0ADDB-144B-4E3E-BA47-4750214526E2}.editor and storm debug|Win32.ActiveCfg = Debug|Win32
+		{9EE0ADDB-144B-4E3E-BA47-4750214526E2}.editor debug|Win32.ActiveCfg = Debug|Win32
+		{9EE0ADDB-144B-4E3E-BA47-4750214526E2}.editor release|Win32.ActiveCfg = Release|Win32
+		{9EE0ADDB-144B-4E3E-BA47-4750214526E2}.Fast|Win32.ActiveCfg = Debug|Win32
+		{9EE0ADDB-144B-4E3E-BA47-4750214526E2}.Fast|Win32.Build.0 = Debug|Win32
+		{9EE0ADDB-144B-4E3E-BA47-4750214526E2}.Profile|Win32.ActiveCfg = Debug|Win32
+		{9EE0ADDB-144B-4E3E-BA47-4750214526E2}.Profile|Win32.Build.0 = Debug|Win32
+		{9EE0ADDB-144B-4E3E-BA47-4750214526E2}.Release|Win32.ActiveCfg = Release|Win32
+		{9EE0ADDB-144B-4E3E-BA47-4750214526E2}.Release|Win32.Build.0 = Release|Win32
+		{9EE0ADDB-144B-4E3E-BA47-4750214526E2}.shadowground no physics|Win32.ActiveCfg = Release|Win32
+		{9EE0ADDB-144B-4E3E-BA47-4750214526E2}.shadowgrounds and storm debug|Win32.ActiveCfg = Debug|Win32
+		{9EE0ADDB-144B-4E3E-BA47-4750214526E2}.shadowgrounds debug|Win32.ActiveCfg = Debug|Win32
+		{9EE0ADDB-144B-4E3E-BA47-4750214526E2}.shadowgrounds release|Win32.ActiveCfg = Release|Win32
+		{9EE0ADDB-144B-4E3E-BA47-4750214526E2}.shadowgrounds test|Win32.ActiveCfg = Debug|Win32
+		{9EE0ADDB-144B-4E3E-BA47-4750214526E2}.Test|Win32.ActiveCfg = Debug|Win32
+		{9EE0ADDB-144B-4E3E-BA47-4750214526E2}.Test|Win32.Build.0 = Debug|Win32
+		{8E67D288-FEA9-4C6D-B095-0C6F3725404C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8E67D288-FEA9-4C6D-B095-0C6F3725404C}.Debug|Win32.Build.0 = Debug|Win32
+		{8E67D288-FEA9-4C6D-B095-0C6F3725404C}.editor and storm debug|Win32.ActiveCfg = Debug|Win32
+		{8E67D288-FEA9-4C6D-B095-0C6F3725404C}.editor debug|Win32.ActiveCfg = Debug|Win32
+		{8E67D288-FEA9-4C6D-B095-0C6F3725404C}.editor release|Win32.ActiveCfg = Release|Win32
+		{8E67D288-FEA9-4C6D-B095-0C6F3725404C}.Fast|Win32.ActiveCfg = Debug|Win32
+		{8E67D288-FEA9-4C6D-B095-0C6F3725404C}.Fast|Win32.Build.0 = Debug|Win32
+		{8E67D288-FEA9-4C6D-B095-0C6F3725404C}.Profile|Win32.ActiveCfg = Debug|Win32
+		{8E67D288-FEA9-4C6D-B095-0C6F3725404C}.Profile|Win32.Build.0 = Debug|Win32
+		{8E67D288-FEA9-4C6D-B095-0C6F3725404C}.Release|Win32.ActiveCfg = Release|Win32
+		{8E67D288-FEA9-4C6D-B095-0C6F3725404C}.Release|Win32.Build.0 = Release|Win32
+		{8E67D288-FEA9-4C6D-B095-0C6F3725404C}.shadowground no physics|Win32.ActiveCfg = Release|Win32
+		{8E67D288-FEA9-4C6D-B095-0C6F3725404C}.shadowgrounds and storm debug|Win32.ActiveCfg = Debug|Win32
+		{8E67D288-FEA9-4C6D-B095-0C6F3725404C}.shadowgrounds debug|Win32.ActiveCfg = Debug|Win32
+		{8E67D288-FEA9-4C6D-B095-0C6F3725404C}.shadowgrounds release|Win32.ActiveCfg = Release|Win32
+		{8E67D288-FEA9-4C6D-B095-0C6F3725404C}.shadowgrounds test|Win32.ActiveCfg = Test|Win32
+		{8E67D288-FEA9-4C6D-B095-0C6F3725404C}.Test|Win32.ActiveCfg = Test|Win32
+		{8E67D288-FEA9-4C6D-B095-0C6F3725404C}.Test|Win32.Build.0 = Test|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.Debug|Win32.Build.0 = Debug|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.editor and storm debug|Win32.ActiveCfg = Debug|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.editor debug|Win32.ActiveCfg = Debug|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.editor release|Win32.ActiveCfg = Release|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.Fast|Win32.ActiveCfg = Release|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.Fast|Win32.Build.0 = Release|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.Profile|Win32.ActiveCfg = Release|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.Profile|Win32.Build.0 = Release|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.Release|Win32.ActiveCfg = Release|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.Release|Win32.Build.0 = Release|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.shadowground no physics|Win32.ActiveCfg = Release|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.shadowground no physics|Win32.Build.0 = Release|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.shadowgrounds and storm debug|Win32.ActiveCfg = Debug|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.shadowgrounds and storm debug|Win32.Build.0 = Debug|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.shadowgrounds debug|Win32.ActiveCfg = Debug|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.shadowgrounds debug|Win32.Build.0 = Debug|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.shadowgrounds release|Win32.ActiveCfg = Release|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.shadowgrounds release|Win32.Build.0 = Release|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.shadowgrounds test|Win32.ActiveCfg = Release|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.shadowgrounds test|Win32.Build.0 = Release|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.Test|Win32.ActiveCfg = Release|Win32
+		{4C263DF5-39CC-4F01-9CC5-23F264196838}.Test|Win32.Build.0 = Release|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.Debug|Win32.Build.0 = Debug|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.editor and storm debug|Win32.ActiveCfg = Legacy debug|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.editor and storm debug|Win32.Build.0 = Legacy debug|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.editor debug|Win32.ActiveCfg = Legacy release|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.editor debug|Win32.Build.0 = Legacy release|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.editor release|Win32.ActiveCfg = Legacy release|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.editor release|Win32.Build.0 = Legacy release|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.Fast|Win32.ActiveCfg = Legacy release|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.Fast|Win32.Build.0 = Legacy release|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.Profile|Win32.ActiveCfg = Profile|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.Profile|Win32.Build.0 = Profile|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.Release|Win32.ActiveCfg = Legacy release|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.Release|Win32.Build.0 = Legacy release|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.shadowground no physics|Win32.ActiveCfg = Release|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.shadowground no physics|Win32.Build.0 = Release|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.shadowgrounds and storm debug|Win32.ActiveCfg = Legacy debug|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.shadowgrounds and storm debug|Win32.Build.0 = Legacy debug|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.shadowgrounds debug|Win32.ActiveCfg = Legacy release|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.shadowgrounds debug|Win32.Build.0 = Legacy release|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.shadowgrounds release|Win32.ActiveCfg = Legacy release|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.shadowgrounds release|Win32.Build.0 = Legacy release|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.shadowgrounds test|Win32.ActiveCfg = Legacy release|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.shadowgrounds test|Win32.Build.0 = Legacy release|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.Test|Win32.ActiveCfg = Release|Win32
+		{E51E797B-E20E-476C-8206-7AA9CF270541}.Test|Win32.Build.0 = Release|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.Debug|Win32.Build.0 = Debug|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.editor and storm debug|Win32.ActiveCfg = Debug|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.editor debug|Win32.ActiveCfg = Debug|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.editor release|Win32.ActiveCfg = Release|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.Fast|Win32.ActiveCfg = Release|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.Fast|Win32.Build.0 = Release|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.Profile|Win32.ActiveCfg = Profile|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.Profile|Win32.Build.0 = Profile|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.Release|Win32.ActiveCfg = Release|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.Release|Win32.Build.0 = Release|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.shadowground no physics|Win32.ActiveCfg = shadowground no physics|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.shadowground no physics|Win32.Build.0 = shadowground no physics|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.shadowgrounds and storm debug|Win32.ActiveCfg = Debug|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.shadowgrounds and storm debug|Win32.Build.0 = Debug|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.shadowgrounds debug|Win32.ActiveCfg = Debug|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.shadowgrounds debug|Win32.Build.0 = Debug|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.shadowgrounds release|Win32.ActiveCfg = Release|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.shadowgrounds release|Win32.Build.0 = Release|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.shadowgrounds test|Win32.ActiveCfg = Test|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.shadowgrounds test|Win32.Build.0 = Test|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.Test|Win32.ActiveCfg = Test|Win32
+		{5C78ED70-84DB-4568-AD42-A5142199F9F5}.Test|Win32.Build.0 = Test|Win32
+		{1AF46AE6-AF6B-4F7B-BA1F-2D473A345F57}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1AF46AE6-AF6B-4F7B-BA1F-2D473A345F57}.Debug|Win32.Build.0 = Debug|Win32
+		{1AF46AE6-AF6B-4F7B-BA1F-2D473A345F57}.editor and storm debug|Win32.ActiveCfg = Debug|Win32
+		{1AF46AE6-AF6B-4F7B-BA1F-2D473A345F57}.editor debug|Win32.ActiveCfg = Debug|Win32
+		{1AF46AE6-AF6B-4F7B-BA1F-2D473A345F57}.editor release|Win32.ActiveCfg = Release|Win32
+		{1AF46AE6-AF6B-4F7B-BA1F-2D473A345F57}.Fast|Win32.ActiveCfg = Debug|Win32
+		{1AF46AE6-AF6B-4F7B-BA1F-2D473A345F57}.Fast|Win32.Build.0 = Debug|Win32
+		{1AF46AE6-AF6B-4F7B-BA1F-2D473A345F57}.Profile|Win32.ActiveCfg = Debug|Win32
+		{1AF46AE6-AF6B-4F7B-BA1F-2D473A345F57}.Profile|Win32.Build.0 = Debug|Win32
+		{1AF46AE6-AF6B-4F7B-BA1F-2D473A345F57}.Release|Win32.ActiveCfg = Release|Win32
+		{1AF46AE6-AF6B-4F7B-BA1F-2D473A345F57}.Release|Win32.Build.0 = Release|Win32
+		{1AF46AE6-AF6B-4F7B-BA1F-2D473A345F57}.shadowground no physics|Win32.ActiveCfg = Release|Win32
+		{1AF46AE6-AF6B-4F7B-BA1F-2D473A345F57}.shadowgrounds and storm debug|Win32.ActiveCfg = Debug|Win32
+		{1AF46AE6-AF6B-4F7B-BA1F-2D473A345F57}.shadowgrounds debug|Win32.ActiveCfg = Debug|Win32
+		{1AF46AE6-AF6B-4F7B-BA1F-2D473A345F57}.shadowgrounds release|Win32.ActiveCfg = Release|Win32
+		{1AF46AE6-AF6B-4F7B-BA1F-2D473A345F57}.shadowgrounds test|Win32.ActiveCfg = Debug|Win32
+		{1AF46AE6-AF6B-4F7B-BA1F-2D473A345F57}.Test|Win32.ActiveCfg = Debug|Win32
+		{1AF46AE6-AF6B-4F7B-BA1F-2D473A345F57}.Test|Win32.Build.0 = Debug|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
