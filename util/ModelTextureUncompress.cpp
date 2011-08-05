@@ -2,7 +2,7 @@
 #include "precompiled.h"
 
 #include "ModelTextureUncompress.h"
-#include "..\util\Debug_MemoryManager.h"
+#include "Debug_MemoryManager.h"
 
 void ChangeToUncompressed(IStorm3D *storm3d, IStorm3D_Model *model)
 {

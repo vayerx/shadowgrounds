@@ -75,6 +75,8 @@
 #define PHYSICS_PHYSX
 #endif
 
+#define LIGHT_MAX_AMOUNT 5
+
 #include "../project_common/configuration_auto.h"
 
 #endif

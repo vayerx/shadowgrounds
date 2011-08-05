@@ -104,7 +104,7 @@
 
 #include "../game/userdata.h"
 
-#include "../survivor/ScrambledZipPackage.h"
+// #include "../survivor/ScrambledZipPackage.h"
 
 #include "../util/crc32.h"
 

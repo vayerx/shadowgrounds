@@ -71,7 +71,7 @@
 #include "GameScripting.h"
 
 // HACK:
-#include "../../chat/SGScriptChatter.h"
+// #include "../../chat/SGScriptChatter.h"
 
 #include "../userdata.h"
 
@@ -1818,7 +1818,8 @@ namespace game
 			break;
 
 		case GS_CMD_chatConnect:
-			chat::SGScriptChatter::getInstance(game)->connect();
+			sp->error("ACHTUNG! NO CHAT SOURCES");
+			// chat::SGScriptChatter::getInstance(game)->connect();
 			break;
 
 		case GS_CMD_chatSend:
@@ -1831,7 +1832,8 @@ namespace game
 				{
 					sp->error("GameScripting::process - chatSend, null string value.");
 				} else {
-					chat::SGScriptChatter::getInstance(game)->sendMessage(std::string(s));
+					sp->error("ACHTUNG! NO CHAT SOURCES");
+					// chat::SGScriptChatter::getInstance(game)->sendMessage(std::string(s));
 				}
 			} else {
 				sp->error("GameScripting::process - chatSend parameter missing.");
@@ -1849,7 +1851,8 @@ namespace game
 					sp->error("GameScripting::process - chatSend, null string value.");
 				} else {
 					std::string tmp = std::string("{SGC_S}message ") + s + std::string("{SGC_E}");
-					chat::SGScriptChatter::getInstance(game)->sendMessage(tmp);
+					sp->error("ACHTUNG! NO CHAT SOURCES");
+					// chat::SGScriptChatter::getInstance(game)->sendMessage(tmp);
 				}
 			} else {
 				sp->error("GameScripting::process - chatSend parameter missing.");
@@ -1857,7 +1860,8 @@ namespace game
 			break;
 
 		case GS_CMD_chatReceive:
-			chat::SGScriptChatter::getInstance(game)->receiveMessages();
+			sp->error("ACHTUNG! NO CHAT SOURCES");
+			// chat::SGScriptChatter::getInstance(game)->receiveMessages();
 			break;
 
 		case GS_CMD_consoleMiniQuery:

@@ -688,7 +688,7 @@ namespace util
 					if (!sp->userStack->isEmpty())
 					{
 						// WARNING: void * -> int casts
-						sp->lastValue = (intptr_t)sp->userStack->popLast();
+						sp->lastValue = (int)(intptr_t)sp->userStack->popLast();
 						sp->userStackSize--;
 #ifdef DEBUG_CHECK_FOR_UNINITIALIZED_SCRIPT_VALUE_USE
 						// HACK: check some magic value instead of 0 as indication of uninitialized...
