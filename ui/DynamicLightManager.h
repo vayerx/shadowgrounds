@@ -31,10 +31,6 @@ public:
 	UnifiedHandle getUnifiedHandle(int typeId, int instanceId) const;
 	void unifiedHandleToLightIds(UnifiedHandle unifiedHandle, int &typeId, int &instanceId) const;
 	bool doesLightExist(UnifiedHandle handle) const;
-
-	VC3 getLightPosition(UnifiedHandle unifiedHandle) const;
-	void setLightPositionByUnifiedHandle(UnifiedHandle unifiedHandle, const VC3 &position);
-
 };
 
 } //ui

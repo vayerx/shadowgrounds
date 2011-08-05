@@ -1,8 +1,10 @@
 
 #include "precompiled.h"
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
 #pragma warning(disable:4786)
+#endif
 
 #include <string.h>
 #include <assert.h>
@@ -17,7 +19,7 @@
 #include "VisualObject.h"
 #include "VisualObjectModel.h"
 
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 namespace ui
 {

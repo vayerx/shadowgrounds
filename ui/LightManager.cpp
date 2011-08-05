@@ -1,16 +1,19 @@
+#include <boost/lexical_cast.hpp>
 
 #include "precompiled.h"
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
 #pragma warning(disable:4786)
+#endif
 
 #include "LightManager.h"
-#include <istorm3d_terrain_renderer.h>
+#include <istorm3D_terrain_renderer.h>
 #include <istorm3d_spotlight.h>
 #include <istorm3d_fakespotlight.h>
-#include <istorm3d_texture.h>
-#include <istorm3d.h>
-#include <istorm3d_model.h>
+#include <IStorm3D_Texture.h>
+#include <IStorm3D.h>
+#include <IStorm3D_Model.h>
 #include <c2_frustum.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
@@ -19,7 +22,6 @@
 #include "../util/LightMap.h"
 #include "Terrain.h"
 #include "../game/unified_handle.h"
-#include "../game/UnifiedHandleManager.h"
 #include "../game/SimpleOptions.h"
 
 #include "../game/options/options_graphics.h"
@@ -30,7 +32,6 @@
 
 
 #include <string>
-#include <boost/lexical_cast.hpp>
 
 using namespace std;
 using namespace boost;
@@ -40,7 +41,6 @@ using namespace boost;
 
 
 namespace ui {
-namespace {
 	static const int LIGHTING_SPOT_AMOUNT = 1;
 	static float LIGHTING_SPOT_CULL_RANGE = 30.f * 30.f;
 	static float LIGHTING_SPOT_FADEOUT_RANGE = 20.f; // not squared
@@ -52,7 +52,7 @@ namespace {
 	static const float FAKELIGHT_FACTOR_FADE_RANGE = 5.f;
 
 #ifdef PROJECT_AOV
-	const int STATIC_LIGHT_LIMIT = 4;
+	const int STATIC_LIGHT_LIMIT = 5;
 #elif PROJECT_SURVIVOR
 	const int STATIC_LIGHT_LIMIT = 5;
 #else
@@ -347,13 +347,6 @@ namespace {
 	}
 
 
-	struct NullDeleter
-	{
-		void operator () (void *)
-		{
-		}
-	};
-
 	template<typename T>
 	struct ReleaseDeleter
 	{
@@ -574,7 +567,10 @@ namespace {
 					if(!insideS)
 					{
 						VC3 clipPoint;
-						bool clip = frustumPlane.GetClip( vS, vP, &clipPoint );
+#ifndef NDEBUG
+						bool clip = 
+#endif
+							frustumPlane.GetClip( vS, vP, &clipPoint );
 						//frustumPlane.clipLine( vS, vP, clipPoint );
 //#pragma message("*** this assert seems to be false 'somewhat randomly' while loading mission - uninitialized data or scene changing randomly while loading based on input?. --jpk")
 						assert ( clip );
@@ -585,7 +581,10 @@ namespace {
 				else if(insideS)
 				{
 					VC3 clipPoint;
-					bool clip = frustumPlane.GetClip( vP, vS, &clipPoint );
+#ifndef NDEBUG
+					bool clip =
+#endif
+						frustumPlane.GetClip( vP, vS, &clipPoint );
 					//frustumPlane.clipLine( vS, vP, clipPoint );
 					assert ( clip );
 					currentOutput[n++] = clipPoint;				
@@ -667,14 +666,6 @@ namespace {
 
 		if(camera)
 		{
-			VC3 p[4] = 
-			{
-				VC3(planeMin.x, imp.position.y - imp.properties.height, planeMin.y),
-				VC3(planeMin.x, imp.position.y - imp.properties.height, planeMax.y),
-				VC3(planeMax.x, imp.position.y - imp.properties.height, planeMin.y),
-				VC3(planeMax.x, imp.position.y - imp.properties.height, planeMax.y)
-			};
-
 			bool visible = false;
 			VC2 minValue(1.f, 1.f);
 			VC2 maxValue(0.f, 0.f);
@@ -689,8 +680,7 @@ namespace {
 			for(int i = 0; i < 4; ++i)
 			{
 				VC3 result;
-				float rhw = 0, realZ = 0;
-				bool inFront = camera->GetTransformedToScreen(p[i], result, rhw, realZ);
+				float realZ = 0;
 
 				result.x = max(0.f, result.x);
 				result.y = max(0.f, result.y);
@@ -750,7 +740,6 @@ namespace {
 	typedef vector<int> IntList;
 
 	typedef vector<Light> LightList;
-};
 
 SpotProperties::SpotProperties()
 :	type(Lighting),
@@ -758,6 +747,7 @@ SpotProperties::SpotProperties()
 	fov(0),
 	height(0),
 	angle(0),
+	strength(.2f),
 	color(1.f, 1.f, 1.f),
 
 	group(0),
@@ -776,10 +766,9 @@ SpotProperties::SpotProperties()
 
 	disableObjectRendering(false),
 
+	sourceHeight(.2f),
 	minPlane(0,0),
 	maxPlane(1.f, 1.f),
-	strength(.2f),
-	sourceHeight(.2f),
 
 	lightingModelType(Pointlight),
 	lightingModelFade(true)
@@ -791,21 +780,12 @@ Light::Light()
 	lightIndex(-1),
 	updateRange(0),
 	enabled(true),
-	dynamic(false),
-	attached(false),
-#ifdef PROJECT_CLAW_PROTO
-	brightnessHack(false),
-	timeValue(rand() % 10000)
-#else
-	brightnessHack(false),
-	timeValue(0)
-#endif
+	dynamic(false)
 {
 }
 
-namespace {
 
-	struct Point
+	struct LightPoint
 	{
 		VC3 position;
 		COL color;
@@ -813,16 +793,15 @@ namespace {
 
 		signed short lightIndex;
 
-		Point()
+		LightPoint()
 		:	range(1.f),
 			lightIndex(-1)
 		{
 		}
 	};
 
-	typedef vector<Point> PointList;
+	typedef vector<LightPoint> PointList;
 
-} // unnamed
 
 struct LightManager::Data
 {
@@ -855,19 +834,17 @@ struct LightManager::Data
 
 	int maxLightAmount;
 
-	std::vector<std::pair<UnifiedHandle, UnifiedHandle> > attachedLights;
-
 	Data(IStorm3D &storm_, IStorm3D_Scene &scene_, IStorm3D_Terrain &terrain_, util::LightMap *lightMap_, Terrain *uiTerrain_)
 	:	storm(storm_),
 		scene(scene_),
 		terrain(terrain_),
-		uiTerrain(uiTerrain_),
- 		lightMap(lightMap_),
- 		shadowLevel(100),
+		shadowLevel(100),
 		lightLevel(100),
 		lightColor(1.f, 1.f, 1.f),
 		selfIlluminationChanger(),
 		camera(scene.GetCamera()),
+		lightMap(lightMap_),
+		uiTerrain(uiTerrain_),
 		maxLightAmount(LIGHT_MAX_AMOUNT)
 	{
 		activeGroups.push_back(0);
@@ -895,6 +872,13 @@ struct LightManager::Data
 
 #if !(defined PROJECT_EDITOR) && !defined(PROJECT_VIEWER) && !defined(PROJECT_PARTICLE_EDITOR)
 		maxLightAmount = game::SimpleOptions::getInt(DH_OPT_I_RENDER_MAX_POINTLIGHTS);
+
+		// make sure we don't crash on incorrect config
+		if (maxLightAmount > LIGHT_MAX_AMOUNT)
+		{
+			maxLightAmount = LIGHT_MAX_AMOUNT;
+		};
+
 #endif
 
 	}
@@ -942,7 +926,7 @@ struct LightManager::Data
 	{
 		// Sorted list for closest lights
 		int closest[LIGHTING_SPOT_AMOUNT] = { -1 };
-		for(unsigned int i = 0; i < LIGHTING_SPOT_AMOUNT; ++i)
+		for(int i = 0; i < LIGHTING_SPOT_AMOUNT; ++i)
 			closest[i] = -1;
 
 		for(unsigned int i = 0; i < spots.size(); ++i)
@@ -1083,11 +1067,11 @@ struct LightManager::Data
 
 		// Sorted list for closest lights
 		int closestFakeLights[LIGHTING_FAKE_SPOT_MAX_AMOUNT + 1] = { -1 };
-		// and now a list for their ranges as well to prevent totally excessive calculation. --jpk
-		float closestFakeRanges[LIGHTING_FAKE_SPOT_MAX_AMOUNT + 1] = { 0.0f };
-
 		for(int i = 0; i < LIGHTING_FAKE_SPOT_AMOUNT + 1; ++i)
 			closestFakeLights[i] = -1;
+
+		// and now a list for their ranges as well to prevent totally excessive calculation. --jpk
+		float closestFakeRanges[LIGHTING_FAKE_SPOT_MAX_AMOUNT + 1] = { 0.0f };
 
 		// Find lights
 		{
@@ -1143,7 +1127,8 @@ struct LightManager::Data
 				{
 					for(int l = 0 ;l < LIGHTING_FAKE_SPOT_AMOUNT + 1; l++)
 					{
-						fakeRange( VC3(), camera, fakeSpots[ closestFakeLights[l] ], &scene, 1.0f - (float)l/LIGHTING_FAKE_SPOT_AMOUNT );
+						if (closestFakeLights[l] >= 0 && closestFakeLights[l] < int(fakeSpots.size()))
+							fakeRange( VC3(), camera, fakeSpots[ closestFakeLights[l] ], &scene, 1.0f - (float)l/LIGHTING_FAKE_SPOT_AMOUNT );
 					}
 				}
 #endif
@@ -1285,10 +1270,9 @@ for(i = 0; i < LIGHTING_FAKE_SPOT_AMOUNT; ++i)
 
 	float getLightIntensity(const Light &l, const VC3 &position, float radius) const
 	{
-		float range = l.range + radius;
 		VC3 pos = position;
 		//pos.y = l.position.y;
-/*		if(l.position.y > position.y)
+		if(l.position.y > position.y)
 		{
 			pos.y = position.y - (radius * 0.5f);
 			if(pos.y < l.position.y)
@@ -1300,14 +1284,12 @@ for(i = 0; i < LIGHTING_FAKE_SPOT_AMOUNT; ++i)
 			if(pos.y > l.position.y)
 				pos.y = l.position.y;
 		}
-*/
+
 		float distance = l.position.GetRangeTo(pos);
-		//if(distance > l.range)
-		if(distance > range)
+		if(distance > l.range)
 			return 0.f;
 
-		//float lightFactor = 1.f - (distance / l.range);
-		float lightFactor = 1.f - (distance / range);
+		float lightFactor = 1.f - (distance / l.range);
 		COL newColor = l.color * lightFactor;
 
 		float maxColor = newColor.r;
@@ -1338,7 +1320,11 @@ for(i = 0; i < LIGHTING_FAKE_SPOT_AMOUNT; ++i)
 
 	void getLighting(const VC3 &position, PointLights &pointLights, bool includeFactor, float radius, bool smoothedTransitions, IStorm3D_Model *model) const
 	{
+		// on shadowgrounds we want to use value read from lightmap when no lights near
+#ifndef PROJECT_SHADOWGROUNDS
+		// on survivor we clear it out
 		pointLights.ambient = COL();	
+#endif
 		VC2 player2(position.x, position.z);
 
 		// Do not use OBB -check for models with bones.
@@ -1354,7 +1340,6 @@ for(i = 0; i < LIGHTING_FAKE_SPOT_AMOUNT; ++i)
 		if(model)
 			modelRadius = model->GetRadius();
 
-		VC3 lightedPosition = position;
 		if(model)
 		{
 			VC3 bboxCenter;
@@ -1379,7 +1364,7 @@ for(i = 0; i < LIGHTING_FAKE_SPOT_AMOUNT; ++i)
 				IStorm3D_Mesh *mesh = object->GetMesh();
 				if(!mesh)
 					continue;
-				const char *foobar = object->GetName();
+				// const char *foobar = object->GetName();
 				if(strstr(object->GetName(), "EditorOnly"))
 					continue;
 
@@ -1416,7 +1401,6 @@ for(i = 0; i < LIGHTING_FAKE_SPOT_AMOUNT; ++i)
 			modelOBB.axes[2] = VC3( transf.Get( 8 ), transf.Get( 9 ), transf.Get( 10 )) ;
 			modelOBB.extents = (bbox.mmax - bbox.mmin) / 2.0f;
 
-			lightedPosition = modelOBB.center;
 		}
 
 		int closest[LIGHT_MAX_AMOUNT + 1] = { 0 };
@@ -1476,8 +1460,8 @@ if(fabsf(haxP.y - l.position.z) > 0.1f)
 			}
 
 			const Light &l2 = lights[i];
-			//float f2 = getLightFadeFactor(l2, position, radius);
-			float f2 = getLightFadeFactor(l2, lightedPosition, radius);
+			//float f2 = getFadeFactor(player2, l2.minPlane, l2.maxPlane, radius);
+			float f2 = getLightFadeFactor(l2, position, radius);
 
 			for(int j = 0; j < maxLightAmount; ++j)
 			{
@@ -1488,24 +1472,19 @@ if(fabsf(haxP.y - l.position.z) > 0.1f)
 				}
 
 				const Light &l1 = lights[closest[j]];
-				//float f1 = getLightFadeFactor(l1, position, radius);
-				float f1 = getLightFadeFactor(l1, lightedPosition, radius);
+				//float f1 = getFadeFactor(player2, l1.minPlane, l1.maxPlane, radius);
+				float f1 = getLightFadeFactor(l1, position, radius);
 				
 				bool update = f2 < f1;
-				//a;
-				/*
-				if(l2.dynamic != l1.dynamic)
+				if(l2.dynamic)
 				{
-					if(l2.dynamic)
-					{
-						if(j < STATIC_LIGHT_LIMIT)
-							update = false;
-					}
-					if(!l2.dynamic)
-					{
-						if(j >= STATIC_LIGHT_LIMIT)
-							update = false;
-					}
+					if(j < STATIC_LIGHT_LIMIT)
+						update = false;
+				}
+				if(!l2.dynamic)
+				{
+					if(j >= STATIC_LIGHT_LIMIT)
+						update = false;
 				}
 				if(l2.dynamic && !l1.dynamic)
 				{
@@ -1517,12 +1496,19 @@ if(fabsf(haxP.y - l.position.z) > 0.1f)
 					if(j < STATIC_LIGHT_LIMIT)
 						update = true;
 				}
+
+				/*
+				else if(!l2.dynamic && l1.dynamic)
+				{
+					if(i < STATIC_LIGHT_LIMIT)
+						update = false;
+				}
 				*/
 
 				//if(f2 < f1)
 				if(update)
 				{
-					for(int k = maxLightAmount - 1; k > j; --k)
+					for(int k = maxLightAmount; k > j; --k)
 					{
 						int index = closest[k - 1];
 						if(index != -1)
@@ -1581,6 +1567,10 @@ for(int i = STATIC_LIGHT_LIMIT; i < LIGHT_MAX_AMOUNT; ++i)
 				f0 = 0.8f;
 
 			pointLights.ambient *= f0;
+#ifdef PROJECT_SHADOWGROUNDS
+		} else {
+			pointLights.ambient *= .8;
+#endif
 		}
 
 		/*
@@ -1769,7 +1759,7 @@ for(int i = STATIC_LIGHT_LIMIT; i < LIGHT_MAX_AMOUNT; ++i)
 		for(int i = 0; i < LIGHTING_FAKE_SPOT_AMOUNT; ++i)
 		{
 			int spotIndex = activeFakes[i];
-			if(spotIndex < 0)
+			if(spotIndex < 0 || spotIndex >= (int)fakeSpots.size())
 				continue;
 
 			const SpotImp &light = fakeSpots[spotIndex];
@@ -1809,24 +1799,6 @@ for(int i = STATIC_LIGHT_LIMIT; i < LIGHT_MAX_AMOUNT; ++i)
 		updateFakeSpots(center, ms);
 		//updateFakeSpots(player, ms);
 		updateFakeSpots((player + center) * .5f, ms);
-
-		// Hack ..
-#ifdef PROJECT_CLAW_PROTO
-		for(unsigned int i = 0; i < lights.size(); ++i)
-		{
-			Light &l = lights[i];
-			if(!l.enabled || !l.brightnessHack && l.lightIndex >= 0)
-				continue;
-			
-			l.timeValue += ms;
-
-			float value = float(l.timeValue) * 0.01f * 0.05f;
-			value = sinf(value * (sinf(1.5f * value)));
-			value = 0.90f + (value * 0.1f);
-
-			terrain.setLightColor(l.lightIndex, l.color * value);
-		}
-#endif
 	}
 
 	void updateLight(const Light &light)
@@ -1887,7 +1859,7 @@ LightManager::~LightManager()
 
 void LightManager::addBuildingLight(const VC3 &position, const COL &color, float range)
 {
-	Point p;
+	LightPoint p;
 	p.position = position;
 	p.color = color;
 	p.range = range;
@@ -1921,7 +1893,7 @@ void LightManager::setBuildingLights(IStorm3D_Model &model)
 		{
 			for(unsigned int j = 0; j < data->buildingLights.size(); ++j)
 			{
-				const Point &light = data->buildingLights[j];
+				const LightPoint &light = data->buildingLights[j];
 
 				float dist = sphere.position.GetRangeTo(light.position);
 				if(dist - sphere.radius > light.range)
@@ -1935,9 +1907,9 @@ void LightManager::setBuildingLights(IStorm3D_Model &model)
 						break;
 					}
 
-					const Point &l1 = data->buildingLights[closest[k]];
+					const LightPoint &l1 = data->buildingLights[closest[k]];
 					float f1 = sphere.position.GetRangeTo(l1.position);
-					const Point &l2 = data->buildingLights[j];
+					const LightPoint &l2 = data->buildingLights[j];
 					float f2 = sphere.position.GetRangeTo(l2.position);
 
 					if(f2 < f1)
@@ -1989,7 +1961,7 @@ void LightManager::setBuildingLights(IStorm3D_Model &model)
 				if(index == -1)
 					continue;
 
-				const Point &light = data->buildingLights[index];
+				const LightPoint &light = data->buildingLights[index];
 				//int id = model.AddObjectLight(light.position, light.color, light.range);
 
 				object->SetLight(j, light.lightIndex);
@@ -2187,15 +2159,6 @@ int LightManager::addLight(const Light &light_)
 		data->terrain.setLightRadius(light.lightIndex, light.range);
 	}
 
-#ifdef PROJECT_CLAW_PROTO
-	if((fabsf(light.color.r - 0.639f) < 0.01f) && (fabsf(light.color.g - 0.427f) < 0.01f) && (fabsf(light.color.b - 0.122f) < 0.01f))
-		light.brightnessHack = true;
-	if((fabsf(light.color.r - 0.4f) < 0.01f) && (fabsf(light.color.g - 0.357f) < 0.01f) && (fabsf(light.color.b - 0.110f) < 0.01f))
-		light.brightnessHack = true;
-	if((fabsf(light.color.r - 0.690f) < 0.01f) && (fabsf(light.color.g - 0.333f) < 0.01f) && (fabsf(light.color.b - 0.067f) < 0.01f))
-		light.brightnessHack = true;
-#endif
-
 	data->updateLight(light);
 	return index;
 }
@@ -2242,41 +2205,6 @@ if(light.minPlane.y > light.position.z - light.range + 0.1f)
 
 	data->terrain.setLightPosition(light.lightIndex, light.position);
 }
-
-VC3 LightManager::getLightPosition(UnifiedHandle unifiedHandle) const
-{
-	assert(VALIDATE_UNIFIED_HANDLE_BITS(unifiedHandle));
-	assert(IS_UNIFIED_HANDLE_LIGHT(unifiedHandle));
-
-	int lightIndex = getLightId(unifiedHandle);
-
-	if(lightIndex < 0 || lightIndex >= int(data->lights.size()))
-	{
-		assert(!"Invalid light parameters");
-		return VC3(0,0,0);
-	}
-
-	Light &light = data->lights[lightIndex];
-	return light.position;
-}
-
-
-void LightManager::setLightPositionByUnifiedHandle(UnifiedHandle unifiedHandle, const VC3 &position)
-{
-	assert(VALIDATE_UNIFIED_HANDLE_BITS(unifiedHandle));
-	assert(IS_UNIFIED_HANDLE_LIGHT(unifiedHandle));
-
-	int lightIndex = getLightId(unifiedHandle);
-
-	if(lightIndex < 0 || lightIndex >= int(data->lights.size()))
-	{
-		assert(!"Invalid light parameters");
-		return;
-	}
-
-	setLightPosition(lightIndex, position);
-}
-
 
 void LightManager::setLightRadius(int lightIndex, float radius)
 {
@@ -2394,106 +2322,6 @@ UnifiedHandle LightManager::getNextLight(UnifiedHandle handle) const
 	return UNIFIED_HANDLE_NONE;
 }
 
-
-UnifiedHandle LightManager::findClosestLight(const VC3 &position)
-{
-	UnifiedHandle uh = getFirstLight();
-
-	float closestDistSq = 99999.0f*99999.0f;
-	int closestNum = -1;
-
-	while (uh != UNIFIED_HANDLE_NONE)
-	{
-		int num = getLightId(uh);
-		assert(num >= 0 && num < (int)data->lights.size());
-
-		VC3 diff = position - data->lights[num].position;
-		float diffLenSq = diff.GetSquareLength();
-		if (diffLenSq < closestDistSq)
-		{
-			closestDistSq = diffLenSq;
-			closestNum = num;
-		}
-
-		uh = getNextLight(uh);
-	}
-
-	if (closestNum != -1)
-	{
-		return getUnifiedHandle(closestNum);
-	} else {
-		return UNIFIED_HANDLE_NONE;
-	}
-}
-
-UnifiedHandle LightManager::findClosestDetachedLight(const VC3 &position)
-{
-	UnifiedHandle uh = getFirstLight();
-
-	float closestDistSq = 99999.0f*99999.0f;
-	int closestNum = -1;
-
-	while (uh != UNIFIED_HANDLE_NONE)
-	{
-		int num = getLightId(uh);
-		assert(num >= 0 && num < (int)data->lights.size());
-
-		if (!data->lights[num].attached)
-		{
-			VC3 diff = position - data->lights[num].position;
-			float diffLenSq = diff.GetSquareLength();
-			if (diffLenSq < closestDistSq)
-			{
-				closestDistSq = diffLenSq;
-				closestNum = num;
-			}
-		}
-
-		uh = getNextLight(uh);
-	}
-
-	if (closestNum != -1)
-	{
-		return getUnifiedHandle(closestNum);
-	} else {
-		return UNIFIED_HANDLE_NONE;
-	}
-}
-
-void LightManager::attachLight(UnifiedHandle light, UnifiedHandle toObject)
-{
-	// expected this to be some light, right...
-	if (light == UNIFIED_HANDLE_NONE
-		|| !VALIDATE_UNIFIED_HANDLE_BITS(light)
-		|| !IS_UNIFIED_HANDLE_LIGHT(light))
-	{
-		//LOG_ERROR("LightManager::attachLight - invalid light unified handle.");
-		assert(!"LightManager::attachLight - invalid light unified handle.");
-		return;
-	}
-
-	// not allowed to attach to nothing.
-	assert(toObject != UNIFIED_HANDLE_NONE);
-
-	if (!doesLightExist(light))
-	{
-		//LOG_ERROR("LightManager::attachLight - light does not exist.");
-		assert(!"LightManager::attachLight - light does not exist.");
-		return;
-	}
-
-	int num = getLightId(light);
-	assert(num >= 0 && num < (int)data->lights.size());
-
-	// the light should still be detached at this point
-	assert(!data->lights[num].attached);
-
-	// ok, attach it.
-	data->lights[num].attached = true;
-	data->attachedLights.push_back(std::pair<UnifiedHandle,UnifiedHandle>(light, toObject));
-}
-
-
 void LightManager::getLighting(const VC3 &position, PointLights &lights, float range, bool smoothedTransitions, bool includeFactor, IStorm3D_Model *override_model) const
 {
 	data->getLighting(position, lights, includeFactor, range, smoothedTransitions, override_model);
@@ -2523,60 +2351,27 @@ COL LightManager::getApproximatedLightingForIndices(const VC3 &position, const P
 			continue;
 
 		float factor = 1.f - (distance / range);
-		if(factor >= 0.001 && factor <= 1.f)
-			result += light.color * factor;
+		result += light.color * factor;
 	}
 
-	result.r = min(max(0.01f, result.r), 0.99f);
-	result.g = min(max(0.01f, result.g), 0.99f);
-	result.b = min(max(0.01f, result.b), 0.99f);
+	result.Clamp();
+/*
+	// Hack around bad color/fog combinations
+#ifdef PROJECT_SURVIVOR
+	float maxLight = max(result.r, result.g);
+	maxLight = max(maxLight, result.b);
 
-	// Hack to get rid of strangely colored particles
-	/*
-#ifdef PROJECT_CLAW_PROTO
-	float maxLight = max(max(result.r, result.g), result.b);
 	result.r = maxLight;
 	result.g = maxLight;
 	result.b = maxLight;
-	result.r = (result.r + maxLight) * 0.5f;
-	result.g = (result.g + maxLight) * 0.5f;
-	result.b = (result.b + maxLight) * 0.5f;
 #endif
-	*/
-
+*/
 	return result;
 }
 
-#if !(defined PROJECT_EDITOR) && !defined(PROJECT_VIEWER) && !defined(PROJECT_PARTICLE_EDITOR)
-void LightManager::update(const VC3 &player, const VC3 &center, int ms, game::UnifiedHandleManager *uhman)
-#else
-void LightManager::update(const VC3 &player, const VC3 &center, int ms, void *dummy)
-#endif
+void LightManager::update(const VC3 &player, const VC3 &center, int ms)
 {
 	data->update(player, center, ms);
-
-#if !(defined PROJECT_EDITOR) && !defined(PROJECT_VIEWER) && !defined(PROJECT_PARTICLE_EDITOR)
-
-	// NOTE: this does not scale well!
-	// (if over maybe ~50 attached lights in a scene, this will start to make a performance hit)
-	for (int i = 0; i < (int)data->attachedLights.size(); i++)
-	{
-		if (doesLightExist(data->attachedLights[i].first))
-		{
-			int num = getLightId(data->attachedLights[i].first);
-
-			if (uhman->doesObjectExist(data->attachedLights[i].second))
-			{
-				VC3 pos = uhman->getObjectPosition(data->attachedLights[i].second);
-				pos.y += 1.5f;
-
-				setLightPosition(num, pos);
-			}
-			else
-				setLightColor(num, COL());
-		}
-	}
-#endif
 }
 
 void LightManager::setLightingSpotCullRange(float cullRange)
@@ -2619,13 +2414,6 @@ float getRadius(IStorm3D_Model *model)
 	min.y = 0;
 	max.y = 0;
 	return min.GetRangeTo(max) * 0.5f;
-}
-
-UnifiedHandle LightManager::findUnifiedHandleByUniqueEditorObjectHandle(UniqueEditorObjectHandle ueoh) const
-{
-	// TODO: iterate the lights, and see if any has the given ueoh
-
-	return UNIFIED_HANDLE_NONE;
 }
 
 } // ui

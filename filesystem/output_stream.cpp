@@ -12,7 +12,18 @@
 #include <boost/static_assert.hpp>
 
 #include <limits.h>
-BOOST_STATIC_ASSERT(sizeof(frozenbyte::filesystem::uint16_t) * CHAR_BIT == 16);
+
+#ifdef _MSC_VER
+// Visual Studio doesn't recognise this
+typedef unsigned short uint16_t;
+
+#else
+// and gcc >= 4.4 requires stdint
+#include <stdint.h>
+
+#endif
+
+BOOST_STATIC_ASSERT(sizeof(uint16_t) * CHAR_BIT == 16);
 BOOST_STATIC_ASSERT(CHAR_BIT == 8);
 
 #include "../util/Debug_MemoryManager.h"

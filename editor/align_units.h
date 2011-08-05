@@ -9,7 +9,7 @@
 #endif
 #ifndef INCLUDED_DATATYPEDEF_H
 #define INCLUDED_DATATYPEDEF_H
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 #endif
 
 class IStorm3D_Camera;
@@ -49,46 +49,6 @@ inline QUAT getRotation(const VC3 &angles)
 	qz.MakeFromAngles(0, angles.z, 0);
 
 	return qz * qx * qy;
-}
-
-inline VC3 getEulerAngles(QUAT quat)
-{
-	quat.Inverse();
-	MAT tm;
-	tm.CreateRotationMatrix(quat);
-
-	float heading = 0.f;
-	float attitude = 0.f;
-	float bank = 0.f;
-
-	float m00 = tm.Get(0);
-	float m02 = tm.Get(2);
-	float m10 = tm.Get(4);
-	float m11 = tm.Get(5);
-	float m12 = tm.Get(6);
-	float m20 = tm.Get(8);
-	float m22 = tm.Get(10);
-
-	if(m10 > 0.998f)
-	{
-		heading = atan2f(m02, m22);
-		attitude = PI/2.f;
-		bank = 0.f;
-	}
-	else if(m10 < -0.998f)
-	{
-		heading = atan2f(m02, m22);
-		attitude = -PI/2;
-		bank = 0.f;
-	}
-	else
-	{
-		heading = atan2f(-m20, m00);
-		attitude = asinf(m10);
-		bank = atan2f(-m12, m11);
-	}
-
-	return VC3(bank, heading, attitude);
 }
 
 } // end of namespace editor

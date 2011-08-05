@@ -3,13 +3,15 @@
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning( disable : 4800 )
+#endif
 
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <string>
 #include <vector>
-#include <storm3d_ui.h>
+#include <Storm3D_UI.h>
 #include "../editor/string_conversions.h"
 #include "../editor/parser.h"
 #include "track.h"
@@ -26,7 +28,7 @@ Vector convertVectorFromString(const std::string& str) {
 	std::string x,y,z;
 	int i = 0;
 	for(int j = 0; j < 3; j++) {	
-		for(i; i < (int)str.size(); i++) {
+		for( ; i < (int)str.size(); i++) {
 			if(str[i] == ',') {
 				i++;
 				break;

@@ -7,21 +7,14 @@
 #undef new
 #endif
 
-
-// BAD DEPENDENCIES... SEE getRayVector(...)
-#include <Storm3D_UI.h>
-#include <D3dx9math.h>
-#include <stdlib.h>
-
 #include "../system/Logger.h"
 #include "CursorRayTracer.h"
-#include "..\util\Debug_MemoryManager.h"
-
-#pragma comment(lib, "d3dx9.lib")
+#include "../util/Debug_MemoryManager.h"
+#include <IStorm3D_Scene.h>
 
 #define CURSOR_RAY_MAX_LENGTH 200.0f
 
-#define	NEAR_Z		1.0f
+static const float NEAR_Z = 1.0f;
 //#define FAR_Z		100.0f
 
 //IStorm3D_Model *foo;
@@ -71,83 +64,13 @@ CursorRayTracer::~CursorRayTracer()
   // nop
 }
 
-void CursorRayTracer::getRayVector(int x, int y, VC3 &dir, VC3 &origin, bool sideways)
-{
-  // TODO: MOVE THESE TO STORM!
-  // NO DX FUNCTION CALLS SHOULD BE HERE!
-
-  //D3DXVECTOR3 result;
-
-  D3DXMATRIX pProjection;
-  D3DXMATRIX pView;
-
-  //D3DXMATRIX pWorld = D3DXMATRIX();
-  //pWorld._11 = pWorld._22 = pWorld._33 = pWorld._44 = 1;
-
-	/*
-  VC3 upvec = VC3(0,1,0);
-
-	if (sideways)
-	{
-		upvec = VC3(0,0,1);
-	}
-	*/
-
-	VC3 upvec = scene->GetCamera()->GetUpVec();
-
-  VC3 position = scene->GetCamera()->GetPosition();
-  VC3 target = scene->GetCamera()->GetTarget();
-  D3DXMatrixLookAtLH(&pView,(D3DXVECTOR3*)&position,
-		(D3DXVECTOR3*)&target,(D3DXVECTOR3*)&upvec);
-
-  float fov = scene->GetCamera()->GetFieldOfView();
-	Storm3D_SurfaceInfo ss = s3d->GetScreenSize();
-	float aspect=(float)ss.width/(float)ss.height;
-  float vis_range = scene->GetCamera()->GetVisibilityRange();
-
-  //D3DVIEWPORT8 pViewport = {0, 0, ss.width, ss.height, 0.0f, 1.0f};
-
-  //D3DXVECTOR3 pV = D3DXVECTOR3((float)x * ss.width / 1024, 
-  //  (float)y * ss.height / 768, 0.0f);
-  D3DXVECTOR3 pV; // = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-
-  D3DXMatrixPerspectiveFovLH(&pProjection,fov,aspect,1.0f,vis_range);
-
-  pV.x =  ( ( ( 2.0f * (float)x * ss.width / 1024 ) / ss.width  ) - 1 ) / pProjection._11;
-  pV.y = -( ( ( 2.0f * (float)y * ss.height / 768 ) / ss.height ) - 1 ) / pProjection._22;
-  pV.z =  1.0f;
-
-  D3DXMATRIX m;
-  D3DXMatrixInverse(&m, NULL, &pView);
-
-  D3DXVECTOR3 vPickRayDir;
-  D3DXVECTOR3 vPickRayOrig;
-
-  vPickRayDir.x  = pV.x*m._11 + pV.y*m._21 + pV.z*m._31;
-  vPickRayDir.y  = pV.x*m._12 + pV.y*m._22 + pV.z*m._32;
-  vPickRayDir.z  = pV.x*m._13 + pV.y*m._23 + pV.z*m._33;
-  D3DXVec3Normalize(&vPickRayDir,&vPickRayDir);
-  vPickRayOrig.x = m._41;
-  vPickRayOrig.y = m._42;
-  vPickRayOrig.z = m._43;
-
-  vPickRayOrig+=vPickRayDir*NEAR_Z;
-
-  dir.x = vPickRayDir.x;
-  dir.y = vPickRayDir.y;
-  dir.z = vPickRayDir.z;
-  origin.x = vPickRayOrig.x;
-  origin.y = vPickRayOrig.y;
-  origin.z = vPickRayOrig.z;
-}
-
 void CursorRayTracer::rayTrace(int x, int y, Storm3D_CollisionInfo &cinfo, bool sideways, bool terrainOnly, bool accurate)
 {
-  VC3 rayDir;
-  VC3 rayOrigin;
-  getRayVector(x, y, rayDir, rayOrigin, sideways);
+	VC3 rayDir;
+	VC3 rayOrigin;
+	scene->GetCamera()->getRayVector(x, y, rayDir, rayOrigin, NEAR_Z);
 
-  VC3 rayDirNorm = rayDir.GetNormalized();
+	VC3 rayDirNorm = rayDir.GetNormalized();
 
 	assert(!cinfo.hit);
 

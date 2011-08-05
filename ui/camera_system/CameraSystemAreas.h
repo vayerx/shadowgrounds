@@ -1,3 +1,6 @@
+#ifndef CAMERASYSTEMAREAS_H
+#define CAMERASYSTEMAREAS_H
+
 #include "ICameraSystem.h"
 #include "../../util/Dampers.h"
 
@@ -79,3 +82,5 @@ public:
 };
 
 } // end of namespace ui
+
+#endif // CAMERASYSTEMAREAS_H

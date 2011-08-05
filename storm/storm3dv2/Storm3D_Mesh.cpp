@@ -1,6 +1,8 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 //------------------------------------------------------------------
 // Includes
@@ -17,7 +19,7 @@
 #include "Storm3D_Bone.h"
 #include "Storm3D_ShaderManager.h"
 #include <algorithm>
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 int storm3d_mesh_allocs = 0;
 int storm3d_dip_calls = 0;
@@ -33,20 +35,19 @@ Storm3D_Mesh::Storm3D_Mesh(Storm3D *s2, Storm3D_ResourceManager &resourceManager
 	render_vertex_amount(0),
 	hasLods(false),
 	vertexes(NULL),
+	bone_weights(NULL),
 	dx_vbuf(NULL),
+	radius(0),
+	sq_radius(0),
+	radius2d(0),
+	rb_update_needed(true),
 	update_vx(true),
 	update_vx_amount(true),
 	update_fc(true),
 	update_fc_amount(true),
 	col_rebuild_needed(true),
-	radius(0),
-	sq_radius(0),
-	radius2d(0),
-	rb_update_needed(true),
-	bone_weights(NULL),
 	sphere_ok(false),
-	box_ok(false),
-	collision_faces(-1)
+	box_ok(false)
 {
 	for(int i = 0; i < LOD_AMOUNT; ++i)
 	{
@@ -205,8 +206,6 @@ IStorm3D_Mesh *Storm3D_Mesh::CreateNewClone()
 		for(int i = 0; i < vertex_amount; ++i)
 			ret->bone_weights[i] = bone_weights[i];
 	}
-
-	ret->collision_faces = collision_faces;
 
 	return ret;
 }
@@ -669,8 +668,6 @@ void Storm3D_Mesh::ReBuild()
 					int bones_found = 0;
 					for(int k = 0; k < weight_index; ++k)
 					{
-						bool found = false;
-						
 						for(unsigned int l = 0; l < chunk.bone_indices.size(); ++l)
 						{
 							if(weights[k] == chunk.bone_indices[l])

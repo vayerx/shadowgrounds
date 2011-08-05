@@ -19,7 +19,7 @@ namespace ui
 		this->storm3D = storm3D;
 		this->stormScene = stormScene;
 		highlightUnit = NULL;
-		bool highlightTerrain = false;
+		highlightTerrain = false;
 		VC3 highlightTerrainPosition = VC3(0,0,0);
 
 #ifdef LEGACY_FILES
@@ -130,7 +130,7 @@ namespace ui
 	}
 
 
-	void UnitHighlight::setHighlightedUnit(game::Unit *unit)
+	void UnitHighlight::setHighlightedUnit(const game::Unit *unit)
 	{		
 		// DISABLED!
 		return;

@@ -28,6 +28,8 @@ namespace ui {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+void setSinglePlayer( const game::Game* game );
+
 class NewGameMenu : public MenuBaseImpl, private IOguiSelectListListener
 {
 public:
@@ -60,6 +62,9 @@ public:
 	~NewGameMenu();
 
 	//.........................................................................
+
+	static int convertToRunningNum( int i );
+	static NewGameMenu::COMMANDS convertToPlayerNum( int i );
 
 	int getType() const;
 

@@ -3,7 +3,9 @@
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifndef __GNUC__
 #pragma warning(disable:4103)
+#endif
 
 #include "file_list.h"
 #include <string>
@@ -12,15 +14,27 @@
 #include <algorithm>
 
 //#include "../system/logger.h"
-#include <windows.h>
+#ifndef __GNUC__
 #pragma warning(disable: 4786)
+#endif
 
 using namespace std;
 using namespace boost;
 
 namespace frozenbyte {
 namespace filesystem {
-namespace {
+
+void convertLower(std::string &str)
+{
+	for(unsigned int i = 0; i < str.size(); ++i)
+	{
+		str[i] = tolower(str[i]);
+
+		if(str[i] == '\\')
+			str[i] = '/';
+	}
+}
+
 
 	/*
 	void addAllFiles(vector<string> &result, const FileList::Dir &dir)
@@ -73,6 +87,11 @@ struct Dir
 	StringList files;
 	IteratorList subDirs;
 
+	Dir () :
+		files(),
+		subDirs()
+	{}
+
 	void addFile(const string &file)
 	{
 		for(unsigned int i = 0; i < files.size(); ++i)
@@ -85,7 +104,7 @@ struct Dir
 	}
 };
 
-void haxFile(std::string &str)
+static void haxFile(std::string &str)
 {
 	for(unsigned int i = 0; i < str.size(); ++i)
 	{
@@ -94,15 +113,7 @@ void haxFile(std::string &str)
 	}
 }
 
-void convertLower(std::string &str)
-{
-	for(unsigned int i = 0; i < str.size(); ++i)
-	{
-		str[i] = tolower(str[i]);
-	}
-}
-
-void getDirPart(const string &file, string &dir)
+static void getDirPart(const string &file, string &dir)
 {
 	string::size_type index = file.find_last_of("\\/");
 	if(index == file.npos)
@@ -114,7 +125,7 @@ void getDirPart(const string &file, string &dir)
 	dir = file.substr(0, index);
 }
 
-int getDirAmountImp(const IteratorList &list)
+static int getDirAmountImp(const IteratorList &list)
 {
 	int result = list.size();
 	/*
@@ -128,7 +139,7 @@ int getDirAmountImp(const IteratorList &list)
 	return result;
 }
 
-int getDirNameImp(const IteratorList &list, string &result, int currentIndex, int findIndex)
+static int getDirNameImp(const IteratorList &list, string &result, int currentIndex, int findIndex)
 {
 	int original = currentIndex;
 	for(IteratorList::const_iterator it = list.begin(); it != list.end(); ++it)
@@ -149,19 +160,18 @@ int getDirNameImp(const IteratorList &list, string &result, int currentIndex, in
 	return currentIndex - original;
 }
 
-string empty;
+static string empty;
 
-} // unnamed
 
 struct FileList::Data
 {
 	bool caseSensitive;
 	DirList dirs;
 
-	Data()
-	:	caseSensitive(false)
-	{
-	}
+	Data() :
+	caseSensitive(false),
+	dirs()
+	{}
 
 	/*
 	void addDirHierarchy(const string &dir)
@@ -278,7 +288,8 @@ struct FileList::Data
 	}
 };
 
-FileList::FileList()
+FileList::FileList() :
+	data(NULL)
 {
 	scoped_ptr<Data> tempData(new Data());
 	data.swap(tempData);

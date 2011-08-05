@@ -5,9 +5,9 @@
 #include "../game/GameMap.h"
 #include "../game/CoverMap.h"
 #include "../game/GameScene.h"
-#include "../game/AreaMasks.h"
+#include "../game/areamasks.h"
 #include "../util/AreaMap.h"
-#include <istorm3d_scene.h>
+#include <IStorm3D_Scene.h>
 
 using namespace util;
 using namespace game;
@@ -33,7 +33,6 @@ void ParticleArea::biasValues(const VC3 &position, VC3 &velocity) const
 
 	if(gameMap->isWellInScaledBoundaries(wx, wy))
 	{
-		float height = position.y / gameMap->getScaleHeight();
 		int x = gameMap->scaledToObstacleX(wx);
 		int y = gameMap->scaledToObstacleY(wy);
 
@@ -132,7 +131,6 @@ float ParticleArea::getBaseHeight(const VC3 &position) const
 
 	if(gameMap->isWellInScaledBoundaries(wx, wy))
 	{
-		AreaMap *areaMap = gameMap->getAreaMap();
 		int hx = gameMap->scaledToHeightmapX(wx);
 		int hy = gameMap->scaledToHeightmapY(wy);
 

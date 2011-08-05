@@ -1,6 +1,8 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 //------------------------------------------------------------------
 // Includes
@@ -9,7 +11,7 @@
 #include "storm3d_scene.h"
 #include "storm3d_model_object.h"
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 
 //------------------------------------------------------------------
@@ -287,5 +289,6 @@ void Storm3D_Model_Object_Animation::Apply(Storm3D_Scene *scene)
 		}*/
 	}
 }
+
 
 

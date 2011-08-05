@@ -16,9 +16,8 @@
 #include "icommand.h"
 #include "command_list.h"
 #include "common_dialog.h"
-
-//#include "istream.h"
-//#include "ostream.h"
+#include "istream.h"
+#include "ostream.h"
 #include "object_settings.h"
 #include "ieditor_state.h"
 #include "color_picker.h"
@@ -37,10 +36,6 @@
 #include "../filesystem/output_stream.h"
 #include "resource/resource.h"
 
-#include "UniqueEditorObjectHandle.h"
-#include "ueoh_to_id_string.h"
-#include "../convert/int64_to_hex.h"
-
 // HACK: hack hack...
 #include "light_mode.h"
 
@@ -54,7 +49,6 @@
 namespace frozenbyte {
 namespace editor {
 namespace {
-
 	struct ModeData
 	{
 		int currentMode;
@@ -110,7 +104,6 @@ namespace {
 
 #ifdef LEGACY_FILES
 			fileWrapper("Data\\Models\\Terrain_objects", "*.s3d", true),
-			//fileWrapper("Data\\Models\\Terrain_objects", "*.s3d", false),
 #else
 			fileWrapper("data\\model\\object", "*.s3d"),
 #endif
@@ -1599,30 +1592,9 @@ namespace {
 				{
 					activeObject = TerrainObject();
 					sharedData.terrainObjects.traceActiveCollision(VC3(-10000,100000,-100000), VC3(0,1,0), rayLength);
-
-					setDialogItemText(sharedData.dialog, IDC_OBJECT_UEOH, "");
-				} else {
-					activeObject = trace;
-
-					if (activeObject.hasObject())
-					{
-						UniqueEditorObjectHandle ueoh = sharedData.terrainObjects.getObjectHandle(activeObject);
-						if (ueoh == 0)
-						{
-							setDialogItemText(sharedData.dialog, IDC_OBJECT_UEOH, "(INVALID UEOH!)");
-						} else {
-							if (ueoh & 0x8000000000000000)
-							{
-								// HACK: interpret some of the UEOH's as a string... (oh my this is gonna hurt at some point!)
-								setDialogItemText(sharedData.dialog, IDC_OBJECT_UEOH, ueoh_to_id_string(ueoh));
-							} else {
-								setDialogItemText(sharedData.dialog, IDC_OBJECT_UEOH, int64_to_hex(ueoh));
-							}
-						}
-					} else {
-						setDialogItemText(sharedData.dialog, IDC_OBJECT_UEOH, "");
-					}
 				}
+				else
+					activeObject = trace;
 			}
 
 			if(activeObject.hasObject())
@@ -1687,38 +1659,6 @@ namespace {
 				if(GetKeyState('P') & 0x80)
 				{
 					sharedData.pickupType(activeObject);
-				}
-
-				// Type changer (ctrl + T)
-				static bool type_changer_down = false;
-
-				if(GetKeyState(VK_CONTROL) & 0x80 && GetKeyState('T') & 0x80)
-				{
-					if (!type_changer_down)
-					{
-						if (activeObject.hasObject())
-						{
-							VC3 position = sharedData.terrainObjects.getObjectPosition(activeObject);
-							VC3 rotation = activeObject.getRotation();
-							sharedData.terrainObjects.removeObject(activeObject);
-
-							std::vector<std::string> modelList;
-							sharedData.getModelSelection(modelList);
-							for (int i = 0; i < (int)modelList.size(); i++)
-							{
-								activeObject = sharedData.terrainObjects.addObject(modelList[i], VC2(position.x, position.z), rotation, position.y);
-
-								//unsigned char r = unsigned char(instance.color.r * 255.f);
-								//unsigned char g = unsigned char(instance.color.r * 255.f);
-								//unsigned char b = unsigned char(instance.color.r * 255.f);
-								//int color = r << 16 | g << 8 | b;
-								//objects.setColor(terrainObject, color);
-							}
-						}
-						type_changer_down = true;
-					}
-				} else {
-					type_changer_down = false;
 				}
 
 				// Reset

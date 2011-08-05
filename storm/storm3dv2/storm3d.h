@@ -7,9 +7,9 @@
 // Includes
 //------------------------------------------------------------------
 #include "storm3d_common_imp.h"
-#include "istorm3d.h"
+#include "IStorm3D.h"
 #include "storm3d_resourcemanager.h"
-#include "storm3d_proceduralmanager.h"
+#include "Storm3D_ProceduralManager.h"
 #include <atlbase.h>
 
 // Forward declarations
@@ -219,7 +219,7 @@ public:
 	// ScreenModes
 	bool SetFullScreenMode(int width=640,int height=480,int bpp=16);
 	bool SetWindowedMode(int width=640,int height=480,bool titlebar=false);
-	bool SetWindowedMode(HWND hwnd, bool disableBuffers);
+	bool SetWindowedMode(bool disableBuffers);
 	std::string GetErrorString() { return error_string; }
 
 	void SetShadowQuality(int quality) { shadow_quality = quality; }
@@ -254,7 +254,7 @@ public:
 	void SetGammaRamp(float gamma, float brightness, float contrast,
 		float red, float green, float blue, bool calibrate);
 
-	void Storm3D::SetGammaPeak(bool peakEnabled, float peakPosition, 
+	void SetGammaPeak(bool peakEnabled, float peakPosition, 
     float peakLowShape, float peakHighShape, 
     float peakRed, float peakGreen, float peakBlue);
 
@@ -330,10 +330,6 @@ public:
 	// Delete everything (textures,materials,models,scenes)
 	void Empty();
 
-	// Renderwindow stuff
-	HWND GetRenderWindow();
-	void SetUserWindowMessageProc(LRESULT (WINAPI *User_MsgProc)(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam));
-
 	// Creation/delete
 	Storm3D(bool no_info = false, frozenbyte::filesystem::FilePackageManager *fileManager = 0, IStorm3D_Logger *logger = 0);
 	~Storm3D();
@@ -354,6 +350,7 @@ public:
 	// -jpk
 	friend class Storm3D_Texture_Video;
 };
+
 
 
 

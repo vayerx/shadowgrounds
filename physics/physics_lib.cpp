@@ -1,8 +1,10 @@
 
 #include "precompiled.h"
 
+#include <boost/lexical_cast.hpp>
+#include <map>
+
 #include "physics_lib.h"
-//#include "sphere_actor.h"
 #include "box_actor.h"
 #include "convex_actor.h"
 #include "../convert/str2int.h"
@@ -11,14 +13,11 @@
 #include "heightmap_actor.h"
 #include "rack_actor.h"
 #include "spherical_joint.h"
-#include "d6_joint.h"
 #include "fluid.h"
 #include "NxPhysics.h"
 #include "../system/Logger.h"
 #include "../game/physics/physics_collisiongroups.h"
-#include <boost/lexical_cast.hpp>
-#include <windows.h>
-#include <map>
+#include "igios.h"
 
 #ifdef PROJECT_CLAW_PROTO
 #include "car_actor.h"
@@ -26,13 +25,13 @@
 NxMaterial * frozenbyte::physics::PhysicsLib::unitMaterial = NULL;
 #endif
 
-#ifdef PHYSICS_PHYSX
+#if defined PHYSICS_PHYSX && defined _MSC_VER
 //#pragma comment(lib, "PhysXLoaderDEBUG.lib")
 #pragma comment(lib, "PhysXLoader.lib")
 #endif
 
-int frozenbyte::physics::physicslib_group_cont[PHYSICS_MAX_COLLISIONGROUPS][PHYSICS_MAX_COLLISIONGROUPS] = { PHYSICSLIB_GROUP_CONTACT_NONE }; 
-bool frozenbyte::physics::physicslib_group_coll[PHYSICS_MAX_COLLISIONGROUPS][PHYSICS_MAX_COLLISIONGROUPS] = { false };
+int frozenbyte::physics::physicslib_group_cont[PHYSICS_MAX_COLLISIONGROUPS][PHYSICS_MAX_COLLISIONGROUPS] = { { PHYSICSLIB_GROUP_CONTACT_NONE } };
+bool frozenbyte::physics::physicslib_group_coll[PHYSICS_MAX_COLLISIONGROUPS][PHYSICS_MAX_COLLISIONGROUPS] = { { false } };
 
 
 namespace frozenbyte {
@@ -42,7 +41,6 @@ namespace physics {
 NxPhysicsSDK *physxSDK = NULL;
 
 
-namespace {
 
 	// TEMP!!!
 	struct Logger: public NxUserOutputStream
@@ -61,10 +59,12 @@ namespace {
 		void print(const char *message)
 		{
 			//MessageBox(0, message, "Shit happens", MB_OK);
-			assert(!"Physics error");
 
+			igiosWarning("physics error: %s\n", message);
 			std::string msgstr = std::string("physics_lib - ") + message;
 			::Logger::getInstance()->error(msgstr.c_str());
+
+			assert(!"Physics error");
 		}
 	};
 
@@ -95,8 +95,8 @@ namespace {
 
 			//NxReal maxForceLen = 0.0f;
 			NxReal maxForceLen = -99999.9f;
-			NxVec3 maxContactNormal;
-			NxVec3 maxContactPosition;
+			NxVec3 maxContactNormal(0, 0, 0);
+			NxVec3 maxContactPosition(0, 0, 0);
 
 			NxContactStreamIterator i(pair.stream);
 			while(i.goNextPair())
@@ -158,8 +158,7 @@ namespace {
 		}
 	};
 
-	boost::scoped_ptr<Logger> logger;
-} // unnamed
+	static boost::scoped_ptr<Logger> logger;
 
 NxUserOutputStream *getLogger()
 {
@@ -217,15 +216,16 @@ struct PhysicsLib::Data
 		statsSimulationWaitTime(0),
 		statsSimulationStartWaitTime(0),
 		startSimulationTime(0),
-		statsContacts(0),
-		runningInHardware(false),
 
+		statsContacts(0),
+		ccd(false),
+		ccdMaxThickness(0.5f),
+
+		runningInHardware(false),
 		physicslib_fluid_containment_actor(0),
 		physicslib_fluid_containment_shape(0),
 		physicslib_fluid_containment_sphere_actor(0),
-		physicslib_fluid_containment_sphere_shape(0),
-		ccd(false),
-		ccdMaxThickness(0.5f)
+		physicslib_fluid_containment_sphere_shape(0)
 	{
 		if (params == NULL)
 		{
@@ -486,12 +486,16 @@ scene->setGroupCollisionFlag(PHYSICS_COLLISIONGROUP_NOCOLLISION, PHYSICS_COLLISI
 
 		if(sdk && scene)
 		{
+#ifndef NDEBUG
 			int actors = scene->getNbActors();
 			assert(actors == 1 || actors == 2);
 
+#ifndef NX_DISABLE_FLUIDS
 			int fluids = scene->getNbFluids();
 			assert(fluids == 0);
-
+#endif
+#endif
+			scene->shutdownWorkerThreads();
 			sdk->releaseScene(*scene);
 		}
 
@@ -611,24 +615,6 @@ boost::shared_ptr<BoxActor> PhysicsLib::createBoxActor(const VC3 &sizes, const V
 
 	return boost::shared_ptr<BoxActor> (actor);
 }
-
-boost::shared_ptr<BoxActor> PhysicsLib::createBoxActor(const std::string &shapes, const VC3 &position)
-{
-	BoxActor *actor = 0;
-
-	if(data->scene)
-	{
-		actor = new BoxActor(*data->scene, shapes, position, data->ccd, data->ccdMaxThickness);
-		if(!actor->isValid())
-		{
-			delete actor;
-			actor = 0;
-		}
-	}
-
-	return boost::shared_ptr<BoxActor> (actor);
-}
-
 
 boost::shared_ptr<CapsuleActor> PhysicsLib::createCapsuleActor(float height, float radius, const VC3 &position, float offset, int axisNumber)
 {
@@ -763,119 +749,7 @@ boost::shared_ptr<SphericalJoint> PhysicsLib::createSphericalJoint(boost::shared
 	return boost::shared_ptr<SphericalJoint> (joint);
 }
 
-boost::shared_ptr<D6Joint> PhysicsLib::createGeneralJoint(boost::shared_ptr<ActorBase> &a, boost::shared_ptr<ActorBase> &b, const PhysicsJoint &joint)
-{
-	D6Joint *result = 0;
-
-	if(data->scene && ((a.get() && a->getActor()) || (b.get() && b->getActor())) )
-	{
-		NxD6JointDesc jointDesc;
-		jointDesc.setToDefault();
-
-		// Basics
-		jointDesc.actor[0] = a.get() ? a->getActor() : 0;
-		jointDesc.actor[1] = b.get() ? b->getActor() : 0;
-
-		jointDesc.setGlobalAnchor(NxVec3(joint.globalAnchor.x, joint.globalAnchor.y, joint.globalAnchor.z));
-
-		// Joint axis motions
-		if(joint.low.hasX() || joint.high.hasX())
-		{
-			jointDesc.twistMotion = NX_D6JOINT_MOTION_LIMITED;
-			jointDesc.twistLimit.low.value = joint.low.angle.x;
-			jointDesc.twistLimit.low.restitution = joint.low.restitution.x;
-			jointDesc.twistLimit.low.spring = joint.low.spring.x;
-			jointDesc.twistLimit.low.damping = joint.low.damping.x;
-
-			jointDesc.twistLimit.high.value = joint.high.angle.x;
-			jointDesc.twistLimit.high.restitution = joint.high.restitution.x;
-			jointDesc.twistLimit.high.spring = joint.high.spring.x;
-			jointDesc.twistLimit.high.damping = joint.high.damping.x;
-		}
-		else
-			jointDesc.twistMotion = NX_D6JOINT_MOTION_LOCKED;
-
-		if(joint.high.hasY())
-		{
-			jointDesc.swing1Motion = NX_D6JOINT_MOTION_LIMITED;
-			jointDesc.swing1Limit.value = joint.high.angle.y;
-			jointDesc.swing1Limit.restitution = joint.high.restitution.y;
-			jointDesc.swing1Limit.spring = joint.high.spring.y;
-			jointDesc.swing1Limit.damping = joint.high.damping.y;
-		}
-		else
-			jointDesc.swing1Motion = NX_D6JOINT_MOTION_LOCKED;
-
-		if(joint.high.hasZ())
-		{
-			jointDesc.swing2Motion = NX_D6JOINT_MOTION_LIMITED;
-			jointDesc.swing2Limit.value = joint.high.angle.z;
-			jointDesc.swing2Limit.restitution = joint.high.restitution.z;
-			jointDesc.swing2Limit.spring = joint.high.spring.z;
-			jointDesc.swing2Limit.damping = joint.high.damping.z;
-		}
-		else
-			jointDesc.swing2Motion = NX_D6JOINT_MOTION_LOCKED;
-
-		jointDesc.xMotion = NX_D6JOINT_MOTION_LOCKED;
-		jointDesc.yMotion = NX_D6JOINT_MOTION_LOCKED;
-		jointDesc.zMotion = NX_D6JOINT_MOTION_LOCKED;
-
-		if(joint.breakForce != 0.f)
-		{
-			jointDesc.maxForce = joint.breakForce;
-			jointDesc.maxTorque = joint.breakForce;
-		}
-
-		// Projection
-		//jointDesc.projectionMode = NX_JPM_NONE;
-		//jointDesc.projectionMode = NX_JPM_POINT_MINDIST;
-
-		// Local axis config for actors
-		{
-			NxVec3 globalAxis(joint.globalAxis.x, joint.globalAxis.y, joint.globalAxis.z);
-			NxVec3 globalNormal(joint.globalNormal.x, joint.globalNormal.y, joint.globalNormal.z);
-
-			for(int i = 0; i < 2; ++i)
-			{
-				NxActor *actor = jointDesc.actor[i];
-				if(!actor || !actor->isDynamic())
-				{
-					// For static actors we have to parent joint to "world" (null actor)
-					jointDesc.actor[i] = 0;
-					jointDesc.localAxis[i] = globalAxis;
-					jointDesc.localNormal[i] = globalNormal;
-					jointDesc.localAnchor[i] = NxVec3(joint.globalAnchor.x, joint.globalAnchor.y, joint.globalAnchor.z);
-
-					continue;
-				}
-
-				NxQuat orientation = actor->getGlobalOrientationQuat();
-				orientation.invert();
-
-				NxVec3 localAxis = globalAxis;
-				NxVec3 localNormal = globalNormal;
-				orientation.rotate(localAxis);
-				orientation.rotate(localNormal);
-
-				jointDesc.localAxis[i] = localAxis;
-				jointDesc.localNormal[i] = localNormal;
-			}
-		}
-
-		jointDesc.isValid();
-
-		result = new D6Joint(*data->scene, jointDesc, a, b);
-		if(!result->isValid())
-		{
-			delete result;
-			result = 0;
-		}
-	}
-
-	return boost::shared_ptr<D6Joint> (result);
-}
-
+#ifndef NX_DISABLE_FLUIDS
 boost::shared_ptr<Fluid> PhysicsLib::createFluid(FluidType fluidType, int maxParticles, float fluidStaticRestitution, float fluidStaticAdhesion, float fluidDynamicRestitution, float fluidDynamicAdhesion, float fluidDamping, float fluidStiffness, float fluidViscosity, float fluidKernelRadiusMultiplier, float fluidRestParticlesPerMeter, float fluidRestDensity, float fluidMotionLimit, int fluidPacketSizeMultiplier, int collGroup)
 {
 	Fluid *fluid = 0;
@@ -893,17 +767,10 @@ boost::shared_ptr<Fluid> PhysicsLib::createFluid(FluidType fluidType, int maxPar
 		fluidDesc.viscosity = fluidViscosity;
 		fluidDesc.restDensity = fluidRestDensity;
 		fluidDesc.damping = fluidDamping;
-#if NX_SDK_VERSION_NUMBER >= 281
 		fluidDesc.restitutionForStaticShapes = fluidStaticRestitution;
-		fluidDesc.restitutionForDynamicShapes = fluidDynamicRestitution;
 		fluidDesc.dynamicFrictionForStaticShapes = fluidStaticAdhesion;
+		fluidDesc.restitutionForDynamicShapes = fluidDynamicRestitution;
 		fluidDesc.dynamicFrictionForDynamicShapes = fluidDynamicAdhesion;
-#else
-		fluidDesc.staticCollisionRestitution = fluidStaticRestitution;
-		fluidDesc.staticCollisionAdhesion = fluidStaticAdhesion;
-		fluidDesc.dynamicCollisionRestitution = fluidDynamicRestitution;
-		fluidDesc.dynamicCollisionAdhesion = fluidDynamicAdhesion;
-#endif
 		fluidDesc.collisionGroup = collGroup;
 		fluidDesc.packetSizeMultiplier = /*8*/ fluidPacketSizeMultiplier;
 
@@ -929,11 +796,14 @@ boost::shared_ptr<Fluid> PhysicsLib::createFluid(FluidType fluidType, int maxPar
 
 	return boost::shared_ptr<Fluid> (fluid);
 }
+#endif
 
 void PhysicsLib::addGroundPlane(float height)
 {
 	if(!data->scene)
 		return;
+
+	assert(data->scene->isWritable());
 
 	NxPlaneShapeDesc planeDesc;
 	planeDesc.d = height;
@@ -1079,11 +949,11 @@ void PhysicsLib::startSimulation(float timeDelta)
 
 	data->contactReport.contactEventAmount = 0;
 	data->contactReport.contactList.clear();
-	data->startSimulationTime = timeGetTime();
+	data->startSimulationTime = Timer::getCurrentTime();
 	data->scene->simulate(timeDelta);
 	data->scene->flushStream();
 
-	data->statsSimulationStartWaitTime = timeGetTime() - data->startSimulationTime;
+	data->statsSimulationStartWaitTime = Timer::getCurrentTime() - data->startSimulationTime;
 }
 
 void PhysicsLib::finishSimulation()
@@ -1091,12 +961,12 @@ void PhysicsLib::finishSimulation()
 	if(!data->scene)
 		return;
 
-	int startWaitTime = timeGetTime();
+	int startWaitTime = Timer::getCurrentTime();
 
 	NxU32 errorState = 0;
 	data->scene->fetchResults(NX_RIGID_BODY_FINISHED, true, &errorState);
 
-	int endSimulationTime = timeGetTime();
+	int endSimulationTime = Timer::getCurrentTime();
 	data->statsSimulationTime = endSimulationTime - data->startSimulationTime;
 	data->statsSimulationWaitTime = endSimulationTime - startWaitTime;
 
@@ -1108,7 +978,21 @@ void PhysicsLib::finishSimulation()
 	data->statsNumDynamicActorsInAwakeGroups = stats.numDynamicActorsInAwakeGroups;
 	data->statsMaxDynamicActorsInAwakeGroups = stats.maxDynamicActorsInAwakeGroups;
 	data->statsContacts = data->contactReport.contactEventAmount;
-
+	/*
+	igiosWarning("Simulation stats\n" \
+					"numActors = %i\n" \
+					"numDynamicActors = %i\n" \
+					"numDynamicActorsInAwakeGroups = %i\n" \
+					"maxDynamicActorsInAwakeGroups = %i\n" \
+					"contactEventAmount = %i\n" \
+					"loggable stats \n%s\n",
+					stats.numActors,
+					stats.numDynamicActors,
+					stats.numDynamicActorsInAwakeGroups,
+					stats.maxDynamicActorsInAwakeGroups,
+					data->contactReport.contactEventAmount,
+					getLoggableStatistics().c_str());
+	*/
 	if(errorState)
 		data->crashed = true;
 }
@@ -1145,10 +1029,12 @@ bool PhysicsLib::isRunningInHardware() const
 	return data->runningInHardware;
 }
 
+#ifndef NX_DISABLE_FLUIDS
 int PhysicsLib::getActiveFluidParticleAmount() const
 {
 	return physics::getFluidParticleCount();
 }
+#endif
 
 std::string PhysicsLib::getLoggableStatistics() const
 {
@@ -1160,8 +1046,10 @@ std::string PhysicsLib::getLoggableStatistics() const
 		result += std::string("") + boost::lexical_cast<std::string> (data->statsNumDynamicActors) + std::string(";");
 		result += std::string("") + boost::lexical_cast<std::string> (data->statsNumDynamicActorsInAwakeGroups) + std::string(";");
 		result += std::string("") + boost::lexical_cast<std::string> (data->statsContacts) + std::string(";");
+#ifndef NX_DISABLE_FLUIDS
 		result += std::string("") + boost::lexical_cast<std::string> (getFluidBaseCount()) + std::string(";");
 		result += std::string("") + boost::lexical_cast<std::string> (physics::getFluidParticleCount()) + std::string(";");
+#endif
 		result += std::string("") + boost::lexical_cast<std::string> (data->statsSimulationStartWaitTime) + std::string(";");
 		result += std::string("") + boost::lexical_cast<std::string> (data->statsSimulationWaitTime) + std::string(";");
 	}
@@ -1181,8 +1069,10 @@ std::string PhysicsLib::getStatistics() const
 		result += std::string("Active actors: ") + boost::lexical_cast<std::string> (data->statsNumDynamicActorsInAwakeGroups) + std::string("\n");
 		result += std::string("Max active actors: ") + boost::lexical_cast<std::string> (data->statsMaxDynamicActorsInAwakeGroups) + std::string("\n");
 		result += std::string("Contacts reported: ") + boost::lexical_cast<std::string> (data->statsContacts) + std::string("\n");
+#ifndef NX_DISABLE_FLUIDS
 		result += std::string("Fluids: ") + boost::lexical_cast<std::string> (getFluidBaseCount()) + std::string("\n");
 		result += std::string("Fluid particles: ") + boost::lexical_cast<std::string> (physics::getFluidParticleCount()) + std::string("\n");
+#endif
 		result += std::string("Physics time: ") + boost::lexical_cast<std::string> (data->statsSimulationTime) + std::string("\n");
 		result += std::string("Physics wait for start: ") + boost::lexical_cast<std::string> (data->statsSimulationStartWaitTime) + std::string("\n");
 		result += std::string("Physics wait for end: ") + boost::lexical_cast<std::string> (data->statsSimulationWaitTime);
@@ -1205,9 +1095,9 @@ bool PhysicsLib::checkOverlapOBB(const VC3 &center, const VC3 &radius, const QUA
 	box.rot.id();
 
 	NxShapesType type = NX_DYNAMIC_SHAPES;
-	if(collisionType = CollisionStatic)
+	if(collisionType == CollisionStatic)
 		type = NX_STATIC_SHAPES;
-	else if (collisionType = CollisionAll)
+	else if (collisionType == CollisionAll)
 		type = NX_ALL_SHAPES;
 
 	return data->scene->checkOverlapOBB(box, type);

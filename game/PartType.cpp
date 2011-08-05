@@ -8,7 +8,7 @@
 #include "../system/Logger.h"
 #include "../convert/str2int.h"
 
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 namespace game
 {
@@ -228,7 +228,7 @@ namespace game
     return setRootData(key, value);
   }
 
-  bool PartType::setSub(char *key)
+  bool PartType::setSub(const char *key)
   {
     return setRootSub(key);
   }
@@ -236,7 +236,7 @@ namespace game
   // TODO: leaks memory...
   // (but that is not important, these are global variables, 
   // inited only once)
-  bool PartType::setRootData(char *key, char *value)
+  bool PartType::setRootData(const char *key, char *value)
   {
     // the über sophisticated data parsing ;)
 
@@ -529,7 +529,7 @@ namespace game
     return false;
   }
 
-  bool PartType::setRootSub(char *key)
+  bool PartType::setRootSub(const char *key)
   {
     if (key == NULL)
     {
@@ -792,7 +792,7 @@ namespace game
     return NULL;
   }
 
-  char *slotPositionStrings[SLOT_POSITIONS] =
+  const char *slotPositionStrings[SLOT_POSITIONS] =
   {
     "(RESERVED)",
     "Head",

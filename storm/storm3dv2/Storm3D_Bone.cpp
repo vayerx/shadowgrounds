@@ -1,6 +1,8 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 //------------------------------------------------------------------
 // Includes
@@ -14,8 +16,8 @@
 #include "storm3d_model_object.h"
 #include "storm3d_helper.h"
 #include "storm3d_light.h"
-#include "..\..\filesystem\input_stream_wrapper.h"
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../filesystem/input_stream_wrapper.h"
+#include "../../util/Debug_MemoryManager.h"
 
 int storm3d_bone_allocs = 0;
 using namespace frozenbyte;
@@ -23,171 +25,14 @@ using namespace frozenbyte;
 //------------------------------------------------------------------
 // Storm3D_BoneAnimation
 //------------------------------------------------------------------
-Storm3D_BoneAnimation::Storm3D_BoneAnimation(const char *filename)
-:	reference_count(1), 
-	bone_id(0),
-
-	loop_time(0)
+Storm3D_BoneAnimation::Storm3D_BoneAnimation(const char *file_name)
+:	bone_id(0),
+	loop_time(0),
+	reference_count(1)
 {
 	successfullyLoaded = false;
 
-	bool combine = false;
-	std::string combineWithFilename;
-	std::vector<std::string> combineBoneNames;
-
-	char actual_filename[512+1];
-	int filename_len = strlen(filename);
-	if (filename_len < 512) 
-	{
-		strcpy(actual_filename, filename);
-		for (int i = 0; i < filename_len; i++)
-		{
-			if (actual_filename[i] == '@')
-			{
-				int restoreAtPos = -1;
-				for (int j = i+1; j < filename_len; j++)
-				{
-					if (actual_filename[j] == '@')
-					{
-						actual_filename[j] = '\0';
-						restoreAtPos = j;
-						break;
-					}
-				}
-				actual_filename[i] = '\0';
-
-				combine = true;
-
-				bool gotFirstOne = false;
-				int lastCommaPos = i;
-				for (int j = i + 1; j < filename_len + 1; j++)
-				{
-					if (actual_filename[j] == '+'
-						|| actual_filename[j] == '\0')
-					{
-						// interpret first token as filename, rest as bone names
-						if (!gotFirstOne)
-						{
-							// file name
-							assert(j >= (lastCommaPos + 1));
-							combineWithFilename = std::string(&actual_filename[lastCommaPos + 1]).substr(0, j - (lastCommaPos + 1));
-							if (combineWithFilename.empty())
-							{
-								assert(!"Storm3D_BoneAnimation - Combine filename empty.");
-								/*
-								if (Storm3D2->getLogger() != NULL)
-								{
-									Storm3D2->getLogger()->warning("Storm3D_BoneAnimation - Combine filename empty.");
-									Storm3D2->getLogger()->debug(filename);
-								}
-								*/
-							}
-							lastCommaPos = j;
-							gotFirstOne = true;
-						} else {
-							// bone name
-							assert(j >= (lastCommaPos + 1));
-							std::string tmp = std::string(&actual_filename[lastCommaPos + 1]).substr(0, j - (lastCommaPos + 1));
-							if (tmp.empty())
-							{
-								assert(!"Storm3D_BoneAnimation - Combine bone name empty.");
-								/*
-								if (Storm3D2->getLogger() != NULL)
-								{
-									Storm3D2->getLogger()->warning("Storm3D_Model::LoadBones - Combine bone name empty.");
-									Storm3D2->getLogger()->debug(filename);
-								}
-								*/
-							} else {
-								combineBoneNames.push_back(tmp);
-							}
-							lastCommaPos = j;							
-						}
-						if (actual_filename[j] == '\0')
-							break;
-					}
-				}
-				if (restoreAtPos != -1)
-				{
-					actual_filename[restoreAtPos] = '@';
-				}
-			}	
-		}
-	} else {
-		assert(0);
-		return;
-	}
-
-	std::vector<std::string> boneNamesByNumber;
-	if (combine)
-	{
-		/*
-		if (Storm3D2->getLogger() != NULL)
-		{
-			Storm3D2->getLogger()->debug((std::string("Storm3D_BoneAnimation - Combining with animation: ") + combineWithFilename).c_str());
-			for (int i = 0; i < (int)combineBoneNames.size(); i++)
-			{
-				Storm3D2->getLogger()->debug((std::string("bone: ") + combineBoneNames[i]).c_str());
-			}
-		}
-		*/
-		// HACK: since the animation file itself does not contain bone names, i'm reading in 
-		// a hacky file which contains the names.
-		// TODO: should modify the animation file format and exporter instead (yikes!)
-		std::string bonenames = actual_filename;
-		for (int i = (int)bonenames.length(); i >= 0; i--)
-		{
-			if (bonenames[i] == '/'
-				|| bonenames[i] == '\\')
-			{
-				std::string foldername = bonenames.substr(0, i + 1);
-				bonenames = foldername + "bone_names";
-
-				if (combineWithFilename.length() >= 5 
-					&& combineWithFilename.substr(0, 5) == "data/")
-				{
-					// absolute path for another animation, so do nothing to it
-				} else {
-					// relative path
-					combineWithFilename = foldername + combineWithFilename;
-				}
-				break;
-			}
-		}
-		bonenames += ".bnam";
-
-		filesystem::FB_FILE *fp = filesystem::fb_fopen(bonenames.c_str(), "rb");
-		if(fp != NULL)
-		{
-			int filesize = filesystem::fb_fsize(fp);
-			char *buf = new char[filesize + 1];
-			filesystem::fb_fread(buf, filesize, 1, fp);
-			buf[filesize] = '\0';
-
-			int lastPos = 0;
-			for (int i = 0; i < filesize; i++)
-			{
-				if (buf[i] == '\r' || buf[i] == '\n')
-				{
-					buf[i] = '\0';
-					if (i > lastPos)
-					{
-						std::string tmp = &buf[lastPos];
-						boneNamesByNumber.push_back(tmp);
-					}
-					lastPos = i + 1;
-				}
-			}
-
-			delete [] buf;
-			filesystem::fb_fclose(fp);
-		} else {
-			assert(!"Storm3D_BoneAnimation - No bone names file found.");
-		}
-	}
-		
-
-	filesystem::FB_FILE *fp = filesystem::fb_fopen(actual_filename, "rb");
+	filesystem::FB_FILE *fp = filesystem::fb_fopen(file_name, "rb");
 	if(fp == 0)
 		return;
 
@@ -207,12 +52,6 @@ Storm3D_BoneAnimation::Storm3D_BoneAnimation(const char *filename)
 	
 	int bone_count = 0;
 	filesystem::fb_fread(&bone_count, sizeof(int), 1, fp);
-
-	if (combine)
-	{
-		// TODO: need a logger instead of assert.
-		assert(boneNamesByNumber.size() == bone_count);
-	}
 
 	// resize containers
 	bone_rotations.resize(bone_count);
@@ -244,93 +83,6 @@ Storm3D_BoneAnimation::Storm3D_BoneAnimation(const char *filename)
 				bone_positions[i].push_back(std::pair<int,Vector>(time,position));
 			}
 		}
-
-		if (combine
-			&& boneNamesByNumber.size() == bone_count)
-		{
-			for (int bn = 0; bn < (int)combineBoneNames.size(); bn++)
-			{
-				if (boneNamesByNumber[i] == combineBoneNames[bn])
-				{
-					// replace this bone animation data with another...
-
-					// HACK: copy&paste ahead. should definately refactor this whole thing...
-					filesystem::FB_FILE *fp_rep = filesystem::fb_fopen(combineWithFilename.c_str(), "rb");
-					if(fp_rep != 0)
-					{
-						char header_rep[5] = { 0 };
-						filesystem::fb_fread(header_rep, sizeof(char), 5, fp_rep);
-						if((memcmp(header_rep,"ANM11",5) != 0))
-						{
-							filesystem::fb_fclose(fp_rep);
-							return;
-						}
-
-						int dummy1;
-						int dummy2;
-
-						// Bone id
-						filesystem::fb_fread(&dummy1, sizeof(int), 1, fp_rep);
-
-						// Loop time in ms
-						filesystem::fb_fread(&dummy2, sizeof(int), 1, fp_rep);
-						
-						int bone_count_rep = 0;
-						filesystem::fb_fread(&bone_count_rep, sizeof(int), 1, fp_rep);
-
-						assert(bone_count_rep == bone_count);
-
-						// For every bone
-						for(int i_rep = 0; i_rep < bone_count_rep; ++i_rep)
-						{
-							int key_count_rep = 0;
-							filesystem::fb_fread(&key_count_rep, sizeof(int), 1, fp_rep);
-							
-							int position_key_count_rep = 0;
-							filesystem::fb_fread(&position_key_count_rep, sizeof(int), 1, fp_rep);
-
-							if (i_rep == i)
-							{
-								bone_rotations[i].clear();
-								bone_positions[i].clear();
-							}
-
-							for(int j_rep = 0; j_rep < key_count_rep; ++j_rep)
-							{
-								int time_rep;
-								Rotation rotation_rep;
-								Vector position_rep;
-
-								filesystem::fb_fread(&time_rep, sizeof(int), 1, fp_rep);
-								filesystem::fb_fread(&rotation_rep, sizeof(float), 4, fp_rep);
-
-								if (i_rep == i)
-								{
-									bone_rotations[i].push_back(std::pair<int,Rotation>(time_rep,rotation_rep));
-								}
-
-								if(position_key_count_rep > 0)
-								{
-									filesystem::fb_fread(&position_rep, sizeof(float), 3, fp_rep);
-									if (i_rep == i)
-									{
-										bone_positions[i].push_back(std::pair<int,Vector>(time_rep,position_rep));
-									}
-								}
-							}
-						}
-
-						filesystem::fb_fclose(fp_rep);
-					} else {
-						assert(!"Storm3D_BoneAnimation - Failed to open animation file used in combine.");
-					}
-					// (end of copy&paste)
-
-					break;
-				}
-			}
-		}
-
 	}
 
 	filesystem::fb_fclose(fp);
@@ -487,8 +239,7 @@ Storm3D_Bone::Storm3D_Bone()
 :	name(NULL),
 	global_tm_ok(false),
 	has_childs(false),
-	useForceTransform(false),
-	noCollision(false)
+	useForceTransform(false)
 
 {
 	storm3d_bone_allocs++;
@@ -548,12 +299,6 @@ void Storm3D_Bone::SetParentIndex(int index)
 {
 	parent_index = index;
 }
-
-void Storm3D_Bone::SetNoCollision(bool noCollision)
-{
-	this->noCollision = noCollision;
-}
-
 /*
 float Storm3D_Bone::GetLenght()
 {

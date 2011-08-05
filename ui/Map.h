@@ -1,7 +1,7 @@
 #ifndef INCLUDED_UI_MAP_H
 #define INCLUDED_UI_MAP_H
 
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 #include <boost/scoped_ptr.hpp>
 #include <string>
 

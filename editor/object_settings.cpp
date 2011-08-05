@@ -8,6 +8,7 @@
 #include "parser.h"
 #include "string_conversions.h"
 #include "../filesystem/input_file_stream.h"
+#include "../filesystem/file_package_manager.h"
 #include "common_dialog.h"
 #include "file_wrapper.h"
 #include "storm.h"
@@ -53,17 +54,12 @@ struct ObjectSettingsData
 		defaultValues["ambient_sound"] = "";
 		defaultValues["ambient_sound_range"] = "";
 		defaultValues["ambient_sound_rolloff"] = "";
-		defaultValues["collision_group"] = "";
-		defaultValues["script"] = "";
-		defaultValues["dynamic_box_shapes"] = "";
-#ifdef PROJECT_CLAW_PROTO
-		defaultValues["ground_joint_hack"] = "";
-#endif
 	}
 
 	void loadObjects()
 	{
-		filesystem::createInputFileStream(fileName) >> parser;
+		filesystem::InputStream strm = filesystem::FilePackageManager::getInstance().getFile(fileName);
+		strm >> parser;
 	}
 
 	void saveObjects()

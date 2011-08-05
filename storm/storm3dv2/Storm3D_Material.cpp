@@ -1,6 +1,8 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 //------------------------------------------------------------------
 // Includes
@@ -11,7 +13,7 @@
 #include "storm3d_texture.h"
 #include "storm3d_scene.h"
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 int storm3d_material_allocs = 0;
 
@@ -56,23 +58,23 @@ namespace {
 //------------------------------------------------------------------
 Storm3D_Material::Storm3D_Material(Storm3D *s2,const char *_name) :
 	Storm3D2(s2),
+	texture_base(NULL),
+	texture_base2(NULL),
+	texture_bump(NULL),
+	texture_reflection(NULL),
+	texture_distortion(NULL),
 	color(1,1,1),
 	self_illum(0,0,0),
 	specular(1,1,1),
 	specular_sharpness(25),
 	doublesided(false),
 	wireframe(false),
+	bumpheight(1.0f),
 	alphablend_type(ATYPE_NONE),
 	transparency(0),
 	glow(0),
 	glow_factor(1.f),
 	multitexture_type(MTYPE_COLORONLY),
-	texture_base(NULL),
-	texture_base2(NULL),
-	texture_bump(NULL),
-	texture_reflection(NULL),
-	texture_distortion(NULL),
-	bumpheight(1.0f),
 	shader_handle(0),
 	scrollEnabled(false),
 	scrollUpdateFrame(-1),
@@ -693,6 +695,7 @@ Storm3D_Material::BUMPTYPE Storm3D_Material::GetBumpType()
 		case MTYPE_DOT3_TEX_REF: return BUMPTYPE_DOT3;
 		case MTYPE_DOT3_DUALTEX: return BUMPTYPE_DOT3;
 		case MTYPE_DOT3_DUALTEX_REF: return BUMPTYPE_DOT3;
+		default: break;
 	}
 	return BUMPTYPE_NONE;
 }
@@ -729,9 +732,6 @@ bool Storm3D_Material::IsIdenticalWith(const Storm3D_Material *other) const
 	 (fabsf(color.g - other->color.g) > 0.05f) ||
 	 (fabsf(color.b - other->color.b) > 0.05f))
 		identical = false;
-
-	if(identical == true)
-		int a = 0;
 
 	return identical;
 }

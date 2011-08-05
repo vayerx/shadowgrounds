@@ -248,7 +248,7 @@
 				PreprocessorDefinitions="LEGACY_FILES;WIN32;_DEBUG;_WINDOWS;FROZENBYTE_DEBUG_MEMORY;_CRT_SECURE_NO_DEPRECATE;PHYSICS_PHYSX;LIGHT_MAX_AMOUNT=5;PROJECT_PARTICLE_EDITOR"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				PrecompiledHeaderFile=".\Debug/particle_editor.pch"
 				AssemblerListingLocation=".\Debug/"
 				ObjectFile=".\Debug/"
@@ -270,7 +270,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="winmm.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="winmm.lib odbc32.lib odbccp32.lib sdl.lib"
 				OutputFile=".\Debug/particle_editor.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
@@ -2945,10 +2945,6 @@
 			</File>
 			<File
 				RelativePath="..\physics\cooker.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\physics\d6_joint.cpp"
 				>
 			</File>
 			<File

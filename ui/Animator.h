@@ -37,7 +37,6 @@ namespace ui
 		static int addAnimationFilename(const char *filename);
 		static int getAnimationNumberByFilename(const char *filename);
 
-		static void preloadAnimation(const char *name);
   private:
     static IStorm3D_BoneAnimation **animations;
     static IStorm3D *storm3d;

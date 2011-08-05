@@ -1,8 +1,8 @@
 #ifndef INC_UNITHEALTHBARWINDOW_H
 #define INC_UNITHEALTHBARWINDOW_H
 
-#include "../ogui/ogui.h"
 #include "ICombatSubWindow.h"
+#include "../ogui/Ogui.h"
 
 class OguiSlider;
 

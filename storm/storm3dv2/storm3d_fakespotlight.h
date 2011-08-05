@@ -5,12 +5,12 @@
 
 #include <istorm3d_fakespotlight.h>
 #include <boost/scoped_ptr.hpp>
-#include <c2_aabb.h>
 
 class Storm3D;
 class Storm3D_Camera;
 struct IDirect3D9;
 struct IDirect3DDevice9;
+struct D3DXMATRIX;
 
 class Storm3D_FakeSpotlight: public IStorm3D_FakeSpotlight
 {
@@ -37,15 +37,14 @@ public:
 
 	void getPlane(VC2 &min, VC2 &max) const;
 	float getPlaneHeight() const;
-	void getArea(AABB &area) const;
 	bool shouldRenderObjectShadows() const;
 
 	Storm3D_Camera &getCamera();
 	void setClipPlanes(const float *cameraView);
 	void setScissorRect(Storm3D_Camera &camera, const VC2I &screenSize);
 
-	bool setAsRenderTarget(const float *cameraView);
-	void applyTextures(const float *cameraView);
+	bool setAsRenderTarget(const D3DXMATRIX &cameraView);
+	void applyTextures(const D3DXMATRIX &cameraView);
 	void renderProjection();
 	void debugRender();
 

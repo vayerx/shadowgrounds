@@ -1,20 +1,26 @@
 
 #include "precompiled.h"
 
+#include <assert.h>
+#include <limits.h>
+#include <sstream>
+#include <boost/lexical_cast.hpp>
+#include <SDL.h>
+
 #include "SurvivorLoadGameMenu.h"
 #include "LoadGameMenu.h"
 
-#include "../system/timer.h"
+#include "../system/Timer.h"
 #include "../ogui/Ogui.h"
 #include "../game/Game.h"
-#include "../game/SaveGameVars.h"
+#include "../game/savegamevars.h"
 #include "../game/GameUI.h"
 #include "MenuCollection.h"
 #include "../game/DHLocaleManager.h"
 #include "../ui/GameController.h"
 #include "../game/SimpleOptions.h"
 #include "../game/options/options_game.h"
-#include "../game/gameProfiles.h"
+#include "../game/GameProfiles.h"
 #include "../filesystem/input_stream_wrapper.h"
 
 #include "../util/fb_assert.h"
@@ -27,10 +33,6 @@
 #include "../ogui/OguiCheckBox.h"
 #include "../ogui/OguiFormattedText.h"
 
-#include <sstream>
-#include <assert.h>
-#include <boost/lexical_cast.hpp>
-
 #include "CoopMenu.h"
 #include "NewGameMenu.h"
 #include "../game/BonusManager.h"
@@ -42,18 +44,18 @@ namespace ui
 {
 	
 SurvivorLoadGameMenu::SurvivorLoadGameMenu( MenuCollection* menu, MenuCollection::Fonts* fonts, Ogui* o_gui, Game* g ) :
-  MenuBaseImpl( NULL ),
-  menuCollection( menu ),
-  fonts( fonts ),
-  doubleClickHack( -1 ),
-  doubleClickTimeHack( 0 ),
+	MenuBaseImpl( NULL ),
+	menuCollection( menu ),
+	fonts( fonts ),
 	bonusOptionWindow( NULL ),
-//	faderLeft( NULL ),
-//	faderBg( NULL ),
-//	faderRight( NULL ),
+	doubleClickHack( -1 ),
+	doubleClickTimeHack( 0 ),
+	//faderLeft( NULL ),
+	//faderRight( NULL ),
+	//faderBg( NULL ),
+	lastValidMission( 0 ),
 	firstMission( 0 ),
 	missionButtonScrollAmount( 0 ),
-	lastValidMission( 0 ),
 	holdingScroll( false ),
 	startedHoldingScroll( -1 )
 {
@@ -74,6 +76,7 @@ SurvivorLoadGameMenu::SurvivorLoadGameMenu( MenuCollection* menu, MenuCollection
 	if (f != NULL)
 	{
 		char buf[32];
+		memset(buf, 0, 32);
 		int length = filesystem::fb_fread(buf, 1, 31, f);
 		buf[length] = 0;
 		if(sscanf(buf, "%i", &firstMission) == 1)
@@ -154,7 +157,7 @@ SurvivorLoadGameMenu::SurvivorLoadGameMenu( MenuCollection* menu, MenuCollection
 	}
 
 	// load images
-	int time_loading_start = timeGetTime();
+	int time_loading_start = SDL_GetTicks();
 	int mission_max = SimpleOptions::getInt(DH_OPT_I_SAVEGAME_SLOT_AMOUNT);
 	bool show_loading_bar = false;
 	for(int savegame_id = 1; ;savegame_id++)
@@ -190,7 +193,7 @@ SurvivorLoadGameMenu::SurvivorLoadGameMenu( MenuCollection* menu, MenuCollection
 		if(savegame_id == 5)
 		{
 			// loading first 5 entries took longer than 100 ms
-			if(timeGetTime() - time_loading_start > 100)
+			if(SDL_GetTicks() - time_loading_start > 100)
 			{
 				// show loading bar
 				show_loading_bar = true;
@@ -784,7 +787,7 @@ void SurvivorLoadGameMenu::clipMissionButtons()
 		
 
 		int pos_x = missionInfos[i].button->GetX();
-		int pos_y = missionInfos[i].button->GetY();
+		//int pos_y = missionInfos[i].button->GetY();
 		int size_x = missionInfos[i].button->GetSizeX();
 		int size_y = missionInfos[i].button->GetSizeY();
 
@@ -822,7 +825,7 @@ void SurvivorLoadGameMenu::clipMissionButtons()
 			unsigned char alpha = getAlphaAtPosition(pos_x, missionButtonClipLeft, fadeLeftStart);
 			unsigned char alpha2 = getAlphaAtPosition(pos_x + size_x, missionButtonClipLeft, fadeLeftStart);
 
-			int split_1 = fadeLeftStart - pos_x;
+			//int split_1 = fadeLeftStart - pos_x;
 			addQuad(&vertices[0], 0, 0, size_x, size_y, alpha, alpha2);
 			missionInfos[i].button->SetCustomShape(vertices, 6);
 		}
@@ -1062,6 +1065,8 @@ bool SurvivorLoadGameMenu::loadMissionInfo(MissionInfo *mi, int savegame_id)
 	// parse stats string
 	char varname[256];
 	char value[256];
+	memset(varname, '\0', 256);
+	memset(value, '\0', 256);
 	const char *stats = savegame_stats.c_str();
 	while(true)
 	{

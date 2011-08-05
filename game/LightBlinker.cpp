@@ -14,8 +14,8 @@
 #include "../system/Logger.h"
 #include "../convert/str2int.h"
 
-#include <IStorm3d_Terrain.h>
-#include <istorm3d_terrain_renderer.h>
+#include <IStorm3D_Terrain.h>
+#include <istorm3D_terrain_renderer.h>
 
 #include "../util/fb_assert.h"
 #include "../util/Debug_MemoryManager.h"

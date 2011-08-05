@@ -52,9 +52,6 @@ GS_CMD_SIMPLE(39, setSuccessMission, STRING)
 GS_CMD_SIMPLE(40, unlockSurvivalMission, STRING)
 
 GS_CMD_SIMPLE(41, setMissionAbortCounter, INT)
-
-GS_CMD_SIMPLE(42, playerSpawnPosition, NONE)
-
 #undef GS_CMD_BASE
 
 // up to 1649

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <istorm3d_proceduralmanager.h>
+#include <IStorm3D_ProceduralManager.h>
 #include <boost/scoped_ptr.hpp>
 #include <atlbase.h>
 

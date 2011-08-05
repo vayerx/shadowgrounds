@@ -98,11 +98,15 @@ typedef Storm3D_Texture *PStorm3D_Texture;
 inline DWORD F2DW(FLOAT f) {return *((DWORD*)&f);}
 
 // Sets
+#ifdef _MSC_VER
 #pragma warning(disable:4786)	// For sets (Microsoft rulez;)
 #pragma warning(disable:4103)
+#endif
 #include <set>
 using namespace std;			// For sets
 
 // "this used in constructor" warning disable
+#ifdef _MSC_VER
 #pragma warning(disable:4355)
+#endif
 

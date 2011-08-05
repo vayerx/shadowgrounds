@@ -1,21 +1,22 @@
 
 #include "precompiled.h"
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
 #pragma warning(disable:4786)
+#endif
 
 #include "SelfIlluminationChanger.h"
 #include <map>
-#include <istorm3d_model.h>
-#include <istorm3d_scene.h>
-#include <istorm3d_material.h>
-#include <istorm3d_mesh.h>
+#include <IStorm3D_Model.h>
+#include <IStorm3D_Scene.h>
+#include <IStorm3D_Material.h>
+#include <IStorm3D_Mesh.h>
 
 using namespace std;
 using namespace boost;
 
 namespace util {
-namespace {
 
 struct Material
 {
@@ -36,7 +37,6 @@ struct Material
 
 typedef map<IStorm3D_Material *, Material> MaterialList;
 
-} // unnamed
 
 struct SelfIlluminationChanger::Data
 {

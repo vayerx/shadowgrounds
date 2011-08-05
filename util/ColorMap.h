@@ -1,7 +1,7 @@
 #ifndef INCLUDED_COLOR_MAP_H
 #define INCLUDED_COLOR_MAP_H
 
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 #include <boost/scoped_ptr.hpp>
 
 namespace game {

@@ -62,7 +62,7 @@ public:
 	};
 
 	// never construct directly, use ogui to make instances of these
-	OguiButton(Ogui *ogui, int id, void *argument);
+	OguiButton(Ogui *ogui, int id, const void *argument);
 	~OguiButton();
 
 	// manually set images and fonts
@@ -144,7 +144,7 @@ public:
 	void SetId(int id);
 
 	// get argument
-	void *GetArgument();
+	const void *GetArgument();
 
 	void Focus(int withCursor);
 
@@ -181,7 +181,7 @@ private:
 	Ogui *ogui;
 	int id;
 	int eventMask;
-	void *argument;
+	const void *argument;
 	IOguiButtonListener *listener;
 	OguiWindow *parent;
 

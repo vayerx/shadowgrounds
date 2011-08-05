@@ -1,7 +1,9 @@
 
 #include "precompiled.h"
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 #include "input_stream_wrapper.h"
 #include "file_package_manager.h"
@@ -69,6 +71,9 @@ FB_FILE *fb_fopen(const char *filename, const char *)
 
 size_t fb_fread(void *buffer, size_t size, size_t count, FB_FILE *stream)
 {
+	// always zero out the buffer
+	memset(buffer, 0, size * count);
+
 	if(!stream)
 	{
 		Logger::getInstance()->warning("fb_fread - Attempt to read when no stream available.");

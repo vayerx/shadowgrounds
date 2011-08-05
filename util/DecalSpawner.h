@@ -2,7 +2,7 @@
 #define INCLUDED_DECALSPAWNER_H
 
 #include <boost/scoped_ptr.hpp>
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 
 class IStorm3D_Material;
 

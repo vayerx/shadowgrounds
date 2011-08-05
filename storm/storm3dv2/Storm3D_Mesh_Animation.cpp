@@ -17,7 +17,7 @@
 #include "storm3d_animation.h"
 #include "storm3d_mesh.h"
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 
 //------------------------------------------------------------------
@@ -144,5 +144,6 @@ void Storm3D_Mesh_Animation::Apply(Storm3D_Scene *scene,int time_now)
 		}*/
 	}
 }
+
 
 

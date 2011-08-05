@@ -113,7 +113,7 @@ namespace ui
 
 			int highlightedWeaponSlot;
 			int highlightedUpgradeSlot;
-			int highlightedUpgradeId;
+			intptr_t highlightedUpgradeId;
 			bool highlightOn;
 
 			int visible;

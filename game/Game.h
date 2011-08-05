@@ -236,7 +236,7 @@ namespace game
 
     void setPaused(bool pauseOn);
 
-    bool isPaused();
+    bool isPaused() const;
 
 		void advanceMissionStartState();
 
@@ -253,7 +253,7 @@ namespace game
 
     GameScene *getGameScene() { return gameScene; }
     //GameMap *getGameMap() { return gameMap; } // use gamescene instead
-    GameUI *getGameUI() { return gameUI; }
+    GameUI *getGameUI() const { return gameUI; }
     GameRandom *getGameRandom() { return gameRandom; }
 
 		void setEnvironmentalEffectManager(EnvironmentalEffectManager *effman);
@@ -404,6 +404,9 @@ namespace game
 		void applyPendingLoad();
 
 		game::GamePhysics *physics;
+
+		// For savegame hack
+		int lastSaveNumber;
 
   public:
 

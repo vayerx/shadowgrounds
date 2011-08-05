@@ -2,11 +2,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <istorm3d_font.h>
 #include "OguiTextLabel.h"
 #include "OguiStormDriver.h"
-#include "..\util\UnicodeConverter.h"
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/UnicodeConverter.h"
+#include "../util/Debug_MemoryManager.h"
 
 
 OguiTextLabel::OguiTextLabel(OguiButton *but)
@@ -62,7 +61,7 @@ void OguiTextLabel::SetText(const char *text)
 		if(stormFont->isUnicode())
 		{
 			std::wstring unicode;
-			frozenbyte::util::convertToWide(text, unicode);
+			util::convertToWide(text, unicode);
 
 			{
 				int lastbr = 0;
@@ -104,7 +103,7 @@ void OguiTextLabel::SetText(const char *text)
 			}
 
 			std::string result;
-			frozenbyte::util::convertToMultiByte(unicode, result);
+			util::convertToMultiByte(unicode, result);
 
 			implButton->SetText(result.c_str());
 		}

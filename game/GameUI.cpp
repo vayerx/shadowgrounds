@@ -2,11 +2,18 @@
 #include "precompiled.h"
 
 #include <stdlib.h> // for NULL
+#include <cmath>
 
+#ifndef M_PI
+#define M_PI PI
+#endif
 
+#ifdef _MSC_VER
 #pragma warning(disable : 4786)
+#endif
 
 #include <Storm3D_UI.h>
+#include <igios.h>
 
 #include "gui_configuration.h"
 
@@ -48,6 +55,7 @@
 
 #include "../convert/str2int.h"
 #include "../system/Logger.h"
+#include "../system/Miscellaneous.h"
 #include "../system/Timer.h"
 #include "../sound/sounddefs.h"
 #include "../sound/SoundMixer.h"
@@ -62,7 +70,7 @@
 #include "../util/LipsyncManager.h"
 #include "../util/HelperPositionCalculator.h"
 
-#include "../ui/decalpositioncalculator.h"
+#include "../ui/DecalPositionCalculator.h"
 #include "../ui/cursordefs.h"
 #include "../ui/UIState.h"
 #include "../ui/Terrain.h"
@@ -111,7 +119,6 @@
 #include "../ui/DebugTrackerVisualizer.h"
 #include "../ui/DebugProjectileVisualizer.h"
 #include "../ui/DebugUnitVisualizer.h"
-#include "../ui/DebugTerrainObjectVisualizer.h"
 #include "../ui/DebugMapVisualizer.h"
 #include "../ui/SelectionVisualizer.h"
 #include "../util/GridOcclusionCuller.h"
@@ -125,9 +132,10 @@
 	#include "../ui/VehicleWindow.h"
 	#include "../ui/CharacterSelectionWindow.h"
 	#include "../ui/MissionFailureWindow.h"
-	#include <keyb3.h>
+//	#include <keyb3.h>
 #endif
-#include <istorm3d_terrain_renderer.h>
+#include <keyb3.h>
+#include <istorm3D_terrain_renderer.h>
 #include <istorm3d_terrain_decalsystem.h>
 
 #include "materials.h"
@@ -143,19 +151,12 @@
 
 #include "direct_controls.h"
 
-#ifdef PROJECT_CLAW_PROTO
-#ifndef USE_CLAW_CONTROLLER
-#define USE_CLAW_CONTROLLER
-#endif
-#endif
-
-#ifdef USE_CLAW_CONTROLLER
-#include "ClawController.h"
-#include "physics/AbstractPhysicsObject.h"
-#include <keyb3.h>
-#endif
 
 #include <boost/lexical_cast.hpp>
+
+#include "userdata.h"
+
+
 
 // HACK:
 extern IStorm3D_Scene *disposable_scene;
@@ -183,7 +184,7 @@ GAMEUI_SOUND_EFFECT_ERRORCODE gameui_sound_effect_errorcode = GAMEUI_SOUND_EFFEC
 
 // 25 meters max distance to hear sounds.
 #ifdef PROJECT_CLAW_PROTO
-#define GAMEUI_MAX_SOUND_DISTANCE_SQ (100 * 100)
+#define GAMEUI_MAX_SOUND_DISTANCE_SQ (50 * 50)
 #else
 #define GAMEUI_MAX_SOUND_DISTANCE_SQ (30 * 30)
 #endif
@@ -248,6 +249,8 @@ namespace game
 	///////////////////////////////////////////////////////////////////////////
 
 	GameUI::GameUI(Ogui *ogui, Game *game, IStorm3D *s3d, IStorm3D_Scene *scene, SoundMixer *soundMixer)
+		:
+	loadingWindow()
 	{
 		this->ogui = ogui;
 		this->game = game;
@@ -274,6 +277,8 @@ namespace game
 		this->oldAimOffset = 0;
 
 		this->errorWindow = NULL;
+
+		this->thirdPersonView = true;
 
 		this->cameraSystem = new CameraSystem();
 
@@ -306,7 +311,6 @@ namespace game
 		quitRequested = false;
 		abortMission = false;
 
-		loadingWindow = NULL;
 		aniRecorderWindow = NULL;
 		upgradeWindow = NULL;
 		vehicleWindow = NULL;
@@ -371,11 +375,11 @@ namespace game
 				if( load_options )
 				{
 #ifdef LEGACY_FILES
-					std::string tmp = "Profiles/";
+					std::string tmp = igios_mapUserDataPrefix("Profiles/");
 					tmp += game->getGameProfiles()->getCurrentProfile( c );
 					tmp += "/Config/keybinds.txt";
 #else
-					std::string tmp = "profiles/";
+					std::string tmp = igios_mapUserDataPrefix("profiles/");
 					tmp += game->getGameProfiles()->getCurrentProfile( c );
 					tmp += "/config/keybinds.txt";
 #endif
@@ -450,6 +454,7 @@ namespace game
 			for (int c = 0; c < MAX_PLAYERS_PER_CLIENT; c++)
 			{
 				joystickAimer[c] = NULL;
+				oldJoystickXY[c] = VC2(0.0f, 0.0f);
 
 				leftMovementEnabled[c] = true;
 				rightMovementEnabled[c] = true;
@@ -993,6 +998,9 @@ namespace game
 		movieAspectRatioGUIVisible = -1;
 
 #ifdef PROJECT_SURVIVOR
+		if(ogui)
+			ogui->ResetSwappedCursorImages();
+
 		game->gameUI->getStorm3D()->setGlobalTimeFactor(1.0f);
 		game->gameUI->setSoundFrequencyFactor(1.0f);
 		Timer::setTimeFactor(1.0f);
@@ -1344,7 +1352,7 @@ namespace game
 		// TODO, NETGAME: check that
 		if (loadingWindow == NULL)
 		{
-			loadingWindow = new LoadingWindow(ogui, game, player);
+			loadingWindow.reset(new LoadingWindow(ogui, game, player));
 		} else {
 			// already open
 			//assert(!"GameUI::openLoadingWindow - Attempt to reopen loading window (when it is already open).");
@@ -1377,9 +1385,8 @@ namespace game
 			#endif
 			*/
 		} else {
-			delete loadingWindow;
-			loadingWindow = NULL;
-		} 	 
+			loadingWindow.reset();
+		}
 
 		// show combat windows
 		//if(combatWindows && combatWindows[player]) combatWindows[player]->endGUIModeTempInvisible();
@@ -1922,7 +1929,9 @@ namespace game
 
 			mapWindow->hide();
 		}
+#ifdef GUI_BUILD_INGAME_GUI_TABS
 		updateIngameTabs();
+#endif
 	}
 #endif
 
@@ -2072,10 +2081,14 @@ namespace game
 			combatWindows[player] = 
 				new CombatWindow(ogui, game, player);
 			combatWindows[player]->show();
+#ifndef PROJECT_SHADOWGROUNDS
 			if(invisible) combatWindows[player]->startGUIModeTempInvisible();
+#endif
 		} else {
 			combatWindows[player]->show();
+#ifndef PROJECT_SHADOWGROUNDS
 			if(invisible) combatWindows[player]->startGUIModeTempInvisible();
+#endif
 			// already open
 			//#ifdef _DEBUG
 			//	abort();
@@ -2359,11 +2372,6 @@ namespace game
 			{
 				VC3 campos = gameCamera->getActualInterpolatedPosition();
 				DebugUnitVisualizer::visualizeUnits(game->units, campos);
-			}
-			if (game::SimpleOptions::getBool(DH_OPT_B_DEBUG_VISUALIZE_TERRAINOBJECTS))
-			{
-				VC3 campos = gameCamera->getActualInterpolatedPosition();
-				DebugTerrainObjectVisualizer::visualizeTerrainObjects(game, campos);
 			}
 			if (game::SimpleOptions::getBool(DH_OPT_B_DEBUG_VISUALIZE_OBSTACLEMAP))
 			{
@@ -2727,7 +2735,7 @@ namespace game
 			/*
 			for (int c = 0; c < MAX_PLAYERS_PER_CLIENT; c++)
 			{*/
-				if (wasKeyClicked(DH_CTRL_QUIT) && cinematicScreen != NULL )
+			if ((wasKeyClicked(DH_CTRL_QUIT) || Keyb3_IsKeyPressed(KEYCODE_MOUSE_BUTTON1) || Keyb3_IsKeyPressed(KEYCODE_MOUSE_BUTTON2) || Keyb3_IsKeyPressed(KEYCODE_MOUSE_BUTTON3)) && cinematicScreen != NULL )
 				{
 					cinematicScreen->close();
 					quit_released = false;
@@ -2940,15 +2948,6 @@ namespace game
 #endif
 								else if( loadingWindow != NULL )
 								{
-#ifdef PROJECT_CLAW_PROTO
-									// hack: pressing esc in loading screen means quitting
-									if(SimpleOptions::getInt(DH_OPT_I_CLAW_CONTROL_TYPE) != 0
-										 && (GetKeyState(VK_ESCAPE) & 0x80))
-									{
-										setQuitRequested();
-									}
-									else
-#endif
 									if(cinematicScreen == NULL)
 									{
 										// quit was not held down in last frame
@@ -2973,21 +2972,9 @@ namespace game
 								{
 									int player = 0;
 
-#ifdef PROJECT_CLAW_PROTO
-									// hack: pressing esc in menu means quitting
-									if(commandWindows[player] != NULL
-										 && SimpleOptions::getInt(DH_OPT_I_CLAW_CONTROL_TYPE) != 0
-										 && (GetKeyState(VK_ESCAPE) & 0x80))
-									{
-										setQuitRequested();
-									}
-									else if(!quitRequested)
-#endif
-									{
-										if( commandWindows[player] == NULL ) 
-											openMainmenuFromGame();
-										else commandWindows[player]->escPressed(); 
-									}
+									if( commandWindows[player] == NULL ) 
+										openMainmenuFromGame();
+									else commandWindows[player]->escPressed(); 
 								} 
 
 
@@ -3254,7 +3241,7 @@ if (SimpleOptions::getInt(DH_OPT_I_CAMERA_CULLING_RATE) > 1)
 
 					combatWindows[game->singlePlayerNumber]->updatePointers();
 
-					Unit *highu = sceneSelection[0]->unit;
+					const Unit *highu = sceneSelection[0]->unit;
 					if (highu != NULL && !highu->visibility.isSeenByPlayer(game->singlePlayerNumber))
 						highu = NULL;
 					combatWindows[game->singlePlayerNumber]->setUnitHighlight(highu);
@@ -3820,7 +3807,7 @@ if (unit->isPhysicsObjectLock() && !unit->isDestroyed()
 			int lightUpdTime = 0;
 			if (!game->isPaused())
 				lightUpdTime = currentTime - lastRunUITime;
-			lightManager->update(playerPos, lightUpdPos, lightUpdTime, game->unifiedHandleManager);
+			lightManager->update(playerPos, lightUpdPos, lightUpdTime);
 
 			// particles and projectiles' visual effects
 			visualEffectManager->prepareForRender(game->gameMap, game->gameMap->colorMap, lightManager);
@@ -3969,12 +3956,17 @@ if (unit->isPhysicsObjectLock() && !unit->isDestroyed()
 							(combatWindows[game->singlePlayerNumber]->isGUIVisible() || forceCursorVisible)
 							&& !game->isPaused())
 						{
+							// removing this breaks turning with mouse
 							gameController[0]->getMouseDelta(&mdx, &mdy);
+
+							// removing this removes cursor from screen
 							if (!this->isAnyIngameWindowVisible() && !msgBoxIsOpen)
 							{
 								ogui->setCursorScreenX(0, AIM_UP_CURSOR_X);
 								ogui->setCursorScreenY(0, AIM_UP_CURSOR_Y);
 							}
+
+							// turning with mouse works even with this removed
 							combatWindows[game->singlePlayerNumber]->setCrosshairProperties(
 								AIM_UP_CURSOR_X, AIM_UP_CURSOR_Y, firstPerson[0]->getFiringSpreadFactor());
 						}
@@ -3985,6 +3977,7 @@ if (unit->isPhysicsObjectLock() && !unit->isDestroyed()
 								ogui->getCursorScreenX(0), ogui->getCursorScreenY(0), firstPerson[0]->getFiringSpreadFactor());
 
 							// TEMP
+							// mouse works even with this removed
 							gameController[0]->getMouseDelta(&mdx, &mdy);
 
 							for(int c = 0; c < MAX_PLAYERS_PER_CLIENT; c++)
@@ -4010,6 +4003,7 @@ if (unit->isPhysicsObjectLock() && !unit->isDestroyed()
 
 
 						} else {
+							// mouse works even with this removed
 							gameController[0]->getMouseDelta(&mdx, &mdy);
 						}
 					}
@@ -4039,28 +4033,59 @@ if (unit->isPhysicsObjectLock() && !unit->isDestroyed()
 					// on the unit's rotation but instead the camera's
 					rot.y = 270.0f - gameCamera->getAngleY();
 				}
-				rot.y += mdx / 5.0f;
-				
-				while (rot.y >= 360) rot.y -= 360;
-				while (rot.y < 0) rot.y += 360;
-				float lookrotx = lookAngle + mdy / 5.0f;
-				if (lookAngle > 180)
-				{
-					if (lookrotx < 360-85) lookrotx = 360-85;
-					if (lookrotx > 360+85) lookrotx = 360-85;
-				} else {
-					if (lookrotx < -85) lookrotx = -85;
-					if (lookrotx > 85) lookrotx = 85;
-				}
-				while (lookrotx >= 360) lookrotx -= 360;
-				while (lookrotx < 0) lookrotx += 360; 
 
-				// Aiming offset moves flashlight and camera along the vertical mouse motion
-				oldAimOffset = aimOffset;
-				this->aimOffset += mdy*0.4f;
-				if (this->aimOffset > MAX_AIM_OFFSET) aimOffset = MAX_AIM_OFFSET;
-				if (this->aimOffset < MIN_AIM_OFFSET) aimOffset = MIN_AIM_OFFSET;
-//				lookAngle += aimOffset*0.2;
+				float lookrotx = lookAngle;
+
+				if (gameController[0]->controllerTypeHasMouse())
+				{
+					rot.y += mdx / 5.0f;
+
+					while (rot.y >= 360) rot.y -= 360;
+					while (rot.y < 0) rot.y += 360;
+					lookrotx = lookAngle + mdy / 5.0f;
+					if (lookAngle > 180)
+					{
+						if (lookrotx < 360-85) lookrotx = 360-85;
+						if (lookrotx > 360+85) lookrotx = 360-85;
+					} else {
+						if (lookrotx < -85) lookrotx = -85;
+						if (lookrotx > 85) lookrotx = 85;
+					}
+					while (lookrotx >= 360) lookrotx -= 360;
+					while (lookrotx < 0) lookrotx += 360; 
+
+					// Aiming offset moves flashlight and camera along the vertical mouse motion
+					oldAimOffset = aimOffset;
+					this->aimOffset += mdy*0.4f;
+					if (this->aimOffset > MAX_AIM_OFFSET) aimOffset = MAX_AIM_OFFSET;
+					if (this->aimOffset < MIN_AIM_OFFSET) aimOffset = MIN_AIM_OFFSET;
+	//				lookAngle += aimOffset*0.2;
+
+				} else {
+					// joystick mode
+
+                    // this is used when free camera mode is off
+
+					int x = 0, y = 0;
+					gameController[0]->getJoystickValues(NULL, NULL, &x, &y);
+
+                    if (x != 0 || y != 0)
+					{
+						VC2 dir((float)x, (float)y);
+						dir.Normalize();
+						if (x > 0)
+						{
+							//  0 < angle < 180
+							rot.y = ((M_PI * 0.5f) + asinf(dir.y)) * 180.0f / M_PI;
+						} else {
+                            // 180 < angle < 360
+							rot.y = (2.0f * M_PI + -(M_PI * 0.5f + asinf(dir.y))) * 180.0f / M_PI;
+						}
+					}
+					// LOG_DEBUG(strPrintf("direction: %d %d rot.y %f lookrotx %f", x, y, rot.y, lookrotx).c_str());
+
+					// TODO: do something to lookrotx?
+				}
 
 				VC3 vel2 = firstPerson[0]->getVelocity();
 				if (vel2.GetSquareLength() > positionOffset.GetSquareLength())
@@ -4071,6 +4096,7 @@ if (unit->isPhysicsObjectLock() && !unit->isDestroyed()
 				}
 
 				// this seems like some weird hack... assuming it is only meant for upward...
+				// this actually turns the player
 				if (SimpleOptions::getBool(DH_OPT_B_GAME_MODE_AIM_UPWARD))
 				{
 					if (!firstPerson[0]->isDestroyed()
@@ -4215,7 +4241,6 @@ if (unit->isPhysicsObjectLock() && !unit->isDestroyed()
 					gameCamera->setAngleY(a);
 				}
 
-				float fooroty = rot.y;
 				if (game::SimpleOptions::getBool(DH_OPT_B_GAME_MODE_AIM_UPWARD))
 				{
 					if ((combatWindows[game->singlePlayerNumber]->isGUIVisible() || forceCursorVisible)
@@ -4482,14 +4507,17 @@ if (unit->isPhysicsObjectLock() && !unit->isDestroyed()
 						{
 							if (firstPerson[c]->getFlashlight() != NULL)
 							{
+								// FIXME: something wrong with this, makes flashlight go all wonky
+								igios_unimplemented();
+                                /*
 								Flashlight *fl = firstPerson[c]->getFlashlight();
-								//float angle = UNIT_ANGLE_TO_RAD(rot.y + firstPerson[c]->getFlashlightDirection() + firstPerson[c]->getUnitType()->getAimBoneDirection());
 
 								VC3 unitpos = firstPerson[c]->getPosition();
 								VC3 selpos = VC3(sceneSelection[c]->scaledMapX, 0, sceneSelection[c]->scaledMapY);
 								float angle = util::PositionDirectionCalculator::calculateDirection(unitpos, selpos);
 
 								fl->setRotation(UNIT_ANGLE_TO_RAD(angle));
+                                */
 							}
 						}
 					}
@@ -4575,11 +4603,11 @@ if (unit->isPhysicsObjectLock() && !unit->isDestroyed()
 				static float oldDistance = 0;
 				static bool oldSet = false;
 				if (oldSet) {
-					float curAngle = gameCamera->getAngleY();
+/*					float curAngle = gameCamera->getAngleY();
 					float curBetaAngle = gameCamera->getBetaAngle();
 					float curFOV = gameCamera->getFOV();
 					float curDistance = gameCamera->getZoom();
-/*					cameraSystem->moveCameraAngle(oldAngle-curAngle);
+					cameraSystem->moveCameraAngle(oldAngle-curAngle);
 					cameraSystem->moveCameraBetaAngle(oldBetaAngle-curBetaAngle);
 					cameraSystem->moveCameraFOV(curFOV-oldFOV);
 					cameraSystem->moveCameraDistance(curDistance-oldDistance);*/
@@ -4952,582 +4980,6 @@ if (unit->isPhysicsObjectLock() && !unit->isDestroyed()
 			combatWindows[game->singlePlayerNumber]->updateGUIAnimations();
 		}
 
-#ifdef USE_CLAW_CONTROLLER
-		if(game->inCombat)
-		{
-
-			if (game->getClawController() && firstPerson[0])
-			{
-				game->getClawController()->setIgnoreActor(game->getGamePhysics()->getImplementingObject(firstPerson[0]->getGamePhysicsObject()));
-			}
-
-			if(game->getClawController() && firstPerson[0] && firstPerson[0]->getVisualObject())
-			{
-				const game::ControlSettings &controllerSettings = game->getClawController()->getControlSettings();
-				bool cursorMode = true;
-				if(!game::SimpleOptions::getBool(DH_OPT_B_CLAW_MOUSE) && this->commandWindows[0] == NULL )
-					cursorMode = false;
-
-				VC3 aimPosition = firstPerson[0]->targeting.getAimingPosition();
-
-				// Grab
-				{
-					static int waitCounter = 0;
-					if(waitCounter && !gameController[0]->isKeyDown(DH_CTRL_ATTACK))
-						waitCounter = 0;
-
-					if(!waitCounter)
-					{
-
-						if(gameController[0]->wasKeyClicked(DH_CTRL_ATTACK))
-						{
-							if(game->getClawController()->hasActor())
-							{
-								game->getClawController()->dropActor();
-								waitCounter = 1;
-							}
-						}
-
-						if(gameController[0]->isKeyDown(DH_CTRL_ATTACK))
-						{
-							if(!game->getClawController()->hasActor())
-								game->getClawController()->pickActor();
-
-							game->getClawController()->setGrabFlag(true);
-						}
-						else
-							game->getClawController()->setGrabFlag(false);
-					}
-				}
-
-				// Sprint stuff
-				bool sprinting = gameController[0]->isKeyDown(DH_CTRL_SPRINT);
-				game->getClawController()->setSprinting(sprinting);
-				if(sprinting && game->getClawController()->hasActor())
-					game->getClawController()->dropActor();
-
-				int throttle = 0;
-				/*
-				if(cursorMode)
-				{
-					game->getClawController()->moveTowards(aimPosition);
-				}
-				else
-				*/
-				{
-					if(game->getGameScene() && game->getGameScene()->getGameMap())
-						aimPosition.y = game->getGameScene()->getGameMap()->getScaledHeightAt(aimPosition.x, aimPosition.z);
-
-					int jx = 0;
-					int jy = 0;
-					Keyb3_ReadJoystick(0, 0, 0, &jx, &jy, &throttle, 0);
-					if(abs(jx) < 4)
-						jx = 0;
-					if(abs(jy) < 4)
-						jy = 0;
-
-					float xd = 0.f;
-					float yd = 0.f;
-
-					if(!cursorMode) // pad
-					{
-						float originalInputLength = sqrtf(float(jx)*float(jx) + float(jy)*float(jy));
-						float inputLength = originalInputLength;
-						if(inputLength > 10.f)
-							inputLength = 10.f;
-
-						inputLength = powf(inputLength, controllerSettings.padDeltaPower);
-						inputLength /= powf(10.f, controllerSettings.padDeltaPower);
-						if(inputLength > 0.001f)
-						{
-							xd = float(jx) / originalInputLength * inputLength;
-							yd = float(jy) / originalInputLength * inputLength;
-						}
-
-						xd *= 0.7928321376f;
-						yd *= 0.7928321376f;
-
-						/*
-						xd = powf(fabsf(float(jx)), controllerSettings.padDeltaPower);
-						yd = powf(fabsf(float(jy)), controllerSettings.padDeltaPower);
-
-						xd /= powf(10.f, controllerSettings.padDeltaPower);
-						yd /= powf(10.f, controllerSettings.padDeltaPower);
-						xd *= 0.7928321376f;
-						yd *= 0.7928321376f;
-
-						if(jx < 0)
-							xd = -xd;
-						if(jy < 0)
-							yd = -yd;
-						*/
-
-						/*
-						// Debug
-						std::string foofoo = "X: ";
-						foofoo += boost::lexical_cast<std::string> (xd);
-						foofoo += " Y: ";
-						foofoo += boost::lexical_cast<std::string> (yd);
-						foofoo += " length: ";
-						float pad = sqrtf(float(xd)*float(xd) + float(yd)*float(yd));
-						foofoo += boost::lexical_cast<std::string> (pad);
-						Logger::getInstance()->error(foofoo.c_str());
-
-						foofoo = "X: ";
-						foofoo += boost::lexical_cast<std::string> (jx);
-						foofoo += " Y: ";
-						foofoo += boost::lexical_cast<std::string> (jy);
-						foofoo += " length: ";
-						pad = sqrtf(float(jx)*float(jx) + float(jy)*float(jy));
-						foofoo += boost::lexical_cast<std::string> (pad);
-						Logger::getInstance()->error(foofoo.c_str());
-						*/
-
-
-						/*
-						float pad = sqrtf(float(jx)*float(jx) + float(jy)*float(jy));
-						pad /= 1.414213562;
-						pad = powf(pad, controllerSettings.padDeltaPower);
-						pad /= powf(10.f, controllerSettings.padDeltaPower);
-
-						std::string foofoo = "Value: ";
-						foofoo += boost::lexical_cast<std::string> (pad);
-						Logger::getInstance()->error(foofoo.c_str());
-
-						xd = pad * float(jx) * 0.7928321376f;
-						yd = pad * float(jy) * 0.7928321376f;
-						*/
-					}
-					else // mouse
-					{
-						int x = 0;
-						int y = 0;
-						int dx = 0;
-						int dy = 0;
-						Keyb3_ReadMouse(&x, &y, &dx, &dy);
-
-						/*
-						if(dx > controllerSettings.mouseDeltaLimit)
-							dx = controllerSettings.mouseDeltaLimit;
-						if(dy > controllerSettings.mouseDeltaLimit)
-							dy = controllerSettings.mouseDeltaLimit;
-						if(dx < -controllerSettings.mouseDeltaLimit)
-							dx = -controllerSettings.mouseDeltaLimit;
-						if(dy < -controllerSettings.mouseDeltaLimit)
-							dy = -controllerSettings.mouseDeltaLimit;
-
-						xd = float(dx) * controllerSettings.mouseDeltaScale;
-						yd = float(dy) * controllerSettings.mouseDeltaScale;
-						*/
-
-						if(dx || dy)
-						{
-							xd  = float(dx);
-							yd  = float(dy);
-							float originalLength = sqrtf(float(xd)*float(xd) + float(yd)*float(yd));
-							float length = originalLength;
-							if(length > float(controllerSettings.mouseDeltaLimit))
-								length = float(controllerSettings.mouseDeltaLimit);
-							float factor = length / float(controllerSettings.mouseDeltaLimit);
-
-							xd = xd / originalLength * factor * 0.7928321376f;
-							yd = yd / originalLength * factor * 0.7928321376f;
-
-							/*
-							std::string foofoo = "X: ";
-							foofoo += boost::lexical_cast<std::string> (dx);
-							foofoo += " Y: ";
-							foofoo += boost::lexical_cast<std::string> (dy);
-							foofoo += " length: ";
-							float pad = sqrtf(float(xd)*float(xd) + float(yd)*float(yd));
-							foofoo += boost::lexical_cast<std::string> (pad);
-							Logger::getInstance()->error(foofoo.c_str());
-							*/
-						}
-					}
-
-			/*
-			std::string foofoo = "Values: ";
-			foofoo += boost::lexical_cast<std::string> (xd);
-			foofoo += ", ";
-			foofoo += boost::lexical_cast<std::string> (yd);
-			Logger::getInstance()->error(foofoo.c_str());
-
-			foofoo = "Values2: ";
-			foofoo += boost::lexical_cast<std::string> (jx);
-			foofoo += ", ";
-			foofoo += boost::lexical_cast<std::string> (jy);
-			Logger::getInstance()->error(foofoo.c_str());
-			*/
-
-					VC3 dir3 = scene->GetCamera()->GetDirection();
-					VC2 dir(dir3.x, dir3.z);
-					dir.Normalize();
-
-					VC3 side3 = VC3(0, 1.f, 0).GetCrossWith(dir3);
-					VC2 side(side3.x, side3.z);
-					side.Normalize();
-
-					VC2 delta;
-					delta.x += float(xd) * side.x;
-					delta.y += float(xd) * side.y;
-
-					delta.x -= float(yd) * dir.x;
-					delta.y -= float(yd) * dir.y;
-
-					//game->getClawController()->setTurbo(gameController[0]->isKeyDown(DH_CTRL_ATTACK_SECONDARY));
-					if(gameController[0]->isKeyDown(DH_CTRL_ATTACK_SECONDARY))
-						game->getClawController()->setAction(ClawController::TurboThrow);
-//					if(gameController[0]->isKeyDown(DH_CTRL_WEAPON_1))
-//						game->getClawController()->moveToRestPosition();
-
-					/*
-					if(abs(throttle) > 3)
-					{
-						VC3 targetPosition = game->getClawController()->getTargetPosition();
-
-						VC3 throttleVector = targetPosition - firstPerson[0]->getPosition();
-						throttleVector.y = 0;
-						if(throttleVector.GetSquareLength() > 0.001f)
-							throttleVector.Normalize();
-
-						VC3 newTarget = firstPerson[0]->getPosition();
-						newTarget.y = aimPosition.y;
-						if(throttle < 0)
-							newTarget += throttleVector * 10.f;
-						else
-							newTarget += throttleVector * 1.f;
-
-						game->getClawController()->moveTowards(newTarget);
-					}
-					*/
-
-					//if(!cursorMode)
-					{
-						VC3 targetPosition = game->getClawController()->getTargetPosition();
-
-						VC3 throttleVector = targetPosition - firstPerson[0]->getPosition();
-						throttleVector.y = 0;
-						if(throttleVector.GetSquareLength() > 0.001f)
-							throttleVector.Normalize();
-
-						// aiming mode turning
-						//
-						{
-							static int lastTime = currentTime;
-							static float lastDeltaTime = 0;
-
-							// smoothed delta time
-							float deltaTime = (float)(currentTime - lastTime) * 0.25f + lastDeltaTime * 0.75f;
-							if(deltaTime < 1.0f) deltaTime = 1.0f;
-							else if(deltaTime > 100.0f) deltaTime = 100.0f;
-							lastDeltaTime = deltaTime;
-							lastTime = currentTime;
-
-							if(throttle)
-							{
-								static float rotationSpeed = 0;
-
-								if(fabsf(xd) > 0.01f)
-								{
-									// increase speed
-									rotationSpeed += -xd * deltaTime * 0.0002f;
-
-									float speedLimit = 0.075f;
-									if(rotationSpeed > speedLimit)
-										rotationSpeed = speedLimit;
-									else if(rotationSpeed < -speedLimit)
-										rotationSpeed = -speedLimit;
-								}
-								else
-								{
-									// decrease speed
-									rotationSpeed *= powf(0.8f, deltaTime/16.0f);
-								}
-
-								QUAT rot;
-								rot.MakeFromAxisRotation(VC3(0,1,0), rotationSpeed);
-								rot.RotateVector(throttleVector);
-
-								if(throttleVector.GetSquareLength() > 0.001f)
-									throttleVector.Normalize();
-
-								float betaAngle = game->getClawController()->getThrowBetaAngle();
-								if(fabsf(yd) > 0.01f)
-								{
-									if (game::SimpleOptions::getBool(DH_OPT_B_CAMERA_INVERT_LOOK)) 
-										betaAngle -= -yd * deltaTime * 0.001f;
-									else
-										betaAngle += -yd * deltaTime * 0.001f;
-								}
-								else if(fabsf(betaAngle) < 0.05f)
-								{
-									betaAngle *= powf(0.99f, deltaTime/16.0f);
-								}
-								game->getClawController()->setThrowBetaAngle(betaAngle);
-							}
-
-							VC3 newTarget = firstPerson[0]->getPosition();
-							newTarget.y = aimPosition.y;
-							newTarget += throttleVector * 1.0f;
-							game->getClawController()->setRestPosition(newTarget);
-
-							//VC3 flexPosition = newTarget - (throttleVector * 6.f);
-							VC3 flexPosition = newTarget - (throttleVector * 3.f);
-							game->getClawController()->setFlexPosition(flexPosition);
-						}
-					}
-
-					/*
-					static float throttleVectorValid = false;
-					static VC3 throttleVector;
-
-					if(abs(throttle) > 3)
-					{
-						VC3 targetPosition = game->getClawController()->getTargetPosition();
-						targetPosition.x += delta.x;
-						targetPosition.z += delta.y;
-
-						if(!throttleVectorValid)
-						{
-							throttleVector = targetPosition - firstPerson[0]->getPosition();
-							throttleVector.y = 0;
-							throttleVector.Normalize();
-							throttleVectorValid	= true;
-						}
-
-						VC2 thrustDelta;
-						thrustDelta.x = -controllerSettings.padTriggerMovementFactor * throttleVector.x * float(throttle);
-						thrustDelta.y = -controllerSettings.padTriggerMovementFactor * throttleVector.z * float(throttle);
-
-						// Clamp
-						if(throttle > 0)
-						{
-							VC3 clampPosition = firstPerson[0]->getPosition() + (throttleVector * 2);
-							VC3 newTargetPosition = targetPosition + VC3(thrustDelta.x, 0, thrustDelta.y);
-							newTargetPosition.y = clampPosition.y;
-							if(throttleVector.GetDotWith(newTargetPosition - clampPosition) < 0)
-							{
-								thrustDelta.x = clampPosition.x - targetPosition.x;
-								thrustDelta.y = clampPosition.z - targetPosition.z;
-							}
-						}
-
-						delta += thrustDelta;
-					}
-					else
-						throttleVectorValid = false;
-					*/
-
-					game->getClawController()->moveByDelta(delta, aimPosition.y);
-					if(!controllerSettings.drawHelperCursor)
-						ogui->SetCursorImageState(0, DH_CURSOR_INVISIBLE);
-
-					//VC3 clawPosition = game->getClawController()->getClawPosition();
-					VC3 clawPosition = game->getClawController()->getTargetPosition();
-					VC3 screenPos;
-					float rhw = 0.f;
-					float realZ = 0.f;
-					scene->GetCamera()->GetTransformedToScreen(clawPosition, screenPos, rhw, realZ);
-
-					int newX = int(screenPos.x * 1024 + 0.5f);
-					int newY = int(screenPos.y * 768 + 0.5f);
-					ogui->setCursorScreenOffsetX(0, newX - ogui->getCursorScreenX(0) + 1);
-					ogui->setCursorScreenOffsetY(0, newY - ogui->getCursorScreenY(0) + 1);
-				}
-
-				// Actions
-				ClawController::Action activeAction = ClawController::ActionNone;
-				if(throttle < -3)
-				{
-					// enable aiming mode
-					activeAction = ClawController::ActionThrow;
-
-					// determine aiming mode direction
-					if(game->getClawController()->getPrepareAction() == ClawController::ActionNone
-						&& game->getClawController()->hasActor())
-					{
-						// get from camera direction
-						if(SimpleOptions::getInt(DH_OPT_I_CLAW_AIM_MODE) == 2)
-						{
-							VC3 cameraDirZ = gameCamera->getTargetPosition() - gameCamera->getPosition();
-							cameraDirZ.y = 0;
-							cameraDirZ.Normalize();
-
-							VC3 playerPos = firstPerson[0]->getPosition();
-							VC3 dirToClaw = game->getClawController()->getClawPosition() - firstPerson[0]->getPosition();
-							float clawDist = dirToClaw.GetLength();
-							VC3 targetPos = playerPos + cameraDirZ * clawDist;
-							targetPos.y = game->getClawController()->getClawPosition().y;
-							game->getClawController()->setTargetPosition(targetPos);
-						}
-						// use autoaim
-						else if(SimpleOptions::getInt(DH_OPT_I_CLAW_AIM_MODE) == 1)
-						{
-
-							VC3 cameraDirZ = gameCamera->getTargetPosition() - gameCamera->getPosition();
-							VC3 cameraDirX = cameraDirZ.GetCrossWith(VC3(0,1,0));
-							VC3 cameraDirY = cameraDirX.GetCrossWith(cameraDirZ);
-							cameraDirY.y = 0;
-							cameraDirY.Normalize();
-
-							VC3 playerPos = firstPerson[0]->getPosition();
-							VC3 clawPos = game->getClawController()->getClawPosition();
-							VC3 dirToClaw = clawPos - playerPos;
-							float clawDist = dirToClaw.GetLength();
-							dirToClaw *= 1.0f / clawDist;
-
-							// disable collision
-							if(firstPerson[0]->getVisualObject())
-								firstPerson[0]->getVisualObject()->setCollidable(false);
-
-							// scan all nearby enemies to determine most likely target
-							//
-							float highestScore = 0.0f;
-							Unit *targetUnit = NULL;
-							VC3 bestPos = game->getClawController()->getClawPosition();
-							IUnitListIterator *iter = game->units->getNearbyOwnedUnits(1, playerPos, 3600.0f);
-							while (iter->iterateAvailable())
-							{
-								Unit *unit = iter->iterateNext();
-								if(unit->getHP() <= 0)
-									continue;
-								if(unit->getUnitType()->getUnitTypeId() != 455611187)
-									continue;
-
-
-								VC3 unitPos = unit->getPosition();
-								VC3 dirToPlayer = unitPos - playerPos;
-								float length = dirToPlayer.GetLength();
-								if(length >= 0.0001f)
-									dirToPlayer *= 1.0f / length;
-
-								
-								// raytrace to find if enemy is visible
-								if(unit->getVisualObject()) unit->getVisualObject()->setCollidable(false);
-								VC3 rayDir = VC3(unitPos.x - playerPos.x, unitPos.y - playerPos.y - 2, unitPos.z - playerPos.z);
-								float rayLength = rayDir.GetLength();
-								rayDir *= 1.0f / rayLength;
-
-								VC3 rayPos = playerPos + VC3(0,5,0);
-								bool hitObject = false;
-								while(rayLength > 0.0f)
-								{
-									GameCollisionInfo cinfo;
-									game->getGameScene()->rayTrace(rayPos, rayDir, rayLength, cinfo, true, false);
-									if(cinfo.hit)
-									{
-										// hit a real terrain object
-										if(cinfo.hitTerrainObject && cinfo.terrainInstanceId != -1 && cinfo.terrainModelId != -1)
-										{
-											hitObject = true;
-											break;
-										}
-										else
-										{
-											// continue cast, at least 1m forward
-											if(cinfo.range > 1.0f)
-											{
-												rayPos += rayDir * cinfo.range;
-												rayLength -= cinfo.range;
-												continue;
-											}
-											else
-											{
-												rayPos += rayDir;
-												rayLength -= 1.0f;
-												continue;
-											}											
-										}
-									}
-									break;
-								}
-								if(unit->getVisualObject()) unit->getVisualObject()->setCollidable(true);
-
-								if(hitObject)
-								{
-									continue;
-								}
-
-
-								float score = 0.0f;
-
-								// aiming at enemy
-								float dot = dirToPlayer.GetDotWith(dirToClaw);
-								if(dot < -0.0f)
-								{
-									// max 0.75 points for directly opposite
-									score += 0.75f * (-dot);
-								}
-								else if(dot > 0.0f)
-								{
-									// max 1.0 points for directly at
-									score += 1.0f * dot;
-								}
-
-								// 0.5 bonus if enemy in front of camera
-								dirToPlayer.y = 0;
-								dirToPlayer.Normalize();
-								dot = dirToPlayer.GetDotWith(cameraDirY);
-								score += dot > 0.75f ? (dot - 0.75f) * 2.0f : 0.0f;
-
-								// distance to enemy is not too large
-								if(length > 20.0f)
-									score *= (20.0f * 20.0f) / (length * length);
-
-
-								if(score > highestScore)
-								{
-									targetUnit = unit;
-									bestPos = unitPos;
-									highestScore = score;
-								}
-
-								float col = score * 0.5f;
-								//disposable_scene->AddLine(playerPos + VC3(0,1,0), unitPos + VC3(0,1,0), COL(col, col, 0));
-							}
-							delete iter;
-
-							// enable collision again
-							if(firstPerson[0]->getVisualObject())
-								firstPerson[0]->getVisualObject()->setCollidable(true);
-
-							if(highestScore != 0)
-							{
-								if(targetUnit != NULL)
-								{
-									targetUnit->variables.setCustomVariable("autoaimed", game->gameTimer);
-								}
-								VC3 dir = bestPos - playerPos;
-								dir.Normalize();
-								VC3 targetPos = playerPos + dir * clawDist;
-								targetPos.y = clawPos.y;
-								game->getClawController()->setTargetPosition(targetPos);
-							}
-							//disposable_scene->AddLine(playerPos + VC3(0,1,0), game->getClawController()->getClawPosition() + VC3(0,1,0), COL(1, 0, 0));
-						}
-					}
-				}
-				game->getClawController()->prepareAction(activeAction);
-
-				if(activeAction == ClawController::ActionNone)
-				{
-					game->getClawController()->setThrowBetaAngle(0);
-				}
-
-//				if(throttle > 3)
-//					game->getClawController()->setAction(ClawController::TurboHit);
-				if(throttle > 3)
-					game->getClawController()->moveToRestPosition();
-
-				if(game->inCombat && game->getClawController() && firstPerson[0] && firstPerson[0]->getVisualObject())
-				{
-					game->getClawController()->setModel(firstPerson[0]->getVisualObject()->getStormModel());
-					game->getClawController()->syncClaw();
-				}
-			}
-		}
-#endif
 
 		game->runCustomUIScriptProcesses();
 
@@ -5666,10 +5118,44 @@ if (unit->isPhysicsObjectLock() && !unit->isDestroyed()
 		{
 			// HACK: attempt to minimize the error caused by camera angle
 			// WARNING: this will screw up the aim in case on different camera angles
-			int rayY = ogui->getCursorScreenY(player) + SimpleOptions::getInt(DH_OPT_I_CURSOR_RAYTRACE_OFFSET_Y);
+
+			int x, y;
+
+			// free-camera mode joystick HACK
+			GameController *ctrl = getController(player);
+			if (ctrl->controllerTypeHasJoystick())
+			{
+				ctrl->getJoystickValues(NULL, NULL, &x, &y);
+
+				if (x != 0 || x != 0)
+				{
+					// only if joystick is pointing in some directon
+					// we compare to 0 because GameController has taken care of dead zones
+					x = 512 + (x * 512 / 1000);
+					y = 384 + (y * 384 / 1000);
+					oldJoystickXY[player] = VC2(x, y);
+
+					// Don't let ogui update cursor position if we are not in menus
+					if (game->inCombat && !game->isPaused())
+					{
+						ogui->setCursorScreenX(player, x);
+						ogui->setCursorScreenX(player, y);
+						ogui->skipCursorMovement();
+					}
+				} else {
+					// joystick centered, use old position so character direction does not "reset"
+					x = oldJoystickXY[player].x;
+					y = oldJoystickXY[player].y;
+				}
+			} else {
+				x = ogui->getCursorScreenX(player);
+				y = ogui->getCursorScreenY(player);
+			}
+
+			int rayY = y + SimpleOptions::getInt(DH_OPT_I_CURSOR_RAYTRACE_OFFSET_Y);
 			if (rayY < 0) rayY = 0;
 			if (rayY >= 768) rayY = 768-1;
-			return cursorRayTrace(ogui->getCursorScreenX(player), rayY, terrainOnly, accurate);
+			return cursorRayTrace(x, rayY, terrainOnly, accurate);
 		}
 		else
 		{
@@ -5714,28 +5200,12 @@ if (unit->isPhysicsObjectLock() && !unit->isDestroyed()
 				ret.scaledMapX = pos.x;
 				ret.scaledMapY = pos.z;
 				ret.unit = hitu;
-#ifdef LEGACY_FILES
-				// no support for unified handle objects...
-#else
-				ret.unifiedHandle = game->units->getUnifiedHandle(game->units->getIdForUnit(hitu));
-#endif
 			} else {
 				// TODO: check that position is in map boundaries!
 				ret.hit = true;
 				ret.scaledMapX = cinfo.position.x;
 				ret.scaledMapY = cinfo.position.z;
 				ret.unit = NULL;
-
-#ifdef LEGACY_FILES
-				// no support for unified handle objects...
-#else
-				if (cinfo.terrainModelId >= 0
-					&& cinfo.terrainInstanceId >= 0)
-				{
-					if (game->gameUI->getTerrain() != NULL)
-						ret.unifiedHandle = game->gameUI->getTerrain()->getUnifiedHandle(cinfo.terrainModelId, cinfo.terrainInstanceId);
-				}
-#endif
 			}
 		} else {
 			ret.hit = false;
@@ -6062,7 +5532,7 @@ if (unit->isPhysicsObjectLock() && !unit->isDestroyed()
 				Logger::getInstance()->debug("GameUI::preloadSound - Preloading sound.");
 			Logger::getInstance()->debug(filename);
 
-			SoundSample *dummy = soundMixer->loadSample(filename, temporaryCache);
+			soundMixer->loadSample(filename, temporaryCache);
 		}
 	}
 
@@ -6187,6 +5657,81 @@ if (unit->isPhysicsObjectLock() && !unit->isDestroyed()
 				return false;
 			}
 
+			// joystick hack
+			if (gameController[clnum]->controllerTypeHasJoystick()
+				&& control >= DIRECT_CTRL_FORWARD
+				&& control <= DIRECT_CTRL_RIGHT)
+			{
+				// get joystick movement values
+				int x = 0, y = 0;
+				gameController[clnum]->getJoystickValues(&x, &y, NULL, NULL);
+
+				// if not in free camera mode we should move relative to world
+				// so we need to "unspin" x and y with player rotation
+				if (SimpleOptions::getBool(DH_OPT_B_GAME_MODE_AIM_UPWARD))
+				{
+					// calculate angle of joystick
+					float angle = 0.0f;
+					if (x != 0 || y != 0)
+					{
+						VC2 dir(x, y);
+						dir.Normalize();
+						if (x > 0)
+						{
+							//  0 < angle < 180
+							angle = ((M_PI * 0.5) + asinf(dir.y)) * 180.0 / M_PI;
+						} else {
+							// 180 < angle < 360
+							angle = (2*M_PI + -(M_PI * 0.5 + asinf(dir.y))) * 180.0 / M_PI;
+						}
+
+						LOG_DEBUG(strPrintf("joystick x y angle: %d %d %f", x, y, angle).c_str());
+						// add player unit angle
+						angle = -angle + unit->getRotation().y;
+
+						// angle += unit->getRotation().y;
+
+						// TODO: calculate new x and y
+						// angle is in degrees, goes clockwise and 0 is up
+						float radAngle = -(M_PI / 2 + angle * 2 * M_PI / 360.f);
+
+						x = 1000 * cosf(radAngle);
+						y = 1000 * sinf(radAngle);
+						LOG_DEBUG(strPrintf("unit rot: %f  new angle: %f", unit->getRotation().y, angle).c_str());
+					}
+				}
+
+				// do movement
+				if (x != 0 || y != 0)
+				{
+					// this is not joystick dead zone
+					// because this is applied after rotation, normalization etc.
+					// FIXME: still an ugly hack
+					// should be made configurable
+					const int MAGIC_THRESHOLD = 200;
+				LOG_DEBUG(strPrintf("movement x y: %d %d", x, y).c_str());
+				switch(control)
+				{
+				case DIRECT_CTRL_FORWARD:
+					return (upMovementEnabled[clnum] && y < -MAGIC_THRESHOLD);
+					break;
+
+				case DIRECT_CTRL_BACKWARD:
+					return (downMovementEnabled[clnum] && y > MAGIC_THRESHOLD);
+					break;
+
+				case DIRECT_CTRL_LEFT:
+					return (leftMovementEnabled[clnum] && x < -MAGIC_THRESHOLD);
+					break;
+
+				case DIRECT_CTRL_RIGHT:
+					return (rightMovementEnabled[clnum] && x > MAGIC_THRESHOLD);
+					break;
+
+				}
+				}
+			}
+
 			switch(control)
 			{
 			case DIRECT_CTRL_FORWARD:
@@ -6280,14 +5825,17 @@ if (unit->isPhysicsObjectLock() && !unit->isDestroyed()
 				if(this->firstPerson[clnum] != NULL)
 				{
 					// get secondary weapon type
-					Weapon *wType = this->firstPerson[clnum]->getWeaponType(this->firstPerson[clnum]->getSelectedWeapon());
-					if (wType != NULL)
-					{
-						secondaryWType = wType->getAttachedWeaponType();
+					int weapNum = this->firstPerson[clnum]->getSelectedWeapon();
+					if (weapNum >= 0) {
+						Weapon *wType = this->firstPerson[clnum]->getWeaponType(weapNum);
+						if (wType != NULL)
+						{
+							secondaryWType = wType->getAttachedWeaponType();
+						}
 					}
 
 					// if switched weapon
-					int weapNum = -1;
+					weapNum = -1;
 					if (secondaryWType != NULL)
 					{
 						weapNum = this->firstPerson[clnum]->getWeaponByWeaponType(secondaryWType->getPartTypeId());
@@ -6916,7 +6464,7 @@ if (unit->isPhysicsObjectLock() && !unit->isDestroyed()
 
 		::disposable_scene = this->scene;
 
-		SHOW_LOADING_BAR(100);
+		SHOW_LOADING_BAR(99);
 
 		ogui->SetCursorImageState(0, DH_CURSOR_ARROW);
 		
@@ -6939,6 +6487,7 @@ if (unit->isPhysicsObjectLock() && !unit->isDestroyed()
 
 		SHOW_LOADING_BAR(100);
 		//this->effects->startFadeIn(500);
+
 	}
 
 	void GameUI::setOguiStormDriver(OguiStormDriver *driver)
@@ -7610,6 +7159,16 @@ if (unit->isPhysicsObjectLock() && !unit->isDestroyed()
 	int GameUI::getLastRunUITime() const
 	{
 		return lastRunUITime;
+	}
+
+	void GameUI::SwapCursorImages(int cursor1, int cursor2)
+	{
+		ogui->SwapCursorImages(cursor1, cursor2);
+	}
+
+	void GameUI::ResetSwappedCursorImages()
+	{
+		ogui->ResetSwappedCursorImages();
 	}
 }
 

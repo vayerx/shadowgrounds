@@ -376,13 +376,13 @@ if (SimpleOptions::getBool(DH_OPT_B_PHYSICS_VISUALIZE_COLLISION_SHAPES))
 #ifdef PROJECT_CLAW_PROTO
 // add a little hack delay here??
 // also don't delete physics until the unit has stopped.
-if (unit->variables.getVariable("following") > 30 &&
+if (unit->variables.getVariable("proning") > 30 &&
 	unit->getGamePhysicsObject()->getVelocity().GetSquareLength() < 0.1f*0.1f )
 {
 		deletePhysics(unit, physics);
 		return;
 } else {
-	unit->variables.setVariable("following", unit->variables.getVariable("following") + 1);
+	unit->variables.setVariable("proning", unit->variables.getVariable("proning") + 1);
 }
 #else
 						deletePhysics(unit, physics);

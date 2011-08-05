@@ -17,7 +17,7 @@ namespace game
 		static void clearLoadedList(const char *fileExtension);
 
   private:
-    void error(char *err, int linenum);
+    void error(const char *err, int linenum);
 
 		PartTypeParserImpl *impl;
   };

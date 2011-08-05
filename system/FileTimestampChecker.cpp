@@ -2,18 +2,15 @@
 
 #include "precompiled.h"
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
 #pragma warning(disable:4786)
+#endif
 
 #include "FileTimestampChecker.h"
 #include "../filesystem/input_stream_wrapper.h"
 
-#ifndef _MSC_VER
-#error FileTimestampChecker implemented for msvc only.
-#endif
-
 #include <assert.h>
-#include <io.h>
 #include <fcntl.h>
 #include <time.h>
 #include <sys/types.h>
@@ -21,6 +18,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef _MSC_VER
+#include <io.h>
+#endif
 
 using namespace frozenbyte;
 #include "../util/Debug_MemoryManager.h"
@@ -74,6 +75,16 @@ bool FileTimestampChecker::isFileUpToDateComparedTo(const char *file, const char
 
 	return false;
 }
+
+#ifndef _MSC_VER
+#define _stat stat
+
+#if defined __WINE__ || !defined WIN32
+#define _fileno fileno
+#endif
+
+#define _fstat fstat
+#endif
 
 int FileTimestampChecker::getFileTimestamp(const char *file)
 {  

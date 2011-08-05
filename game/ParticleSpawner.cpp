@@ -45,9 +45,6 @@ namespace game
 		this->waitTime = 0;
 
 		this->projectileHandle = 0;
-
-		this->attached = false;
-		this->attachedTo = UNIFIED_HANDLE_NONE;
 	}
 
 
@@ -133,16 +130,12 @@ namespace game
 
 
 	Projectile *ParticleSpawner::spawnProjectileWithWeapon(Game *game, const Weapon *weapon,
-		const VC3 &position, const VC3 &direction, float distanceToListener, UnifiedHandle originUH)
+		const VC3 &position, const VC3 &direction, float distanceToListener)
 	{
 		Bullet *bullet = weapon->getBulletType();
 		if (bullet != NULL)
 		{
 			Projectile *proj = new Projectile(NULL, bullet);
-			if (originUH != UNIFIED_HANDLE_NONE)
-			{
-				proj->setOriginUnifiedHandle(originUH);
-			}
 			game->projectiles->addProjectile(proj);
 
 			VC3 projpos = position;
@@ -259,9 +252,7 @@ namespace game
 			int firereload = (weapon->getFireReloadTime() * ((100 - weapon->getFireReloadVary()) + game->gameRandom->nextInt() % (weapon->getFireReloadVary() + 1)) / 100);
 			waitTime = firereload;
 
-			UnifiedHandle att = UNIFIED_HANDLE_NONE;
-			if (attached) att = attachedTo;
-			Projectile *proj = spawnProjectileWithWeapon(game, weapon, this->position, this->direction, sqrtf(this->distanceToListenerSq), att);
+			Projectile *proj = spawnProjectileWithWeapon(game, weapon, this->position, this->direction, sqrtf(this->distanceToListenerSq));
 
 			if (proj != NULL)
 				this->projectileHandle = proj->getHandle();

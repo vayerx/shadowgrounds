@@ -17,7 +17,7 @@ namespace game
 
 			void setDestroyed(bool destroyed);
 
-			bool isSeenByPlayer(int player);
+			bool isSeenByPlayer(int player) const;
 			//void setSeenByPlayer(int player, bool seen);
 			//bool isToBeSeenByPlayer(int player);
 			void setToBeSeenByPlayer(int player, bool seen);

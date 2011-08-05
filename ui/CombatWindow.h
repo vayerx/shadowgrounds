@@ -21,6 +21,7 @@ namespace game
 
 namespace ui
 {
+	int getNumberOfPlayers();
 	
 	class GamePointers;
 	class CombatRadar;
@@ -155,7 +156,7 @@ namespace ui
 		void setTacticalModeButton(bool tactical);
 		
 		void updateUnitHighlight();
-		void setUnitHighlight(game::Unit *unit);
+		void setUnitHighlight(const game::Unit *unit);
 		void setTerrainHighlight(VC3 &position);
 		void clearHighlight();
 		void lockHighlight();

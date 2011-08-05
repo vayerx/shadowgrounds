@@ -1,5 +1,13 @@
 #include "precompiled.h"
 
+#include <map>
+#include <list>
+#ifdef _WIN32
+#include <malloc.h>
+#endif
+#include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
+
 #include "VehicleWindow.h"
 
 #include "../game/Unit.h"
@@ -26,11 +34,6 @@
 #include "../util/fb_assert.h"
 
 #include "../game/DHLocaleManager.h"
-
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
-#include <map>
-#include <list>
 
 using namespace game;
 

@@ -437,7 +437,7 @@ unsigned char ubercrypt_key[CRYPT_KEY_LEN+1] =
 #define CRYPT_OFFSET_MODULO 2
 #define CRYPT_OFFSET_MODULO_VALUE 1
 #define CRYPT_OFFSET_ADD 0
-const char *version_branch_name = "dev";
+//const char *version_branch_name = "dev";
 
 #endif
 

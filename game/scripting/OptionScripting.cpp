@@ -38,7 +38,7 @@ using namespace ui;
 namespace game
 {
 	void OptionScripting::process(util::ScriptProcess *sp, 
-		int command, int intData, char *stringData, ScriptLastValueType *lastValue, 
+		int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue,
 		GameScriptData *gsd, Game *game, bool *pause)
 	{
 		switch(command)
@@ -50,7 +50,7 @@ namespace game
 				game::GameOption *opt = oman->getOptionByName(stringData);
 				if (opt != NULL)
 				{
-					int tmp;
+					int tmp = 0;
 					VariableScriptingUtils vsutils;
 					vsutils.getVariableValueToInt(opt, &tmp);
 					*lastValue = tmp;

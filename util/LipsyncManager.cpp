@@ -1,3 +1,6 @@
+#include <boost/shared_ptr.hpp>
+#include <fstream>
+#include <map>
 
 #include "precompiled.h"
 
@@ -8,28 +11,20 @@
 #include "../editor/parser.h"
 #include "../editor/string_conversions.h"
 #include "../util/assert.h"
-#include "../system/timer.h"
-#include "../system/logger.h"
+#include "../system/Timer.h"
+#include "../system/Logger.h"
 #include "../filesystem/file_package_manager.h"
 #include "../filesystem/input_stream.h"
-#include <istorm3d.h>
-#include <istorm3d_scene.h>
-#include <istorm3d_texture.h>
-#include <boost/shared_ptr.hpp>
-#include <fstream>
-#include <map>
+#include <IStorm3D.h>
+#include <IStorm3D_Scene.h>
+#include <IStorm3D_Texture.h>
 
 using namespace boost;
 using namespace std;
 using namespace frozenbyte;
 using namespace frozenbyte::editor;
 
-// this was copy&pasted here and there, which kinda caused crashes when not all of them were
-// properly updated, thus, made this define for it. --jpk
-#define LIPSYNC_MAX_CHARACTERS 2
-
 namespace util {
-namespace {
 
 	struct TextureReleaser
 	{
@@ -92,20 +87,6 @@ namespace {
 				return;
 
 			IStorm3D_Camera &cam = *scene->GetCamera();
-#ifdef PROJECT_AOV
-			cam.SetAspectRatio(aspectRatio);
-			cam.SetPosition(cameraPosition);
-			cam.SetTarget(cameraTarget);
-			//cam.SetUpVec(VC3(-0.2f,1.f,0).GetNormalized());
-			cam.SetUpVec(VC3(0.0f,1.f,0));
-			cam.SetVisibilityRange(100.f);
-			//cam.SetFieldOfView(PI / 4.5f);
-			cam.SetFieldOfView(PI / 7.0f);
-
-			model->SetLighting(0, lightIndex);
-			model->SetSelfIllumination(ambient);
-			model->SetScale(VC3(scale, scale, scale));
-#else
 			cam.SetAspectRatio(aspectRatio);
 			cam.SetPosition(cameraPosition);
 			cam.SetTarget(cameraTarget);
@@ -116,7 +97,6 @@ namespace {
 			model->SetLighting(0, lightIndex);
 			model->SetSelfIllumination(ambient);
 			model->SetScale(VC3(scale, scale, scale));
-#endif
 		}
 
 		void render()
@@ -153,13 +133,12 @@ namespace {
 
 	typedef map<string, Character> CharacterMap;
 
-} // unnamed
 
 struct LipsyncManager::Data
 {
 	IStorm3D *storm;
 	IStorm3D_Terrain *terrain;
-	//boost::shared_ptr<IStorm3D_Material> material[LIPSYNC_MAX_CHARACTERS];
+	//boost::shared_ptr<IStorm3D_Material> material[2];
 	//boost::shared_ptr<IStorm3D_Texture> noise;
 
 	CharacterMap characters;
@@ -167,7 +146,7 @@ struct LipsyncManager::Data
 	sfx::LipsyncManager manager;
 	int lastUpdateTime;
 
-	ActiveCharacter activeCharacters[LIPSYNC_MAX_CHARACTERS];
+	ActiveCharacter activeCharacters[2];
 	bool active;
 	int numCharacters;
 
@@ -181,8 +160,8 @@ struct LipsyncManager::Data
 		terrain(terrain_),
 		manager(storm),
 		lastUpdateTime(0),
-		numCharacters(LIPSYNC_MAX_CHARACTERS),
-		active(false)
+		active(false),
+		numCharacters(2)
 	{
 		FB_ASSERT(storm);
 		lastUpdateTime = getCurrentTime();
@@ -191,7 +170,7 @@ struct LipsyncManager::Data
 		noise.reset(storm->CreateNewTexture("noise_02.dds"), TextureReleaser());
 		if(noise)
 		{
-			for(int i = 0; i < LIPSYNC_MAX_CHARACTERS; ++i)
+			for(int i = 0; i < 2; ++i)
 			{
 				material[i].reset(storm->CreateNewMaterial("lipsync_noise"));
 				material[i]->SetBaseTexture(noise.get());
@@ -202,47 +181,12 @@ struct LipsyncManager::Data
 		}
 		*/
 
-#ifdef PROJECT_AOV
-		originalCameraPosition = VC3(0.f,1.7f,-6.0f);
-		originalCameraTarget = VC3(0,1.7f,0);
-		originalBackgroundColor = COL(19.f/255.f, 19.f/255.f, 19.f/255.f);
-
-		for(int i = 0; i < LIPSYNC_MAX_CHARACTERS; ++i)
-		{
-			activeCharacters[i].scene.reset(storm->CreateNewScene());
-			activeCharacters[i].scene->SetBackgroundColor(originalBackgroundColor);
-
-			activeCharacters[i].lightPosition = VC3(-2.5f, 5.f, -10.f);
-			activeCharacters[i].lightColor = COL(0.01f, 0.01f, 0.01f);
-			activeCharacters[i].ambient = COL(0.3f, 0.3f, 0.3f);
-			activeCharacters[i].scale = 10.f;
-			//activeCharacters[i].cameraPosition = VC3(0.f,2.4f,-5.8f);
-			activeCharacters[i].cameraPosition = originalCameraPosition;
-
-			activeCharacters[i].cameraTarget = originalCameraTarget;
-			activeCharacters[i].renderTarget = storm->getRenderTarget(i);
-
-			/*
-			if(i == 0)
-			{
-				activeCharacters[i].cameraPosition.x = -1.3f;
-				activeCharacters[i].lightPosition.x = -2.5f;
-			}
-			else if(i == 1)
-			{
-				activeCharacters[i].cameraPosition.x =  1.3f;
-				activeCharacters[i].lightPosition.x =  2.5f;
-			}
-			*/
-			activeCharacters[i].lightIndex = terrain->addLight(activeCharacters[i].lightPosition, 20.f, activeCharacters[i].lightColor);
-			activeCharacters[i].update();
-		}
-#else
 		originalCameraPosition = VC3(0.f,2.4f,-7.2f);
 		originalCameraTarget = VC3(0,1.8f,0);
 		originalBackgroundColor = COL(19.f/255.f, 19.f/255.f, 19.f/255.f);
 
-		for(int i = 0; i < LIPSYNC_MAX_CHARACTERS; ++i)
+		//for(int i = 0; i < 3; ++i)
+		for(int i = 0; i < 2; ++i)
 		{
 			activeCharacters[i].scene.reset(storm->CreateNewScene());
 			activeCharacters[i].scene->SetBackgroundColor(originalBackgroundColor);
@@ -265,24 +209,18 @@ struct LipsyncManager::Data
 			{
 				activeCharacters[i].cameraPosition.x =  1.3f;
 				activeCharacters[i].lightPosition.x =  2.5f;
-			} else {
-				assert(!"over 2 lipsync characters not supported.");
 			}
 
 			activeCharacters[i].lightIndex = terrain->addLight(activeCharacters[i].lightPosition, 20.f, activeCharacters[i].lightColor);
 			activeCharacters[i].update();
 		}
-#endif
 	}
 
 	void init()
 	{
-		Parser parser(false, true);
-#ifdef LEGACY_FILES
-		filesystem::FilePackageManager::getInstance().getFile("Data/Animations/lipsync.txt") >> parser;
-#else
-		filesystem::FilePackageManager::getInstance().getFile("data/animation/lipsync.txt") >> parser;
-#endif
+		EditorParser parser(false, true);
+		filesystem::InputStream lipsyncfile = filesystem::FilePackageManager::getInstance().getFile("Data/Animations/lipsync.txt");
+		lipsyncfile >> parser;
 
 		const ParserGroup &root = parser.getGlobals();
 		const ParserGroup &chars = root.getSubGroup("Characters");
@@ -353,10 +291,7 @@ struct LipsyncManager::Data
 		else
 		{
 			if(characters.find(id) == characters.end())
-			{
 				Logger::getInstance()->error("LipsyncManager::Data::setCharacter -- cannot find given char id");
-				Logger::getInstance()->debug(id.c_str());
-			}
 
 			Character &c = characters[id];
 			ac.model = c.model;
@@ -472,8 +407,8 @@ void LipsyncManager::playSpeech(const std::string &character, const boost::share
 
 void LipsyncManager::setActive(bool active, int numChars)
 {
-	if(numChars >= LIPSYNC_MAX_CHARACTERS)
-		numChars = LIPSYNC_MAX_CHARACTERS;
+	if(numChars >= 2)
+		numChars = 2;
 
 	data->active = active;
 	data->numCharacters = numChars;

@@ -1,5 +1,10 @@
 #include "precompiled.h"
 
+#include <map>
+#ifdef _WIN32
+#include <malloc.h>
+#endif
+
 #include "BonusManager.h"
 #include "../game/options/options_camera.h"
 #include "../game/options/options_graphics.h"
@@ -8,9 +13,10 @@
 #include "../game/Game.h"
 #include "../game/GameUI.h"
 #include "../game/scripting/GameScripting.h"
-#include <map>
 
-#define BONUS_OPTIONS_FILE "Config/bonus.dat"
+#include "../game/userdata.h"
+
+#define BONUS_OPTIONS_FILE igios_mapUserDataPrefix("Config/bonus.dat").c_str()
 
 namespace game
 {
@@ -21,7 +27,7 @@ namespace game
 	{
 	public:
 		IBonusOption() : active(false), applied(false), createAsButton(false) {}
-		~IBonusOption() {}
+		virtual ~IBonusOption() {}
 		virtual void apply(game::Game *game, int flags) = 0;
 		virtual void unapply(game::Game *game, int flags) = 0;
 
@@ -191,7 +197,7 @@ namespace game
 			if(flags & BonusManager::APPLYING_AFTER_LOAD)
 			{
 				game->gameScripting->loadScripts("Data/Missions/Common/bonuses.dhs", NULL);
-				game->addCustomScriptProcess("invulnerability_apply", NULL, NULL);
+				game->addCustomScriptProcess("invulnerability_apply", 0, NULL);
 			}
 		}
 
@@ -239,7 +245,7 @@ namespace game
 			if(flags & BonusManager::APPLYING_AFTER_LOAD)
 			{
 				game->gameScripting->loadScripts("Data/Missions/Common/bonuses.dhs", NULL);
-				game->addCustomScriptProcess("thirdperson_apply", NULL, NULL);
+				game->addCustomScriptProcess("thirdperson_apply", 0, NULL);
 			}
 		}
 
@@ -307,7 +313,7 @@ namespace game
 		~BonusManagerImpl()
 		{
 			// save unlocked options
-			saveOptions();
+			//saveOptions();
 		}
 
 		void unlockOption(const std::string &name)
@@ -567,11 +573,13 @@ namespace game
 	void BonusManager::unlockOption(const std::string &name)
 	{
 		impl->unlockOption(name);
+		impl->saveOptions();
 	}
 
 	void BonusManager::unlockAllOptions()
 	{
 		impl->unlockAllOptions();
+		impl->saveOptions();
 	}
 
 	bool BonusManager::isOptionUnlocked(const std::string &name)
@@ -587,6 +595,7 @@ namespace game
 	void BonusManager::makeOptionsAvailable(bool available)
 	{
 		impl->makeOptionsAvailable(available);
+		impl->saveOptions();
 	}
 
 	bool BonusManager::shouldCreateAsButton(int i)

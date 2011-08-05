@@ -1,5 +1,8 @@
-
 #include "precompiled.h"
+
+#include <assert.h>
+#include <map>
+#include <string>
 
 #include "ConvexPhysicsObject.h"
 
@@ -7,14 +10,12 @@
 #include "../../physics/physics_lib.h"
 #include "../../physics/convex_actor.h"
 #include "../../physics/actor_base.h"
-#include <assert.h>
-#include <string>
 
 #ifdef PHYSICS_PHYSX
 
 namespace game
 {
-	typedef std::map<std::string, boost::shared_ptr<frozenbyte::physics::ConvexMesh>> MeshHash;
+	typedef std::map<std::string, boost::shared_ptr<frozenbyte::physics::ConvexMesh> > ConvexMeshHash;
 
 	class ConvexPhysicsObjectImpl
 	{
@@ -31,25 +32,25 @@ namespace game
 
 		boost::shared_ptr<frozenbyte::physics::ConvexMesh> getMesh(GamePhysics *gamePhysics)
 		{
-			MeshHash::iterator iter = meshHash.find(this->filename);
+			ConvexMeshHash::iterator iter = meshHash.find(this->filename);
 			if (iter != meshHash.end())
 			{
 				return (*iter).second;
 			}
 
 			boost::shared_ptr<frozenbyte::physics::ConvexMesh> m = gamePhysics->getPhysicsLib()->createConvexMesh(this->filename.c_str());
-			meshHash.insert(std::pair<std::string, boost::shared_ptr<frozenbyte::physics::ConvexMesh>>(filename, m));
+			meshHash.insert(std::pair<std::string, boost::shared_ptr<frozenbyte::physics::ConvexMesh> >(filename, m));
 			return m;
 		}
 
 		std::string filename;
 
-		static MeshHash meshHash;
+		static ConvexMeshHash meshHash;
 
 		friend class ConvexPhysicsObject;
 	};
 
-	MeshHash ConvexPhysicsObjectImpl::meshHash = MeshHash();
+	ConvexMeshHash ConvexPhysicsObjectImpl::meshHash = ConvexMeshHash();
 
 
 	ConvexPhysicsObject::ConvexPhysicsObject(GamePhysics *gamePhysics, const char *filename, float mass, int collisionGroup, const VC3 &position) 

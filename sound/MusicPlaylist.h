@@ -20,7 +20,7 @@ public:
   void stop();
   void nextTrack();
   void previousTrack();
-  void loadPlaylist(int bank, char *filename);
+  void loadPlaylist(int bank, const char *filename);
   void setBank(int bank);
   void run();
   void setSuffle(bool suffle);

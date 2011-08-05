@@ -2,8 +2,10 @@
 
 #include "precompiled.h"
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
 #pragma warning(disable:4786)
+#endif
 
 #include "GameConfigs.h"
 
@@ -24,19 +26,19 @@
 
 namespace {
 
-	struct Tracker
+	struct ConfTracker
 	{
-		Tracker()
+		ConfTracker()
 		{
 		}
 
-		~Tracker()
+		~ConfTracker()
 		{
 			game::GameConfigs::cleanInstance();
 		}
 	};
 
-	Tracker tracker;
+	ConfTracker confTracker;
 }
 
 namespace game

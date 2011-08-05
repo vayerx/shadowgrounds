@@ -25,20 +25,11 @@ namespace {
 		UnitProperties properties;
 		StringProperties stringProperties;
 
-		bool isJoint;
-
 		Unit()
 		:	yRotation(0),
-			height(0),
-			isJoint(false)
+			height(0)
 		{
 		}
-	};
-
-	enum ExportType
-	{
-		EXPORT_UNITS = 1,
-		EXPORT_JOINTS = 2
 	};
 } // unnamed
 
@@ -50,19 +41,15 @@ struct ExporterUnitsData
 
 	// Units saved to special files
 	std::map<std::string, std::vector<Unit> > fileUnits;
+
 	VC2I spawnPosition;
 
-	void exportUnits(std::ofstream &stream, const std::vector<Unit> &units, const std::string &id, ExportType exportType)
+	void exportUnits(std::ofstream &stream, const std::vector<Unit> &units, const std::string &id)
 	{
 		for(unsigned int i = 0; i < units.size(); ++i)
 		{
 			stream << std::endl;
 			const Unit &unit = units[i];
-
-			if(exportType == EXPORT_UNITS && unit.isJoint)
-				continue;
-			if(exportType == EXPORT_JOINTS && !unit.isJoint)
-				continue;
 
 			int rotation = int((unit.yRotation / PI * 180.f) + 0.5f);
 			while(rotation < 0)
@@ -112,7 +99,6 @@ struct ExporterUnitsData
 				bool convertToWaterParams = false;
 				bool convertToParticleParams = false;
 				bool convertToMapParams = false;
-				bool convertToJointParams = false;
 
 				if (strcmp(unit.spawnText[j].c_str(), "<UNIT_ADD_PARAMETERS>") == 0)
 				{
@@ -147,11 +133,6 @@ struct ExporterUnitsData
 				if(unit.spawnText[j] == "<MAP_ADD_PARAMETERS>")
 				{
 					convertToMapParams = true;
-					printLineUnconverted = false;
-				}
-				if(unit.spawnText[j] == "<JOINT_ADD_PARAMETERS>")
-				{
-					convertToJointParams = true;
 					printLineUnconverted = false;
 				}
 
@@ -196,12 +177,6 @@ struct ExporterUnitsData
 
 					stream << "   setPosition " << "s," << unit.position.x << "," << unit.position.y << std::endl;
 				}
-				if(convertToJointParams)
-				{
-					addParamsAdded = true;
-					stream << "   setJointPosition " << unit.position.x << "," << unit.height << "," << unit.position.y << std::endl;
-					stream << "   setJointNormalAngle " << rotation << std::endl;
-				}
 				if (convertToParams
 					|| (j == unit.spawnText.size() - 1 && !addParamsAdded))
 				{
@@ -231,54 +206,44 @@ struct ExporterUnitsData
 		}
 	}
 
-	void save(const std::string &fileName, const std::string &id, ExportType exportType)
+	void save(const std::string &fileName, const std::string &id)
 	{
 		std::ofstream stream(fileName.c_str());
 
-		if(exportType & EXPORT_UNITS)
-		{
-			stream << "script " << id << "_units" << std::endl;
-			stream << "sub addunits" << std::endl;
+		stream << "script " << id << "_units" << std::endl;
+		stream << "sub addunits" << std::endl;
 
-			// HC player
-			stream << "   // Player" << std::endl;
-			stream << "   setPlayer 0" << std::endl;
-			stream << "   setHostile 1" << std::endl;
-			stream << "   setFriendly 2" << std::endl;
-			stream << "   setFriendly 3" << std::endl;
-			stream << "   setSpawn " << spawnPosition.x << "," << spawnPosition.y << std::endl;
-			stream << std::endl;
+		// HC player
+		stream << "   // Player" << std::endl;
+		stream << "   setPlayer 0" << std::endl;
+		stream << "   setHostile 1" << std::endl;
+		stream << "   setFriendly 2" << std::endl;
+		stream << "   setFriendly 3" << std::endl;
+		stream << "   setSpawn " << spawnPosition.x << "," << spawnPosition.y << std::endl;
+		stream << std::endl;
 
-			stream << "   // Enemies" << std::endl;
-			stream << "   setPlayer 1" << std::endl;
-			stream << "   setHostile 0" << std::endl;
-			stream << "   setFriendly 2" << std::endl;
-			stream << "   setHostile 3" << std::endl;
-			exportUnits(stream, hostileUnits, id, exportType);
-			stream << std::endl;
+		stream << "   // Enemies" << std::endl;
+		stream << "   setPlayer 1" << std::endl;
+		stream << "   setHostile 0" << std::endl;
+		stream << "   setFriendly 2" << std::endl;
+		stream << "   setHostile 3" << std::endl;
+		exportUnits(stream, hostileUnits, id);
+		stream << std::endl;
 
-			stream << "   // Neutral" << std::endl;
-			stream << "   setPlayer 2" << std::endl;
-			stream << "   setFriendly 0" << std::endl;
-			stream << "   setFriendly 1" << std::endl;
-			stream << "   setFriendly 3" << std::endl;
-			exportUnits(stream, neutralUnits, id, exportType);
-			stream << std::endl;
+		stream << "   // Neutral" << std::endl;
+		stream << "   setPlayer 2" << std::endl;
+		stream << "   setFriendly 0" << std::endl;
+		stream << "   setFriendly 1" << std::endl;
+		stream << "   setFriendly 3" << std::endl;
+		exportUnits(stream, neutralUnits, id);
+		stream << std::endl;
 
-			stream << "   // Ally" << std::endl;
-			stream << "   setPlayer 3" << std::endl;
-			stream << "   setFriendly 0" << std::endl;
-			stream << "   setHostile 1" << std::endl;
-			stream << "   setFriendly 2" << std::endl;
-			exportUnits(stream, allyUnits, id, exportType);
-		}
-		else
-		{
-			stream << "script " << id << "_joints" << std::endl;
-			stream << "sub addjoints" << std::endl;
-
-			exportUnits(stream, neutralUnits, id, exportType);
-		}
+		stream << "   // Ally" << std::endl;
+		stream << "   setPlayer 3" << std::endl;
+		stream << "   setFriendly 0" << std::endl;
+		stream << "   setHostile 1" << std::endl;
+		stream << "   setFriendly 2" << std::endl;
+		exportUnits(stream, allyUnits, id);
 
 		stream << "endSub" << std::endl;
 		stream << "endScript" << std::endl;
@@ -295,7 +260,7 @@ ExporterUnits::~ExporterUnits()
 {
 }
 
-void ExporterUnits::addUnit(const std::string &name, const std::vector<std::string> &spawnText, const VC2 &position, float yRotation, float height, const std::string &scriptName, int side, const UnitProperties &properties, const StringProperties &stringProperties)
+void ExporterUnits::addUnit(const std::vector<std::string> &spawnText, const VC2 &position, float yRotation, float height, const std::string &scriptName, int side, const UnitProperties &properties, const StringProperties &stringProperties)
 {
 	Unit u;
 	u.spawnText = spawnText;
@@ -305,14 +270,6 @@ void ExporterUnits::addUnit(const std::string &name, const std::vector<std::stri
 	u.height = height;
 	u.properties = properties;
 	u.stringProperties = stringProperties;
-
-#ifdef LEGACY_FILES
-	if(name.find("Joint,") != name.npos)
-		u.isJoint = true;
-#else
-	if(name.find("joint/") != name.npos)
-		u.isJoint = true;
-#endif
 
 	// Store it to special file units if has export_file_name defined
 	{
@@ -365,10 +322,7 @@ void ExporterUnits::setSpawn(const VC2I &position)
 void ExporterUnits::save(const ExportOptions &options) const
 {
 	std::string fileName = options.fileName + std::string("\\") + options.id + std::string("_units.dhs");
-	data->save(fileName, options.id, EXPORT_UNITS);
-
-	std::string fileName2 = options.fileName + std::string("\\") + options.id + std::string("_joints.dhs");
-	data->save(fileName2, options.id, EXPORT_JOINTS);
+	data->save(fileName, options.id);
 
 	std::map<std::string, std::vector<Unit> >::iterator it = data->fileUnits.begin();
 	for(; it != data->fileUnits.end(); ++it)
@@ -387,7 +341,7 @@ void ExporterUnits::save(const ExportOptions &options) const
 		stream << script.c_str() << std::endl;
 		stream << "sub hax" << std::endl;
 
-		data->exportUnits(stream, it->second, options.id, EXPORT_UNITS);	
+		data->exportUnits(stream, it->second, options.id);	
 
 		stream << "endSub" << std::endl;
 		stream << "endScript" << std::endl;

@@ -4,6 +4,9 @@
 
 #include "AI_PathFind.h"
 
+namespace frozenbyte {
+namespace ai {
+
 class PathSimplifier
 {
 public:
@@ -13,6 +16,9 @@ public:
 		int maxHeightDifferenct);
 
 };
+
+} // end of namespace ai
+} // end of namespace frozenbyte
 
 #endif
 

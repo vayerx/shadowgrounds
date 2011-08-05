@@ -2,7 +2,7 @@
 #include "precompiled.h"
 
 #include "FogApplier.h"
-#include <istorm3d_scene.h>
+#include <IStorm3D_Scene.h>
 #include <map>
 
 using namespace std;

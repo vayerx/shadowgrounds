@@ -2,10 +2,12 @@
 #ifndef OGUIDRIVER_H
 #define OGUIDRIVER_H
 
-#pragma warning(disable : 4290) 
-#include "OGuiException.h"
-#include "IOGuiImage.h"
-#include "IOGuiFont.h"
+#ifdef _MSC_VER
+#pragma warning(disable : 4290)
+#endif
+#include "OguiException.h"
+#include "IOguiImage.h"
+#include "IOguiFont.h"
 
 class IStorm3D_StreamBuilder;
 class IStorm3D_VideoStreamer;

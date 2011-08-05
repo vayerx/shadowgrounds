@@ -11,16 +11,12 @@
 #define GORETYPE_BURN 6
 #define GORETYPE_GRIND 7
 #define GORETYPE_ELECTRIFIED 8
-#define GORETYPE_FALL 9
-#define GORETYPE_PARTIAL_FALL 9
-#define GORETYPE_SQUISH 11
-#define GORETYPE_PUNCH 12
 
-#define GORETYPE_AMOUNT 13
+#define GORETYPE_AMOUNT 9
 
 namespace game
 {
-  extern char *goreTypeName[GORETYPE_AMOUNT + 1];
+  extern const char *goreTypeName[GORETYPE_AMOUNT + 1];
   extern bool goreTypeRemovesOrigin[GORETYPE_AMOUNT + 1];
 }
 

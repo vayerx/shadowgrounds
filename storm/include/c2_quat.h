@@ -1,7 +1,7 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
 #pragma once
-
+#include "c2_vectors.h"
 
 //------------------------------------------------------------------
 // Prototypes and typedefs
@@ -357,6 +357,26 @@ public:
 		Vec3<A> temp(vector);
 		RotateVector(temp);
 		return temp;
+	}
+
+	Vec3<A> getEulerAngles() const;
+
+    static void rotateToward(const VC3 &a, const VC3 &b, QUAT &result)
+	{
+		VC3 axis = a.GetCrossWith(b);
+		float dot = a.GetDotWith(b);
+
+		if(dot < -0.99f)
+		{
+			result = QUAT();
+			return;
+		}
+
+		result.x = axis.x;
+		result.y = axis.y;
+		result.z = axis.z;
+		result.w = (dot + 1.0f);
+		result.Normalize();
 	}
 };
 

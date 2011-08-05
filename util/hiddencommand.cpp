@@ -6,17 +6,16 @@
 
 #include <assert.h>
 
-#include <windows.h>
-
 #include <stdlib.h>
-#include <malloc.h>
 #include <memory.h>
-#include <tchar.h>
-#include <process.h>
 
 #include "../system/Logger.h"
 
 #include "Debug_MemoryManager.h"
+
+#ifdef WIN32
+#include <tchar.h>
+#include <windows.h>
 
 bool hiddencommand(const char *command, bool wait_process )
 {
@@ -49,13 +48,11 @@ bool hiddencommand(const char *command, bool wait_process )
 	BOOL success = CreateProcess(NULL, foobuf, NULL, NULL, false,
 		CREATE_NEW_CONSOLE | NORMAL_PRIORITY_CLASS, NULL, NULL, &sis, &pis);
 
-  if (success )
-  {
-    DWORD pidValue = pis.dwProcessId;
-
-		// this won't work, why?
-    //int termstat;
-    //_cwait( &termstat, pidValue, _WAIT_CHILD );
+	if (success )
+	{
+	  // this won't work, why?
+	  //int termstat;
+	  //_cwait( &termstat, pidValue, _WAIT_CHILD );
 	if( wait_process )
 	{
 		DWORD excode = STILL_ACTIVE;
@@ -84,3 +81,12 @@ bool hiddencommand(const char *command, bool wait_process )
 }
 
 
+#else
+
+#include "igios.h"
+
+bool hiddencommand(const char *command, bool wait_process ) {
+	igios_unimplemented();
+	return false;
+}
+#endif

@@ -3,7 +3,9 @@
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 #include "file_package_manager.h"
 #include "empty_buffer.h"
@@ -78,7 +80,19 @@ struct FilePackageManagerData
 				return result;
 		}
 
-		// Not found
+		// Not found, try again all lowercase
+		for(unsigned int i = 0; i < fileName.size(); ++i)
+		{
+			if(isupper(fileName[i]))
+				fileName[i] = tolower(fileName[i]);
+		}
+
+		for(PackageMap::reverse_iterator it = packages.rbegin(); it != packages.rend(); ++it)
+		{
+			InputStream result = it->second->getFile(fileName);
+			if(!result.isEof())
+				return result;
+		}
 
 		if (logNonExisting)
 		{
@@ -86,6 +100,7 @@ struct FilePackageManagerData
 			// (as the instance would be different from the game's instance - unless used through a pointer given by the game)
 			//::Logger::getInstance()->error("FilePackageManager::getFile - File does not exist or is zero length.");
 			//::Logger::getInstance()->debug(fileName.c_str());
+      // igiosWarning("FilePackageManager::getFile - File does not exist or is zero length. (%s)\n",fileName.c_str());
 		}
 
 		InputStream inputStream;
@@ -93,6 +108,24 @@ struct FilePackageManagerData
 
 		inputStream.setBuffer(inputBuffer);
 		return inputStream;		
+	}
+
+	unsigned int getCrc(std::string fileName)
+	{
+		for(unsigned int i = 0; i < fileName.size(); ++i)
+		{
+			if(fileName[i] == '\\')
+				fileName[i] = '/';
+		}
+
+		for(PackageMap::reverse_iterator it = packages.rbegin(); it != packages.rend(); ++it)
+		{
+			unsigned int result = it->second->getCrc(fileName);
+			if(result != 0)
+				return result;
+		}
+
+		return 0;
 	}
 };
 
@@ -128,11 +161,16 @@ InputStream FilePackageManager::getFile(const std::string &fileName)
 	return data->getFile(fileName);
 }
 
+unsigned int FilePackageManager::getCrc(const std::string &fileName)
+{
+	return data->getCrc(fileName);
+}
+
 void FilePackageManager::setInputStreamErrorReporting(bool logNonExisting)
 {
 	// HACK: this goes directly to input file stream..
 	//frozenbyte::filesystem::setInputStreamErrorReporting(logNonExisting);
-	data->logNonExisting = logNonExisting;
+	//data->logNonExisting = logNonExisting;
 }
 
 

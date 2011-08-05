@@ -75,8 +75,8 @@ protected:
 	OguiButton*		background;
 	OguiButton*		foreground;
 	int				x;
-	int				w;
 	int				y;
+	int				w;
 	int				h;
 	int				id;
 	float			value;

@@ -1,6 +1,10 @@
 
 #include "precompiled.h"
 
+#include <sstream>
+#include <assert.h>
+#include <boost/lexical_cast.hpp>
+
 #include "LoadGameMenu.h"
 
 #ifdef PROJECT_SURVIVOR
@@ -15,10 +19,10 @@
 	#endif
 #endif
 
-#include "../system/timer.h"
+#include "../system/Timer.h"
 #include "../ogui/Ogui.h"
 #include "../game/Game.h"
-#include "../game/SaveGameVars.h"
+#include "../game/savegamevars.h"
 #include "../game/GameUI.h"
 #include "MenuCollection.h"
 #include "../game/DHLocaleManager.h"
@@ -36,10 +40,6 @@
 #include "../ogui/OguiCheckBox.h"
 #include "../ogui/OguiFormattedText.h"
 
-#include <sstream>
-#include <assert.h>
-#include <boost/lexical_cast.hpp>
-
 using namespace game;
 
 namespace ui
@@ -48,9 +48,8 @@ namespace ui
 bool LoadGameMenu::startAsCoop = false;
 int LoadGameMenu::selectedSelection = -1;
 
-namespace {
-	//const static int mission_max = 11;
 	int mission_max = 0;
+namespace {
 	std::vector< bool >	availableMissions;
 
 /*
@@ -204,11 +203,11 @@ LoadGameMenu::LoadGameMenu( MenuCollection* menu, MenuCollection::Fonts* fonts, 
   doubleClickHack( -1 ),
   doubleClickTimeHack( 0 ),
   hideLoadGame( true ),
-  survivorInfoScreen( NULL ),
   scrollCount( 0 ),
   scrollPosition( 0 ),
   buttonYMinLimit( 64 ),
   buttonYMaxLimit( 450 ),
+  survivorInfoScreen( NULL ),
 	bonusOptionWindow( NULL )
 {
 	assert( o_gui );
@@ -323,7 +322,7 @@ LoadGameMenu::LoadGameMenu( MenuCollection* menu, MenuCollection::Fonts* fonts, 
 		std::string newst_str = "";
 		availableMissions.resize( mission_max + 1 );
 
-		int time_loading_start = timeGetTime();
+		int time_loading_start = Timer::getCurrentTime();
 		bool show_loading_bar = false;
 
 		for( i = 1; i <= mission_max; i++ )
@@ -383,7 +382,7 @@ LoadGameMenu::LoadGameMenu( MenuCollection* menu, MenuCollection::Fonts* fonts, 
 			if(i == 5)
 			{
 				// loading first 5 entries took longer than 100 ms
-				if(timeGetTime() - time_loading_start > 100)
+				if(Timer::getCurrentTime() - time_loading_start > 100)
 				{
 					// show loading bar
 					show_loading_bar = true;
@@ -825,7 +824,7 @@ void LoadGameMenu::missionSelected( int m, int ex_selection )
 			if(startAsCoop) foo << "coop_";
 			foo << m;
 
-			bool add = game->getInfoForSavegame(foo.str().c_str(), "savegame" );
+			game->getInfoForSavegame(foo.str().c_str(), "savegame" );
 			survivorInfoScreen->ResetText();
 			survivorInfoScreen->SetTextString( "($savegametype)", savegame_type );
 			survivorInfoScreen->SetTextString( "($savegameversion)", savegame_version );

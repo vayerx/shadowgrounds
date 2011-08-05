@@ -1,10 +1,13 @@
 
 #include "precompiled.h"
 
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
+
 #include "visualizer.h"
 #include "physics_lib.h"
-#include <istorm3d_scene.h>
+#include <IStorm3D_Scene.h>
 #include "NxPhysics.h"
 
 
@@ -29,7 +32,7 @@ namespace {
 
 void visualize(PhysicsLib &physics, IStorm3D_Scene &scene, float range)
 {
-	float rangeSq = range*range;
+	// float rangeSq = range*range;
 
 	NxScene *pscene = physics.getScene();
 	if(!pscene)

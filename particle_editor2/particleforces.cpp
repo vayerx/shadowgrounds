@@ -1,10 +1,12 @@
+#include <boost/lexical_cast.hpp>
 
 #include "precompiled.h"
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
-
+#ifdef _MSC_VER
 #pragma warning( disable : 4800 )
+#endif
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -13,9 +15,9 @@
 #include <map>
 #include <list>
 #include <fstream>
-#include <storm3d_ui.h>
-#include "..\editor\string_conversions.h"
-#include "..\editor\parser.h"
+#include <Storm3D_UI.h>
+#include "../editor/string_conversions.h"
+#include "../editor/parser.h"
 #include "track.h"
 //#include "paramblock.h"
 #include "particletiming.h"
@@ -33,7 +35,6 @@ namespace {
 	int gravityId = 2;
 	int windId = 3;
 	int sideGravityId = 4;
-	int gravityPointId = 5;
 
 } // unnamed
 
@@ -91,15 +92,9 @@ void GravityParticleForce::preCalc(float t) {
 }
 	
 void GravityParticleForce::calcForce(Vector& force, const Vector& pos, const Vector& vel) {
-#if defined(PROJECT_AOV) && defined(PROJECT_PARTICLE_EDITOR)
-	force.x = 0.0f;
-	force.y = 0.0f;
-	force.z = -m_gravity * PARTICLE_TIME_SCALE;
-#else
 	force.x = 0.0f;
 	force.y = -m_gravity * PARTICLE_TIME_SCALE;
 	force.z = 0.0f;
-#endif
 }
 	
 void GravityParticleForce::parseFrom(const editor::ParserGroup& pg) {
@@ -131,15 +126,9 @@ void SideGravityParticleForce::preCalc(float t) {
 }
 	
 void SideGravityParticleForce::calcForce(Vector& force, const Vector& pos, const Vector& vel) {
-#if defined(PROJECT_AOV) && defined(PROJECT_PARTICLE_EDITOR)
-	force.x = 0.0f;
-	force.y = -m_sideGravity * PARTICLE_TIME_SCALE;
-	force.z = 0.0f;
-#else
 	force.x = 0.0f;
 	force.y = 0.0f;
 	force.z = -m_sideGravity * PARTICLE_TIME_SCALE;
-#endif
 }
 	
 void SideGravityParticleForce::parseFrom(const editor::ParserGroup& pg) {
@@ -149,61 +138,6 @@ void SideGravityParticleForce::parseFrom(const editor::ParserGroup& pg) {
 int SideGravityParticleForce::getTypeId() const
 {
 	return sideGravityId;
-}
-
-// GRAVITY POINT ---------------------------------------------------
-
-int GravityPointParticleForce::getType()
-{
-	return gravityPointId;
-}
-
-void GravityPointParticleForce::setGravity(float f) {
-	m_gravity = f;
-}
-	
-float GravityPointParticleForce::getGravity() {
-	return m_gravity;
-}
-
-void GravityPointParticleForce::setPoint(const VC3 &point) {
-	m_point = point;
-}
-	
-VC3 GravityPointParticleForce::getPoint() {
-	return m_point;
-}
-
-void GravityPointParticleForce::preCalc(float t) {
-
-}
-	
-void GravityPointParticleForce::calcForce(Vector& force, const Vector& pos, const Vector& vel) {
-	VC3 diff = pos - m_point;
-	VC3 diffNorm = diff.GetNormalized();
-	float diffLenSq = diff.GetSquareLength();
-	if (fabsf(diffLenSq) < 0.01f)
-	{
-		force.x = 0.0f;
-		force.y = 0.0f;
-		force.z = 0.0f;
-	} else {
-		// realistic gravity (bad)
-		//force = -diffNorm * 0.001f * m_gravity / diffLenSq;
-		// unrealisic gravity (better)
-		float diffLen = sqrtf(diffLenSq);
-		force = -diffNorm * 0.001f * m_gravity / diffLen;
-	}
-}
-	
-void GravityPointParticleForce::parseFrom(const editor::ParserGroup& pg) {
-	m_gravity = convertFromString<float>(pg.getValue("gravity", ""), 0.0f);
-	m_point = convertVectorFromString(pg.getValue("point", "0,0,0"));
-}
-
-int GravityPointParticleForce::getTypeId() const
-{
-	return gravityPointId;
 }
 
 // WIND -----------------------------------------------------

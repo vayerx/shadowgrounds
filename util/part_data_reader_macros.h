@@ -67,7 +67,7 @@ if (strcmp(key, stringname) == 0) \
 } 
 
 #define PDATA_GETFUNC(type, varname, funcname) \
-type funcname() \
+type funcname() const \
 { \
   return varname;\
 }
@@ -76,7 +76,7 @@ type funcname() \
 protected: \
   type varname; \
 public: \
-  type funcname() { return varname; } \
+  type funcname() const { return varname; } \
 
 #endif
 

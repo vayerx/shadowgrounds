@@ -184,31 +184,30 @@ GS_CMD_SIMPLE(136, setUnifiedHandleObjectVelocity, NONE)
 GS_CMD_SIMPLE(137, getUnifiedHandleObjectCenterPosition, NONE)
 GS_CMD_SIMPLE(138, setUnifiedHandleObjectCenterPosition, NONE)
 
-//GS_CMD_SIMPLE(139, getTerrainObjectMetaValueString, STRING)
+GS_CMD_SIMPLE(139, getTerrainObjectMetaValueString, STRING)
 
 GS_CMD_SIMPLE(140, getUnifiedHandleObjectDistanceToPosition, NONE)
 GS_CMD_SIMPLE(141, getUnifiedHandleObjectDistanceToPositionFloat, NONE)
 
-// previously, physSetGroupCont/Coll were here.
-GS_CMD_SIMPLE(142, _reservedMiscScripting142, NONE)
-GS_CMD_SIMPLE(143, _reservedMiscScripting143, NONE)
+GS_CMD_SIMPLE(142, physSetGroupCont, STRING)
+GS_CMD_SIMPLE(143, physSetGroupColl, STRING)
 
-//GS_CMD_SIMPLE(144, doesReplacementForTerrainObjectExist, NONE)
-//GS_CMD_SIMPLE(145, getReplacementForTerrainObject, NONE)
+GS_CMD_SIMPLE(144, doesReplacementForTerrainObjectExist, NONE)
+GS_CMD_SIMPLE(145, getReplacementForTerrainObject, NONE)
 
 GS_CMD_SIMPLE(146, unifiedHandleToValue, NONE)
 GS_CMD_SIMPLE(147, valueToUnifiedHandle, NONE)
 
-//GS_CMD_SIMPLE(148, findClosestTerrainObjectOfMaterial, STRING)
-//GS_CMD_SIMPLE(149, getTerrainObjectPosition, NONE)
+GS_CMD_SIMPLE(148, findClosestTerrainObjectOfMaterial, STRING)
+GS_CMD_SIMPLE(149, getTerrainObjectPosition, NONE)
 
 GS_CMD_SIMPLE(150, disableAllParticleSpawners, NONE)
 GS_CMD_SIMPLE(151, deleteAllParticleSpawners, NONE)
 
-//GS_CMD_SIMPLE(152, hasTerrainObjectMetaValueString, STRING)
+GS_CMD_SIMPLE(152, hasTerrainObjectMetaValueString, STRING)
 
-//GS_CMD_SIMPLE(153, getTerrainObjectVariable, STRING)
-//GS_CMD_SIMPLE(154, setTerrainObjectVariable, STRING)
+GS_CMD_SIMPLE(153, getTerrainObjectVariable, STRING)
+GS_CMD_SIMPLE(154, setTerrainObjectVariable, STRING)
 
 GS_CMD_SIMPLE(155, getControllerCursorScreenPositionX, NONE)
 GS_CMD_SIMPLE(156, getControllerCursorScreenPositionY, NONE)
@@ -217,15 +216,15 @@ GS_CMD_SIMPLE(157, isControllerSceneSelectionAvailable, NONE)
 GS_CMD_SIMPLE(158, getControllerSceneSelectionPosition, NONE)
 GS_CMD_SIMPLE(159, getControllerSceneSelectionUnit, NONE)
 
-//GS_CMD_SIMPLE(160, changeTerrainObjectTo, STRING)
+GS_CMD_SIMPLE(160, changeTerrainObjectTo, STRING)
 
 GS_CMD_SIMPLE(161, startScriptProcessForUnifiedHandle, STRING)
 
-//GS_CMD_SIMPLE(162, deleteTerrainObject, NONE)
+GS_CMD_SIMPLE(162, deleteTerrainObject, NONE)
 
-//GS_CMD_SIMPLE(163, setTerrainObjectDamageTextureFadeFactorToFloatValue, NONE)
-//GS_CMD_SIMPLE(164, setTerrainObjectByIdString, STRING)
-//GS_CMD_SIMPLE(165, getTerrainObjectIdString, NONE)
+GS_CMD_SIMPLE(163, setTerrainObjectDamageTextureFadeFactorToFloatValue, NONE)
+GS_CMD_SIMPLE(164, setTerrainObjectByIdString, STRING)
+GS_CMD_SIMPLE(165, getTerrainObjectIdString, NONE)
 
 GS_CMD_SIMPLE(166, spawnProjectileWithShooter, STRING)
 GS_CMD_SIMPLE(167, savegameStats, STRING)
@@ -252,20 +251,8 @@ GS_CMD_SIMPLE(183, isUnitPlayerControlled, NONE)
 GS_CMD_SIMPLE(184, openCombatSubWindowWithText, STRING)
 GS_CMD_SIMPLE(185, doesFileExist, STRING)
 
-GS_CMD_SIMPLE(186, makeUnreachableAreaFromPositionBlocked, NONE)
-
-GS_CMD_SIMPLE(187, getUnifiedHandleObjectByUniqueEditorObjectHandleString, STRING)
-GS_CMD_SIMPLE(188, getUnifiedHandleObjectByUniqueEditorObjectHandleHex, STRING)
-
-GS_CMD_SIMPLE(189, attachAddedParticleSpawnerToUnifiedHandleObject, NONE)
-
-GS_CMD_SIMPLE(190, getClawPosition, NONE)
-GS_CMD_SIMPLE(191, clawHasObject, NONE)
-
-GS_CMD_SIMPLE(192, spawnProjectileAttachingToUnifiedHandle, STRING)
-GS_CMD_SIMPLE(193, preloadPartTypeModel, STRING)
-GS_CMD_SIMPLE(194, preloadAnimation, STRING)
-GS_CMD_SIMPLE(195, setReflectionEnabled, INT)
+GS_CMD_SIMPLE(186, swapCursors, STRING)
+GS_CMD_SIMPLE(187, resetSwappedCursors, NONE)
 
 #undef GS_CMD_BASE
 

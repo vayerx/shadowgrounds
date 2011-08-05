@@ -39,7 +39,7 @@ HeightmapActor::HeightmapActor(NxPhysicsSDK &sdk_, NxScene &scene, const unsigne
 	}
 
 	heightField = sdk.createHeightField(heightDesc);
-	delete[] heightDesc.samples;
+	delete[] (NxU32 *) heightDesc.samples;
 
 	if(heightField)
 	{

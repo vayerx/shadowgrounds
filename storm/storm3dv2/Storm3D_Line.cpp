@@ -1,14 +1,16 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 #include "Storm3D_Line.h"
-#include "Storm3D.h"
+#include "storm3d.h"
 #include <cassert>
 
 #include "Storm3D_ShaderManager.h"
 #include "VertexFormats.h"
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 extern int storm3d_dip_calls;
 
@@ -122,8 +124,8 @@ void Storm3D_Line::Render(IDirect3DDevice9 *device)
 
 		// last corner points (next part will be connected to these)
 		// -jpk
-		VXFORMAT_PSD *lastp1;
-		VXFORMAT_PSD *lastp2;
+		VXFORMAT_PSD *lastp1 = NULL;
+		VXFORMAT_PSD *lastp2 = NULL;
 
 		for(unsigned int i = 0; i < points.size() - 1; ++i)
 		{

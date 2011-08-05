@@ -63,7 +63,7 @@ String::String(const int val)
 {
 	// Create string
 	char str[20];
-	itoa(val,str,10);
+	snprintf(str, 20, "%d", val);
 
 	// Copy
 	length=strlen(str);
@@ -197,7 +197,8 @@ String String::GetAndRemoveFirstWord(char separator)
 	String temp;
 
 	// Search for separator
-	for (int i=0;(i<length)&&(data[i]!=separator);i++); //OK
+	int i;
+	for (i=0;(i<length)&&(data[i]!=separator);i++); //OK
 	
 	// Found?
 	if (i==length)
@@ -226,7 +227,8 @@ String String::GetAndRemoveLastWord(char separator)
 	String temp;
 
 	// Search for separator
-	for (int i=length-1;(i>=0)&&(data[i]!=separator);i--); //OK
+	int i;
+	for (i=length-1;(i>=0)&&(data[i]!=separator);i--); //OK
 	
 	// Found?
 	if (i<0)
@@ -359,7 +361,7 @@ void String::operator=(const int val)
 
 	// Create string
 	char str[20];
-	itoa(val,str,10);
+	snprintf(str, 20, "%d", val);
 
 	// Copy
 	length=strlen(str);

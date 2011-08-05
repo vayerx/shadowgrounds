@@ -1,7 +1,7 @@
 #ifndef INCLUDED_PARTICLE_AREA_H
 #define INCLUDED_PARTICLE_AREA_H
 
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 #include "../particle_editor2/iparticlearea.h"
 
 class IStorm3D_Scene;

@@ -6,11 +6,8 @@
 #include "Game.h"
 #include "GameUI.h"
 #include "UnitList.h"
-#include "UnitActor.h"
-#include "unittypes.h"
 #include "../ui/LightManager.h"
 #include "../ui/DynamicLightManager.h"
-#include "ParticleSpawnerManager.h"
 #include "tracking/ObjectTracker.h"
 #include "tracking/ITrackerObject.h"
 
@@ -66,13 +63,6 @@ namespace game
 				return false;
 			}
 		}
-		else if (IS_UNIFIED_HANDLE_PARTICLE_SPAWNER(uh))
-		{
-			if (game->particleSpawnerManager)
-				return game->particleSpawnerManager->doesParticleSpawnerExist(uh);
-			else
-				return false;
-		}
 		else 
 		{
 			// TODO: other types.
@@ -93,26 +83,17 @@ namespace game
 			assert(game->gameUI->getTerrain()->doesTrackableUnifiedHandleObjectExist(uh));
 			return game->gameUI->getTerrain()->getTrackableUnifiedHandlePosition(uh);
 		}
-		else if (IS_UNIFIED_HANDLE_LIGHT(uh))
-		{
-			assert(game->gameUI->getLightManager()->doesLightExist(uh));
-			return game->gameUI->getLightManager()->getLightPosition(uh);
-		}
-		else if (IS_UNIFIED_HANDLE_DYNAMIC_LIGHT(uh))
-		{
-			assert(game->gameUI->getDynamicLightManager()->doesLightExist(uh));
-			return game->gameUI->getDynamicLightManager()->getLightPosition(uh);
-		}
+		//else if (IS_UNIFIED_HANDLE_LIGHT(uh))
+		//{
+		//	assert(game->gameUI->getLightManager()->doesLightExist(uh));
+			//return game->gameUI->getTerrain()->getLightPosition(uh);
+		//	return VC3(0,0,0);
+		//}
 		else if (IS_UNIFIED_HANDLE_TRACKER(uh))
 		{
 			ITrackerObject *t = game->objectTracker->getTrackerByUnifiedHandle(uh);
 			assert(t != NULL);
 			return t->getTrackerPosition();
-		}
-		else if (IS_UNIFIED_HANDLE_PARTICLE_SPAWNER(uh))
-		{
-			assert(game->particleSpawnerManager->doesParticleSpawnerExist(uh));
-			return game->particleSpawnerManager->getParticleSpawnerPosition(uh);
 		}
 		else 
 		{
@@ -129,39 +110,6 @@ namespace game
 			ITrackerObject *t = game->objectTracker->getTrackerByUnifiedHandle(uh);
 			assert(t != NULL);
 			t->setTrackerPosition(position);
-		}
-		else if (IS_UNIFIED_HANDLE_UNIT(uh))
-		{
-			assert(game->units->doesTrackableUnifiedHandleObjectExist(uh));
-			Unit *u = game->units->getUnitById(game->units->unifiedHandleToUnitId(uh));
-			UnitActor *ua = getUnitActorForUnit(u);
-			assert(ua != NULL);
-			ua->removeUnitObstacle(u);
-			u->setPosition(position);
-			ua->addUnitObstacle(u);
-		}
-		else if (IS_UNIFIED_HANDLE_TERRAIN_OBJECT(uh))
-		{
-			assert(game->gameUI->getTerrain()->doesTrackableUnifiedHandleObjectExist(uh));
-			int modelId = 0;
-			int instanceId = 0;
-			game->gameUI->getTerrain()->unifiedHandleToTerrainIds(uh, &modelId, &instanceId);
-			game->gameUI->getTerrain()->setTerrainObjectPosition(modelId, instanceId, position);
-		}
-		else if (IS_UNIFIED_HANDLE_LIGHT(uh))
-		{
-			assert(game->gameUI->getLightManager()->doesLightExist(uh));
-			game->gameUI->getLightManager()->setLightPositionByUnifiedHandle(uh, position);
-		}
-		else if (IS_UNIFIED_HANDLE_DYNAMIC_LIGHT(uh))
-		{
-			assert(game->gameUI->getDynamicLightManager()->doesLightExist(uh));
-			game->gameUI->getDynamicLightManager()->setLightPositionByUnifiedHandle(uh, position);
-		}
-		else if (IS_UNIFIED_HANDLE_PARTICLE_SPAWNER(uh))
-		{
-			assert(game->particleSpawnerManager->doesParticleSpawnerExist(uh));
-			game->particleSpawnerManager->setParticleSpawnerPosition(uh, position);
 		}
 		else 
 		{

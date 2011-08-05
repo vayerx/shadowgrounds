@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <cassert>
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 // Loose quadtree, extended to 3d space
 // Static, stores instances directly
@@ -462,7 +462,7 @@ StaticQuadtree<T>::StaticQuadtree(const VC2 &min_, const VC2 &max_)
 	AABB looseArea;
 
 	StaticQuadtree<T>::Node::calculateLooseArea(area, looseArea);	
-	root = new StaticQuadtree<T>::Node(area, looseArea, 0);
+	root = new Node(area, looseArea, 0);
 }
 
 template<class T>

@@ -6,12 +6,21 @@
 #include <boost/shared_ptr.hpp>
 #include <string>
 #include <d3d9.h>
+#include <d3dx9.h>
 #include <atlbase.h>
 #include <vector>
 
 class Storm3D_Texture;
 class IStorm3D_Logger;
 struct IDirect3DDevice9;
+
+#ifndef NDEBUG
+void activeShaderNames();
+void setTracing(bool tracing_);
+
+#else
+#define activeShaderNames() ;
+#endif
 
 namespace frozenbyte {
 namespace storm {
@@ -23,6 +32,9 @@ class VertexShader
 	
 	IDirect3DDevice9 &device;
 	std::vector<D3DVERTEXELEMENT9> elements;
+
+	std::string name;
+	CComPtr<IDirect3DVertexShader9> createVertexShader(IDirect3DDevice9 &device, const std::string &fileName);
 
 public:
 	VertexShader(IDirect3DDevice9 &device);
@@ -122,6 +134,9 @@ class PixelShader
 
 	std::vector<D3DVERTEXELEMENT9> elements;
 
+	std::string name;
+
+	CComPtr<IDirect3DPixelShader9> createPixelShader(IDirect3DDevice9 &device, const std::string &fileName);
 public:
 	PixelShader(IDirect3DDevice9 &device);
 	~PixelShader();
@@ -235,6 +250,8 @@ void enableMipFiltering(IDirect3DDevice9 &device, int startStage, int endStage, 
 
 void setInverseCulling(bool enable);
 void setCulling(IDirect3DDevice9 &device, DWORD type);
+
+void dumpD3DXMatrix(const D3DXMATRIX &mat);
 
 } // storm
 } // frozenbyte

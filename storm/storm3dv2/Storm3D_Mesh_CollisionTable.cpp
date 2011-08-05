@@ -1,13 +1,15 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
 #include "storm3d_mesh_collisiontable.h"
 #include "storm3d_mesh.h"
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 #include <algorithm>
 #include <string>
@@ -222,8 +224,6 @@ void Storm3D_Mesh_CollisionTable::ReBuild(Storm3D_Mesh *mesh)
 	// TEMP!!!
 	//return;
 
-	int memory_before = 0; //frozenbyte::debug::Debug_MemoryManager::amountMemoryInUse();
-
 	// Set owner
 	owner=mesh;
 
@@ -235,10 +235,6 @@ void Storm3D_Mesh_CollisionTable::ReBuild(Storm3D_Mesh *mesh)
 		return;
 
 	face_amount=owner->face_amount[0];
-
-	if (owner->collision_faces != -1)
-		face_amount = owner->collision_faces;
-
 	SAFE_DELETE_ARRAY(faces);
 	faces = new CollisionFace[face_amount];
 

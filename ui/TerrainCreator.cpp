@@ -5,16 +5,17 @@
 #include "../game/SimpleOptions.h"
 #include "../game/options/options_memory.h"
 #include "../util/ModelTextureUncompress.h"
-#include "../util/parser.h"
+#include "../util/Parser.h"
 #include "../util/LightAmountManager.h"
 #include "../game/GameMap.h"
 #include "../ui/Terrain.h"
 #include <Storm3D_UI.h>
-#include <istorm3d_terrain_renderer.h>
 #include <istorm3d_terrain_decalsystem.h>
 
 #include <time.h>
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
+
+#include "../util/fb_assert.h"
 
 namespace ui {
 
@@ -48,6 +49,12 @@ Terrain *TerrainCreator::createTerrain(game::GameMap *gameMap, ui::LightManager 
 
 	std::string forceMapName = Parser::GetString(scene_properties, "forceheightmap");
 	*/
+
+	/*if (configFile == NULL)
+	{
+		fb_assert(!"TerrainCreator::createTerrain - Null configFile parameter given.");
+	}*/
+
 	std::string forceMapName;
 	Terrain *terrain = new Terrain(storm3d, scene, configFile, forceMapName.c_str(), gameMap->getAreaMap(), gameMap, lightManager, ambientSoundManager);
 

@@ -198,7 +198,7 @@ namespace game
 
 		virtual const char *getStatusInfo() const;
 
-		virtual void *getVisualObjectDataId();
+		virtual void *getVisualObjectDataId() const;
 
 		/** 
 		 * This method is here to implement IPointerObject interface.
@@ -207,17 +207,17 @@ namespace game
 		 * @return VC3, the world position where any pointer tracking this
 		 * unit should be placed.
 		 */
-		virtual const VC3 &getPointerPosition();
+		virtual const VC3 &getPointerPosition() const;
 
 		// to get the actual unit middle position...
-		virtual const VC3 getPointerMiddleOffset();
+		virtual const VC3 getPointerMiddleOffset() const;
 
 		/**
 		 * Returns the root part of the unit.
 		 * @return Part*, unit's root part (usually some torso for armors).
 		 * Return value is NULL if the unit has no root part.
 		 */
-		Part *getRootPart();
+		Part *getRootPart() const;
 
 		/** 
 		 * Set the root part of the unit (armor's root is usually a torso).
@@ -240,7 +240,7 @@ namespace game
 		 * combat. 
 		 * @return Character*, the character assigned to this unit or NULL if none.
 		 */
-		Character *getCharacter();
+		Character *getCharacter() const;
 
 		/**
 		 * Set the character for this unit.
@@ -259,7 +259,7 @@ namespace game
 		 * NO_UNIT_OWNER if none.
 		 */
 		//int getOwner();
-		inline int getOwner()
+		inline int getOwner() const
 		{
 			return owner;
 		}
@@ -271,7 +271,7 @@ namespace game
 		 * @return boolean, true if unit is active (can take part in combat), 
 		 * else false.
 		 */
-		inline bool isActive()
+		inline bool isActive() const
 		{
 			return active;
 		}
@@ -289,7 +289,7 @@ namespace game
 		 * Returns true if this unit is one of the selected units.
 		 * @return bool, true if unit is selected, else false.
 		 */
-		bool isSelected();
+		bool isSelected() const;
 
 		/** 
 		 * Sets the unit selected or unselected.
@@ -301,37 +301,37 @@ namespace game
 		 * Returns unit's current behaviour mode.
 		 * @return UNIT_MODE, the unit's behaviour mode.
 		 */
-		UNIT_MODE getMode();
+		UNIT_MODE getMode() const;
 
 		/** 
 		 * Returns the overall heat of the unit.
 		 * @return int, the unit's heat.
 		 */
-		int getHeat();
+		int getHeat() const;
 
 		/** 
 		 * Returns the maximum overall heat.
 		 * @return int, the unit's max heat.
 		 */
-		int getMaxHeat();
+		int getMaxHeat() const;
 
 		/** 
 		 * Returns the energy of the unit.
 		 * @return int, the unit's energy.
 		 */
-		int getEnergy();
+		int getEnergy() const;
 
 		/** 
 		 * Returns the cooling amount of the unit.
 		 * @return int, the unit's cooling amount (done every coolrate ticks).
 		 */
-		int getCoolingAmount();
+		int getCoolingAmount() const;
 
 		/** 
 		 * Returns the recharging amount of the unit.
 		 * @return int, the unit's recharging amount (done every rechargerate ticks).
 		 */
-		int getRechargingAmount();
+		int getRechargingAmount() const;
 
 		/** 
 		 * Returns the max energy of the unit.
@@ -339,13 +339,13 @@ namespace game
 		 * damage inflicted to power cells.)
 		 * @return int, the unit's current max energy.
 		 */
-		int getMaxEnergy();
+		int getMaxEnergy() const;
 
 		/** 
 		 * Returns the starting max energy of the unit.
 		 * @return int, the max energy of the unit at the start of the combat.
 		 */
-		int getStartEnergy();
+		int getStartEnergy() const;
 
 		// re-calculates overall heat based on heat of the parts
 		//int calculateHeat();
@@ -398,17 +398,17 @@ namespace game
 
 		void calculateWeight();
 
-		int getWeight();
+		int getWeight() const;
 
 		void calculateRunningValue();
 		void calculateStealthValue();
 		void calculateReconValue();
 
-		int getRunningValue();
-		int getStealthValue();
-		int getReconValue();
+		int getRunningValue() const;
+		int getStealthValue() const;
+		int getReconValue() const;
 
-		bool isUnitMirrorSide();
+		bool isUnitMirrorSide() const;
 
 		void setUnitMirrorSide(bool mirrorSide);
 
@@ -425,7 +425,7 @@ namespace game
 		 * A proper unit actor is selected based on this id number.
 		 * @return int, the type id number of the unit.
 		 */
-		int getUnitTypeId();
+		int getUnitTypeId() const;
 
 		void setUnitTypeId(int id);
 
@@ -433,7 +433,7 @@ namespace game
 		 * Returns the type of the unit.
 		 * @return UnitType, the type of the unit.
 		 */
-		inline UnitType *getUnitType() { return unitType; }
+		inline UnitType *getUnitType() const { return unitType; }
 
 		void setUnitType(UnitType *unitType);
 
@@ -462,13 +462,13 @@ namespace game
 		 */
 		void setToBeSeenUnit(Unit *seeUnit);
 
-		Unit *getToBeSeenUnit();
+		Unit *getToBeSeenUnit() const;
 
 		void setToBeSeenUnitDistance(float distance);
 		
-		float getToBeSeenUnitDistance();
+		float getToBeSeenUnitDistance() const;
 
-		bool isAnimated();
+		bool isAnimated() const;
 		void setAnimated(bool animated);
 
 		/**
@@ -480,24 +480,24 @@ namespace game
 		 * Returns the unit that this unit is currently seeing (looking at).
 		 * @return Unit*, pointer to unit seen or NULL if no units seen.
 		 */
-		inline Unit *getSeeUnit()
+		inline Unit *getSeeUnit() const
 		{
 			return seeingUnit;
 		}
 
-		float getSeeUnitDistance();
+		float getSeeUnitDistance() const;
 
 		/**
 		 * Checks whether unit is at it's waypoint.
 		 * @return bool, true if unit has reached it's waypoint, else false.
 		 */
-		bool atWaypoint();
+		bool atWaypoint() const;
 
 		/**
 		 * Checks whether unit is at it's final destination.
 		 * @return bool, true if unit has reached it's destination, else false.
 		 */
-		bool atFinalDestination();
+		bool atFinalDestination() const;
 
 		/**
 		 * Deprecated.
@@ -507,7 +507,7 @@ namespace game
 		/**
 		 * Deprecated.
 		 */
-		int getRotateYSpeed();
+		int getRotateYSpeed() const;
 
 		/**
 		 * Returns the visualization of this unit.
@@ -515,7 +515,7 @@ namespace game
 		 * visualized.
 		 */
 		//virtual ui::VisualObject *getVisualObject();
-		ui::VisualObject *Unit::getVisualObject()
+		ui::VisualObject *getVisualObject() const
 		{
 			return visualObject;
 		}
@@ -537,33 +537,35 @@ namespace game
 		inline const VC3 &getFinalDestination() const { return finalDestination; }
 		//QUAT getRotation();
 
-		virtual int getAnimation();
+		virtual int getAnimation() const;
 		virtual void setAnimation(int animation);
 
-		virtual int getBlendAnimation(int num);
-		virtual void setBlendAnimation(int num, int animation);
+		virtual int getBlendAnimation(unsigned int num) const;
+		virtual void setBlendAnimation(unsigned int num, int animation);
 
 		virtual void setAnimationSpeedFactor(float speedFactor);
-		virtual float getAnimationSpeedFactor();
+		virtual float getAnimationSpeedFactor() const;
 
-		int getAnimationTimeLeft();
+		int getAnimationTimeLeft() const;
 		void setAnimationTimeLeft(int animationTimeLeft);
 
-		inline int getWalkDelay()
+		inline int getWalkDelay() const
 		{
 			return walkDelay; 
 		}
 		void setWalkDelay(int delayTicks);
-		inline int getFireReloadDelay(int weapon)
+		inline int getFireReloadDelay(unsigned int weapon) const
 		{
+			assert(weapon < UNIT_MAX_WEAPONS);
 			return fireReloadDelay[weapon]; 
 		}
-		void setFireReloadDelay(int weapon, int delayTicks);
-		inline int getFireWaitDelay(int weapon)
+		void setFireReloadDelay(unsigned int weapon, int delayTicks);
+		inline int getFireWaitDelay(unsigned int weapon) const
 		{
+			assert(weapon < UNIT_MAX_WEAPONS);
 			return fireWaitDelay[weapon]; 
 		}
-		void setFireWaitDelay(int weapon, int delayTicks);
+		void setFireWaitDelay(unsigned int weapon, int delayTicks);
 
 		// call when starting combat
 		void initWeapons();
@@ -572,53 +574,53 @@ namespace game
 		void uninitWeapons();
 
 		// returns the first part it happens to find (in unspecified order), or null if no part of such part type
-		Part *seekPartOfPartType(PartType *partType);
+		Part *seekPartOfPartType(const PartType *partType) const;
 
-		inline Weapon *getWeaponType(int weapon) { return weaponType[weapon]; }
+		inline Weapon *getWeaponType(unsigned int weapon) const { assert(weapon < UNIT_MAX_WEAPONS) ;return weaponType[weapon]; }
 		void setWeaponType(int weapon, Weapon *weaponType);
-		int getWeaponPosition(int weapon);
-		int getWeaponAmmoAmount(int weapon);
-		int getWeaponMaxAmmoAmount(int weapon);
-		AmmoPack *getWeaponAmmoType(int weapon);
+		int getWeaponPosition(unsigned int weapon) const;
+		int getWeaponAmmoAmount(unsigned int weapon) const;
+		int getWeaponMaxAmmoAmount(unsigned int weapon) const;
+		AmmoPack *getWeaponAmmoType(unsigned int weapon) const;
 
 
-		Weapon *getCustomizedWeaponType(Weapon *weapon);
+		Weapon *getCustomizedWeaponType(const Weapon *weapon) const;
 		void deleteCustomizedWeaponTypes();
 		Weapon *createCustomizedWeaponType(Weapon *weapon);
 
 		inline Projectile *getWeaponCopyProjectile(int weapon) { return weaponCopyProjectile[weapon]; }
-		void setWeaponCopyProjectile(int weapon, Projectile *projectile);
+		void setWeaponCopyProjectile(unsigned int weapon, Projectile *projectile);
 
-		void setWeaponFireTime(int weapon, int delayTicks);
+		void setWeaponFireTime(unsigned int weapon, int delayTicks);
 
-		inline int getWeaponFireTime(int weapon) { return weaponFireTime[weapon]; }
+		inline int getWeaponFireTime(unsigned int weapon) const { assert(weapon < UNIT_MAX_WEAPONS); return weaponFireTime[weapon]; }
 
-		float getMaxWeaponRange();
+		float getMaxWeaponRange() const;
 
-		bool hasAnyWeaponReady();
+		bool hasAnyWeaponReady() const;
 
 		// returns false if was out of ammo
-		bool useWeaponAmmo(int weapon);
+		bool useWeaponAmmo(unsigned int weapon);
 
 		// returns false, if no reload was done 
 		// (out of ammo or clip already full)
-		bool reloadWeaponAmmoClip(int weapon, bool instantReload = false);
+		bool reloadWeaponAmmoClip(unsigned int weapon, bool instantReload = false);
 
-		int getWeaponAmmoInClip(int weapon);
+		int getWeaponAmmoInClip(unsigned int weapon) const;
 
-		void clearWeaponAmmoInClip(int weapon);
+		void clearWeaponAmmoInClip(unsigned int weapon);
 
 		// weapon selected in use
 		// (unoperable weapons are always inactive too..?)
-		bool isWeaponActive(int weapon);
+		bool isWeaponActive(int weapon) const;
 		void setWeaponActive(int weapon, bool active);
 
 		// weapon operable (not out of ammo or broken)
-		bool isWeaponOperable(int weapon);
+		bool isWeaponOperable(int weapon) const;
 		void setWeaponOperable(int weapon, bool operable);
 
 		// weapon model visible
-		bool isWeaponVisible(int weapon);
+		bool isWeaponVisible(int weapon) const;
 		void setWeaponVisible(int weapon, bool visible);
 
 		// sets each weapon active or inactive based on the given firetype
@@ -628,25 +630,25 @@ namespace game
 		void inactivateAntiVehicleWeapons();
 
 		// returns true if unit has some weapons for the given firetype
-		bool hasWeaponsForFiretype(FireType fireType);
+		bool hasWeaponsForFiretype(FireType fireType) const;
 
-		int getWeaponLoopSoundHandle(int weapon);
-		int getWeaponLoopSoundKey(int weapon);
-		void setWeaponLoopSoundHandle(int weapon, int handle, int key);
+		int getWeaponLoopSoundHandle(unsigned int weapon) const;
+		int getWeaponLoopSoundKey(unsigned int weapon) const;
+		void setWeaponLoopSoundHandle(unsigned int weapon, int handle, int key);
 
-		int getWeaponSoundHandle(int weapon);
-		void setWeaponSoundHandle(int weapon, int handle);
+		int getWeaponSoundHandle(unsigned int weapon) const;
+		void setWeaponSoundHandle(unsigned int weapon, int handle);
 
 		void setSelectedWeapon(int weaponNumber);
-		int getSelectedWeapon();
+		int getSelectedWeapon() const;
 
 		void setSelectedSecondaryWeapon(int weaponNumber);
-		int getSelectedSecondaryWeapon();
+		int getSelectedSecondaryWeapon() const;
 
-		int getWeaponByWeaponType(int weaponTypeId);
+		int getWeaponByWeaponType(int weaponTypeId) const;
 
 		//bool isDestroyed();
-		bool isDestroyed()
+		bool isDestroyed() const
 		{
 			return destroyed;
 		}
@@ -655,133 +657,133 @@ namespace game
 
 		void setPath(frozenbyte::ai::Path *path);
 
-		frozenbyte::ai::Path *getPath();
+		frozenbyte::ai::Path *getPath() const;
 
 		void setPathIndex(int pathIndex);
-		int getPathIndex();
-		bool isAtPathEnd();
+		int getPathIndex() const;
+		bool isAtPathEnd() const;
 
-		int getBlockedTime();
+		int getBlockedTime() const;
 		void increaseBlockedTime();
 		void clearBlockedTime();
 
-		int getNonBlockedTime();
+		int getNonBlockedTime() const;
 		void increaseNonBlockedTime();
 		void clearNonBlockedTime();
 
 		void setAI(void *ai);
-		void *getAI();
+		void *getAI() const;
 
-		bool isOnGround();
+		bool isOnGround() const;
 		void setOnGround(bool onGround);
 
-		bool isGroundFriction();
+		bool isGroundFriction() const;
 		void setGroundFriction(bool groundFriction);
 
-		char *getScript();
-		void setScript(char *scriptName);
+		char *getScript() const;
+		void setScript(const char *scriptName);
 
-		Unit *getLeader();
+		Unit *getLeader() const;
 		void setLeader(Unit *unit);
 
 		void restoreDefaultSpeed();
 		void setSpeed(UNIT_SPEED speed);
-		inline Unit::UNIT_SPEED getSpeed()
+		inline Unit::UNIT_SPEED getSpeed() const
 		{
 			return speed;
 		}
 
 		void setMoveState(UNIT_MOVE_STATE moveState);
-		Unit::UNIT_MOVE_STATE getMoveState();
+		Unit::UNIT_MOVE_STATE getMoveState() const;
 		void setMoveStateCounter(int moveStateCounter);
-		int getMoveStateCounter();
+		int getMoveStateCounter() const;
 
-		float getAngleTo(const VC3 &toPosition);
+		float getAngleTo(const VC3 &toPosition) const;
 
 		void setTurnToAngle(float angle);
-		bool isTurning();
+		bool isTurning() const;
 		void stopTurning();
-		float getTurnToAngle();
+		float getTurnToAngle() const;
 
 		void setSpottedScriptDelay(int delayTicks);
-		int getSpottedScriptDelay();
+		int getSpottedScriptDelay() const;
 
 		void setHitScriptDelay(int delayTicks);
-		int getHitScriptDelay();
+		int getHitScriptDelay() const;
 		void setHitByUnit(Unit *unit, Bullet *hitBullet);
-		Unit *getHitByUnit();
-		Bullet *getHitByBullet();
+		Unit *getHitByUnit() const;
+		Bullet *getHitByBullet() const;
 
 		void setHitMissScriptDelay(int delayTicks);
-		int getHitMissScriptDelay();
+		int getHitMissScriptDelay() const;
 		void setHitMissByUnit(Unit *unit);
-		Unit *getHitMissByUnit();
+		Unit *getHitMissByUnit() const;
 
 		void setPointedScriptDelay(int delayTicks);
-		int getPointedScriptDelay();
+		int getPointedScriptDelay() const;
 		void setPointedByUnit(Unit *unit);
-		Unit *getPointedByUnit();
+		Unit *getPointedByUnit() const;
 
 		void setHearNoiseScriptDelay(int delayTicks);
-		int getHearNoiseScriptDelay();
+		int getHearNoiseScriptDelay() const;
 		void setHearNoiseByUnit(Unit *unit);
-		Unit *getHearNoiseByUnit();
+		Unit *getHearNoiseByUnit() const;
 
 		void setSpawnCoordinates(VC3 &spawn);
-		VC3 getSpawnCoordinates();
+		VC3 getSpawnCoordinates() const;
 		void clearSpawnCoordinates();
-		bool hasSpawnCoordinates();
+		bool hasSpawnCoordinates() const;
 
 		void setIdleTime(int idleTime);
-		int getIdleTime();
+		int getIdleTime() const;
 
 		void setLookBetaAngle(float lookBetaAngle);
-		float getLookBetaAngle();
+		float getLookBetaAngle() const;
 
-		bool isDirectControl();
+		bool isDirectControl() const;
 		void setDirectControl(bool directControl);
 		void setDirectControlType(UNIT_DIRECT_CONTROL_TYPE directControlType);
-		UNIT_DIRECT_CONTROL_TYPE getDirectControlType();
+		UNIT_DIRECT_CONTROL_TYPE getDirectControlType() const;
 
-		int getGroupNumber();
+		int getGroupNumber() const;
 		void setGroupNumber(int groupNumber);
 
-		int getHP();
+		int getHP() const;
 		void setHP(int hp);
 
-		int getMaxHP();
+		int getMaxHP() const;
 		void setMaxHP(int maxHP);
 
-		float getPoisonResistance();
+		float getPoisonResistance() const;
 		void setPoisonResistance(float value);
 
-		float getCriticalHitPercent();
+		float getCriticalHitPercent() const;
 		void setCriticalHitPercent(float value);
 
 		void enableHPGain(float limit, int amount, int delay, int startdelay, float damagefactor);
 		void disableHPGain(void);
-		float getHPGainLimit(void);
-		int getHPGainAmount(void);
-		int getHPGainDelay(void);
-		int getHPGainStartDelay(void);
-		int getHPGainStartTime(void);
-		float getHPGainDamageFactor(void);
-		int getLastTimeDamaged(void);
+		float getHPGainLimit(void) const;
+		int getHPGainAmount(void) const;
+		int getHPGainDelay(void) const;
+		int getHPGainStartDelay(void) const;
+		int getHPGainStartTime(void) const;
+		float getHPGainDamageFactor(void) const;
+		int getLastTimeDamaged(void) const;
 		void setLastTimeDamaged(int time);
 		void setHPGainStartTime(int time);
 
 		void setTurningSound(int handle, int timeNow);
-		int getTurningSound();
-		int getTurningSoundStartTime();
-		int getTurningSoundVolume();
-		int getTurningSoundFrequency();
+		int getTurningSound() const;
+		int getTurningSoundStartTime() const;
+		int getTurningSoundVolume() const;
+		int getTurningSoundFrequency() const;
 		void setTurningSoundVolume(int vol);
 		void setTurningSoundFrequency(int freq);
 
-		int calculateArmorRating();
+		int calculateArmorRating() const;
 
 		void setSightBonus(bool sightBonus);
-		bool hasSightBonus();
+		bool hasSightBonus() const;
 
 		void useStoredPath(int pathNumber);
 
@@ -789,41 +791,41 @@ namespace game
 			const VC3 &startPosition, const VC3 &endPosition);
 
 		void prepareAnimationSet();
-		ui::AnimationSet *getAnimationSet();
+		ui::AnimationSet *getAnimationSet() const;
 
 		void setLastBoneAimDirection(float angle);
-		float getLastBoneAimDirection();
+		float getLastBoneAimDirection() const;
 
 		void setLastBoneAimBetaAngle(float angle);
-		float getLastBoneAimBetaAngle();
+		float getLastBoneAimBetaAngle() const;
 
 		void setFlashlightDirection(float angle);
-		float getFlashlightDirection();
+		float getFlashlightDirection() const;
 
 		void setStealthing(bool stealthing);
-		bool isStealthing();
+		bool isStealthing() const;
 
-		bool isStealthVisualInUse();
+		bool isStealthVisualInUse() const;
 		void setStealthVisualInUse(bool useStealth);
 
 		void setReconAvailableFlag(bool reconAvailable);
-		bool isReconAvailableFlag();
+		bool isReconAvailableFlag() const;
 
 		void setFallenOnBack(bool fallenOnBack);
-		bool hasFallenOnBack();
+		bool hasFallenOnBack() const;
 
-		float getFiringSpreadFactor();
+		float getFiringSpreadFactor() const;
 		void setFiringSpreadFactor(float firingSpreadFactor);
 
 		void setMovingForward();
 		void setMovingBackward();
 		void setMovingSideways();
 
-		bool wasMovingForward();
-		bool wasMovingBackward();
-		bool wasMovingSideways();
+		bool wasMovingForward() const;
+		bool wasMovingBackward() const;
+		bool wasMovingSideways() const;
 
-		float getRushDistance();
+		float getRushDistance() const;
 		void setRushDistance(float rushDistance);
 	
 		// call for every non-sneaky step taken by the unit,
@@ -834,37 +836,37 @@ namespace game
 		void retireFromCombat();
 
 		void setArmorAmount(int value);
-		int getArmorAmount();
+		int getArmorAmount() const;
 		void setArmorClass(int value);
-		int getArmorClass();
+		int getArmorClass() const;
 
 		void setMuzzleflashVisualEffect(ui::VisualEffect *visualEffect, int muzzleflashDuration);
 		void advanceMuzzleflashVisualEffect();
-		bool isMuzzleflashVisible();
+		bool isMuzzleflashVisible() const;
 		void resetMuzzleflashDuration(int muzzleflashDuration, int atTime = 0);
-		ui::VisualEffect *getMuzzleflashVisualEffect();
+		ui::VisualEffect *getMuzzleflashVisualEffect() const;
 
 		// HACK: this is kinda hacky way to implement eject
 		void setEjectVisualEffect(ui::VisualEffect *visualEffect, int ejectDuration);
 		void advanceEjectVisualEffect();
-		bool isEjectVisible();
+		bool isEjectVisible() const;
 		void resetEjectDuration(int ejectDuration, int atTime = 0);
-		ui::VisualEffect *getEjectVisualEffect();
+		ui::VisualEffect *getEjectVisualEffect() const;
 
 		// laser pointer thing
 		void setPointerVisualEffect(ui::VisualEffect *visualEffect);
 		void setPointerHitVisualEffect(ui::VisualEffect *visualEffect);
-		ui::VisualEffect *getPointerVisualEffect(void);
-		ui::VisualEffect *getPointerHitVisualEffect(void);
+		ui::VisualEffect *getPointerVisualEffect(void) const;
+		ui::VisualEffect *getPointerHitVisualEffect(void) const;
 
 		//void setSpotlight(ui::Spotlight *spotlight);
 		//ui::Spotlight *getSpotlight();
 
 		// TODO: halo class instead of direct spotlight usage!
 		void setSecondarySpotlight(ui::Spotlight *spotlight);
-		ui::Spotlight *getSecondarySpotlight();
+		ui::Spotlight *getSecondarySpotlight() const;
 
-		bool isClipReloading();
+		bool isClipReloading() const;
 
 		// returns true if ammo was added, false if cannot take that
 		// ammo, or ammo amount full.
@@ -872,79 +874,79 @@ namespace game
 		bool setWeaponAmmo(AmmoPack *ammoPackType, int amount);
 
 		// WARNING: not really "strafed", but "45 angle instead of 90"
-		bool isLastMoveStrafed();
+		bool isLastMoveStrafed() const;
 		void setLastMoveStrafed(bool lastMoveStrafed);
 
 		void setForcedAnimation(int anim);
-		int getForcedAnimation();
+		int getForcedAnimation() const;
 
 		void addItem(int number, Item *item);
-		Item *getItem(int number);
+		Item *getItem(int number) const;
 		Item *removeItem(int number);
-		int getItemNumberByTypeId(int itemTypeId);
+		int getItemNumberByTypeId(int itemTypeId) const;
 
-		Flashlight *getFlashlight();
+		Flashlight *getFlashlight() const;
 		void setFlashlight(Flashlight *flashlight);
 
-		bool wasLastPathfindSuccess();
+		bool wasLastPathfindSuccess() const;
 		void setLastPathfindSuccess(bool pathfindSuccess);
 
 		void setImmortal(bool immortal, bool run_hitscript = false);
-		bool isImmortal();
-		bool isImmortalWithHitScript();
+		bool isImmortal() const;
+		bool isImmortalWithHitScript() const;
 
 		void setJumpCounter(int jumpTickLength);
-		int getJumpCounter();
+		int getJumpCounter() const;
 		void setJumpTotalTime(int jumpTotalTime);
-		int getJumpTotalTime();
+		int getJumpTotalTime() const;
 
 		void setTurnedTime(int turnedTime);
-		int getTurnedTime();
+		int getTurnedTime() const;
 
 		void setDeathBleedDelay(int bleedDelay);
-		int getDeathBleedDelay();
+		int getDeathBleedDelay() const;
 
 		void setFiringInProgress(bool firingInProgress);
-		bool isFiringInProgress();
+		bool isFiringInProgress() const;
 
 		void addPositionToBacktrack(const VC3 &position, const VC3 &oldPosition);
-		bool hasMovedSinceOldestBacktrack(float movementTreshold);
-		bool hasAttemptedToMoveAllBacktrackTime();
+		bool hasMovedSinceOldestBacktrack(float movementTreshold) const;
+		bool hasAttemptedToMoveAllBacktrackTime() const;
 
-		const char *getIdString();
+		const char *getIdString() const;
 		void setIdString(const char *idstring);
 
 		int getIdNumber() const;
 		void setIdNumber(int id);
 
-		const char *getExecuteTipText();
+		const char *getExecuteTipText() const;
 		void setExecuteTipText(const char *executeTip);
 
 		void setStrafeRotationOffset(float rotationOffset);
-		float getStrafeRotationOffset();
+		float getStrafeRotationOffset() const;
 		void setStrafeAimOffset(float aimOffset);
-		float getStrafeAimOffset();
+		float getStrafeAimOffset() const;
 
 		void setCameraRelativeJumpDirections(bool forward, bool backward, bool left, bool right);
-		void getCameraRelativeJumpDirections(bool *forward, bool *backward, bool *left, bool *right);
+		void getCameraRelativeJumpDirections(bool *forward, bool *backward, bool *left, bool *right) const;
 		void setUnitRelativeJumpDirections(bool forward, bool backward, bool left, bool right);
-		void getUnitRelativeJumpDirections(bool *forward, bool *backward, bool *left, bool *right);
+		void getUnitRelativeJumpDirections(bool *forward, bool *backward, bool *left, bool *right) const;
 		void setJumpAnim(int anim);
-		int getJumpAnim();
+		int getJumpAnim() const;
 
-		int getPendingWeaponChangeRequest();
+		int getPendingWeaponChangeRequest() const;
 		void setPendingWeaponChangeRequest(int pendingWeaponId);
 
-		int getJumpNotAllowedTime();
+		int getJumpNotAllowedTime() const;
 		void setJumpNotAllowedTime(int jumpNotAllowedTime);
 
 		void makeGhostOfFuture();
-		bool isGhostOfFuture();
-		int getGhostTime();
+		bool isGhostOfFuture() const;
+		int getGhostTime() const;
 		void setGhostTime(int ghostTime);
 
-		int getWeaponForSharedClip(int weapon);
-		int getAttachedWeapon(int weapon);
+		int getWeaponForSharedClip(unsigned int weapon) const;
+		int getAttachedWeapon(int weapon) const;
 
 		void addSlowdown(float slowdownFactor);
 		void setSlowdown(float slowdownFactor);
@@ -957,97 +959,97 @@ namespace game
 		int getUnitEffectLayerDuration() const;
 
 		void setIdleRequest(int idleRequestAnimNumber);
-		int getIdleRequest();
+		int getIdleRequest() const;
 		void clearIdleRequest();
 
-		bool doesKeepReloading();
-		int getKeepFiringCount();
+		bool doesKeepReloading() const;
+		int getKeepFiringCount() const;
 		void setKeepReloading(bool keepReloading);
 		void setKeepFiringCount(int keepFiringCount);
 
-		bool doesUseAIDisableRange();
+		bool doesUseAIDisableRange() const;
 		void setUseAIDisableRange(bool aiDisableRange);
 
 		void setSelectedItem(int selectedItem);
-		int getSelectedItem();
+		int getSelectedItem() const;
 
 		void advanceFade();
 
-		float getCurrentVisibilityFadeValue();
+		float getCurrentVisibilityFadeValue() const;
 		void fadeVisibility(float fadeToValue, int fadeTime);
 		void setFadeVisibilityImmediately(float fadeValue);
 
 		void setLightVisibilityFactor(float lightVisibility, bool forceLightVisibilityFactor);
-		float getLightVisibilityFactor();
-		bool isForcedLightVisibilityFactor();
+		float getLightVisibilityFactor() const;
+		bool isForcedLightVisibilityFactor() const;
 
-		float getCurrentLightingFadeValue();
+		float getCurrentLightingFadeValue() const;
 		void fadeLighting(float fadeToValue, int fadeTime);
 
-		bool doesCollisionCheck();
+		bool doesCollisionCheck() const;
 		void setCollisionCheck(bool collCheck);
 
-		bool doesCollisionBlockOthers();
+		bool doesCollisionBlockOthers() const;
 		void setCollisionBlocksOthers(bool enabled);
 
-		bool hasAreaTriggered();
+		bool hasAreaTriggered() const;
 		void setAreaTriggered(bool areaTriggered);
 
 		virtual VC3 getTrackablePosition() const;
 		virtual float getTrackableRadius2d() const;
 
-		VC3 &getAreaCenter();
+		const VC3 &getAreaCenter() const;
 		void setAreaCenter(const VC3 &position);
 
-		float getAreaRange();
+		float getAreaRange() const;
 		void setAreaRange(float range);
 
-		int getAreaClipMask();
+		int getAreaClipMask() const;
 		void setAreaClipMask(int clipMask);
 
-		int getAreaCircleId();
+		int getAreaCircleId() const;
 		void setAreaCircleId(int areaCircleId);
 
-		bool isFollowPlayer();
+		bool isFollowPlayer() const;
 		void setFollowPlayer(bool followPlayer);
 
 		util::DirectionalLight &getDirectionalLight() { return directionalLight; }
 		const util::DirectionalLight &getDirectionalLight() const { return directionalLight; }
 
-		void setLastLightUpdatePosition(VC3 &position);
-		VC3 getLastLightUpdatePosition();
+		void setLastLightUpdatePosition(const VC3 &position);
+		VC3 getLastLightUpdatePosition() const;
 
 		void increaseContinuousFireTime();
 		void clearContinuousFireTime();
-		int getContinuousFireTime();
+		int getContinuousFireTime() const;
 
-		bool isOnFire();
-		int getOnFireCounter();
+		bool isOnFire() const;
+		int getOnFireCounter() const;
 		void setOnFireCounter(int value);
 
-		bool hasAliveMarker();
+		bool hasAliveMarker() const;
 		void setAliveMarker(bool alive);
 
-		int getWeaponClipSize(int weapon);
+		int getWeaponClipSize(unsigned int weapon) const;
 
-		bool isAnyWeaponFiring();
+		bool isAnyWeaponFiring() const;
 
-		int getFireSweepDirection();
+		int getFireSweepDirection() const;
 		void setFireSweepDirection(int sweepDirection);
 
-		bool hasDiedByPoison();
+		bool hasDiedByPoison() const;
 		void setDiedByPoison(bool diedByPoison);
 
-		void rotateWeaponBarrel(int weapon);
-		int getRotatedWeaponBarrel(int weapon);
+		void rotateWeaponBarrel(unsigned int weapon);
+		int getRotatedWeaponBarrel(unsigned int weapon) const;
 
-		void rotateWeaponEjectBarrel(int weapon);
-		int getRotatedWeaponEjectBarrel(int weapon);
+		void rotateWeaponEjectBarrel(unsigned int weapon);
+		int getRotatedWeaponEjectBarrel(unsigned int weapon) const;
 
-		bool isShootAnimStanding();
+		bool isShootAnimStanding() const;
 		void setShootAnimStanding(bool shootAnimStanding);
 
-		bool isRushing();
+		bool isRushing() const;
 		void setRushing(bool rushing);
 
 		//void setDelayedHitProjectileBullet(Bullet *bullet, int interval, int amount);
@@ -1056,115 +1058,115 @@ namespace game
 		void setDelayedHitProjectileInterval(int interval);
 		void setDelayedHitProjectileAmount(int amount);
 
-		Bullet *getDelayedHitProjectileBullet();
-		int getDelayedHitProjectileInterval();
-		int getDelayedHitProjectileAmount();
+		Bullet *getDelayedHitProjectileBullet() const;
+		int getDelayedHitProjectileInterval() const;
+		int getDelayedHitProjectileAmount() const;
 
 		void setAniRecordBlendEndFlag(bool blendEndFlag);
 		void setAniRecordBlendFlag(int blendAnim);
 
-		bool getAniRecordBlendEndFlag();
-		int getAniRecordBlendFlag();
+		bool getAniRecordBlendEndFlag() const;
+		int getAniRecordBlendFlag() const;
 
-		bool hasAniRecordFireFlag();
-		VC3 getAniRecordFireSourcePosition();
-		VC3 getAniRecordFireDestinationPosition();
+		bool hasAniRecordFireFlag() const;
+		VC3 getAniRecordFireSourcePosition() const;
+		VC3 getAniRecordFireDestinationPosition() const;
 		void setAniRecordFirePosition(const VC3 &sourcePosition, const VC3 &targetPosition);
 		void clearAniRecordFireFlag();
 
 		void setWeaponRechargeAmount(int chargeAmount);
-		int getWeaponRechargeAmount();
-		bool isWeaponRecharging();
+		int getWeaponRechargeAmount() const;
+		bool isWeaponRecharging() const;
 		void setWeaponRecharging(bool charging);
 		void setWeaponRechargeRange(int chargeMin, int chargePeak, int steps);
-		int getWeaponRechargeMin();
-		int getWeaponRechargePeak();
-		int getWeaponRechargeSteps();
+		int getWeaponRechargeMin() const;
+		int getWeaponRechargePeak() const;
+		int getWeaponRechargeSteps() const;
 
 		void setDisappearCounter(int counterValue) { this->disappearCounter = counterValue; }
-		int getDisappearCounter() { return this->disappearCounter; }
+		int getDisappearCounter() const { return this->disappearCounter; }
 
 		void setHitAnimationCounter(int counterValue) { this->hitAnimationCounter = counterValue; }
-		int getHitAnimationCounter() { return this->hitAnimationCounter; }
+		int getHitAnimationCounter() const { return this->hitAnimationCounter; }
 
 		void setDestroyedTime(int counterValue) { this->destroyedTime = counterValue; }
-		int getDestroyedTime() { return this->destroyedTime; }
+		int getDestroyedTime() const { return this->destroyedTime; }
 
 		void setHitAnimationBoneAngle(float value) { this->hitAnimationBoneAngle = value; }
-		float getHitAnimationBoneAngle() { return this->hitAnimationBoneAngle; }
+		float getHitAnimationBoneAngle() const { return this->hitAnimationBoneAngle; }
 
 		void setHitAnimationVector(const VC3 &value) { this->hitAnimationVector = value; }
-		VC3 getHitAnimationVector() { return this->hitAnimationVector; }
+		VC3 getHitAnimationVector() const { return this->hitAnimationVector; }
 
 		void setHitAnimationFactor(float value) { this->hitAnimationFactor = value; }
-		float getHitAnimationFactor() { return this->hitAnimationFactor; }
+		float getHitAnimationFactor() const { return this->hitAnimationFactor; }
 
 		void setSpottable(bool spottable) { this->spottable = spottable; }
-		bool isSpottable() { return this->spottable; }
+		bool isSpottable() const { return this->spottable; }
 
 		void setClipEmptySoundDone(bool snddone) { this->clipEmptySoundDone = snddone; }
-		bool isClipEmptySoundDone() { return this->clipEmptySoundDone; }
+		bool isClipEmptySoundDone() const { return this->clipEmptySoundDone; }
 
 		void setClipEmptyTime(int value) { this->clipEmptyTime = value; }
-		int getClipEmptyTime() { return this->clipEmptyTime; }
+		int getClipEmptyTime() const { return this->clipEmptyTime; }
 
 		void setAimStopCounter(int value) { this->aimStopCounter = value; }
-		int getAimStopCounter() { return this->aimStopCounter; }
+		int getAimStopCounter() const { return this->aimStopCounter; }
 
 		void setBurnedCrispyAmount(int value) { this->burnedCrispyAmount = value; }
-		int getBurnedCrispyAmount() { return this->burnedCrispyAmount; }
+		int getBurnedCrispyAmount() const { return this->burnedCrispyAmount; }
 
 		void setLastRotationDirection(int value) { this->lastRotationDirection = value; }
-		int getLastRotationDirection() { return this->lastRotationDirection; }
+		int getLastRotationDirection() const { return this->lastRotationDirection; }
 
 		void setActCheckCounter(int value) { this->actCheckCounter = value; }
-		int getActCheckCounter() { return this->actCheckCounter; }
+		int getActCheckCounter() const { return this->actCheckCounter; }
 
 		void setGamePhysicsObject(AbstractPhysicsObject *obj) { this->physicsObject = obj; }
-		AbstractPhysicsObject *getGamePhysicsObject() { return this->physicsObject; }
+		AbstractPhysicsObject *getGamePhysicsObject() const { return this->physicsObject; }
 
 		void setFluidContainmentPhysicsObject(AbstractPhysicsObject *obj) { this->fluidContainmentPhysicsObject = obj; }
-		AbstractPhysicsObject *getFluidContainmentPhysicsObject() { return this->fluidContainmentPhysicsObject; }
+		AbstractPhysicsObject *getFluidContainmentPhysicsObject() const { return this->fluidContainmentPhysicsObject; }
 
 		void setActed(bool value) { this->acted = value; }
-		bool hasActed() { return this->acted; }
+		bool hasActed() const { return this->acted; }
 
-		const std::vector<FootStepTrigger *> &getFootStepTriggers();
+		const std::vector<FootStepTrigger *> &getFootStepTriggers() const;
 
 		// (sideways)
 		void setSideways(bool value) { this->sideways = value; }
-		bool isSideways() { return this->sideways; }
+		bool isSideways() const { return this->sideways; }
 
 		// (sideways)
 		void setSideGravityX(float value) { this->sideGravityX = value; }
-		float getSideGravityX() { return this->sideGravityX; }
+		float getSideGravityX() const { return this->sideGravityX; }
 
 		// (sideways)
 		void setSideGravityZ(float value) { this->sideGravityZ = value; }
-		float getSideGravityZ() { return this->sideGravityZ; }
+		float getSideGravityZ() const { return this->sideGravityZ; }
 
 		// (sideways)
 		void setSideVelocityMax(float value) { this->sideVelocityMax = value; }
-		float getSideVelocityMax() { return this->sideVelocityMax; }
+		float getSideVelocityMax() const { return this->sideVelocityMax; }
 
 		void setAnimationLastPosition(const VC3 &value) { this->animationLastPosition = value; }
-		const VC3 &getAnimationLastPosition() { return this->animationLastPosition; }
+		const VC3 &getAnimationLastPosition() const { return this->animationLastPosition; }
 
 		// (sideways)
-		bool isOnPhysicsObject() { return this->onPhysicsObject; }
+		bool isOnPhysicsObject() const { return this->onPhysicsObject; }
 		void setOnPhysicsObject(bool value) { this->onPhysicsObject = value; }
 
 		// (sideways)
-		bool isOnSlope() { return this->onSlope; }
+		bool isOnSlope() const { return this->onSlope; }
 		void setOnSlope(bool value) { this->onSlope = value; }
 
-		bool isPhysicsObjectFeedbackEnabled() { return this->physicsObjectFeedbackEnabled; }
+		bool isPhysicsObjectFeedbackEnabled() const { return this->physicsObjectFeedbackEnabled; }
 		void setPhysicsObjectFeedbackEnabled(bool value) { this->physicsObjectFeedbackEnabled = value; }
 
-		bool isPhysicsObjectLock() { return this->physicsObjectLock; }
+		bool isPhysicsObjectLock() const { return this->physicsObjectLock; }
 		void setPhysicsObjectLock(bool value) { this->physicsObjectLock = value; }
 
-		float getPhysicsObjectDifference() { return this->physicsObjectDifference; }
+		float getPhysicsObjectDifference() const { return this->physicsObjectDifference; }
 		void setPhysicsObjectDifference(float value) { this->physicsObjectDifference = value; }
 		
 		// for Survivors snow hack
@@ -1176,7 +1178,7 @@ namespace game
 
 		// FOR UNITLIST's USE
 		void setUnitListEntity(UnitListEntity *listEntity);
-		UnitListEntity *getUnitListEntity();
+		UnitListEntity *getUnitListEntity() const;
 
 		void setWeaponAmmoInClip(int weapon, int ammoInClip);
 
@@ -1205,10 +1207,10 @@ namespace game
 
 		void setOwner(int player);
 
-		float getCustomTimeFactor() { return customTimeFactor; }
+		float getCustomTimeFactor() const { return customTimeFactor; }
 		void setCustomTimeFactor(float factor) { customTimeFactor = factor; }
 
-		IAIDirectControl *getAIDirectControl() { return aiDirectControl; }
+		IAIDirectControl *getAIDirectControl() const { return aiDirectControl; }
 		void setAIDirectControl(IAIDirectControl *dc) { aiDirectControl = dc; }
 
 		float getLaunchSpeed() const { return launchSpeed; }
@@ -1216,7 +1218,7 @@ namespace game
 		bool getLaunchNow() const { return launchNow; }
 		void setLaunchNow(bool enabled) { launchNow = enabled; }
 
-		const std::string &getTorsoModelOverride() { return torsoModelOverride; }
+		const std::string &getTorsoModelOverride() const { return torsoModelOverride; }
 		void setTorsoModelOverride(const std::string &str) { torsoModelOverride = str; }
 
 	protected:
@@ -1241,14 +1243,14 @@ namespace game
 		 * Defaults to 0.
 		 * @return int, number of weapons put to array
 		 */
-		int getWeaponArray(WeaponObject **weaponArray, int arraySize, Part *startPart, int startNumber = 0);
+		int getWeaponArray(WeaponObject **weaponArray, int arraySize, Part *startPart, int startNumber = 0) const;
 
 		/**
 		 * Like getWeaponArray, but lists ammo packs, not weapons.
 		 */
-		int getAmmoArray(AmmoPackObject **ammoArray, int arraySize, Part *startPart, int startNumber = 0);
+		int getAmmoArray(AmmoPackObject **ammoArray, int arraySize, Part *startPart, int startNumber = 0) const;
 
-		bool useWeaponAmmoImpl(int weapon, int usageWeapon);
+		bool useWeaponAmmoImpl(unsigned int weapon, int usageWeapon);
 
 	private:
 		Part *rootPart;
@@ -1695,17 +1697,17 @@ namespace game
 		}
 
 		// target lock upgrade
-		int getLastTargetLockTime(void) { return lastTargetLockTime; }
+		int getLastTargetLockTime(void) const { return lastTargetLockTime; }
 		void setLastTargetLockTime(int time) { lastTargetLockTime = time; }
 
-		int getTargetLockCounter(void) { return targetLockCounter; }
+		int getTargetLockCounter(void) const { return targetLockCounter; }
 		void setTargetLockCounter(int value) { targetLockCounter = value; }
 		
 		void setTargetLockCounterMax(int max) { targetLockCounterMax = max; }
-		int getTargetLockCounterMax(void) { return targetLockCounterMax; }
+		int getTargetLockCounterMax(void) const { return targetLockCounterMax; }
 
 		void setLastTargetLockUnit(Unit *unit) { lastTargetLockUnit = unit; }
-		Unit *getLastTargetLockUnit(void) { return lastTargetLockUnit; }
+		Unit *getLastTargetLockUnit(void) const { return lastTargetLockUnit; }
 
 		void setTargetLockTimes(int release, int cancel) { targetLockReleaseTime = release; targetLockCancelTime = cancel; }
 
@@ -1727,7 +1729,7 @@ namespace game
 		bool		hasHighlightText() const;
 		std::string getHighlightText() const;
 		void		setHighlightText( const std::string& styletext );
-		bool isTouchProjectileEnabled() {return touchProjectileEnabled;}
+		bool isTouchProjectileEnabled() const {return touchProjectileEnabled;}
 		void setTouchProjectileEnabled(bool b) {touchProjectileEnabled = b;}
 
 

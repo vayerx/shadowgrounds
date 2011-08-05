@@ -16,7 +16,7 @@
 #include <string.h>
 #include <string>
 
-//#include "../util/Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 //#include <Storm3D_UI.h>
 #include <DatatypeDef.h>

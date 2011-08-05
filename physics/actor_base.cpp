@@ -62,7 +62,7 @@ void ActorBase::init()
 
 	if(actor->isDynamic())
 	{
-		setLinearDamping(0.2f);
+		setDamping(0.2f, 0.0f);
 	}
 
 	actor->userData = this;
@@ -173,7 +173,6 @@ bool ActorBase::getVolumeUnderWater(float water_height, VC3 &min, VC3 &max) cons
 	NxShape *const*shapes = actor->getShapes();
 
 	// get total size of shapes
-	float amount = 0.0f;
 	NxBounds3 totalBounds;
 	totalBounds.setEmpty();
 	while(shapeAmount--)
@@ -224,11 +223,6 @@ void ActorBase::setRotation(const QUAT &rotation)
 void ActorBase::setMass(float mass)
 {
 	actor->updateMassFromShapes(0, mass);
-}
-
-float ActorBase::getMass() const
-{
-	return actor->getMass();
 }
 
 void ActorBase::movePosition(const VC3 &position)
@@ -294,24 +288,10 @@ void ActorBase::addTorqueImpulse(const VC3 &torque, bool smooth)
 	actor->addTorque(NxVec3(torque.x, torque.y, torque.z), smooth ? NX_SMOOTH_IMPULSE : NX_IMPULSE);
 }
 
-void ActorBase::setLinearDamping(float damping)
+void ActorBase::setDamping(float linearDamping, float angularDamping)
 {
-	actor->setLinearDamping(damping);
-}
-
-void ActorBase::setAngularDamping(float damping)
-{
-	actor->setAngularDamping(damping);
-}
-
-float ActorBase::getLinearDamping() const
-{
-	return actor->getLinearDamping();
-}
-
-float ActorBase::getAngularDamping() const
-{
-	return actor->getAngularDamping();
+	actor->setLinearDamping(linearDamping);
+	actor->setAngularDamping(angularDamping);
 }
 
 void ActorBase::putToSleep()
@@ -355,8 +335,10 @@ void ActorBase::enableFeature(Feature feature, bool enable)
 		flag = NX_BF_DISABLE_GRAVITY;
 	else if(feature == KINEMATIC_MODE)
 		flag = NX_BF_KINEMATIC;
-	else
+	else {
 		assert(!"Invalid parameter");
+		return;
+	}
 
 	if(enable)
 		actor->raiseBodyFlag(flag);

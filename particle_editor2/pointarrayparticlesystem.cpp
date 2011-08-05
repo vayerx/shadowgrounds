@@ -1,10 +1,12 @@
+#include <boost/lexical_cast.hpp>
 
 #include "precompiled.h"
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
-
+#ifdef _MSC_VER
 #pragma warning( disable : 4800 )
+#endif
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -13,9 +15,9 @@
 #include <map>
 #include <list>
 #include <fstream>
-#include <storm3d_ui.h>
-#include "..\editor\string_conversions.h"
-#include "..\editor\parser.h"
+#include <Storm3D_UI.h>
+#include "../editor/string_conversions.h"
+#include "../editor/parser.h"
 #include "track.h"
 //#include "paramblock.h"
 #include "parseutil.h"
@@ -23,12 +25,12 @@
 #include "particleeffect.h"
 #include "pointarrayparticlesystem.h"
 #ifdef PHYSICS_PHYSX
-#include "particlephysics.h"
+#include "ParticlePhysics.h"
 #include "../game/physics/physics_collisiongroups.h"
 #endif
 
 // TEMP TEST
-#include "..\game\GameRandom.h"
+#include "../game/GameRandom.h"
 
 
 using namespace frozenbyte::editor;
@@ -39,7 +41,7 @@ namespace particle
 {
 
 namespace {
-	int id = 0;
+	int PAPSid = 0;
 }
 
 PointArrayParticleSystem::PointArrayParticleSystem() 
@@ -65,6 +67,7 @@ boost::shared_ptr<IParticleSystem> PointArrayParticleSystem::clone()
 	boost::shared_ptr<IParticleSystem> ptr(ps);
 
 #ifdef PHYSICS_PHYSX
+#ifndef NX_DISABLE_FLUIDS
 
 	if(!fluid && physics && (m_eds->physicsType == GenParticleSystemEditables::PHYSICS_TYPE_FLUID || m_eds->physicsType == GenParticleSystemEditables::PHYSICS_TYPE_FLUID_INTERACTION))
 	{
@@ -82,6 +85,7 @@ boost::shared_ptr<IParticleSystem> PointArrayParticleSystem::clone()
 	ps->m_render_fluid_parts = m_render_fluid_parts;
 
 #endif
+#endif
 
 	return ptr;
 }
@@ -91,43 +95,17 @@ void PointArrayParticleSystem::setRotation(const MAT &tm)
 	rotation = tm;
 }
 */
-
-// HACK: ...
-//static bool useHelperVel = false;
-//static VC3 helperVel = VC3(0,0,0);
-
 void PointArrayParticleSystem::setParticlePosition(Vector& pos) 
 {	
-	//useHelperVel = false;
 	if(m_parray.get()==NULL)
-	{
-#ifdef PROJECT_PARTICLE_EDITOR
-		static bool pointarraywarninggiven = false;
-		if (!pointarraywarninggiven)
-		{
-			pointarraywarninggiven = true;
-			MessageBox(0, "Null point array encountered (model load failed or no filename given)\r\nThis warning will only be shown once.\r\nRestart particle editor to see this message again.", "Warning", MB_ICONEXCLAMATION|MB_OK);
-		}
-#endif
 		return;
-	}
 	
 	if(spawnModel)
 	{
 		if(!spawnHelpers.empty())
 		{
 			int index = rand() % spawnHelpers.size();
-			if(m_eds->randomizeBetweenVertices
-				&& spawnHelperEnds[index] != -1)
-			{
-				float fact = (float)(rand() % 1000) / 1000.0f;
-				pos = spawnHelpers[index]->GetGlobalPosition() * fact;
-				pos += spawnHelpers[spawnHelperEnds[index]]->GetGlobalPosition() * (1.0f - fact);
-
-				pos += lastModelVelocity;
-			} else {
-				pos = spawnHelpers[index]->GetGlobalPosition();
-			}
+			pos = spawnHelpers[index]->GetGlobalPosition();
 		}
 		else
 			pos = spawnModel->GetPosition();
@@ -135,7 +113,6 @@ void PointArrayParticleSystem::setParticlePosition(Vector& pos)
 	else if(m_eds->randomizeBetweenVertices)
 	{
 // TEMP TEST
-#pragma message("FIXME! - PointArrayParticleSystem::setParticlePosition")
 static game::GameRandom *gameRand;
 if (gameRand == NULL)
 {
@@ -182,30 +159,22 @@ void PointArrayParticleSystem::setParticleVelocity(Vector& vel, const Vector& di
 	bool forceDirection = !use_explosion && (eds.launchDirectionType == GenParticleSystemEditables::DIRECTION_EXPLOSION || eds.launchDirectionType == GenParticleSystemEditables::DIRECTION_NEGATIVE_EXPLOSION);
 	if(m_eds->useNormalsAsDirection || forceDirection)
 	{
-		if(m_eds->useBinormalsAsDirection)
-		{
-			//VC3 up = VC3(0,1,0);
-			VC3 up = VC3((rand() % 1000) / 1000.0f, (rand() % 1000) / 1000.0f, (rand() % 1000) / 1000.0f);
-			VC3 binormal = up.GetCrossWith(m_parray->normals[m_index]);
-			vel = binormal * speed;	
-			m_rotation.RotateVector(vel);
-		} else {
-			vel = m_parray->normals[m_index] * speed;	
-			m_rotation.RotateVector(vel);
-		}
+		vel = m_parray->normals[m_index] * speed;	
+		m_rotation.RotateVector(vel);
 	}
 	else
 		vel = dir * speed;
+
 }
 
 void *PointArrayParticleSystem::getId() const
 {
-	return &id;
+	return &PAPSid;
 }
 
 void *PointArrayParticleSystem::getType()
 {
-	return &id;
+	return &PAPSid;
 }
 
 void PointArrayParticleSystem::init(IStorm3D* s3d, IStorm3D_Scene* scene) 
@@ -270,37 +239,6 @@ void PointArrayParticleSystem::init(IStorm3D* s3d, IStorm3D_Scene* scene)
 
 void PointArrayParticleSystem::tick(IStorm3D_Scene* scene) {
 	GenParticleSystem::defaultTick(scene, *m_eds);
-
-	if (this->spawnModel)
-	{
-		modelPositionSamplingCounter++;
-		if (modelPositionSamplingCounter >= 4)
-		{
-			modelPositionSamplingCounter = 0;
-			VC3 modelPos = this->spawnModel->GetPosition();
-			/*
-			if (modelPos.x != lastModelPosition.x
-				|| modelPos.y != lastModelPosition.y
-				|| modelPos.z != lastModelPosition.z)
-			{
-				lastModelVelocity = modelPos - lastModelPosition;
-			}
-			*/
-			if (modelPos.x < lastModelPosition.x)
-			{
-				lastModelVelocity.x = -0.2f;
-			}
-			else if (modelPos.x > lastModelPosition.x)
-			{
-				lastModelVelocity.x = 0.2f;
-			}
-			else
-			{
-				lastModelVelocity = 0.0f;
-			}
-			lastModelPosition = modelPos;
-		}
-	}
 }
 
 void PointArrayParticleSystem::prepareForLaunch(IStorm3D* s3d, IStorm3D_Scene* scene) {
@@ -320,7 +258,6 @@ void PointArrayParticleSystem::parseFrom(const ParserGroup& pg, const util::Soun
 	m_eds->scale = convertVectorFromString(pg.getValue("scale", "1,1,1"));
 	m_eds->rotation = convertVectorFromString(pg.getValue("rotation", "0,0,0"));
 	m_eds->useNormalsAsDirection = static_cast<bool>(convertFromString<int>(pg.getValue("direction_from_normals", ""), 0));
-	m_eds->useBinormalsAsDirection = static_cast<bool>(convertFromString<int>(pg.getValue("direction_from_binormals", ""), 0));
 	m_eds->randomizeBetweenVertices = static_cast<bool>(convertFromString<int>(pg.getValue("positions_between_vertices", ""), 0));
 	m_eds->planePositions = static_cast<bool>(convertFromString<int>(pg.getValue("plane_positions", ""), 0));
 }

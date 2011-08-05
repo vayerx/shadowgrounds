@@ -107,7 +107,7 @@ private:
 	
 	OguiButton *CreateNewButton(int x, int y, int sizex, int sizey, 
 		IOguiImage *img, IOguiImage *imgdown, IOguiImage *imghigh, IOguiImage *imgdisabled, bool withText, 
-		const char *text, int id, void *argument, IOguiFont *font, bool clipToWindow = true );
+		const char *text, int id, const void *argument, IOguiFont *font, bool clipToWindow = true );
 
 	Ogui *ogui;
 	IOguiImage *image;

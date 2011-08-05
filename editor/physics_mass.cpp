@@ -4,6 +4,7 @@
 #include "parser.h"
 #include "string_conversions.h"
 #include "../filesystem/input_file_stream.h"
+#include "../filesystem/file_package_manager.h"
 #include "../system/Logger.h"
 #include <vector>
 
@@ -45,7 +46,7 @@ struct PhysicsMass::Data
 	void parseData()
 	{
 		Parser parser;
-		filesystem::createInputFileStream(fileName) >> parser;
+		filesystem::FilePackageManager::getInstance().getFile(fileName) >> parser;
 
 		const ParserGroup &globals = parser.getGlobals();
 		int groups = globals.getSubGroupAmount();

@@ -238,6 +238,8 @@ struct TerrainLightMap::Data
 				radius3D = 20.f;
 			else if(area == 4)
 				radius3D = 10.f;
+			else if(area == 5)
+				radius3D = 1.f;
 
 			int radiusX = int(radius3D * size.x / storm.heightmapSize.x);
 			int radiusY = int(radius3D * size.y / storm.heightmapSize.z);
@@ -568,6 +570,195 @@ struct TerrainLightMap::Data
 			int a = 0;
 
 		return pixel.color;
+	}
+
+	void setShadow(const VC2 &position, float value, const VC2 &rect, const LightList &lights, const VC3 &sunDir)
+	{
+		if(!storm.terrain || values.empty())
+			return;
+
+		const VC3 &hSize = storm.heightmapSize;
+		VC2 pos(hSize.x * .5f, hSize.z * .5f);
+		pos += position;
+		pos.x /= hSize.x;
+		pos.y /= hSize.z;
+
+		int radius_x = int(rect.x / (float)hSize.x);
+		int radius_y = int(rect.y / (float)hSize.y);
+
+		float vis_factor = 255.0f;
+
+		float merge_mul = value;
+		if(merge_mul < 0.0f)
+		{
+			vis_factor = 0.0f;
+			merge_mul = -value;
+		}
+
+		bool calculateSun = false;
+		if(sunDir.GetSquareLength() > 0.001f)
+			calculateSun = true;
+
+		int start_x = int(pos.x * size.x) - radius_x;
+		if(start_x < 0)
+			start_x = 0;
+		else if(start_x >= size.x)
+			start_x = size.x - 1;
+
+		int start_y = int(pos.y * size.y) - radius_y;
+		if(start_y < 0)
+			start_y = 0;
+		else if(start_y >= size.y)
+			start_y = size.y - 1;
+
+		int end_x = int(pos.x * size.x) + radius_x;
+		if(end_x < 0)
+			end_x = 0;
+		else if(end_x >= size.x)
+			end_x = size.x - 1;
+
+		int end_y = int(pos.y * size.y) + radius_y;
+		if(end_y < 0)
+			end_y = 0;
+		else if(end_y >= size.y)
+			end_y = size.y - 1;
+
+		int center_x = int(pos.x * size.x);
+		int center_y = int(pos.y * size.y);
+		float fradius_x = 0.5f * (float)(radius_x * radius_x);
+		float fradius_y = 0.5f * (float)(radius_y * radius_y);
+
+		float xd = storm.heightmapSize.x / size.x;
+		float yd = storm.heightmapSize.z / size.y;
+		int xr = size.x / 2;
+		int yr = size.y / 2;
+
+		for(int y = start_y; y < end_y; y++)
+		for(int x = start_x; x < end_x; x++)
+		{
+			int dx = (x - center_x);
+			int dy = (y - center_y);
+			float merge_factor = merge_mul * (1.0f - sqrtf((float)(dx*dx / fradius_x + dy*dy / fradius_y)));
+			if(merge_factor < 0.0f)
+				merge_factor = 0.0f;
+			else if(merge_factor > 1.0f)
+				merge_factor = 1.0f;
+
+			VC3 terrainNormal;
+			{
+				float txf = float(storm.heightmapResolution.x) * x / size.x;
+				float tyf = float(storm.heightmapResolution.y) * y / size.y;
+				int tx = int(txf);
+				int ty = int(tyf);
+
+				VC3 n1 = storm.terrain->getNormal(VC2I(tx, ty));
+				VC3 n2 = storm.terrain->getNormal(VC2I(tx + 1, ty));
+				VC3 n3 = storm.terrain->getNormal(VC2I(tx, ty + 1));
+				VC3 n4 = storm.terrain->getNormal(VC2I(tx + 1, ty + 1));
+
+				float f1 = txf - float(tx);
+				float f2 = tyf - float(ty);
+				float f3 = sqrtf(f1*f1 + f2*f2) / 1.415f;
+				n1 *= 1.f - f3;
+				n2 *= f1;
+				n3 *= f2;
+				n4 *= f3;
+
+				terrainNormal = n2;
+				terrainNormal += n3;
+				if(f3 < .5f)
+					terrainNormal += n1;
+				else
+					terrainNormal += n4;
+
+				terrainNormal.Normalize();
+
+				//terrainNormal = n1 + n2 + n3 + n4;
+				//terrainNormal.Normalize();
+			}
+
+			COL lightColor;
+			{
+				int xp = x - xr;
+				int yp = y - yr;
+				VC3 pos(xp * xd + (xd * .5f), 0, yp * yd + (yd * .5f));
+				pos.y = storm.terrain->getHeight(VC2(pos.x, pos.z));
+				LightList::const_iterator it = lights.begin();
+				for(; it != lights.end(); ++it)
+				{
+					float rangeSq = pos.GetSquareRangeTo(it->position);
+					float lightRange = it->range * MAGIC_FACTOR;
+					if(rangeSq > lightRange * lightRange)
+					{
+						continue;
+					}
+
+					float visStrengthScale = 1.f - it->strength;
+					float visStrengthAdd = it->strength;
+
+					float visFactor = vis_factor / 255.0f;
+					visFactor *= visStrengthScale;
+					visFactor += visStrengthAdd;
+
+					if(visFactor < 0.001f)
+						continue;
+
+
+					VC3 dir = (it->position - pos).GetNormalized();
+					float dot = terrainNormal.GetDotWith(dir);
+					if(dot < 0)
+					{
+						continue;
+					}
+
+					float fadeFactor1 = 1.f - sqrtf(rangeSq) / lightRange;
+					float fadeFactor2 = 1.f - cosf(3.14f * 0.5f - sqrtf(rangeSq) / lightRange * PI * .5f);
+					float fadeFactor = 0.5f * (fadeFactor1 + fadeFactor2);
+
+					COL c = it->color;
+					c *= fadeFactor * dot * visFactor;
+					//c *= fadeFactor * visFactor;
+
+					lightColor += c;
+				}
+			}
+
+			lightColor *= 255.0f;
+			if(lightColor.r > 255.0f) lightColor.r = 255.0f;
+			else if(lightColor.r < 0.0f) lightColor.r = 0.0f;
+			if(lightColor.g > 255.0f) lightColor.g = 255.0f;
+			else if(lightColor.g < 0.0f) lightColor.g = 0.0f;
+			if(lightColor.b > 255.0f) lightColor.b = 255.0f;
+			else if(lightColor.b < 0.0f) lightColor.b = 0.0f;
+
+			Pixel &pixel = values[y * size.x + x];
+
+			float old_light_r = pixel.light.r;
+			float old_light_g = pixel.light.g;
+			float old_light_b = pixel.light.b;
+
+			pixel.light.r = pixel.color.r = (int)(lightColor.r * merge_factor + pixel.color.r * (1.0f - merge_factor));
+			pixel.light.g = pixel.color.g = (int)(lightColor.g * merge_factor + pixel.color.g * (1.0f - merge_factor));
+			pixel.light.b = pixel.color.b = (int)(lightColor.b * merge_factor + pixel.color.b * (1.0f - merge_factor));
+
+			float sun_light = 0.0f;
+			if(calculateSun)
+			{
+				sun_light = vis_factor * 0.5f + 127.0f;
+				float dot = terrainNormal.GetDotWith(sunDir);
+				if(dot > 0)
+				{
+					sun_light *= dot;
+				}
+				else
+				{
+					sun_light = 0;
+				}
+			}
+			pixel.light.r = (int)((lightColor.r + sun_light) * merge_factor + old_light_r * (1.0f - merge_factor));
+			pixel.light.g = (int)((lightColor.g + sun_light) * merge_factor + old_light_g * (1.0f - merge_factor));
+			pixel.light.b = (int)((lightColor.b + sun_light) * merge_factor + old_light_b * (1.0f - merge_factor));
+		}
 	}
 
 	void doExport(Exporter &exporter) const
@@ -917,6 +1108,12 @@ COL TerrainLightMap::getColor(const VC2 &position) const
 	float factor = .8f;
 	return COL(factor * color.r / 255.f, factor * color.g / 255.f, factor * color.b / 255.f);
 }
+
+void TerrainLightMap::setShadow(const VC2 &position, float value, const VC2 &rect, const LightList &lights, const VC3 &sunDir)
+{
+	data->setShadow(position, value, rect, lights, sunDir);
+}
+
 
 void TerrainLightMap::doExport(Exporter &exporter) const
 {

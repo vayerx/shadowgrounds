@@ -9,6 +9,7 @@ namespace game
   {
   public:
     GameRequest();
+    virtual ~GameRequest();
 
     //virtual void processData(BYTE *data) = 0;
 

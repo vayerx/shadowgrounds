@@ -3,8 +3,9 @@
 #ifndef INCLUDED_STORM3D_TERRAIN_HEIGHTMAP_H
 #define INCLUDED_STORM3D_TERRAIN_HEIGHTMAP_H
 
-#include "DatatypeDef.h"
 #include <boost/scoped_ptr.hpp>
+#include "DatatypeDef.h"
+#include <istorm3d_spotlight.h>
 
 class Storm3D;
 class Storm3D_Scene;
@@ -53,7 +54,7 @@ public:
 		Nv
 	};
 
-	void renderDepth(Storm3D_Scene &scene, Storm3D_Camera *camera, RenderMode mode, RenderType type, int spot_type, Storm3D_Spotlight *spot);
+	void renderDepth(Storm3D_Scene &scene, Storm3D_Camera *camera, RenderMode mode, RenderType type, IStorm3D_Spotlight::Type spot_type, Storm3D_Spotlight *spot);
 	//void renderDepth(Storm3D_Scene &scene, Storm3D_Camera *camera, bool atiShader, bool atiLightingShader, int spot_type);
 
 	// Texturing

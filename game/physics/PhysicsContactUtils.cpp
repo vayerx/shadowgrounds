@@ -16,7 +16,7 @@ namespace game
 		assert(terrObjModelId != NULL);
 		assert(terrObjInstanceId != NULL);
 
-		int id = (int)o->getCustomData();
+		intptr_t id = (intptr_t)o->getCustomData();
 		if (id != 0)
 		{
 			// bit 32 tells us if this is unit or terr.object

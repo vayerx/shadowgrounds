@@ -33,9 +33,6 @@ MusicPlaylist::MusicPlaylist(SoundMixer *mixer)
   if (mixer != NULL)
   {
     mixer->setMusicLooping(false);
-		#ifdef PROJECT_CLAW_PROTO
-			mixer->setMusicLooping(true);
-		#endif
     Logger::getInstance()->debug("MusicPlaylist - Initialized with mixer.");
   } else {
     Logger::getInstance()->debug("MusicPlaylist - Initialized without mixer (no sounds).");
@@ -154,7 +151,7 @@ void MusicPlaylist::previousTrack()
 }
 
 
-void MusicPlaylist::loadPlaylist(int bank, char *filename)
+void MusicPlaylist::loadPlaylist(int bank, const char *filename)
 {
   Logger::getInstance()->debug("MusicPlaylist::loadPlaylist - Loading playlist...");
   Logger::getInstance()->debug(filename);

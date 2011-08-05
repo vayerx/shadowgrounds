@@ -19,7 +19,6 @@
 #include "Item.h"
 #include "Flashlight.h"
 
-#include <c2_qtree.h>
 #include <string>
 
 #include "../system/Logger.h"
@@ -27,7 +26,7 @@
 #include "../ui/AnimationSet.h"
 #include "../ui/VisualEffect.h"
 
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 #define UNIT_MAX_ARMOR_AMOUNT 100
 #define UNIT_MAX_ARMOR_CLASS 3
@@ -72,13 +71,16 @@ namespace game
 		return unit_get_status_info_buf.c_str();
 	}
 
-	void *Unit::getVisualObjectDataId()
+	void *Unit::getVisualObjectDataId() const
 	{ 
 		return (void *)&unitDataId; 
 	}
 
 	//	Unit::Unit(int owner)
 	Unit::Unit() :
+		movingForward(false),
+		movingBackward(false),
+		movingSideways(false),
 		visualizationOffsetInterpolation( 1.0f )
 	{
 		//this->owner = owner;
@@ -569,6 +571,11 @@ namespace game
 
 		deleteCustomizedWeaponTypes();
 
+		for (unsigned int i = 0; i < footStepTriggers.size(); i++) {
+			delete footStepTriggers[i];
+			footStepTriggers[i] = NULL;
+		}
+
 		// TODO, delete all parts under this one
 	}
 
@@ -577,12 +584,12 @@ namespace game
 		this->ai = ai;
 	}
 
-	void *Unit::getAI()
+	void *Unit::getAI() const
 	{
 		return ai;
 	}
 
-	const char *Unit::getIdString()
+	const char *Unit::getIdString() const
 	{
 		return idString;
 	}
@@ -611,7 +618,7 @@ namespace game
 		this->idNumber = id;
 	}
 
-	const char *Unit::getExecuteTipText()
+	const char *Unit::getExecuteTipText() const
 	{
 		return executeTipText;
 	}
@@ -646,7 +653,7 @@ namespace game
 		}
 	}
 
-	ui::VisualEffect *Unit::getPointerVisualEffect(void)
+	ui::VisualEffect *Unit::getPointerVisualEffect(void) const
 	{
 		return pointerVisualEffect;
 	}
@@ -667,7 +674,7 @@ namespace game
 		}
 	}
 
-	ui::VisualEffect *Unit::getPointerHitVisualEffect(void)
+	ui::VisualEffect *Unit::getPointerHitVisualEffect(void) const
 	{
 		return pointerHitVisualEffect;
 	}
@@ -730,7 +737,7 @@ namespace game
 	}
 
 
-	bool Unit::isMuzzleflashVisible()
+	bool Unit::isMuzzleflashVisible() const
 	{
 		if (muzzleflashDuration > 0)
 		{
@@ -799,7 +806,7 @@ namespace game
 	}
 
 
-	bool Unit::isEjectVisible()
+	bool Unit::isEjectVisible() const
 	{
 		if (ejectDuration > 0)
 		{
@@ -867,17 +874,17 @@ namespace game
 		turning = false;
 	}
 
-	bool Unit::isTurning()
+	bool Unit::isTurning() const
 	{
 		return turning;
 	}
 
-	float Unit::getTurnToAngle()
+	float Unit::getTurnToAngle() const
 	{
 		return this->turningToAngle;
 	}
 	
-	float Unit::getAngleTo(const VC3 &toPosition)
+	float Unit::getAngleTo(const VC3 &toPosition) const
 	{
 		VC2 destFloat = VC2(
 			(float)(toPosition.x-position.x), (float)(toPosition.z-position.z));
@@ -887,7 +894,7 @@ namespace game
 		return destAngle;
 	}
 
-	void Unit::setScript(char *scriptName)
+	void Unit::setScript(const char *scriptName)
 	{
 		if (this->script != NULL)
 		{
@@ -901,12 +908,12 @@ namespace game
 		}
 	}
 
-	char *Unit::getScript()
+	char *Unit::getScript() const
 	{
 		return script;
 	}
 
-	int Unit::getBlockedTime()
+	int Unit::getBlockedTime() const
 	{
 		return blockedTime;
 	}
@@ -921,7 +928,7 @@ namespace game
 		blockedTime = 0;
 	}
 
-	int Unit::getNonBlockedTime()
+	int Unit::getNonBlockedTime() const
 	{
 		return nonBlockedTime;
 	}
@@ -936,12 +943,12 @@ namespace game
 		nonBlockedTime = 0;
 	}
 
-	const VC3 &Unit::getPointerPosition()
+	const VC3 &Unit::getPointerPosition() const
 	{
 		return position;
 	}
 
-	const VC3 Unit::getPointerMiddleOffset()
+	const VC3 Unit::getPointerMiddleOffset() const
 	{
 		if (speed == Unit::UNIT_SPEED_CRAWL
 			|| destroyed || moveState == Unit::UNIT_MOVE_STATE_UNCONSCIOUS)
@@ -951,7 +958,7 @@ namespace game
 	}
 
 
-	Part *Unit::getRootPart()
+	Part *Unit::getRootPart() const
 	{
 		return rootPart;
 	}
@@ -961,7 +968,7 @@ namespace game
 		rootPart = part;
 	}
 
-	Character *Unit::getCharacter()
+	Character *Unit::getCharacter() const
 	{
 		return character;
 	}
@@ -986,7 +993,7 @@ namespace game
 		this->active = active;
 	}
 
-	bool Unit::isSelected()
+	bool Unit::isSelected() const
 	{
 		return selected;
 	}
@@ -996,7 +1003,7 @@ namespace game
 		this->selected = selected;
 	}
 
-	Unit::UNIT_MODE Unit::getMode()
+	Unit::UNIT_MODE Unit::getMode() const
 	{
 		return mode;
 	}
@@ -1016,7 +1023,7 @@ namespace game
 		this->moveState = moveState;
 	}
 
-	Unit::UNIT_MOVE_STATE Unit::getMoveState()
+	Unit::UNIT_MOVE_STATE Unit::getMoveState() const
 	{
 		return moveState;
 	}
@@ -1027,12 +1034,12 @@ namespace game
 	}
 
 
-	int Unit::getMoveStateCounter()
+	int Unit::getMoveStateCounter() const
 	{
 		return moveStateCounter;
 	}
 
-	int Unit::getUnitTypeId()
+	int Unit::getUnitTypeId() const
 	{
 		return unitTypeId;
 	}
@@ -1103,7 +1110,7 @@ namespace game
 		//}
 	}
 
-	bool Unit::isOnGround()
+	bool Unit::isOnGround() const
 	{
 		return onGround;
 	}
@@ -1113,7 +1120,7 @@ namespace game
 		this->onGround = onGround;
 	}
 
-	bool Unit::isGroundFriction()
+	bool Unit::isGroundFriction() const
 	{
 		return groundFriction;
 	}
@@ -1128,7 +1135,7 @@ namespace game
 		this->deathBleedDelay = bleedDelay;
 	}
 
-	int Unit::getDeathBleedDelay()
+	int Unit::getDeathBleedDelay() const
 	{
 		return this->deathBleedDelay;
 	}
@@ -1155,7 +1162,7 @@ namespace game
 		this->rotateYSpeed = rotateYSpeed;
 	}
 
-	int Unit::getRotateYSpeed()
+	int Unit::getRotateYSpeed() const
 	{
 		return rotateYSpeed;
 	}
@@ -1258,7 +1265,7 @@ namespace game
 	}
 	*/
 
-	bool Unit::isStealthVisualInUse()
+	bool Unit::isStealthVisualInUse() const
 	{
 		return stealthVisualInUse;
 	}
@@ -1281,57 +1288,57 @@ namespace game
 		} 
 	}
 
-	int Unit::getHeat()
+	int Unit::getHeat() const
 	{
 		return heat;
 	}
 
-	int Unit::getMaxHeat()
+	int Unit::getMaxHeat() const
 	{
 		return maxHeat;
 	}
 
-	int Unit::getEnergy()
+	int Unit::getEnergy() const
 	{
 		return energy;
 	}
 
-	int Unit::getMaxEnergy()
+	int Unit::getMaxEnergy() const
 	{
 		return maxEnergy;
 	}
 
-	int Unit::getStartEnergy()
+	int Unit::getStartEnergy() const
 	{
 		return startEnergy;
 	}
 
-	int Unit::getRechargingAmount()
+	int Unit::getRechargingAmount() const
 	{
 		return rechargingAmount;
 	}
 
-	int Unit::getCoolingAmount()
+	int Unit::getCoolingAmount() const
 	{
 		return coolingAmount;
 	}
 
-	int Unit::getWeight()
+	int Unit::getWeight() const
 	{
 		return weight;
 	}
 
-	int Unit::getRunningValue()
+	int Unit::getRunningValue() const
 	{
 		return runningValue;
 	}
 
-	int Unit::getStealthValue()
+	int Unit::getStealthValue() const
 	{
 		return stealthValue;
 	}
 
-	int Unit::getReconValue()
+	int Unit::getReconValue() const
 	{
 		return reconValue;
 	}
@@ -1626,7 +1633,7 @@ namespace game
 	}
 	*/
 
-	bool Unit::atWaypoint()
+	bool Unit::atWaypoint() const
 	{
 		// todo, optimize, make one bool variable of this...
 		if (position.x == waypoint.x && position.z == waypoint.z)
@@ -1635,7 +1642,7 @@ namespace game
 			return false;
 	}
 
-	bool Unit::atFinalDestination()
+	bool Unit::atFinalDestination() const
 	{
 		// todo, optimize, make one bool variable of this...
 		if (position.x == finalDestination.x && position.z == finalDestination.z)
@@ -1650,7 +1657,7 @@ namespace game
 		leader = unit;
 	}
 
-	Unit *Unit::getLeader()
+	Unit *Unit::getLeader() const
 	{
 		return leader;
 	}
@@ -1663,7 +1670,7 @@ namespace game
 	}
 
 
-	ui::AnimationSet *Unit::getAnimationSet()
+	ui::AnimationSet *Unit::getAnimationSet() const
 	{
 		return animationSet;
 	}
@@ -1674,20 +1681,20 @@ namespace game
 		currentAnimation = animation;
 	}
 
-	int Unit::getAnimation()
+	int Unit::getAnimation() const
 	{
 		return currentAnimation;		
 	}
 
-	void Unit::setBlendAnimation(int num, int animation)
+	void Unit::setBlendAnimation(unsigned int num, int animation)
 	{
-		assert(num >= 0 && num < UNIT_MAX_BLEND_ANIMATIONS);
+		assert(num < UNIT_MAX_BLEND_ANIMATIONS);
 		currentBlendAnimation[num] = animation;
 	}
 
-	int Unit::getBlendAnimation(int num)
+	int Unit::getBlendAnimation(unsigned int num) const
 	{
-		assert(num >= 0 && num < UNIT_MAX_BLEND_ANIMATIONS);
+		assert(num < UNIT_MAX_BLEND_ANIMATIONS);
 		return currentBlendAnimation[num];
 	}
 
@@ -1696,7 +1703,7 @@ namespace game
 		this->animationSpeedFactor = speedFactor;
 	}
 
-	float Unit::getAnimationSpeedFactor()
+	float Unit::getAnimationSpeedFactor() const
 	{
 		return this->animationSpeedFactor;
 	}
@@ -1706,7 +1713,7 @@ namespace game
 		animationTimeLeft = animationTime;
 	}
 
-	int Unit::getAnimationTimeLeft()
+	int Unit::getAnimationTimeLeft() const
 	{
 		return animationTimeLeft;
 	}
@@ -1723,8 +1730,9 @@ namespace game
 	}
 	*/
 
-	void Unit::setFireReloadDelay(int weapon, int delayTicks)
+	void Unit::setFireReloadDelay(unsigned int weapon, int delayTicks)
 	{
+		assert(weapon < UNIT_MAX_WEAPONS);
 		fireReloadDelay[weapon] = delayTicks;
 		if (delayTicks == 0)
 			clipReloading = false;
@@ -1737,8 +1745,9 @@ namespace game
 	}
 	*/
 
-	void Unit::setFireWaitDelay(int weapon, int delayTicks)
+	void Unit::setFireWaitDelay(unsigned int weapon, int delayTicks)
 	{
+		assert(weapon < UNIT_MAX_WEAPONS);
 		fireWaitDelay[weapon] = delayTicks;
 	}
 
@@ -1749,8 +1758,9 @@ namespace game
 	}
 	*/
 
-	void Unit::setWeaponFireTime(int weapon, int delayTicks)
+	void Unit::setWeaponFireTime(unsigned int weapon, int delayTicks)
 	{
+		assert(weapon < UNIT_MAX_WEAPONS);
 		weaponFireTime[weapon] = delayTicks;
 	}
 
@@ -1762,8 +1772,9 @@ namespace game
 	*/
 
 
-	bool Unit::useWeaponAmmoImpl(int weapon, int usageWeapon)
+	bool Unit::useWeaponAmmoImpl(unsigned int weapon, int usageWeapon)
 	{
+		assert(weapon < UNIT_MAX_WEAPONS);
 		// usageWeapon defines the weapon to use for usage amounts
 		// weapon is the weapon the ammo of which is used.
 
@@ -1772,6 +1783,7 @@ namespace game
 
 		if (weaponAmmoNumber[weapon] != -1)
 		{
+			assert(usageWeapon >= 0 && usageWeapon < UNIT_MAX_WEAPONS);
 			assert(weaponType[weapon] != NULL);
 			assert(weaponType[usageWeapon] != NULL);
 
@@ -1815,15 +1827,16 @@ namespace game
 	}
 
 
-	int Unit::getWeaponForSharedClip(int weapon)
+	int Unit::getWeaponForSharedClip(unsigned int weapon) const
 	{
+		assert(weapon < UNIT_MAX_WEAPONS);
 		assert(weaponType[weapon]->isSharedClipAttachment());
 
 		int sharedClipWeap = -1;
 
 		// find the weapon to which this weapon is attached,
 		// and sharing clip with it.
-		for (int i = 0; i < UNIT_MAX_WEAPONS; i++)
+		for (unsigned int i = 0; i < UNIT_MAX_WEAPONS; i++)
 		{
 			if (weaponType[i] != NULL)
 			{
@@ -1845,7 +1858,7 @@ namespace game
 		return sharedClipWeap;
 	}
 
-	int Unit::getAttachedWeapon(int weapon)
+	int Unit::getAttachedWeapon(int weapon) const
 	{
 		if(weapon < 0 || weapon > UNIT_MAX_WEAPONS) return -1;
 
@@ -1864,8 +1877,9 @@ namespace game
 	}
 
 
-	bool Unit::useWeaponAmmo(int weapon)
+	bool Unit::useWeaponAmmo(unsigned int weapon)
 	{
+		assert(weapon < UNIT_MAX_WEAPONS);
 		assert(weaponType[weapon] != NULL);
 
 		if (!weaponOperable[weapon])
@@ -1876,7 +1890,7 @@ namespace game
 		if (weaponType[weapon]->isSharedClipAttachment())
 		{
 			int sharedClipWeap = getWeaponForSharedClip(weapon);
-			if (sharedClipWeap != -1) 
+			if (sharedClipWeap >= 0)
 				return useWeaponAmmoImpl(sharedClipWeap, weapon);
 			else
 				return false;
@@ -1935,7 +1949,7 @@ namespace game
 		this->weaponType[weapon] = weaponType;
 	}
 
-	Weapon *Unit::getCustomizedWeaponType(Weapon *weapon)
+	Weapon *Unit::getCustomizedWeaponType(const Weapon *weapon) const
 	{
 		if(weapon == NULL)
 			return NULL;
@@ -1987,7 +2001,7 @@ namespace game
 	}
 	*/
 
-	bool Unit::hasAnyWeaponReady()
+	bool Unit::hasAnyWeaponReady() const
 	{
 		for (int i = 0; i < UNIT_MAX_WEAPONS; i++)
 		{
@@ -2169,7 +2183,7 @@ namespace game
 		turningSoundVolume = 0;
 	}
 
-	Part *Unit::seekPartOfPartType(PartType *partType)
+	Part *Unit::seekPartOfPartType(const PartType *partType) const
 	{
 		if (rootPart != NULL)
 		{
@@ -2321,7 +2335,7 @@ namespace game
 	}
 
 	
-	bool Unit::hasWeaponsForFiretype(FireType fireType)
+	bool Unit::hasWeaponsForFiretype(FireType fireType) const
 	{ 	
 		bool act = false;
 
@@ -2356,7 +2370,7 @@ namespace game
 	}
 
 	
-	bool Unit::isWeaponActive(int weapon)
+	bool Unit::isWeaponActive(int weapon) const
 	{
 		return weaponActive[weapon];
 	}
@@ -2366,7 +2380,7 @@ namespace game
 		weaponActive[weapon] = active;
 	}
 
-	bool Unit::isWeaponOperable(int weapon)
+	bool Unit::isWeaponOperable(int weapon) const
 	{
 		return weaponOperable[weapon];
 	}
@@ -2380,7 +2394,7 @@ namespace game
 		}
 	}
 
-	bool Unit::isWeaponVisible(int weapon)
+	bool Unit::isWeaponVisible(int weapon) const
 	{
 		if(weapon < 0 || weapon > UNIT_MAX_WEAPONS) return false;
 		return weaponVisible[weapon];
@@ -2395,42 +2409,46 @@ namespace game
 		}
 	}
 
-	float Unit::getMaxWeaponRange()
+	float Unit::getMaxWeaponRange() const
 	{
 		return maxWeaponRange;
 	}
 
-	int Unit::getWeaponAmmoAmount(int weapon)
+	int Unit::getWeaponAmmoAmount(unsigned int weapon) const
 	{
+		assert(weapon < UNIT_MAX_WEAPONS);
 		if (weaponAmmoNumber[weapon] != -1)
 			return ammoAmount[weaponAmmoNumber[weapon]];
 		else
 			return 0;
 	}
 
-	int Unit::getWeaponMaxAmmoAmount(int weapon)
+	int Unit::getWeaponMaxAmmoAmount(unsigned int weapon) const
 	{
+        assert(weapon < UNIT_MAX_WEAPONS);
 		if (weaponAmmoNumber[weapon] != -1)
 			return maxAmmoAmount[weaponAmmoNumber[weapon]];
 		else
 			return 0;
 	}
 
-	AmmoPack *Unit::getWeaponAmmoType(int weapon)
+	AmmoPack *Unit::getWeaponAmmoType(unsigned int weapon) const
 	{
+        assert(weapon < UNIT_MAX_WEAPONS);
 		if (weaponAmmoNumber[weapon] != -1)
 			return ammoType[weaponAmmoNumber[weapon]];
 		else
 			return NULL;
 	}
 
-	int Unit::getWeaponPosition(int weapon)
+	int Unit::getWeaponPosition(unsigned int weapon) const
 	{
+        assert(weapon < UNIT_MAX_WEAPONS);
 		return weaponPosition[weapon];
 	}
 
 	
-	int Unit::getWeaponArray(WeaponObject **weaponArray, int arraySize, Part *startPart, int startNumber)
+	int Unit::getWeaponArray(WeaponObject **weaponArray, int arraySize, Part *startPart, int startNumber) const
 	{
 		if (weaponArray == NULL)
 		{
@@ -2478,7 +2496,7 @@ namespace game
 	}
 
 
-	int Unit::getAmmoArray(AmmoPackObject **ammoArray, int arraySize, Part *startPart, int startNumber)
+	int Unit::getAmmoArray(AmmoPackObject **ammoArray, int arraySize, Part *startPart, int startNumber) const
 	{
 		if (ammoArray == NULL)
 		{
@@ -2528,7 +2546,7 @@ namespace game
 		toBeSeeingUnit = seeUnit;
 	}
 
-	Unit *Unit::getToBeSeenUnit()
+	Unit *Unit::getToBeSeenUnit() const
 	{
 		return toBeSeeingUnit;
 	}
@@ -2552,19 +2570,19 @@ namespace game
 	}
 	*/
 
-	float Unit::getSeeUnitDistance()
+	float Unit::getSeeUnitDistance() const
 	{
 		return seeingUnitDistance;
 	}
 
-	float Unit::getToBeSeenUnitDistance()
+	float Unit::getToBeSeenUnitDistance() const
 	{
 		return toBeSeeingUnitDistance;
 	}
 
 
 	// if the path is changed, must call updatePath next.
-	frozenbyte::ai::Path *Unit::getPath()
+	frozenbyte::ai::Path *Unit::getPath() const
 	{
 		return path;
 	}
@@ -2590,12 +2608,12 @@ namespace game
 		}
 	}
 
-	bool Unit::isAtPathEnd()
+	bool Unit::isAtPathEnd() const
 	{
 		return atPathEnd;
 	}
 
-	int Unit::getPathIndex()
+	int Unit::getPathIndex() const
 	{
 		return pathIndex;
 	}
@@ -2631,7 +2649,7 @@ namespace game
 		spottedDelay = delayTicks;
 	}
 
-	int Unit::getSpottedScriptDelay()
+	int Unit::getSpottedScriptDelay() const
 	{
 		return spottedDelay;
 	}
@@ -2641,7 +2659,7 @@ namespace game
 		hitDelay = delayTicks;
 	}
 
-	int Unit::getHitScriptDelay()
+	int Unit::getHitScriptDelay() const
 	{
 		return hitDelay;
 	}
@@ -2668,12 +2686,12 @@ namespace game
 		}
 	}
 
-	Unit *Unit::getHitByUnit()
+	Unit *Unit::getHitByUnit() const
 	{
 		return hitByUnit;
 	}
 
-	Bullet *Unit::getHitByBullet()
+	Bullet *Unit::getHitByBullet() const
 	{
 		return hitByBullet;
 	}
@@ -2683,7 +2701,7 @@ namespace game
 		hitMissDelay = delayTicks;
 	}
 
-	int Unit::getHitMissScriptDelay()
+	int Unit::getHitMissScriptDelay() const
 	{
 		return hitMissDelay;
 	}
@@ -2693,7 +2711,7 @@ namespace game
 		hitMissByUnit = unit;
 	}
 
-	Unit *Unit::getHitMissByUnit()
+	Unit *Unit::getHitMissByUnit() const
 	{
 		return hitMissByUnit;
 	}
@@ -2703,7 +2721,7 @@ namespace game
 		pointedDelay = delayTicks;
 	}
 
-	int Unit::getPointedScriptDelay()
+	int Unit::getPointedScriptDelay() const
 	{
 		return pointedDelay;
 	}
@@ -2713,7 +2731,7 @@ namespace game
 		pointedByUnit = unit;
 	}
 
-	Unit *Unit::getPointedByUnit()
+	Unit *Unit::getPointedByUnit() const
 	{
 		return pointedByUnit;
 	}
@@ -2723,7 +2741,7 @@ namespace game
 		hearNoiseDelay = delayTicks;
 	}
 
-	int Unit::getHearNoiseScriptDelay()
+	int Unit::getHearNoiseScriptDelay() const
 	{
 		return hearNoiseDelay;
 	}
@@ -2733,7 +2751,7 @@ namespace game
 		hearNoiseByUnit = unit;
 	}
 
-	Unit *Unit::getHearNoiseByUnit()
+	Unit *Unit::getHearNoiseByUnit() const
 	{
 		return hearNoiseByUnit;
 	}
@@ -2752,12 +2770,12 @@ namespace game
 		hasSpawn = false;
 	}
 
-	VC3 Unit::getSpawnCoordinates()
+	VC3 Unit::getSpawnCoordinates() const
 	{
 		return this->spawn;
 	}
 
-	bool Unit::hasSpawnCoordinates()
+	bool Unit::hasSpawnCoordinates() const
 	{
 		return hasSpawn;
 	}
@@ -2767,7 +2785,7 @@ namespace game
 		this->idleTime = idleTime;
 	}
 
-	int Unit::getIdleTime()
+	int Unit::getIdleTime() const
 	{
 		return this->idleTime;
 	}
@@ -2777,7 +2795,7 @@ namespace game
 		this->lookBetaAngle = lookBetaAngle;
 	}
 
-	float Unit::getLookBetaAngle()
+	float Unit::getLookBetaAngle() const
 	{
 		return lookBetaAngle;
 	}
@@ -2787,7 +2805,7 @@ namespace game
 		this->directControl = directControl;
 	}
 
-	bool Unit::isDirectControl()
+	bool Unit::isDirectControl() const
 	{
 		return directControl;
 	}
@@ -2797,12 +2815,12 @@ namespace game
 		this->directControlType = directControlType;
 	}
 
-	Unit::UNIT_DIRECT_CONTROL_TYPE Unit::getDirectControlType()
+	Unit::UNIT_DIRECT_CONTROL_TYPE Unit::getDirectControlType() const
 	{
 		return directControlType;
 	}
 
-	int Unit::getGroupNumber()
+	int Unit::getGroupNumber() const
 	{
 		return groupNumber;
 	}
@@ -2812,7 +2830,7 @@ namespace game
 		this->groupNumber = groupNumber;
 	}
 
-	int Unit::getHP()
+	int Unit::getHP() const
 	{
 		return hp;
 	}
@@ -2826,7 +2844,7 @@ namespace game
 			this->hp = hp;
 	}
 
-	int Unit::getMaxHP()
+	int Unit::getMaxHP() const
 	{
 		return maxHP;
 	}
@@ -2836,7 +2854,7 @@ namespace game
 		this->maxHP = maxHP;
 	}
 
-	float Unit::getPoisonResistance()
+	float Unit::getPoisonResistance() const
 	{
 		return poisonResistance;
 	}
@@ -2846,7 +2864,7 @@ namespace game
 		poisonResistance = value;
 	}
 
-	float Unit::getCriticalHitPercent()
+	float Unit::getCriticalHitPercent() const
 	{
 		return criticalHitPercent;
 	}
@@ -2856,7 +2874,7 @@ namespace game
 		criticalHitPercent = value;
 	}
 
-	int Unit::calculateArmorRating()
+	int Unit::calculateArmorRating() const
 	{
 		// TODO: proper implementation!
 		// this only calculates to depth 1 (rootpart and parts attached to it)
@@ -2895,34 +2913,39 @@ namespace game
 	}
 	*/
 
-	int Unit::getWeaponLoopSoundHandle(int weapon)
+	int Unit::getWeaponLoopSoundHandle(unsigned int weapon) const
 	{
+		assert(weapon < UNIT_MAX_WEAPONS);
 		return weaponLoopSoundHandle[weapon];
 	}
 
-	int Unit::getWeaponLoopSoundKey(int weapon)
+	int Unit::getWeaponLoopSoundKey(unsigned int weapon) const
 	{
+		assert(weapon < UNIT_MAX_WEAPONS);
 		return weaponLoopSoundKey[weapon];
 	}
 
-	int Unit::getWeaponSoundHandle(int weapon)
+	int Unit::getWeaponSoundHandle(unsigned int weapon) const
 	{
 		return weaponSoundHandle[weapon];
 	}
 
-	void Unit::setWeaponLoopSoundHandle(int weapon, int handle, int key)
+	void Unit::setWeaponLoopSoundHandle(unsigned int weapon, int handle, int key)
 	{
+		assert(weapon < UNIT_MAX_WEAPONS);
 		weaponLoopSoundHandle[weapon] = handle;
 		weaponLoopSoundKey[weapon] = key;
 	}
 
-	void Unit::setWeaponSoundHandle(int weapon, int handle)
+	void Unit::setWeaponSoundHandle(unsigned int weapon, int handle)
 	{
+		assert(weapon < UNIT_MAX_WEAPONS);
 		weaponSoundHandle[weapon] = handle;
 	}
 
-	void Unit::setWeaponCopyProjectile(int weapon, Projectile *projectile)
+	void Unit::setWeaponCopyProjectile(unsigned int weapon, Projectile *projectile)
 	{
+		assert(weapon < UNIT_MAX_WEAPONS);
 		this->weaponCopyProjectile[weapon] = projectile;
 	}
 
@@ -2931,7 +2954,7 @@ namespace game
 		this->sightBonus = sightBonus;
 	}
 
-	bool Unit::hasSightBonus()
+	bool Unit::hasSightBonus() const
 	{
 		return sightBonus;
 	}
@@ -2953,7 +2976,7 @@ namespace game
 		lastBoneAimDirection = angle;
 	}
 
-	float Unit::getLastBoneAimDirection()
+	float Unit::getLastBoneAimDirection() const
 	{
 		return lastBoneAimDirection;
 	}
@@ -2963,7 +2986,7 @@ namespace game
 		lastBoneAimBetaAngle = angle;
 	}
 	
-	float Unit::getLastBoneAimBetaAngle()
+	float Unit::getLastBoneAimBetaAngle() const
 	{
 		return lastBoneAimBetaAngle;
 	}
@@ -2973,7 +2996,7 @@ namespace game
 		lastBoneAimDirection = angle;
 	}
 
-	float Unit::getFlashlightDirection()
+	float Unit::getFlashlightDirection() const
 	{
 		return lastBoneAimDirection;
 	}
@@ -2983,7 +3006,7 @@ namespace game
 		this->stealthing = stealthing;
 	}
 
-	bool Unit::isStealthing()
+	bool Unit::isStealthing() const
 	{
 		return stealthing;
 	}
@@ -2994,7 +3017,7 @@ namespace game
 		this->reconAvailable = reconAvailable;
 	}
 
-	bool Unit::isReconAvailableFlag()
+	bool Unit::isReconAvailableFlag() const
 	{
 		return reconAvailable;
 	}
@@ -3005,13 +3028,13 @@ namespace game
 		this->fallenOnBack = fallenOnBack;
 	}
 
-	bool Unit::hasFallenOnBack()
+	bool Unit::hasFallenOnBack() const
 	{
 		return fallenOnBack;
 	}
 
 
-	float Unit::getFiringSpreadFactor()
+	float Unit::getFiringSpreadFactor() const
 	{
 		return firingSpreadFactor;
 	}
@@ -3021,8 +3044,9 @@ namespace game
 		this->firingSpreadFactor = firingSpreadFactor;
 	}
 
-	int Unit::getWeaponClipSize(int weapon)
+	int Unit::getWeaponClipSize(unsigned int weapon) const
 	{
+		assert(weapon < UNIT_MAX_WEAPONS);
 		if (weaponType[weapon] == NULL)
 			return 0;
 
@@ -3031,8 +3055,9 @@ namespace game
 		return weaponType[weapon]->getClipSize();
 	}
 
-	bool Unit::reloadWeaponAmmoClip(int weapon, bool instantReload)
+	bool Unit::reloadWeaponAmmoClip(unsigned int weapon, bool instantReload)
 	{
+		assert(weapon < UNIT_MAX_WEAPONS);
 		if (weaponType[weapon] == NULL)
 			return false;
 
@@ -3096,13 +3121,15 @@ namespace game
 		}
 	}
 
-	int Unit::getWeaponAmmoInClip(int weapon)
+	int Unit::getWeaponAmmoInClip(unsigned int weapon) const
 	{
+		assert(weapon < UNIT_MAX_WEAPONS);
 		return weaponAmmoInClip[weapon];
 	}
 
-	void Unit::clearWeaponAmmoInClip(int weapon)
+	void Unit::clearWeaponAmmoInClip(unsigned int weapon)
 	{
+		assert(weapon < UNIT_MAX_WEAPONS);
 		weaponAmmoInClip[weapon] = 0;
 	}
 
@@ -3126,11 +3153,11 @@ namespace game
 		movingBackward = false; 
 	}
 
-	bool Unit::wasMovingForward() { return movingForward; }
-	bool Unit::wasMovingBackward() { return movingBackward; }
-	bool Unit::wasMovingSideways() { return movingSideways; }
+	bool Unit::wasMovingForward() const { return movingForward; }
+	bool Unit::wasMovingBackward() const { return movingBackward; }
+	bool Unit::wasMovingSideways() const { return movingSideways; }
 
-	float Unit::getRushDistance()
+	float Unit::getRushDistance() const
 	{
 		return rushDistance;
 	}
@@ -3154,7 +3181,7 @@ namespace game
 		armorAmount = value;
 	}
 
-	int Unit::getArmorAmount()
+	int Unit::getArmorAmount() const
 	{
 		return armorAmount;
 	}
@@ -3168,7 +3195,7 @@ namespace game
 		armorClass = value;
 	}
 
-	int Unit::getArmorClass()
+	int Unit::getArmorClass() const
 	{
 //Logger::getInstance()->error("Unit::getArmorAmount - should not be used.");
 //abort();
@@ -3192,7 +3219,7 @@ namespace game
 		this->flashlight = flashlight;
 	}
 
-	Flashlight *Unit::getFlashlight()
+	Flashlight *Unit::getFlashlight() const
 	{
 		return flashlight;
 	}
@@ -3202,17 +3229,17 @@ namespace game
 		this->spotlight2 = spotlight;
 	}
 
-	ui::Spotlight *Unit::getSecondarySpotlight()
+	ui::Spotlight *Unit::getSecondarySpotlight() const
 	{
 		return spotlight2;
 	}
 
-	bool Unit::isClipReloading()
+	bool Unit::isClipReloading() const
 	{
 		return clipReloading;
 	}
 
-	bool Unit::isLastMoveStrafed()
+	bool Unit::isLastMoveStrafed() const
 	{
 		return this->lastMoveStrafed;
 	}
@@ -3222,7 +3249,7 @@ namespace game
 		this->lastMoveStrafed = lastMoveStrafed;
 	}
 
-	bool Unit::isUnitMirrorSide()
+	bool Unit::isUnitMirrorSide() const
 	{
 		return this->unitMirrorSide;
 	}
@@ -3237,7 +3264,7 @@ namespace game
 		this->forcedAnim = anim;
 	}
 
-	int Unit::getForcedAnimation()
+	int Unit::getForcedAnimation() const
 	{
 		return forcedAnim;
 	}
@@ -3279,7 +3306,7 @@ namespace game
 
 	}
 
-	Item *Unit::getItem(int number)
+	Item *Unit::getItem(int number) const
 	{
 		if (number < 0 || number >= UNIT_MAX_ITEMS)
 		{
@@ -3309,7 +3336,7 @@ namespace game
 		return item;
 	}
 
-	int Unit::getItemNumberByTypeId(int itemTypeId)
+	int Unit::getItemNumberByTypeId(int itemTypeId) const
 	{
 		if (items == NULL)
 			return -1;
@@ -3330,7 +3357,7 @@ namespace game
 		this->selectedWeapon = weaponNumber;
 	}
 
-	int Unit::getSelectedWeapon()
+	int Unit::getSelectedWeapon() const
 	{
 		return selectedWeapon;
 	}
@@ -3340,12 +3367,12 @@ namespace game
 		this->selectedSecondaryWeapon = weaponNumber;
 	}
 
-	int Unit::getSelectedSecondaryWeapon()
+	int Unit::getSelectedSecondaryWeapon() const
 	{
 		return selectedSecondaryWeapon;
 	}
 
-	int Unit::getWeaponByWeaponType(int weaponTypeId)
+	int Unit::getWeaponByWeaponType(int weaponTypeId) const
 	{
 		for (int i = 0; i < UNIT_MAX_WEAPONS; i++)
 		{
@@ -3358,7 +3385,7 @@ namespace game
 		return -1;
 	}
 
-	bool Unit::wasLastPathfindSuccess()
+	bool Unit::wasLastPathfindSuccess() const
 	{
 		return lastPathfindSuccess;
 	}
@@ -3368,12 +3395,12 @@ namespace game
 		this->lastPathfindSuccess = pathfindSuccess;
 	}
 
-	bool Unit::isImmortal()
+	bool Unit::isImmortal() const
 	{
 		return immortal;
 	}
 
-	bool Unit::isImmortalWithHitScript()
+	bool Unit::isImmortalWithHitScript() const
 	{
 		return immortalWithHitScript;
 	}
@@ -3389,7 +3416,7 @@ namespace game
 		this->jumpCounter = jumpTickLength;
 	}
 
-	int Unit::getJumpCounter()
+	int Unit::getJumpCounter() const
 	{
 		return jumpCounter;
 	}
@@ -3399,7 +3426,7 @@ namespace game
 		this->jumpTotalTime = jumpTickLength;
 	}
 
-	int Unit::getJumpTotalTime()
+	int Unit::getJumpTotalTime() const
 	{
 		return jumpTotalTime;
 	}
@@ -3409,12 +3436,12 @@ namespace game
 		this->turnedTime = turnedTime;
 	}
 
-	int Unit::getTurnedTime()
+	int Unit::getTurnedTime() const
 	{
 		return turnedTime;
 	}
 
-	bool Unit::isAnimated()
+	bool Unit::isAnimated() const
 	{
 		return animated;
 	}
@@ -3429,12 +3456,12 @@ namespace game
 		this->firingInProgress = firingInProgress;
 	}
 
-	bool Unit::isFiringInProgress()
+	bool Unit::isFiringInProgress() const
 	{
 		return this->firingInProgress;
 	}
 
-	bool Unit::isAnyWeaponFiring()
+	bool Unit::isAnyWeaponFiring() const
 	{
 		for (int i = 0; i < UNIT_MAX_WEAPONS; i++)
 		{
@@ -3448,7 +3475,7 @@ namespace game
 		return false;
 	}
 
-	int Unit::getFireSweepDirection()
+	int Unit::getFireSweepDirection() const
 	{
 		return sweepDirection;
 	}
@@ -3485,7 +3512,7 @@ namespace game
 		}
 	}
 
-	bool Unit::hasMovedSinceOldestBacktrack(float movementTreshold)
+	bool Unit::hasMovedSinceOldestBacktrack(float movementTreshold) const
 	{
 		for (int i = 0; i < UNIT_BACKTRACK_AMOUNT/2; i++)
 		{
@@ -3503,7 +3530,7 @@ namespace game
 		return false;
 	}
 
-	bool Unit::hasAttemptedToMoveAllBacktrackTime()
+	bool Unit::hasAttemptedToMoveAllBacktrackTime() const
 	{
 		for (int i = 0; i < UNIT_BACKTRACK_AMOUNT; i++)
 		{
@@ -3519,7 +3546,7 @@ namespace game
 		this->strafeRotationOffset = rotationOffset;
 	}
 
-	float Unit::getStrafeRotationOffset()
+	float Unit::getStrafeRotationOffset() const
 	{
 		return this->strafeRotationOffset;
 	}
@@ -3529,7 +3556,7 @@ namespace game
 		this->strafeAimOffset = aimOffset;
 	}
 
-	float Unit::getStrafeAimOffset()
+	float Unit::getStrafeAimOffset() const
 	{
 		return this->strafeAimOffset;
 	}
@@ -3542,7 +3569,7 @@ namespace game
 		this->jumpCamRight = right;
 	}
 
-	void Unit::getCameraRelativeJumpDirections(bool *forward, bool *backward, bool *left, bool *right)
+	void Unit::getCameraRelativeJumpDirections(bool *forward, bool *backward, bool *left, bool *right) const
 	{
 		*forward = this->jumpCamForward;
 		*backward = this->jumpCamBackward;
@@ -3558,7 +3585,7 @@ namespace game
 		this->jumpUnitRight = right;
 	}
 
-	void Unit::getUnitRelativeJumpDirections(bool *forward, bool *backward, bool *left, bool *right)
+	void Unit::getUnitRelativeJumpDirections(bool *forward, bool *backward, bool *left, bool *right) const
 	{
 		*forward = this->jumpUnitForward;
 		*backward = this->jumpUnitBackward;
@@ -3566,7 +3593,7 @@ namespace game
 		*right = this->jumpUnitRight;
 	}
 
-	int Unit::getPendingWeaponChangeRequest()
+	int Unit::getPendingWeaponChangeRequest() const
 	{
 		return this->pendingWeaponChangeRequest;
 	}
@@ -3576,7 +3603,7 @@ namespace game
 		this->pendingWeaponChangeRequest = pendingWeaponId;
 	}
 
-	int Unit::getJumpNotAllowedTime()
+	int Unit::getJumpNotAllowedTime() const
 	{
 		return this->jumpNotAllowedTime;
 	}
@@ -3592,12 +3619,12 @@ namespace game
 		this->ghostOfFuture = true;
 	}
 
-	bool Unit::isGhostOfFuture()
+	bool Unit::isGhostOfFuture() const
 	{
 		return this->ghostOfFuture;
 	}
 
-	int Unit::getGhostTime()
+	int Unit::getGhostTime() const
 	{
 		return this->ghostTime;
 	}
@@ -3686,7 +3713,7 @@ namespace game
 		this->idleRequest = idleRequestAnimNumber;
 	}
 
-	int Unit::getIdleRequest()
+	int Unit::getIdleRequest() const
 	{
 		return this->idleRequest;
 	}
@@ -3696,12 +3723,12 @@ namespace game
 		this->idleRequest = 0;
 	}
 
-	bool Unit::doesKeepReloading()
+	bool Unit::doesKeepReloading() const
 	{
 		return this->keepReloading;
 	}
 	
-	int Unit::getKeepFiringCount()
+	int Unit::getKeepFiringCount() const
 	{
 		return this->keepFiring;
 	}
@@ -3716,7 +3743,7 @@ namespace game
 		this->keepFiring = keepFiringCount;
 	}
 
-	bool Unit::doesUseAIDisableRange()
+	bool Unit::doesUseAIDisableRange() const
 	{
 		return this->useAIDisableRange;
 	}
@@ -3732,7 +3759,7 @@ namespace game
 		this->selectedItem = selectedItem;
 	}
 
-	int Unit::getSelectedItem()
+	int Unit::getSelectedItem() const
 	{
 		return selectedItem;
 	}
@@ -3746,7 +3773,7 @@ namespace game
 		this->fadeLightingTimeTotal = fadeTime;
 	}
 
-	float Unit::getCurrentLightingFadeValue()
+	float Unit::getCurrentLightingFadeValue() const
 	{
 		float srcFactor = (float)fadeLightingTimeLeft / (float)fadeLightingTimeTotal;
 		float targFactor = 1.0f - srcFactor;
@@ -3774,7 +3801,7 @@ namespace game
 		this->fadeVisibilityTimeTotal = fadeTime;
 	}
 
-	float Unit::getCurrentVisibilityFadeValue()
+	float Unit::getCurrentVisibilityFadeValue() const
 	{
 		if (fadeVisibilityTimeTotal <= 1)
 		{
@@ -3802,7 +3829,7 @@ namespace game
 		}
 	}
 
-	bool Unit::doesCollisionCheck()
+	bool Unit::doesCollisionCheck() const
 	{
 		return this->collisionCheck;
 	}
@@ -3812,7 +3839,7 @@ namespace game
 		this->collisionCheck = collCheck;
 	}
 
-	bool Unit::doesCollisionBlockOthers()
+	bool Unit::doesCollisionBlockOthers() const
 	{
 		return this->collisionBlocksOthers;
 	}
@@ -3822,7 +3849,7 @@ namespace game
 		this->collisionBlocksOthers = collCheck;
 	}
 
-	bool Unit::hasAreaTriggered()
+	bool Unit::hasAreaTriggered() const
 	{
 		return this->areaTriggered;
 	}
@@ -3842,7 +3869,7 @@ namespace game
 		return 0;
 	}
 
-	VC3 &Unit::getAreaCenter()
+	const VC3 &Unit::getAreaCenter() const
 	{
 		return this->areaCenter;
 	}
@@ -3852,7 +3879,7 @@ namespace game
 		this->areaCenter = position;
 	}
 
-	float Unit::getAreaRange()
+	float Unit::getAreaRange() const
 	{
 		return this->areaRange;
 	}
@@ -3862,7 +3889,7 @@ namespace game
 		this->areaRange = range;
 	}
 
-	int Unit::getAreaClipMask()
+	int Unit::getAreaClipMask() const
 	{
 		return this->areaClipMask;
 	}
@@ -3873,7 +3900,7 @@ namespace game
 		this->areaClipMask = clipMask;
 	}
 
-	int Unit::getAreaCircleId()
+	int Unit::getAreaCircleId() const
 	{
 		return this->areaCircleId;
 	}
@@ -3883,7 +3910,7 @@ namespace game
 		this->areaCircleId = areaCircleId;
 	}
 
-	bool Unit::isFollowPlayer()
+	bool Unit::isFollowPlayer() const
 	{
 		return this->followPlayer;
 	}
@@ -3893,12 +3920,12 @@ namespace game
 		this->followPlayer = followPlayer;
 	}
 
-	void Unit::setLastLightUpdatePosition(VC3 &position)
+	void Unit::setLastLightUpdatePosition(const VC3 &position)
 	{
 		this->lastLightUpdatePosition = position;
 	}
 
-	VC3 Unit::getLastLightUpdatePosition()
+	VC3 Unit::getLastLightUpdatePosition() const
 	{
 		return this->lastLightUpdatePosition;
 	}
@@ -3910,17 +3937,17 @@ namespace game
 		this->unitListEntity = listEntity;
 	}
 
-	UnitListEntity *Unit::getUnitListEntity()
+	UnitListEntity *Unit::getUnitListEntity() const
 	{
 		return this->unitListEntity;
 	}
 
-	ui::VisualEffect *Unit::getMuzzleflashVisualEffect()
+	ui::VisualEffect *Unit::getMuzzleflashVisualEffect() const
 	{
 		return this->muzzleflashVisualEffect;
 	}
 
-	ui::VisualEffect *Unit::getEjectVisualEffect()
+	ui::VisualEffect *Unit::getEjectVisualEffect() const
 	{
 		return this->ejectVisualEffect;
 	}
@@ -3935,12 +3962,12 @@ namespace game
 		this->continuousFireTime = 0;
 	}
 
-	int Unit::getContinuousFireTime()
+	int Unit::getContinuousFireTime() const
 	{
 		return this->continuousFireTime;
 	}
 
-	bool Unit::isOnFire()
+	bool Unit::isOnFire() const
 	{
 		if (onFireCounter > 0)
 			return true;
@@ -3948,7 +3975,7 @@ namespace game
 			return false;
 	}
 
-	int Unit::getOnFireCounter()
+	int Unit::getOnFireCounter() const
 	{
 		return onFireCounter;
 	}
@@ -3958,7 +3985,7 @@ namespace game
 		this->onFireCounter = value;
 	}
 
-	bool Unit::hasAliveMarker()
+	bool Unit::hasAliveMarker() const
 	{
 		return this->aliveMarker;
 	}
@@ -3968,7 +3995,7 @@ namespace game
 		this->aliveMarker = alive;
 	}
 
-	bool Unit::hasDiedByPoison()
+	bool Unit::hasDiedByPoison() const
 	{
 		return this->diedByPoison;
 	}
@@ -3978,8 +4005,9 @@ namespace game
 		this->diedByPoison = diedByPoison;
 	}
 
-	void Unit::rotateWeaponBarrel(int weapon)
+	void Unit::rotateWeaponBarrel(unsigned int weapon)
 	{
+		assert(weapon < UNIT_MAX_WEAPONS);
 		assert(weaponType[weapon] != NULL);
 
 		if (weaponType[weapon] != NULL)
@@ -3990,13 +4018,15 @@ namespace game
 		}
 	}
 
-	int Unit::getRotatedWeaponBarrel(int weapon)
+	int Unit::getRotatedWeaponBarrel(unsigned int weapon) const
 	{
+		assert(weapon < UNIT_MAX_WEAPONS);
 		return this->weaponBarrel[weapon];
 	}
 
-	void Unit::rotateWeaponEjectBarrel(int weapon)
+	void Unit::rotateWeaponEjectBarrel(unsigned int weapon)
 	{
+		assert(weapon < UNIT_MAX_WEAPONS);
 		assert(weaponType[weapon] != NULL);
 
 		if (weaponType[weapon] != NULL)
@@ -4007,8 +4037,9 @@ namespace game
 		}
 	}
 
-	int Unit::getRotatedWeaponEjectBarrel(int weapon)
+	int Unit::getRotatedWeaponEjectBarrel(unsigned int weapon) const
 	{
+		assert(weapon < UNIT_MAX_WEAPONS);
 		return this->weaponEjectBarrel[weapon];
 	}
 
@@ -4018,17 +4049,17 @@ namespace game
 		this->forceLightVisibilityFactor = forceLightVisibilityFactor;
 	}
 
-	float Unit::getLightVisibilityFactor()
+	float Unit::getLightVisibilityFactor() const
 	{
 		return this->lightVisibilityFactor;
 	}
 
-	bool Unit::isForcedLightVisibilityFactor()
+	bool Unit::isForcedLightVisibilityFactor() const
 	{
 		return this->forceLightVisibilityFactor;
 	}
 
-	bool Unit::isShootAnimStanding()
+	bool Unit::isShootAnimStanding() const
 	{
 		return this->shootAnimStanding;
 	}
@@ -4038,7 +4069,7 @@ namespace game
 		this->shootAnimStanding = shootAnimStanding;
 	}
 
-	bool Unit::isRushing()
+	bool Unit::isRushing() const
 	{
 		return this->rushing;
 	}
@@ -4074,17 +4105,17 @@ namespace game
 		this->delayedHitProjectileAmount = amount;
 	}
 
-	Bullet *Unit::getDelayedHitProjectileBullet()
+	Bullet *Unit::getDelayedHitProjectileBullet() const
 	{
 		return this->delayedHitProjectileBullet;
 	}
 
-	int Unit::getDelayedHitProjectileInterval()
+	int Unit::getDelayedHitProjectileInterval() const
 	{
 		return this->delayedHitProjectileInterval;
 	}
 
-	int Unit::getDelayedHitProjectileAmount()
+	int Unit::getDelayedHitProjectileAmount() const
 	{
 		return this->delayedHitProjectileAmount;
 	}
@@ -4094,7 +4125,7 @@ namespace game
 		this->jumpAnim = anim;
 	}
 
-	int Unit::getJumpAnim()
+	int Unit::getJumpAnim() const
 	{
 		return this->jumpAnim;
 	}
@@ -4109,27 +4140,27 @@ namespace game
 		this->aniRecordBlendFlag = blendAnim;
 	}
 
-	bool Unit::getAniRecordBlendEndFlag()
+	bool Unit::getAniRecordBlendEndFlag() const
 	{
 		return this->aniRecordBlendEndFlag;
 	}
 
-	int Unit::getAniRecordBlendFlag()
+	int Unit::getAniRecordBlendFlag() const
 	{
 		return this->aniRecordBlendFlag;
 	}
 
-	bool Unit::hasAniRecordFireFlag()
+	bool Unit::hasAniRecordFireFlag() const
 	{
 		return this->aniRecordFireFlag;
 	}
 
-	VC3 Unit::getAniRecordFireSourcePosition()
+	VC3 Unit::getAniRecordFireSourcePosition() const
 	{
 		return this->aniRecordFireSourcePosition;
 	}
 
-	VC3 Unit::getAniRecordFireDestinationPosition()
+	VC3 Unit::getAniRecordFireDestinationPosition() const
 	{
 		return this->aniRecordFireDestinationPosition;
 	}
@@ -4185,27 +4216,27 @@ namespace game
 		this->weaponChargeSteps = steps;
 	}
 
-	int Unit::getWeaponRechargeAmount()
+	int Unit::getWeaponRechargeAmount() const
 	{
 		return this->weaponChargeAmount;
 	}
 
-	int Unit::getWeaponRechargeMin()
+	int Unit::getWeaponRechargeMin() const
 	{
 		return this->weaponChargeMin;
 	}
 
-	int Unit::getWeaponRechargePeak()
+	int Unit::getWeaponRechargePeak() const
 	{
 		return this->weaponChargePeak;
 	}
 
-	int Unit::getWeaponRechargeSteps()
+	int Unit::getWeaponRechargeSteps() const
 	{
 		return this->weaponChargeSteps;
 	}
 
-	bool Unit::isWeaponRecharging()
+	bool Unit::isWeaponRecharging() const
 	{
 		return this->weaponCharging;
 	}
@@ -4260,37 +4291,37 @@ namespace game
 		hpGainStartTime = -1;
 	}
 
-	float Unit::getHPGainLimit(void)
+	float Unit::getHPGainLimit(void) const
 	{
 		return hpGainLimit;
 	}
 
-	int Unit::getHPGainAmount(void)
+	int Unit::getHPGainAmount(void) const
 	{
 		return hpGainAmount;
 	}
 
-	int Unit::getHPGainDelay(void)
+	int Unit::getHPGainDelay(void) const
 	{
 		return hpGainDelay;
 	}
 
-	int Unit::getHPGainStartDelay(void)
+	int Unit::getHPGainStartDelay(void) const
 	{
 		return hpGainStartDelay;
 	}
 
-	int Unit::getHPGainStartTime(void)
+	int Unit::getHPGainStartTime(void) const
 	{
 		return hpGainStartTime;
 	}
 
-	float Unit::getHPGainDamageFactor(void)
+	float Unit::getHPGainDamageFactor(void) const
 	{
 		return hpGainDamageFactor;
 	}
 
-	int Unit::getLastTimeDamaged(void)
+	int Unit::getLastTimeDamaged(void) const
 	{
 		return lastTimeDamaged;
 	}
@@ -4311,17 +4342,17 @@ namespace game
 		turningSoundStartTime = timeNow;
 	}
 
-	int Unit::getTurningSound()
+	int Unit::getTurningSound() const
 	{
 		return turningSound;
 	}
 
-	int Unit::getTurningSoundStartTime()
+	int Unit::getTurningSoundStartTime() const
 	{
 		return turningSoundStartTime;
 	}
 
-	int Unit::getTurningSoundVolume()
+	int Unit::getTurningSoundVolume() const
 	{
 		return turningSoundVolume;
 	}
@@ -4331,7 +4362,7 @@ namespace game
 		turningSoundVolume = vol;
 	}
 
-	int Unit::getTurningSoundFrequency()
+	int Unit::getTurningSoundFrequency() const
 	{
 		return turningSoundFrequency;
 	}
@@ -4341,7 +4372,7 @@ namespace game
 		turningSoundFrequency = freq;
 	}
 
-	const std::vector<FootStepTrigger *> &Unit::getFootStepTriggers()
+	const std::vector<FootStepTrigger *> &Unit::getFootStepTriggers() const
 	{
 		return footStepTriggers;
 	}

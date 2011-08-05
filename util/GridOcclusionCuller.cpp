@@ -1,8 +1,9 @@
 
 #include "precompiled.h"
 
-#include "GridOcclusionCuller.h"
 #include <stdio.h>
+#include "GridOcclusionCuller.h"
+#include "../system/Logger.h"
 
 namespace util
 {

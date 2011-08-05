@@ -4,7 +4,7 @@
 
 #include <DatatypeDef.h>
 
-#include "../util/AI_Pathfind.h"
+#include "../util/AI_PathFind.h"
 
 namespace game
 {

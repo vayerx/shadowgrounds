@@ -1193,7 +1193,7 @@ void TerrainUnits::doExport(Exporter &exporter) const
 				instance.cachedHeight = data->storm.getHeight(instance.position);
 
 			float height = instance.cachedHeight + instance.heightOffset;
-			units.addUnit(unit.name, unit.spawnText, instance.position, instance.yRotation, height, scriptName, instance.side, instance.properties, stringProperties);
+			units.addUnit(unit.spawnText, instance.position, instance.yRotation, height, scriptName, instance.side, instance.properties, stringProperties);
 		}
 	}
 }
@@ -1298,9 +1298,6 @@ filesystem::InputStream &TerrainUnits::readStream(filesystem::InputStream &strea
 				instance.uniqueEditorObjectHandle = 0;
 				instance.uniqueEditorObjectHandle |= (UniqueEditorObjectHandle)lower;
 				instance.uniqueEditorObjectHandle |= ((UniqueEditorObjectHandle)upper << 32);
-			} else {
-				unsigned int internalHandle = _time32(NULL);
-				instance.uniqueEditorObjectHandle = UniqueEditorObjectHandleManager::createNewUniqueHandle(internalHandle);
 			}
 
 		}

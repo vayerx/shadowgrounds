@@ -1,6 +1,8 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 //------------------------------------------------------------------
 // Includes
@@ -14,7 +16,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include "Storm3D_Bone.h"
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 
 #ifdef PROJECT_AOV
@@ -29,18 +31,19 @@
 Storm3D_Model_Object::Storm3D_Model_Object(Storm3D *s2,const char *name,Storm3D_Model *_parent_model, Storm3D_ResourceManager &resourceManager_) :
 	Storm3D2(s2),
 	resourceManager(resourceManager_),
-	parent_model(_parent_model),
-	parent_bone(0),
-	parent(NULL),
-	mx_update(true),
-	mxg_update(true),
-	no_collision(false),
-	sphere_collision_only(false),
-	no_render(false),
-	light_object(false),
+	name(0),
 	mesh(NULL),
 	gpos_update_needed(true),
 	scale(1,1,1),
+	mx_update(true),
+	mxg_update(true),
+	parent_model(_parent_model),
+	parent(NULL),
+	parent_bone(0),
+	no_collision(false),
+	no_render(false),
+	light_object(false),
+	sphere_collision_only(false),
 	sphere_ok(false),
 	box_ok(false),
 	object_box_ok(false),
@@ -49,12 +52,11 @@ Storm3D_Model_Object::Storm3D_Model_Object(Storm3D *s2,const char *name,Storm3D_
 	force_lighting_alpha_enable(false),
 	force_lighting_alpha(0),
 	spot_transparency_factor(1.f),
-	name(0),
 	distortion_only(false),
-	sort_data(0.f),
 	renderPassMask(RENDER_PASS_MASK_VALUE_NONE),
 	alphaTestPassConditional(false),
-	alphaTestValue(DEFAULT_ALPHA_TEST_VALUE)
+	alphaTestValue(DEFAULT_ALPHA_TEST_VALUE),
+	sort_data(0.f)
 {
 	visibility_id = 0;
 	real_visibility_id = 0;
@@ -549,7 +551,7 @@ void Storm3D_Model_Object::InformChangeToChilds()
 //------------------------------------------------------------------
 // Storm3D_Model_Object::SetPosition
 //------------------------------------------------------------------
-void Storm3D_Model_Object::SetPosition(VC3 &_position)
+void Storm3D_Model_Object::SetPosition(const VC3 &_position)
 {
 	position=_position;
 
@@ -579,7 +581,7 @@ void Storm3D_Model_Object::SetPosition(VC3 &_position)
 //------------------------------------------------------------------
 // Storm3D_Model_Object::SetRotation
 //------------------------------------------------------------------
-void Storm3D_Model_Object::SetRotation(QUAT &_rotation)
+void Storm3D_Model_Object::SetRotation(const QUAT &_rotation)
 {
 	rotation=_rotation;
 
@@ -600,7 +602,7 @@ void Storm3D_Model_Object::SetRotation(QUAT &_rotation)
 //------------------------------------------------------------------
 // Storm3D_Model_Object::SetScale
 //------------------------------------------------------------------
-void Storm3D_Model_Object::SetScale(VC3 &_scale)
+void Storm3D_Model_Object::SetScale(const VC3 &_scale)
 {
 	scale=_scale;
 

@@ -437,19 +437,7 @@ GS_CMD_SIMPLE(339, setUnitNoHit, INT)
 
 GS_CMD_SIMPLE(340, isUnitHitByPoison, NONE)
 GS_CMD_SIMPLE(341, setUnitShielded, INT)
-
-GS_CMD_SIMPLE(342, interpolatedUnitPosition, NONE)
-
-GS_CMD_SIMPLE(343, predictClawDodge, INT)
-GS_CMD_SIMPLE(344, getPredictedClawDodgePosition, FLOAT)
-GS_CMD_SIMPLE(345, findSafePosition, FLOAT)
-GS_CMD_SIMPLE(346, findLineOfFireToPlayer, NONE)
-
-GS_CMD_SIMPLE(347, hasFallenOnBack, NONE)
-GS_CMD_SIMPLE(348, hasLineOfFire, NONE)
-
-GS_CMD_SIMPLE(349, setCustomUnitVariable, STRING)
-GS_CMD_SIMPLE(350, getCustomUnitVariable, STRING)
+GS_CMD_SIMPLE(342, reloadUnitWeapons, NONE)
 
 #undef GS_CMD_BASE
 

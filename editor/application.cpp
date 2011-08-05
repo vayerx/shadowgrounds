@@ -45,6 +45,7 @@
 #include <fstream>
 #include <boost/scoped_array.hpp>
 #include <boost/lexical_cast.hpp>
+#pragma comment(lib, "storm3dv2.lib")
 
 #ifdef PROJECT_AOV
 #define EDITOR_GZIP_SAVES 1

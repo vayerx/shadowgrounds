@@ -2,14 +2,17 @@
 #ifndef GUIEFFECTWINDOW_H
 #define GUIEFFECTWINDOW_H
 
-#include <datatypedef.h>
+
+#include <boost/utility.hpp>
+
+#include <DatatypeDef.h>
 
 class Ogui;
 class OguiWindow;
 
 namespace ui
 {
-	class GUIEffectWindow
+	class GUIEffectWindow : public boost::noncopyable
 	{
 		public:
 

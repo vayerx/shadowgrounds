@@ -7,8 +7,8 @@
 // Includes
 //------------------------------------------------------------------
 #include "storm3d_common_imp.h"
-#include "istorm3d_particle.h"
-#include "vertexformats.h"
+#include "IStorm3D_Particle.h"
+#include "VertexFormats.h"
 #include "storm3d_terrain_utils.h"
 #include "storm3d.h"
 
@@ -57,7 +57,7 @@ public:
 
 	public:
 		PointArray(IStorm3D_Material* mtl, Storm3D_PointParticle* parts, int nParts, const COL &factor_, bool distortion_) 
-		: m_mtl(mtl), m_parts(parts), m_numParts(nParts), m_partOffset(0), factor(factor_), distortion(distortion_)
+		: m_parts(parts), m_numParts(nParts), m_partOffset(0), m_mtl(mtl), factor(factor_), distortion(distortion_)
 		{
 		}
 
@@ -97,7 +97,7 @@ public:
 	
 	public:
 		QuadArray(IStorm3D_Material* mtl, Storm3D_PointParticle* parts, int nParts, Storm3D_ParticleTextureAnimationInfo* info, const COL &factor_, bool distortion_, bool faceUp_) 
-		: m_mtl(mtl), m_parts(parts), m_numParts(nParts), m_partOffset(0), factor(factor_), distortion(distortion_), faceUp(faceUp_)
+		: m_parts(parts), m_numParts(nParts), m_partOffset(0), m_mtl(mtl), factor(factor_), distortion(distortion_), faceUp(faceUp_)
 		{
 			if(info) {
 				m_animInfo.numFrames = info->numFrames;
@@ -150,7 +150,7 @@ public:
 	
 	public:
 		LineArray(IStorm3D_Material* mtl, Storm3D_LineParticle* parts, int nParts, Storm3D_ParticleTextureAnimationInfo* info, const COL &factor_, bool distortion_) 
-		: m_mtl(mtl), m_parts(parts), m_numParts(nParts), m_partOffset(0), factor(factor_), distortion(distortion_) 
+		: m_parts(parts), m_numParts(nParts), m_partOffset(0), m_mtl(mtl), factor(factor_), distortion(distortion_) 
 		{
 			if(info) {
 				m_animInfo.numFrames = info->numFrames;

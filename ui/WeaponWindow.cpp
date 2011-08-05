@@ -1,9 +1,12 @@
 
 #include "precompiled.h"
 
+#include <assert.h>
+#include <limits.h>
+#include <boost/lexical_cast.hpp>
+
 #include "WeaponWindow.h"
 
-#include <assert.h>
 #include "Visual2D.h"
 #include "uidefaults.h"
 #include "../game/Unit.h"
@@ -22,8 +25,6 @@
 #include "../util/Debug_MemoryManager.h"
 #include "../system/Timer.h"
 #include "CombatSubWindowFactory.h"
-
-#include <boost/lexical_cast.hpp>
 
 using namespace game;
 
@@ -47,18 +48,18 @@ REGISTER_COMBATSUBWINDOW( WeaponWindow );
 		weaponListSelectedImage( NULL ),
 		weaponListDisabledImage( NULL ),
 
-		lastUpdateValue( 0 ),
-		lastUpdateWeaponAmount( 0 ),
+		weaponNames( WEAPONWINDOW_MAX_WEAPONS ),
+		weaponSelectionFont( NULL ),
+		playerNameFont( NULL ),
+		weaponSelectionText( NULL ),
+		labelButton( NULL ),
+		hideWeaponSelection( 0 ),
 
 		profile(),
 		coop(false),
 
-		weaponNames( WEAPONWINDOW_MAX_WEAPONS ),
-		weaponSelectionText( NULL ),
-		weaponSelectionFont( NULL ),
-		playerNameFont( NULL ),
-		labelButton( NULL ),
-		hideWeaponSelection( 0 )
+		lastUpdateValue( 0 ),
+		lastUpdateWeaponAmount( 0 )
 	{
 		int i = 0;
 		for ( i = 0; i < WEAPONWINDOW_MAX_WEAPONS; i++ )
@@ -82,17 +83,17 @@ REGISTER_COMBATSUBWINDOW( WeaponWindow );
 		weaponListSelectedImage( NULL ),
 		weaponListDisabledImage( NULL ),
 
-		lastUpdateValue( 0 ),
-		lastUpdateWeaponAmount( 0 ),
+		weaponNames( WEAPONWINDOW_MAX_WEAPONS ),
+		weaponSelectionFont( NULL ),
+		weaponSelectionText( NULL ),
+		labelButton( NULL ),
+		hideWeaponSelection( 0 ),
 
 		profile(profile),
 		coop(coop),
 
-		weaponNames( WEAPONWINDOW_MAX_WEAPONS ),
-		weaponSelectionText( NULL ),
-		weaponSelectionFont( NULL ),
-		labelButton( NULL ),
-		hideWeaponSelection( 0 )
+		lastUpdateValue( 0 ),
+		lastUpdateWeaponAmount( 0 )
 	{
 		this->ogui = ogui;
 		this->game = game;
@@ -169,7 +170,22 @@ REGISTER_COMBATSUBWINDOW( WeaponWindow );
 			int sizeY = getLocaleGuiInt( (prefix + "list_slot_size_y" ).c_str(), 0);
 			for (int i = 0; i < WEAPONWINDOW_MAX_WEAPONS; i++)
 			{
-				weaponListButtons[i] = ogui->CreateSimpleImageButton(listWin, 0 + i * offsetX, 0 + i * offsetY, sizeX, sizeY, NULL, NULL, NULL, NULL);
+#ifdef PROJECT_SURVIVOR
+				// only show 5th slot if carrying electric gun
+				if(i == 4)
+				{
+					if(game->gameUI->getFirstPerson(clientNum) && game->gameUI->getFirstPerson(clientNum)->getWeaponByWeaponType(PARTTYPE_ID_STRING_TO_INT("W_Elect3")) != -1)
+					{
+
+					}
+					else
+					{
+						weaponListButtons[i] = NULL;
+						continue;
+					}
+				}
+#endif
+				weaponListButtons[i] = ogui->CreateSimpleImageButton(listWin, 0 + i * offsetX, 0 + i * offsetY, sizeX, sizeY, NULL, NULL, NULL, 0);
 				weaponListButtons[i]->SetDisabledImage(weaponListDisabledImage);
 				weaponListButtons[i]->SetDisabled(true);
 			}
@@ -216,7 +232,10 @@ REGISTER_COMBATSUBWINDOW( WeaponWindow );
 		OguiAligner::align(listWin, OguiAligner::WIDESCREEN_FIX_RIGHT, ogui);
 		OguiAligner::align(weaponIconButton, OguiAligner::WIDESCREEN_FIX_RIGHT, ogui);
 		for (int i = 0; i < WEAPONWINDOW_MAX_WEAPONS; i++)
-			OguiAligner::align(weaponListButtons[i], OguiAligner::WIDESCREEN_FIX_RIGHT, ogui);
+		{
+			if(weaponListButtons[i])
+				OguiAligner::align(weaponListButtons[i], OguiAligner::WIDESCREEN_FIX_RIGHT, ogui);
+		}
 		OguiAligner::align(weaponSelectionText, OguiAligner::WIDESCREEN_FIX_RIGHT, ogui);
 		OguiAligner::align(labelButton, OguiAligner::WIDESCREEN_FIX_RIGHT, ogui);
 #endif
@@ -347,15 +366,19 @@ REGISTER_COMBATSUBWINDOW( WeaponWindow );
 					weapNum = -1;
 #endif
 
+				if (weapNum != -1) {
 				Weapon *weap = game->gameUI->getFirstPerson(clientNum)->getWeaponType(weapNum);
 				if(weap && !weap->isSelectableWithoutAmmo() && game->gameUI->getFirstPerson(clientNum)->getWeaponAmmoAmount(weapNum) == 0)
 					weapNum = -1;
+				}
 
 				if (weapNum != -1)
 				{
-					weaponListButtons[i]->SetDisabledImage(weaponListImage);
+					if(weaponListButtons[i])
+						weaponListButtons[i]->SetDisabledImage(weaponListImage);
 				} else {
-					weaponListButtons[i]->SetDisabledImage(weaponListDisabledImage);
+					if(weaponListButtons[i])
+						weaponListButtons[i]->SetDisabledImage(weaponListDisabledImage);
 				}
 			}
 
@@ -397,9 +420,8 @@ REGISTER_COMBATSUBWINDOW( WeaponWindow );
 					{
 						weaponIconButton->SetDisabledImage(weaponImages[uinum]);
 					}
-					weaponListButtons[uinum]->SetDisabledImage(weaponListSelectedImage);
-				} else {
-					fb_assert(!"WeaponWindow::update - Internal error, weapon ui number out of range.");
+					if(weaponListButtons[uinum])
+						weaponListButtons[uinum]->SetDisabledImage(weaponListSelectedImage);
 				}
 
 				if ( weaponSelectionText && uinum >= 0 && uinum < (int)weaponNames.size() )

@@ -7,6 +7,7 @@
 //#include "..\ui\particlesystem.h"
 //#include "..\ui\particlemanager.h"
 
+#pragma comment(lib, "storm3dv2.lib")
 //using namespace ui;
 
 

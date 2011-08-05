@@ -4,7 +4,7 @@
 #define INCLUDED_STORM3D_TERRAIN_GROUP_H
 
 #include "DatatypeDef.h"
-#include "istorm3d_terrain.h"
+#include "IStorm3D_Terrain.h"
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 

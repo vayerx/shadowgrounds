@@ -58,7 +58,7 @@ public:
    */
 	virtual void act(Unit *unit);
 
-	virtual bool setPathTo(Unit *unit, VC3 &destination) = 0;
+	virtual bool setPathTo(Unit *unit, const VC3 &destination) = 0;
 
 	virtual frozenbyte::ai::Path *solvePath(Unit *unit, const VC3 &startPosition, VC3 &endPosition, int maxDepth = 100) = 0;
 
@@ -246,7 +246,7 @@ protected:
 	void applyAnimations(Unit *unit, const UnitActAnimationRequests &animRequests);
 
 	// internal, actual shooting implementation
-	bool shoot(Unit *unit, VC3 &target);
+	bool shoot(Unit *unit, const VC3 &target);
 
 	// make a noise (gameplay noise, not actual sound)
 	void actNoisy(Unit *unit);

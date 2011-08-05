@@ -2,11 +2,14 @@
 #ifndef OGUI_H
 #define OGUI_H
 
-
+#ifdef _MSC_VER
 // VC whines about "throw(xxx)" exception specifications
-#pragma warning(disable : 4290) 
+#pragma warning(disable : 4290)
+#endif
 
 //#include <c2_sptr.h>
+
+#include <list>
 
 #include "OguiException.h"
 #include "IOguiDriver.h"
@@ -119,7 +122,7 @@ public:
   /**
    * Loads the default font used for texts unless otherwise specified.
    */
-  void LoadDefaultFont(char *filename) throw (OguiException *);
+  void LoadDefaultFont(const char *filename) throw (OguiException *);
 
   /** 
    * Returns maximum number of cursors (numbers are from 0 to returnvalue-1).
@@ -157,6 +160,9 @@ public:
    */
   void SetCursorImageState(int cursornum, int state)
     throw (OguiException *);
+
+	void SwapCursorImages(int cursor1, int cursor2);
+	void ResetSwappedCursorImages();
 
   /**
    * Change cursor image offset for given cursor and state.
@@ -226,38 +232,38 @@ public:
 
   // Create a simple window loading given background image
   OguiWindow *CreateSimpleWindow(int x, int y, int sizex, int sizey, 
-    const char *imagefilename, int id = 0);
+    const char *imagefilename, int id = 0) throw (OguiException *);
 
   // Create a simple image button
   OguiButton *CreateSimpleImageButton(OguiWindow *win, int x, int y, int sizex, int sizey, 
     const char *imageFilename, const char *imageDownFilename, const char *imageHighlightFilename,
-    int id = 0, void *argument = NULL);
+    int id = 0, void *argument = NULL) throw (OguiException *);
 
   // Create a simple image button w/ disabled image
   OguiButton *CreateSimpleImageButton(OguiWindow *win, int x, int y, int sizex, int sizey, 
     const char *imageFilename, const char *imageDownFilename, const char *imageHighlightFilename, const char *imageDisabledFilename,
-    int id = 0, void *argument = NULL, bool clipToWindow = true );
+    int id = 0, void *argument = NULL, bool clipToWindow = true ) throw (OguiException *);
 
   // Create a simple image+text button
   OguiButton *CreateSimpleTextButton(OguiWindow *win, int x, int y, int sizex, int sizey, 
     const char *imageFilename, const char *imageDownFilename, const char *imageHighlightFilename, 
-    const char *text, int id = 0, void *argument = NULL, bool clipToWindow = true );
+    const char *text, int id = 0, const void *argument = NULL, bool clipToWindow = true ) throw (OguiException *);
 
   // Create a text label
   OguiTextLabel *CreateTextLabel(OguiWindow *win, int x, int y, 
-    int sizex, int sizey, const char *text);
+    int sizex, int sizey, const char *text) throw (OguiException *);
 
   // Create a text area (which wraps text automatically to multiple lines)
   OguiTextLabel *CreateTextArea(OguiWindow *win, int x, int y, 
-    int sizex, int sizey, const char *text);
+    int sizex, int sizey, const char *text) throw (OguiException *);
 
   // Create a select list 
   // Works fine as a button/checkbutton/radiobutton group too...
   // (Just use proper images and argument values to make them)
-  OguiSelectList *Ogui::CreateSelectList(OguiWindow *win, int x, int y, 
+  OguiSelectList *CreateSelectList(OguiWindow *win, int x, int y, 
     OguiSelectListStyle *style, int valueAmount, const char **values, const char **descs, 
     bool multiSelectable = false, int defaultSelection = -1, int id = 0,
-    void *argument = NULL);
+    void *argument = NULL) throw (OguiException *);
 
   /**
    * Loads an image.
@@ -291,14 +297,16 @@ public:
 	int getScreenSizeY();
 
 private:
-  IOguiDriver *drv;
-  IOguiFont *defaultFont;
-  IOguiImage ***cursorImages;
-  int **cursorOffsetX;
-  int **cursorOffsetY;
+	IOguiDriver *drv;
+	IOguiFont *defaultFont;
+	IOguiImage ***cursorImages;
+	int **cursorOffsetX;
+	int **cursorOffsetY;
 
-	LinkedList *buttons;
-	LinkedList *windows;
+	std::vector< std::pair<int, int> > swappedCursorImages;
+
+	std::list<OguiButton*> buttons;
+	std::list<OguiWindow*> windows;
 
 	friend class OguiWindow;
 	friend class OguiButton;
@@ -311,4 +319,3 @@ private:
 };
 
 #endif
-

@@ -5,7 +5,7 @@
 
 #include <boost/scoped_ptr.hpp>
 #include <c2_vectors.h>
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 
 class Storm3D;
 class IStorm3D_Model;

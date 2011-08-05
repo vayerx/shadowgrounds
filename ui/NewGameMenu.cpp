@@ -4,7 +4,7 @@
 #include "NewGameMenu.h"
 
 #include "../util/assert.h"
-#include "../ogui/ogui.h"
+#include "../ogui/Ogui.h"
 #include "../ui/MenuCollection.h"
 #include "../game/DHLocaleManager.h"
 #include "../game/Game.h"
@@ -18,6 +18,7 @@
 #include "../game/options/options_game.h"
 #include "../ui/GameController.h"
 #include "../ogui/OguiCheckBox.h"
+#include "../game/userdata.h"
 
 #include <boost/lexical_cast.hpp>
 
@@ -52,7 +53,7 @@ std::map< int, std::string >	NewGameMenu::coopPlayerNames;
 
 
 // Converts player number into a running number
-int convertToRunningNum( int i )
+int NewGameMenu::convertToRunningNum( int i )
 {
 	switch( i )
 	{
@@ -73,7 +74,7 @@ int convertToRunningNum( int i )
 	return -1;
 }
 
-NewGameMenu::COMMANDS convertToPlayerNum( int i )
+NewGameMenu::COMMANDS NewGameMenu::convertToPlayerNum( int i )
 {
 	switch( i )
 	{
@@ -94,7 +95,7 @@ NewGameMenu::COMMANDS convertToPlayerNum( int i )
 	return NewGameMenu::COMMANDS_STARTGAME;
 }
 
-void setSinglePlayer( Game* game )
+void setSinglePlayer( const Game* game )
 {
 	SimpleOptions::setBool( DH_OPT_B_1ST_PLAYER_ENABLED, true );
 	SimpleOptions::setBool( DH_OPT_B_2ND_PLAYER_ENABLED, false );
@@ -120,9 +121,9 @@ void setSinglePlayer( Game* game )
 
 NewGameMenu::NewGameMenu( MenuCollection* menu, MenuCollection::Fonts* fonts, Ogui* o_gui, Game* g ) :
 	MenuBaseImpl( NULL ),
-	menuCollection( menu ),
-	fonts( fonts ),
+	difficultActiveSelection( 0 ),
 
+	tutorialHintsButton( NULL ),
 	gameModeButtons(),
 	gameModeActiveSelection( 0 ),
 
@@ -131,16 +132,16 @@ NewGameMenu::NewGameMenu( MenuCollection* menu, MenuCollection::Fonts* fonts, Og
 	coopProfileListSaver( NULL ),
 	coopCaptureEvents( NULL ),
 	coopCurrentSelection( -1 ),
-	difficultActiveSelection( 0 ),
 
-	selectListStyle( NULL ),
-	styles(),	
-	textLabels(),
-	startGame( NULL ),
-	gameProfiles( NULL ),
 	none( getLocaleGuiString( "gui_newgame_text_none" ) ),
+	gameProfiles( NULL ),
+	menuCollection( menu ),
+	fonts( fonts ),
 
-	tutorialHintsButton( NULL )
+	styles(),
+	selectListStyle( NULL ),
+	textLabels(),
+	startGame( NULL )
 {
 	///////////////////////////////////////////////////////////////////////////
 	
@@ -474,7 +475,7 @@ void NewGameMenu::applyChanges()
 				tmp += game->getGameProfiles()->getCurrentProfile( i );
 				tmp += "/config/keybinds.txt";
 #endif
-				game->gameUI->getController( i )->loadConfiguration( tmp.c_str() );
+				game->gameUI->getController( i )->loadConfiguration( igios_mapUserDataPrefix(tmp).c_str() );
 			}
 
 		}
@@ -605,8 +606,12 @@ void NewGameMenu::menuStartGame()
 	}
 #endif
 
-	if( game->getGameProfiles()->doesProfileExist( 0 ) == false )
-		return;
+	if( game->getGameProfiles()->doesProfileExist( 0 ) == false ) {
+		game->getGameProfiles()->createNewProfile("Player 1");
+		game->getGameProfiles()->setCurrentProfile("Player 1", 0, true);
+		game->getGameUI()->getController(0)->loadConfiguration( "Data/Misc/keybinds.txt" );
+	}
+	//return;
 
 	int num_of_players = 0;
 	setSinglePlayer( game );
@@ -651,7 +656,9 @@ void NewGameMenu::menuStartGame()
 				GameController* gameController = game->getGameUI()->getController( c );
 
 				{
+#ifndef NDEBUG
 					int foo = gameController->getControllerType();
+#endif
 					gameController->reloadConfiguration();
 
 					assert( foo == gameController->getControllerType() );
@@ -1132,7 +1139,7 @@ OguiButtonStyle* NewGameMenu::loadStyle( const std::string& button_name )
 
 void NewGameMenu::openCoopProfileMenu( int i )
 {
-	coopCaptureEvents = ogui->CreateSimpleImageButton( win, 0, 0, getLocaleGuiInt( "gui_newgamemenu_window_w", 1024 ), getLocaleGuiInt( "gui_newgamemenu_window_h", 768 ), NULL, NULL, NULL, NULL );
+	coopCaptureEvents = ogui->CreateSimpleImageButton( win, 0, 0, getLocaleGuiInt( "gui_newgamemenu_window_w", 1024 ), getLocaleGuiInt( "gui_newgamemenu_window_h", 768 ), NULL, NULL, NULL, 0 );
 	coopCaptureEvents->SetListener( this );
 
 	int scroll_button_w = 0;

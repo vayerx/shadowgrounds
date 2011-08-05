@@ -27,6 +27,7 @@ public:
 
 	void findFiles(const std::string &dir, const std::string &extension, IFileList &result);
 	InputStream getFile(const std::string &fileName);
+	unsigned int getCrc(const std::string &fileName);
 };
 
 } // end of namespace filesystem

@@ -1,7 +1,14 @@
-
 #include "precompiled.h"
 
-#include "soundlib.h"
+#include <boost/lexical_cast.hpp>
+
+#ifdef _WIN32
+typedef unsigned __int64 Uint64;
+#else
+typedef uint64_t Uint64;
+#endif
+
+#include "SoundLib.h"
 
 // NOTE: unwanted dependency (due to sound_missing_warning option)
 #include "../game/SimpleOptions.h"
@@ -401,7 +408,7 @@ int CSoundLib::CreateSound(CSound* Sound,int Looping)
     if( bRestored )
     {
         // The buffer was restored, so we need to fill it with new data
-        if( FAILED( hr = Sound->FillBufferWithSound( pDSB, FALSE ) ) )
+        if( FAILED( hr = Sound->FillBufferWithSound( pDSB, false ) ) )
             return -1;
     }
     
@@ -635,7 +642,7 @@ HRESULT CSound::FillBufferWithSound( LPDIRECTSOUNDBUFFER pDSB, BOOL bRepeatWavIf
 
 //-----------------------------------------------------------------------------
 // Name: CSound::RestoreBuffer()
-// Desc: Restores the lost buffer. *pbWasRestored returns TRUE if the buffer was 
+// Desc: Restores the lost buffer. *pbWasRestored returns true if the buffer was 
 //       restored.  It can also NULL if the information is not needed.
 //-----------------------------------------------------------------------------
 HRESULT CSound::RestoreBuffer( LPDIRECTSOUNDBUFFER pDSB, BOOL* pbWasRestored )
@@ -671,7 +678,7 @@ HRESULT CSound::RestoreBuffer( LPDIRECTSOUNDBUFFER pDSB, BOOL* pbWasRestored )
         while( hr = pDSB->Restore() );
 
         if( pbWasRestored != NULL )
-            *pbWasRestored = TRUE;
+            *pbWasRestored = true;
 
         return S_OK;
     }
@@ -683,7 +690,7 @@ HRESULT CSound::RestoreBuffer( LPDIRECTSOUNDBUFFER pDSB, BOOL* pbWasRestored )
 
 //-----------------------------------------------------------------------------
 // Name: CSound::GetFreeBuffer()
-// Desc: Checks to see if a buffer is playing and returns TRUE if it is.
+// Desc: Checks to see if a buffer is playing and returns true if it is.
 //-----------------------------------------------------------------------------
 LPDIRECTSOUNDBUFFER CSound::GetFreeBuffer()
 {
@@ -865,7 +872,7 @@ HRESULT CWaveFile::OpenFromMemory( BYTE* pbData, ULONG ulDataSize,
     m_ulDataSize = ulDataSize;
     m_pbData     = pbData;
     m_pbDataCur  = m_pbData;
-    m_bIsReadingFromMemory = TRUE;
+    m_bIsReadingFromMemory = true;
     
     if( dwFlags != WAVEFILE_READ )
         return E_NOTIMPL;       
@@ -1367,9 +1374,48 @@ int CSoundStream::IsComplete()
 	return 0;
 }
 
+#elif SOUND_NULL
+
+namespace sfx {
+
+
+void SoundStream::setVolume(float value) {}
+void SoundStream::play() {}
+bool SoundStream::hasEnded() const { return true; }
+void SoundStream::stop() {}
+void SoundLib::stopSound(int sound) {}
+void SoundLib::setSound3D(int sound, const VC3 &position, const VC3 &velocity) {}
+void SoundLib::setSoundVolume(int sound, float value) {}
+bool SoundLib::isSoundPlaying(int sound) const { return false; }
+SoundStream::~SoundStream() {}
+void SoundStream::setBaseVolume(float value) {}
+SoundStream *SoundLib::createStream(const char *file) { return NULL; }
+void SoundLib::setSoundLoop(int sound, bool loop) {}
+void SoundLib::setSoundPaused(int sound, bool pause) {}
+int SoundLib::createSound(Sound *sound, int priority) { return -1; }
+void SoundLib::setSoundArea(const std::string &name) {}
+void SoundLib::update() {}
+void SoundStream::setLooping(bool loop) {}
+Sound *SoundLib::loadSample(const char *file) { return NULL; }
+void SoundLib::playSound(int sound) {}
+void SoundLib::setSoundFrequency(int sound, int value) {}
+void SoundLib::setFrequencyFactor(float scalar) {}
+int SoundLib::getSoundFrequency(int sound) const { return 0; }
+void SoundLib::setListener(const VC3 &position, const VC3 &velocity, const VC3 &forwardDirection, const VC3 &upDirection) {}
+Sound::~Sound() {}
+SoundLib::~SoundLib() {}
+void SoundStream::setPanning(float value) {}
+bool SoundLib::initialize() { return true; }
+void SoundLib::setAcceleration(bool useHW, bool useEax_, int minHardwareChannels_, int maxHardwareChannels_) {}
+void SoundLib::setProperties(int mixrate_, int softwareChannels_) {}
+int Sound::getLength() const { return 1; }
+SoundLib::SoundLib() {}
+
+
+}
 #else // fmod
 
-#include "soundlib.h"
+#include "SoundLib.h"
 #include <assert.h>
 #include <string>
 #include <fmod.h>
@@ -1488,14 +1534,11 @@ SoundStream::SoundStream(const char *file)
 	if(fileStream.isEof())
 		return;
 
-#ifdef PROJECT_CLAW_PROTO
-	// proper streaming, no zip support
-	stream = FSOUND_Stream_Open(file, 0, 0, 0);
-#else
+	//stream = FSOUND_Stream_Open(file, 0, 0, 0);
+
 	buffer.reset(new char[fileStream.getSize()]);
 	fileStream.read(buffer.get(), fileStream.getSize());
 	stream = FSOUND_Stream_Open(buffer.get(), FSOUND_LOADMEMORY, 0, fileStream.getSize());
-#endif
 
 	if(stream)
 		channel = FSOUND_Stream_PlayEx(FSOUND_FREE, stream, 0, TRUE);
@@ -1563,7 +1606,7 @@ void SoundStream::setLooping(bool loop)
 void SoundStream::play()
 {
 	if(channel >= 0)
-		FSOUND_SetPaused(channel, FALSE);
+		FSOUND_SetPaused(channel, false);
 }
 
 void SoundStream::pause()
@@ -1611,11 +1654,11 @@ SoundLib::SoundLib()
 	useHardware(false),
 	useEax(false),
 	mixrate(44100),
-	frequencyFactor(1.f),
 	softwareChannels(32),
 	minHardwareChannels(16),
 	maxHardwareChannels(32),
-	speakerType(StereoSpeakers)
+	speakerType(StereoSpeakers),
+	frequencyFactor(1.f)
 {
 }
 
@@ -1644,13 +1687,17 @@ void SoundLib::setSpeakers(SpeakerType speakerType_)
 	speakerType = speakerType_;
 }
 
-bool SoundLib::initialize(HWND window)
+bool SoundLib::initialize()
 {
 	assert(!initialized);
 
 	//if(useEax && useHardware)
 	{
+#ifdef _WIN32
 		FSOUND_SetOutput(FSOUND_OUTPUT_DSOUND);
+#else
+		FSOUND_SetOutput(FSOUND_OUTPUT_ALSA);
+#endif
 
 		int driverAmount = FSOUND_GetNumDrivers();
 		for(int i = 0; i < driverAmount; ++i)
@@ -1686,13 +1733,16 @@ bool SoundLib::initialize(HWND window)
 			Logger::getInstance()->debug(foo.c_str());
 		}
 
+#ifdef _WIN32
 		FSOUND_SetOutput(-1);
+#else
+		FSOUND_SetOutput(FSOUND_OUTPUT_OSS);
+#endif
 	}
 
 	if(!useHardware)
 		maxHardwareChannels = 0;
 
-	FSOUND_SetHWND(window);
 	FSOUND_SetMinHardwareChannels(minHardwareChannels);
 	FSOUND_SetMaxHardwareChannels(maxHardwareChannels);
 	FSOUND_SetSpeakerMode(speakerType);
@@ -1722,12 +1772,13 @@ bool SoundLib::initialize(HWND window)
 			Logger::getInstance()->debug(foo.c_str());
 
 			{
-				Parser parser;
+				EditorParser parser;
 #ifdef LEGACY_FILES
-				filesystem::FilePackageManager::getInstance().getFile("Data/Ambient/environment.txt") >> parser;
+				filesystem::InputStream env_file = filesystem::FilePackageManager::getInstance().getFile("Data/Ambient/environment.txt");
 #else
-				filesystem::FilePackageManager::getInstance().getFile("data/audio/environment/environment.txt") >> parser;
+				filesystem::InputStream env_file = filesystem::FilePackageManager::getInstance().getFile("data/audio/environment/environment.txt");
 #endif
+				env_file >> parser;
 
 				ParserGroup &root = parser.getGlobals();
 				for(int i = 0; i < root.getSubGroupAmount(); ++i)
@@ -1743,8 +1794,6 @@ bool SoundLib::initialize(HWND window)
 					p.RoomHF = convertFromString<int> (group.getValue("room_hf"), -100);
 					p.RoomLF = convertFromString<int> (group.getValue("room_lf"), 0);
 					p.DecayTime = convertFromString<float> (group.getValue("decay_time"), 1.49f);
-					p.DecayHFRatio = convertFromString<float> (group.getValue("decay_hf_ratio"), 0.83f);
-					p.DecayLFRatio = convertFromString<float> (group.getValue("decay_lf_ratio"), 1.00f);
 					p.Reflections = convertFromString<int> (group.getValue("reflections"), -2602);
 					p.ReflectionsDelay = convertFromString<float> (group.getValue("reflections_delay"), 0.007f);
 					p.Reverb = convertFromString<int> (group.getValue("reverb"), 200);
@@ -1755,7 +1804,7 @@ bool SoundLib::initialize(HWND window)
 					p.ModulationDepth = convertFromString<float> (group.getValue("modulation_depth"), 0.f);
 					p.AirAbsorptionHF = convertFromString<float> (group.getValue("air_absorption_hf"), -5.0f);
 					p.HFReference = convertFromString<float> (group.getValue("hf_reference"), 5000.f);
-					p.LFReference = convertFromString<float> (group.getValue("lf_reference"), 250.f);
+					p.LFReference = convertFromString<float> (group.getValue("hf_reference"), 250.f);
 					p.RoomRolloffFactor = convertFromString<float> (group.getValue("room_rolloff_factor"), 0.f);
 					p.Diffusion = convertFromString<float> (group.getValue("diffusion"), 100.f);
 					p.Density = convertFromString<float> (group.getValue("density"), 100.f);
@@ -1766,12 +1815,13 @@ bool SoundLib::initialize(HWND window)
 			}
 
 			{
-				Parser parser;
+				EditorParser parser;
 #ifdef LEGACY_FILES
-				filesystem::FilePackageManager::getInstance().getFile("Data/Ambient/environment_aliases.txt") >> parser;
+				filesystem::InputStream alias_file = filesystem::FilePackageManager::getInstance().getFile("Data/Ambient/environment_aliases.txt");
 #else
-				filesystem::FilePackageManager::getInstance().getFile("data/audio/environment/environment_aliases.txt") >> parser;
+				filesystem::InputStream alias_file = filesystem::FilePackageManager::getInstance().getFile("data/audio/environment/environment_aliases.txt");
 #endif
+				alias_file >> parser;
 
 				ParserGroup &root = parser.getGlobals();
 				for(int i = 0; i < root.getValueAmount(); ++i)
@@ -1910,7 +1960,7 @@ void SoundLib::playSound(int sound)
 		float frequency = getSoundFrequency(sound) * frequencyFactor;
 		setSoundFrequency(sound, int(frequency + .5f));
 
-		FSOUND_SetPaused(sound, FALSE);
+		FSOUND_SetPaused(sound, false);
 	}
 }
 
@@ -2024,7 +2074,7 @@ int SoundLib::getSoundTime(int sound) const
 	int freq = FSOUND_GetFrequency(sound);
 	int pos = FSOUND_GetCurrentPosition(sound);
 
-	__int64 temp = pos * 1000;
+	Uint64 temp = pos * 1000;
 	temp /= freq;
 
 	return int(temp);

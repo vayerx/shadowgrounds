@@ -1,6 +1,15 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
+
+#include <queue>
+#include <vector>
+#include <boost/scoped_ptr.hpp>
+#include <c2_common.h>
+#include <c2_qtree.h>
+#include <c2_oobb.h>
 
 #include "storm3d_terrain_models.h"
 #include "storm3d_terrain_utils.h"
@@ -14,14 +23,11 @@
 #include "storm3d_mesh.h"
 #include "storm3d_material.h"
 #include "storm3d_texture.h"
-#include "storm3d_shadermanager.h"
+#include "Storm3D_ShaderManager.h"
 #include "storm3d.h"
-#include <c2_qtree.h>
-#include <c2_oobb.h>
-#include <boost/scoped_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 
 
@@ -41,7 +47,6 @@ using namespace frozenbyte::storm;
 static const int MAX_VISIBILITY_STRUCTURES = 2;
 int active_visibility = 0;
 
-namespace {
 
 	const int MODEL_UPDATE_RATE = 2;
 	const int OBJECT_UPDATE_RATE = 2;
@@ -232,7 +237,6 @@ namespace {
 
 		return true;
 	}
-}
 
 struct Storm3D_TerrainModelsData : public DataBase
 {
@@ -311,14 +315,14 @@ struct Storm3D_TerrainModelsData : public DataBase
 		filterLightmap(false),
 		renderCollision(false),
 		enableAlphaTest(true),
-		enableMaterialAmbient(true),
 		renderBoned(true),
+		enableMaterialAmbient(true),
 		forceWhiteBase(false),
 		enableGlow(true),
 		enableDistortion(false),
 		enableReflection(false),
-		skyModelGlowAllowed(true),
 		additionalAlphaTestPassAllowed(false),
+		skyModelGlowAllowed(true),
 		terrainObjectColorFactorBuilding(1.f, 1.f, 1.f),
 		terrainObjectColorFactorOutside(1.f, 1.f, 1.f),
 		frustumsEnabled(false),
@@ -431,10 +435,7 @@ struct Storm3D_TerrainModelsData : public DataBase
 					}
 					
 					if(!hasAlpha)
-					{
-						if (!model->skyModel)
-							solidObjects[i][DepthObjects].push_back(o);
-					}
+						solidObjects[i][DepthObjects].push_back(o);
 				}
 			}
 		}
@@ -485,10 +486,7 @@ struct Storm3D_TerrainModelsData : public DataBase
 			}
 			
 			if(!hasAlpha)
-			{
-				if (!m->skyModel)
-					solidObjects[i][DepthObjects].push_back(o);
-			}
+				solidObjects[i][DepthObjects].push_back(o);
 		}
 	}
 
@@ -896,9 +894,7 @@ struct Storm3D_TerrainModelsData : public DataBase
 						if(!hasAlpha)
 						{
 							if (!m->skyModel)
-							{
 								solidObjects[active_visibility][DepthObjects].push_back(o);
-							}
 						}
 					}
 				}
@@ -982,8 +978,9 @@ struct Storm3D_TerrainModelsData : public DataBase
 		}
 	}
 
-	bool shouldRender(RenderType renderType, Storm3D_Model_Object *object, const Frustum *frustum, const Frustum *frustum2, const IStorm3D_Model *skipModel, RenderFlags flags, const VC2 &minplane, const VC2 &maxplane, const AABB &fakeArea, int activeVisibility) const
+	bool shouldRender(RenderType renderType, Storm3D_Model_Object *object, const Frustum *frustum, const Frustum *frustum2, const IStorm3D_Model *skipModel, RenderFlags flags, const VC2 &minplane, const VC2 &maxplane, int activeVisibility) const
 	{
+
 		if(object->parent_model == skipModel)
 			return false;
 
@@ -1034,19 +1031,6 @@ struct Storm3D_TerrainModelsData : public DataBase
 				float radius2 = mesh->GetRadius();
 				if(!contains2d(pos2, radius2, minplane, maxplane))
 					return false;
-
-				OOBB oobb = object->GetObjectBoundingBox();
-				if(object->ObjectBoundingBoxOk())
-				{
-					const MAT &modelTM = object->GetMXG();
-					modelTM.TransformVector(oobb.center);
-					modelTM.RotateVector(oobb.axes[0]);
-					modelTM.RotateVector(oobb.axes[1]);
-					modelTM.RotateVector(oobb.axes[2]);
-
-					if(!collision(fakeArea, oobb))
-						return false;
-				}
 			}
 			else
 			{
@@ -1429,7 +1413,6 @@ struct Storm3D_TerrainModelsData : public DataBase
 
 	void applySolidMaterial(RenderType renderType, Storm3D_Material &material, Storm3D_Model &model, Storm3D_Model_Object &object, Storm3D_Spotlight *spot)
 	{
-		Storm3D_ShaderManager *shaderManager = Storm3D_ShaderManager::GetSingleton();
 		IDirect3DDevice9 &device = *storm.GetD3DDevice();
 
 		applyGeneralMaterial(renderType, material, model, object);
@@ -1553,6 +1536,7 @@ struct Storm3D_TerrainModelsData : public DataBase
 		if(renderType == Depth || renderType == FakeDepth)
 			objectType = DepthObjects;
 
+
 		Frustum *frustum = 0;
 		Frustum realFrustum;
 		Frustum *frustum2 = 0;
@@ -1572,9 +1556,9 @@ struct Storm3D_TerrainModelsData : public DataBase
 		}
 		else if(fakeSpot)
 		{
-			//Storm3D_Camera &camera = fakeSpot->getCamera();
-			//realFrustum = camera.getFrustum();
-			//frustum = &realFrustum;
+			Storm3D_Camera &camera = fakeSpot->getCamera();
+			realFrustum = camera.getFrustum();
+			frustum = &realFrustum;
 		}
 		else
 		{
@@ -1587,13 +1571,9 @@ struct Storm3D_TerrainModelsData : public DataBase
 
 		VC2 minPlane;
 		VC2 maxPlane;
-		AABB fakeArea;
 
 		if(fakeSpot)
-		{
 			fakeSpot->getPlane(minPlane, maxPlane);
-			fakeSpot->getArea(fakeArea);
-		}
 
 		ObjectList::iterator it = solidObjects[active_visibility][objectType].begin();
 		for(; it != solidObjects[active_visibility][objectType].end(); ++it)
@@ -1602,7 +1582,7 @@ struct Storm3D_TerrainModelsData : public DataBase
 			if(!object)
 				continue;
 
-			if(!shouldRender(renderType, object, frustum, frustum2, skipModel, flags, minPlane, maxPlane, fakeArea, active_visibility))
+			if(!shouldRender(renderType, object, frustum, frustum2, skipModel, flags, minPlane, maxPlane, active_visibility))
 				continue;
 
 			Storm3D_Mesh *mesh = static_cast<Storm3D_Mesh *> (object->GetMesh());
@@ -1684,13 +1664,9 @@ struct Storm3D_TerrainModelsData : public DataBase
 		}
 		else if(fakeSpot)
 		{
-			//Storm3D_Camera &camera = fakeSpot->getCamera();
-			//realFrustum = camera.getFrustum();
-			//frustum = &realFrustum;
-
-			//Storm3D_Camera &camera = static_cast<Storm3D_Camera &> (*scene.GetCamera());
-			//realFrustum = camera.getFrustum();
-			//frustum = &realFrustum;
+			Storm3D_Camera &camera = fakeSpot->getCamera();
+			realFrustum = camera.getFrustum();
+			frustum = &realFrustum;
 		}
 		else
 		{
@@ -1701,13 +1677,8 @@ struct Storm3D_TerrainModelsData : public DataBase
 
 		VC2 minPlane;
 		VC2 maxPlane;
-		AABB fakeArea;
-
 		if(fakeSpot)
-		{
 			fakeSpot->getPlane(minPlane, maxPlane);
-			fakeSpot->getArea(fakeArea);
-		}
 
 		std::vector<Storm3D_Model_Object *> special_render_pass_objects[RENDER_PASS_BITS_AMOUNT];
 
@@ -1718,7 +1689,7 @@ struct Storm3D_TerrainModelsData : public DataBase
 			if(!object)
 				continue;
 
-			if(!shouldRender(renderType, object, frustum, frustum2, skipModel, flags, minPlane, maxPlane, fakeArea, active_visibility))
+			if(!shouldRender(renderType, object, frustum, frustum2, skipModel, flags, minPlane, maxPlane, active_visibility))
 				continue;
 
 			Storm3D_Mesh *mesh = static_cast<Storm3D_Mesh *> (object->GetMesh());
@@ -1938,12 +1909,6 @@ struct Storm3D_TerrainModelsData : public DataBase
 		mesh->ReBuild();
 
 //frozenbyte::storm::setCulling(device, D3DCULL_NONE);
-
-// for blackedge...
-//device.SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_BORDER);
-//device.SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
-//DWORD blackCol = 0xff000000; // ARGB
-//device.SetSamplerState(0, D3DSAMP_BORDERCOLOR, blackCol);
 
 		Storm3D_ShaderManager::GetSingleton()->SetShader(&device, object);
 		mesh->RenderBuffers(object);

@@ -1,4 +1,3 @@
-
 #include "precompiled.h"
 
 // Copyright 2002-2004 Frozenbyte Ltd.
@@ -10,11 +9,11 @@ using namespace std;
 
 namespace sfx {
 
-typedef vector<unsigned char> SampleList;
+typedef vector<unsigned char> AmpSampleList;
 
 AmplitudeArray::AmplitudeArray()
-:	avgValue(0),
-	maxValue(0),
+:	maxValue(0),
+	avgValue(0),
 	originalMax(0),
 	originalAvg(0)
 {
@@ -45,7 +44,7 @@ void AmplitudeArray::update()
 	originalMax = 0;
 	
 	int addAvg = 0;
-	for(SampleList::iterator it = data.begin(); it != data.end(); ++it)
+	for(AmpSampleList::iterator it = data.begin(); it != data.end(); ++it)
 	{
 		unsigned char value = *it;
 
@@ -56,7 +55,7 @@ void AmplitudeArray::update()
 
 	if(originalMax < 10)
 		originalMax = 10;
-	originalAvg = unsigned char(addAvg / data.size());
+	originalAvg = (unsigned char) (addAvg / data.size());
 
 	maxValue = originalMax;
 	avgValue = originalAvg;
@@ -141,7 +140,7 @@ unsigned char AmplitudeArray::getAmplitude(int index) const
 
 		if(newMax < 10)
 			newMax = 10;
-		newAvg = unsigned char(addAvg / (sampleAhead * 2));
+		newAvg = (unsigned char) (addAvg / (sampleAhead * 2));
 
 		//max = (3 * originalMax / 4) + (1 * newMax / 4);
 		//avg = (3 * originalAvg / 4) + (1 * newAvg / 4);
@@ -149,7 +148,7 @@ unsigned char AmplitudeArray::getAmplitude(int index) const
 		avgValue = (2 * originalAvg / 4) + (2 * newAvg / 4);
 	}
 
-	return unsigned char(255 * data[index] / maxValue);
+	return (unsigned char)(255 * data[index] / maxValue);
 }
 
 } // sfx

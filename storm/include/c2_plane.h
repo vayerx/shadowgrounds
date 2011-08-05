@@ -1,7 +1,7 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
-#pragma once
-
+#ifndef INCLUDED_C2_PLANE_H
+#define INCLUDED_C2_PLANE_H
 
 //------------------------------------------------------------------
 // Prototypes and typedefs
@@ -80,14 +80,14 @@ public:
 
 	TPlane GetTransformed(const TMatrix<A> &matrix) const
 	{
-		Plane temp(*this);
+		TPlane temp(*this);
 		temp.Transform(matrix);
 		return temp;
 	}
 
 	TPlane GetRotated(const Quat<A> &rotation) const
 	{
-		Plane temp(*this);
+		TPlane temp(*this);
 		temp.Rotate(rotation);
 		return temp;
 	}
@@ -96,9 +96,9 @@ public:
 	void Transform(const TMatrix<A> &matrix)
 	{
 		// Calculate position first
-		Vector pos=planenormal*range_to_origin;
-		pos.Transform(matrix);
-		planenormal.Transform(matrix.GetWithoutTranslation().GetInverse().GetTranspose());
+		Vec3<A> pos=planenormal*range_to_origin;
+		matrix.TransformVector(pos);
+		matrix.GetWithoutTranslation().GetInverse().GetTranspose().TransformVector(planenormal);
 
 		// Calculate new range to origin
 		range_to_origin=planenormal.GetDotWith(pos);
@@ -107,7 +107,7 @@ public:
 	void Rotate(const Quat<A> &rotation)
 	{
 		// Calculate position first
-		Vector pos=planenormal*range_to_origin;
+		Vec3<A> pos=planenormal*range_to_origin;
 
 		// Convert the quaternion to matrix first
 		// Optimized code... Messy but fast... (even a P4 should survive with these 9 mults;)
@@ -201,7 +201,7 @@ public:
 		return temp;
 	}
 
-	bool GetClip ( const Vec3<A> p1, const Vec3<A> p2, Vec3<A> * out )
+	bool GetClip ( const Vec3<A> p1, const Vec3<A> p2, Vec3<A> * out ) const
 	{
 		// Checks if line defined by points p1 and p2 intersects the plane.
 		// If it does, and if out != NULL, out will be the intersection point.
@@ -272,3 +272,4 @@ public:
 };
 
 
+#endif // INCLUDED_C2_PLANE_H

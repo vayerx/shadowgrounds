@@ -5,9 +5,13 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 #include <string>
 #include <sstream>
 
+#include <IStorm3D.h>
+#include <istorm3d_videostreamer.h>
+#include <istorm3D_terrain_renderer.h>
 #include "../util/assert.h"
 
 #include "uidefaults.h"
@@ -24,21 +28,18 @@
 #include "../game/SimpleOptions.h"
 #include "../game/options/options_graphics.h"
 #include "../game/scripting/GameScripting.h"
-#include "../system/timer.h"
+#include "../system/Timer.h"
 #include "../sound/sounddefs.h"
 #include "../sound/SoundMixer.h"
 #include "../ui/UIEffects.h"
 #include "../filesystem/input_stream_wrapper.h"
-#include <istorm3d.h>
-#include <IStorm3D_VideoStreamer.h>
-#include <istorm3d_terrain_renderer.h>
 
 #ifdef PROJECT_SURVIVOR
 	#include "SurvivalMenu.h"
 #endif
 
 #include "../game/DHLocaleManager.h"
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 #define LOADINGW_CLOSE 1
 #define LOADINGW_PROGRESS 2
@@ -57,6 +58,7 @@ namespace ui
 
 	LoadingWindow::LoadingWindow( Ogui *ogui, game::Game *game, int player ) :
       ogui( ogui ),
+	  win(NULL),
 	  game( game ),
 	  player( player ),
 	  fadingOut( false ),
@@ -65,6 +67,7 @@ namespace ui
 	  briefingArea( NULL ),
 	  closebut( NULL ),
 	  loadingbut( NULL ),
+	  upgradeMenuBut( NULL ),
 	  headerText( NULL ),
 	  missionText( NULL ),
 	  headerFont( NULL ),
@@ -76,38 +79,36 @@ namespace ui
 	  fontButton( NULL ),
 	  fontButtonDisabled( NULL ),
 	  fontButtonHighlighted( NULL ),
-	  upgradeMenuBut( NULL ),
-		scrollingStarted( false ),
 		scrollingText( NULL ),
 		scrollingFader( NULL ),
+		lastScrollTime( 0 ),
 		scrollTimeDeltaAvg( 0.0f ),
+		scrollingStarted( false ),
 		nextScrollAmount( 0.0f ),
 		totalScrollAmount( 0 ),
-		scrollingLimit( 0 ),
 		speechSound( -1 ),
 		speechSoundStartTime( -1 ),
 		playedMusic( false ),
+		scrollingLimit( 0 ),
+		briefVideo( NULL ),
+		briefVideoStream( NULL ),
+		videoStarted( false ),
+		cinematicStarted( false ),
+		cinematicFinished( true ),
+		lastUpdateTime( 0 ),
+		updateStarted( false ),
 	  scrolling_font_file( NULL ),
 		scrolling_font_bold_file( NULL ),
 		scrolling_font_italic_file( NULL ),
 		scrolling_font_h1_file( NULL ),
-		briefVideo( NULL ),
-		briefVideoStream( NULL ),
-		lastUpdateTime( 0 ),
-		videoStarted( false ),
-		cinematicStarted( false ),
-		cinematicFinished( true ),
-		updateStarted( false ),
-		lastScrollTime( 0 ),
 		background_image( NULL )
 	{
 
 		FB_ASSERT( ogui != NULL );
-		FB_ASSERT( win != NULL );
 		FB_ASSERT( game != NULL );
 
-		
 		createWindows();
+		FB_ASSERT( win != NULL );
 	}
 
 	LoadingWindow::~LoadingWindow()
@@ -531,7 +532,7 @@ namespace ui
 		{
 			game->gameUI->closeLoadingWindow(player);
 		}
-		if (eve->triggerWindow == scrollingFader && eve->eventType == OguiEffectEvent::EVENT_TYPE_FADEDIN)
+		else if (eve->triggerWindow == scrollingFader && eve->eventType == OguiEffectEvent::EVENT_TYPE_FADEDIN)
 		{
 			startScrolling();
 		}
@@ -629,6 +630,10 @@ namespace ui
 			closebut->SetDisabledFont(fontButtonDisabled);
 			closebut->SetHighlightedFont( fontButtonHighlighted );
 		}
+
+		// focus on it so pressing joystick button starts the game
+		// without having to move cursor
+		closebut->Focus(0);
 	}
 
 	void LoadingWindow::update()
@@ -744,19 +749,6 @@ namespace ui
 			const char *video = NULL;
 			if( ::game::DHLocaleManager::getInstance()->getString( ::game::DHLocaleManager::BANK_GUI,  video_locale.c_str(), &video ) )
 			{
-#ifdef PROJECT_CLAW_PROTO
-				// hack: choose high res video if appropriate
-				if(SimpleOptions::getBool( DH_OPT_B_HIGH_QUALITY_VIDEO ))
-				{
-					if(ogui->getScreenSizeX() >= 1280 && ogui->getScreenSizeY() >= 720)
-					{
-						if(strcmp(video, "Data/Videos/chain-anim_640x360.wmv") == 0)
-						{
-							video = "Data/Videos/chain-anim_720p.wmv";
-						}
-					}
-				}
-#endif
 				if(SimpleOptions::getBool( DH_OPT_B_VIDEO_ENABLED ))
 				{
 					sfx::SoundMixer *mixer = game->gameUI->getSoundMixer();

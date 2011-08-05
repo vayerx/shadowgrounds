@@ -48,6 +48,7 @@ public:
 
 class Track {
 public:
+	virtual ~Track() {};
 	virtual int getType()=0;
 	virtual void setValue(void* v, float t=0)=0;
 	virtual void getValue(void* v, float t=0) const=0;

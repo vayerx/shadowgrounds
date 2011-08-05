@@ -8,7 +8,9 @@
 
 // TODO: proper destructor!
 
-#pragma warning( disable : 4290 ) 
+#ifndef __GNUC__
+#pragma warning( disable : 4290 )
+#endif
 
 // #include "csp/compat.h"
 #include <stdlib.h>
@@ -45,8 +47,8 @@ class Stack
     Stack();
     bool isEmpty();
     void push(void *data);
-    void *pop() throws (StackEmptyException);
-    void *peek() throws (StackEmptyException);
+    void *pop() throws (StackEmptyException *);
+    void *peek() throws (StackEmptyException *);
 };
 
 

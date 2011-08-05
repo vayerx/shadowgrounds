@@ -1,22 +1,28 @@
-
 #include "precompiled.h"
 
-#include "terrain.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <deque>
+#include <map>
+#include <string>
+#include <boost/scoped_array.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/lexical_cast.hpp>
+
+#include "Terrain.h"
 #include "../game/materials.h"
 #include <Storm3D_UI.h>
 #include <IStorm3D_Bone.h>
-#include <IStorm3D_Terrain_Renderer.h>
+#include <istorm3D_terrain_renderer.h>
 #include <Storm3D_ObstacleMapDefs.h>
-#include <stdlib.h>
-#include <time.h>
 #include "../util/Parser.h"
 #include "../util/AreaMap.h"
 #include "../util/FogApplier.h"
 #include "../util/fb_assert.h"
 #include "../util/ColorMap.h"
 #include "../game/gamedefs.h"
-#include "../game/gamemap.h"
-#include <stdio.h>
+#include "../game/GameMap.h"
 #include "../system/Logger.h"
 #include "../filesystem/input_stream_wrapper.h"
 #include "../filesystem/file_package_manager.h"
@@ -31,15 +37,19 @@
 #include "../game/physics/CapsulePhysicsObject.h"
 #include "../game/physics/physics_collisiongroups.h"
 #include "../physics/physics_lib.h"
-#include "../ui/lightmanager.h"
+#include "../ui/LightManager.h"
 #include "../ui/AmbientSoundManager.h"
 #ifdef PHYSICS_PHYSX
 #include "../game/physics/RackPhysicsObject.h"
 #include "../game/physics/TerrainPhysicsObject.h"
 #include "../game/physics/ConvexPhysicsObject.h"
-#include "../physics/Cooker.h"
+#include "../physics/cooker.h"
 #include "../game/options/options_physics.h"
 #include "../system/FileTimestampChecker.h"
+#ifdef PROJECT_SHADOWGROUNDS
+#include "../editor/string_conversions.h"
+#include "../editor/parser.h"
+#endif
 #endif
 #ifdef PHYSICS_ODE
 #include "../game/physics/CylinderPhysicsObject.h"
@@ -51,12 +61,6 @@
 #include "../game/physics/PhysicsContactUtils.h"
 #include "../game/Unit.h"
 #include "../game/tracking/trackable_types.h"
-#include <map>
-#include <string>
-#include <deque>
-#include <boost/scoped_array.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/lexical_cast.hpp>
 #ifdef PROJECT_CLAW_PROTO
 #include "../game/physics/CarPhysicsObject.h"
 #endif
@@ -65,7 +69,10 @@
 #include "../game/unified_handle.h"
 #include "../game/tracking/SimpleTrackableUnifiedHandleObjectIterator.h"
 #include "../editor/UniqueEditorObjectHandle.h"
-#include "../game/scripting/GameScripting.h"
+
+#include "igios.h"
+
+#include "../survivor/SurvivorConfig.h"
 
 // Sigh
 #ifdef PROJECT_CLAW_PROTO
@@ -112,16 +119,6 @@ extern game::GameScene *gameScene_instance;
 // HACK: !!!
 extern bool signal_this_terrain_object_break_hack;
 
-// HACK: hacky running of terrain object scripts...
-typedef struct 
-{
-	std::string scriptName;
-	VC3 position;
-	UnifiedHandle uh;
-} ScriptRunStuff;
-static std::vector<ScriptRunStuff> scriptsToRun;
-
-
 
 bool terrain_object_variables_inited = false;
 std::string terrain_object_variable_name[TERRAIN_OBJECT_VARIABLES_AMOUNT] = 
@@ -130,7 +127,7 @@ std::string terrain_object_variable_name[TERRAIN_OBJECT_VARIABLES_AMOUNT] =
 };
 
 
-void init_terrain_object_variables()
+static void init_terrain_object_variables()
 {
 	if (!terrain_object_variables_inited)
 	{
@@ -188,7 +185,7 @@ void init_terrain_object_variables()
 	}
 }
 
-void uninit_terrain_object_variables()
+static void uninit_terrain_object_variables()
 {
 	if (terrain_object_variables_inited)
 	{
@@ -202,27 +199,26 @@ void uninit_terrain_object_variables()
 	}
 }
 
-namespace {
 	static const int BLOCK_SIZE = IStorm3D_Terrain::BLOCK_SIZE;
 	const float UPDATE_PHYSICS_RANGE = 0.0015f;
 	const float UPDATE_LIGHT_RANGE = 0.1f;
 
-	filesystem::InputStream &operator >> (filesystem::InputStream &stream, VC2I &vector)
+	static filesystem::InputStream &operator >> (filesystem::InputStream &stream, VC2I &vector)
 	{
 		return stream >> vector.x >> vector.y;
 	}
 
-	filesystem::InputStream &operator >> (filesystem::InputStream &stream, VC3 &vector)
+	static filesystem::InputStream &operator >> (filesystem::InputStream &stream, VC3 &vector)
 	{
 		return stream >> vector.x >> vector.y >> vector.z;
 	}
 
-	filesystem::InputStream &operator >> (filesystem::InputStream &stream, TColor<unsigned char> &color)
+	static filesystem::InputStream &operator >> (filesystem::InputStream &stream, TColor<unsigned char> &color)
 	{
 		return stream >> color.r >> color.g >> color.b;
 	}
 
-	float getRadius2d(const VC3 &a, const VC3 &b)
+	static float getRadius2d(const VC3 &a, const VC3 &b)
 	{
 		float xd = a.x - b.x;
 		float yd = a.z - b.z;
@@ -230,7 +226,7 @@ namespace {
 		return sqrtf(xd*xd + yd*yd);
 	}
 
-	QUAT getRotation(const VC3 &angles)
+	static QUAT getRotation(const VC3 &angles)
 	{
 		QUAT qx;
 		qx.MakeFromAngles(angles.x, 0, 0);
@@ -240,46 +236,6 @@ namespace {
 		qz.MakeFromAngles(0, angles.z, 0);
 
 		return qz * qx * qy;
-	}
-
-	VC3 getEulerAngles(QUAT quat)
-	{
-		quat.Inverse();
-		MAT tm;
-		tm.CreateRotationMatrix(quat);
-
-		float heading = 0.f;
-		float attitude = 0.f;
-		float bank = 0.f;
-
-		float m00 = tm.Get(0);
-		float m02 = tm.Get(2);
-		float m10 = tm.Get(4);
-		float m11 = tm.Get(5);
-		float m12 = tm.Get(6);
-		float m20 = tm.Get(8);
-		float m22 = tm.Get(10);
-
-		if(m10 > 0.998f)
-		{
-			heading = atan2f(m02, m22);
-			attitude = PI/2.f;
-			bank = 0.f;
-		}
-		else if(m10 < -0.998f)
-		{
-			heading = atan2f(m02, m22);
-			attitude = -PI/2;
-			bank = 0.f;
-		}
-		else
-		{
-			heading = atan2f(-m20, m00);
-			attitude = asinf(m10);
-			bank = atan2f(-m12, m11);
-		}
-
-		return VC3(bank, heading, attitude);
 	}
 
 	/** TerrainAnimation **/
@@ -484,10 +440,6 @@ namespace {
 
 		TRACKABLE_TYPEID_DATATYPE trackableType;
 
-		std::string script;
-
-		int collisionGroup;
-
 		std::map<std::string, std::string> metaValues;
 
 		ObjectData()
@@ -496,15 +448,14 @@ namespace {
 			type(-1),
 			fallType(TERRAIN_OBJECT_FALLTYPE_INVALID),
 			obstacleType(-1),
-			physicsType(TERRAIN_OBJECT_PHYSICS_TYPE_INVALID),
 			breakTexture(TERRAIN_OBJECT_BREAK_TEXTURE_TYPE_NONE),
 			hp(0),
 			radius(0),
 			fireThrough(true),
 			nextSound(0),
 			nextAnimation(0),
-			trackableType(0),
-			collisionGroup(PHYSICS_COLLISIONGROUP_DYNAMIC_TERRAINOBJECTS)
+			physicsType(TERRAIN_OBJECT_PHYSICS_TYPE_INVALID),
+			trackableType(0)
 			//originalModel(0),
 			//originalInstance(0)
 		{
@@ -596,10 +547,10 @@ namespace {
 		:	height(0),
 			heightOffset(0),
 			groundHeight(0),
-			hp(0),
 			sunStrength(0),
 			lightmapped(0),
 			lightMultiplier(0),
+			hp(0),
 			inBuilding(true),
 			originalModel(0),
 			originalInstance(0),
@@ -679,6 +630,7 @@ namespace {
 			lastEffectTime = source.lastEffectTime;
 
 			deleted = source.deleted;
+			ambientSound = source.ambientSound;
 
 			dynamicObstacleExists = source.dynamicObstacleExists;
 			dynamicObstaclePosition = source.dynamicObstaclePosition;
@@ -769,7 +721,7 @@ namespace {
 	typedef std::vector<Object> ObjectList;
 	typedef std::map<std::string, int> ObjectIndices;
 
-	TerrainObstacle createObstacle(const ObjectData &data, const ObjectInstance &instance)
+	static TerrainObstacle createObstacle(const ObjectData &data, const ObjectInstance &instance)
 	{
 		TerrainObstacle obstacle;
 		if(instance.originalName.empty())
@@ -792,7 +744,7 @@ namespace {
 		return obstacle;
 	}
 
-	ExplosionEvent createEvent(const ObjectData &data, const ObjectInstance &instance, const VC2 &position, const VC3 &velocity, IStorm3D_Terrain *terrain, const VC3 &explosionPosition, bool useExplosion, UnifiedHandle unifiedHandle)
+	static ExplosionEvent createEvent(const ObjectData &data, const ObjectInstance &instance, const VC2 &position, const VC3 &velocity, IStorm3D_Terrain *terrain, const VC3 &explosionPosition, bool useExplosion, UnifiedHandle unifiedHandle)
 	{
 		ExplosionEvent event;
 		event.position.x = instance.position.x;
@@ -811,7 +763,7 @@ namespace {
 		//event.rotation.x = instance.rotation.x * 180.f / PI;
 		//event.rotation.y = instance.rotation.y * 180.f / PI;
 		//event.rotation.z = instance.rotation.z * 180.f / PI;
-		VC3 angles = getEulerAngles(instance.setRotation);
+		VC3 angles = instance.setRotation.getEulerAngles();
 		event.rotation.x = angles.x * 180.f / PI;
 		event.rotation.y = angles.y * 180.f / PI;
 		event.rotation.z = angles.z * 180.f / PI;
@@ -857,17 +809,16 @@ namespace {
 		}
 	};
 
-	struct LightMap
+	struct TerrainLightMap
 	{
 		std::vector<TColor<unsigned char> > values;
 		boost::shared_ptr<IStorm3D_Texture> texture;
 
-		LightMap()
+		TerrainLightMap()
 		{
 		}
 	};
 
-} // unnamed
 
 TerrainObstacle::TerrainObstacle()
 :	terrainObstacleType(0),
@@ -913,7 +864,7 @@ struct TerrainData
 	std::vector<boost::shared_ptr<IStorm3D_Texture> > textures;
 	std::map<int, std::vector<BlendPass> > blendings;	
 	boost::scoped_ptr<IStorm3D_Model> backgroundStormModel;
-	std::map<int, LightMap> lightMaps;
+	std::map<int, TerrainLightMap> lightMaps;
 	
 	ObjectList objects;
 	ObjectIndices objectIndices;
@@ -987,7 +938,9 @@ struct TerrainData
 
 	~TerrainData()
 	{
+#ifdef PHYSICS_PHYSX  // turol: is this ok?
 		clear_static_physics_temp_models();
+#endif
 
 		// TODO: should we delete the heightMapData here... 
 		// it is a shared buffer (someone else may delete it - gameMap maybe?)
@@ -1106,8 +1059,8 @@ struct TerrainData
 		AABB boundingbox = objects[modelId].model->GetBoundingBox();
 
 		// not so axis aligned box
-		if( abs( boundingbox.mmax.x - boundingbox.mmin.x ) > 2 ||
-			abs( boundingbox.mmax.z - boundingbox.mmin.z ) > 2 )
+		if( fabsf( boundingbox.mmax.x - boundingbox.mmin.x ) > 2 ||
+			fabsf( boundingbox.mmax.z - boundingbox.mmin.z ) > 2 )
 		{
 			VC2 corners[4];
 			{
@@ -1169,7 +1122,7 @@ struct TerrainData
 			if( false )
 			{
 				VC2 pos2d = objects[modelId].instances[instanceId].position;		
-				VC3 rot = getEulerAngles( objects[modelId].instances[instanceId].setRotation );
+				VC3 rot = objects[modelId].instances[instanceId].setRotation.getEulerAngles();
 
 				int ox = gameMap->scaledToObstacleX(pos2d.x);
 				int oy = gameMap->scaledToObstacleY(pos2d.y);
@@ -1273,7 +1226,7 @@ struct TerrainData
 				int ox = gameMap->scaledToObstacleX(pos2d.x);
 				int oy = gameMap->scaledToObstacleY(pos2d.y);
 
-				float rotation = getEulerAngles( objects[modelId].instances[instanceId].setRotation ).y;
+				float rotation = objects[modelId].instances[instanceId].setRotation.getEulerAngles().y;
 
 				paintDynamicObstacle( modelId, instanceId, VC2I(ox, oy), rotation, true );
 
@@ -1409,29 +1362,9 @@ struct TerrainData
 			theNewInstance.position = VC2(position.x, position.z);
 			theNewInstance.height = position.y;
 			theNewInstance.setRotation = rotation;
-			theNewInstance.rotation = getEulerAngles(rotation);
+			theNewInstance.rotation = rotation.getEulerAngles();
 
 			newObject.instances.push_back(theNewInstance);
-
-
-			// update lighting
-			//
-			ui::PointLights lights;
-			if(lightManager && gameMap)
-			{
-				if (gameMap->isWellInScaledBoundaries(position.x, position.z))
-				{
-					lights.ambient = gameMap->colorMap->getUnmultipliedColor(position.x / gameMap->getScaledSizeX() + .5f, position.z / gameMap->getScaledSizeY() + .5f);
-					lightManager->getLighting(position, lights, newObject.data.radius, false, false, terrain->getInstanceModel(newModelId, newInstanceId) );
-				}
-			}
-			for(int k = 0; k < LIGHT_MAX_AMOUNT; ++k)
-			{
-				theNewInstance.ambient = lights.ambient;
-				theNewInstance.lightIndices[k] = lights.lightIndices[k];
-				terrain->setInstanceLight(newModelId, newInstanceId, k, theNewInstance.lightIndices[k], theNewInstance.ambient);
-			}
-			theNewInstance.lightUpdatePosition = position;
 		}
 
 		ObjectData &data = newObject.data;
@@ -1513,12 +1446,20 @@ static util::ObjectDurabilityParser durp;
 
 		return ret;
 	}
-
 	void loadScene(const char *forceName)
 	{
 		std::string fileName = dirName + "\\scene.bin";
 		//filesystem::InputStream stream = filesystem::createInputFileStream(fileName);
 		filesystem::InputStream stream = filesystem::FilePackageManager::getInstance().getFile(fileName);
+#ifdef PROJECT_SURVIVOR_DEMO
+		unsigned int crc = filesystem::FilePackageManager::getInstance().getCrc(fileName);
+
+		if(crc != 0xF56499B0
+			&& crc != 0x7EDF6E64
+			&& crc != 0xD550D273
+			&& crc != 0x9EC6D639)
+			return;
+#endif
 
 		if(stream.isEof())
 		{
@@ -1537,7 +1478,8 @@ static util::ObjectDurabilityParser durp;
 		if(version <= 2)
 			return;
 
-		heightMap.swap(boost::scoped_array<WORD> (new WORD[mapSize.x * mapSize.y]));
+		boost::scoped_array<WORD> newArr (new WORD[mapSize.x * mapSize.y]);
+		heightMap.swap(newArr);
 
 		// NOTICE: this obstaclemap thing is totally fucked up!
 		// keeping it that way to preserve compatibility with old editor exports.
@@ -1588,9 +1530,18 @@ static util::ObjectDurabilityParser durp;
 
 				TColor<unsigned char> color;
 				stream >> color.r >> color.g >> color.b;
-				f.color = COL(color.r / 255.f, color.g / 255.f, color.b / 255.f);
+				// Warning: color component order below changed from RGB to BGR to fix fog color in DirectX
+				f.color = COL(color.b / 255.f, color.g / 255.f, color.r / 255.f);
 
 				stream >> f.start >> f.end;
+
+#ifdef PROJECT_SHADOWGROUNDS
+				// FIXME, properly!
+				if (f.start < 0.0f)
+					f.start = 20.0f;
+				if (f.end < 0.0f)
+					f.end = 9.0f;
+#endif
 
 				fogApplier.setFog(id, f);
 			}
@@ -1691,7 +1642,7 @@ static util::ObjectDurabilityParser durp;
 				int values = 0;
 				stream >> values;
 
-				LightMap &map = lightMaps[block];
+				TerrainLightMap &map = lightMaps[block];
 
 				map.values.resize(values / 3);
 				assert(sizeof(TColor<unsigned char>) == 3);
@@ -1731,6 +1682,13 @@ static util::ObjectDurabilityParser durp;
 
 		objects.resize(objectAmount);
 
+#if defined(PROJECT_SHADOWGROUNDS) && defined(PHYSICS_PHYSX)
+		frozenbyte::editor::EditorParser parser(false, false);
+
+		filesystem::InputStream strm = filesystem::FilePackageManager::getInstance().getFile("Data/Misc/objects.fbt");
+		strm >> parser;
+#endif
+
 		for(int i = 0; i < objectAmount; ++i)
 		{
 			if (((i * 4) / objectAmount) != (((i-1) * 5) / objectAmount))
@@ -1744,21 +1702,6 @@ static util::ObjectDurabilityParser durp;
 			if(version >= 3)
 			{
 				stream >> data.explosionObstacle >> data.explosionEffect;
-				if (data.explosionEffect.length() >= 10 
-					&& data.explosionEffect.substr(0, 10) == "<filename>")
-				{
-					for (int pos = (int)data.fileName.length() - 1; pos >= 0; pos--)
-					{
-						if (data.fileName[pos] == '/'
-							|| data.fileName[pos] == '\\')
-						{
-							// note, assuming .s3d
-							data.explosionEffect = data.fileName.substr(pos + 1, data.fileName.length() - (pos + 1) - 4)
-								+	data.explosionEffect.substr(10, data.explosionEffect.length() - 10);
-							break;
-						}
-					}
-				}
 			}
 			if(version >= 5)
 			{
@@ -1840,6 +1783,15 @@ static util::ObjectDurabilityParser durp;
 					//	data.physicsData1 = VC3(0.5f, 0.5f, 0.5f);
 					//}
 				}
+#if defined(PROJECT_SHADOWGROUNDS) && defined(PHYSICS_PHYSX)
+				const frozenbyte::editor::ParserGroup &group = parser.getGlobals().getSubGroup(data.fileName);
+
+				data.physicsType = frozenbyte::editor::convertFromString<int> (group.getValue("physics_type"), 0);
+				data.physicsMass = frozenbyte::editor::convertFromString<float> (group.getValue("physics_weight"), 0.0f);
+				data.physicsSoundMaterial = group.getValue("physics_material");
+				data.physicsData1 = VC3(0.2f, 0.2f, 0.2f);
+				data.physicsData2 = VC3(0.0f, 0.0f, 0.0f);
+#endif
 			}
 
 			if(version >= 21)
@@ -1925,6 +1877,27 @@ static util::ObjectDurabilityParser durp;
 			if(data.physicsType == 0)
 				model->SetNoCollision(true);
 
+#if defined(PROJECT_SHADOWGROUNDS) && defined(PHYSICS_PHYSX)
+			AABB aabb = model->GetBoundingBox();
+			VC3 size = aabb.mmax - aabb.mmin;
+
+			if(data.physicsType == TERRAIN_OBJECT_PHYSICS_TYPE_BOX) // box
+			{
+				object.data.physicsData1 = size;
+				object.data.physicsData1 *= 0.5f;
+			}
+			else if(data.physicsType == TERRAIN_OBJECT_PHYSICS_TYPE_CYLINDER) // cylinder
+			{
+				object.data.physicsData1.x = size.y;
+				object.data.physicsData1.y = size.x * 0.5f;
+			}
+			else if(data.physicsType == TERRAIN_OBJECT_PHYSICS_TYPE_CAPSULE) // capsule
+			{
+				object.data.physicsData1.x = size.y - size.x;
+				object.data.physicsData1.y = size.x * 0.5f;
+			}
+#endif
+
 			object.createBreak(*storm);
 			terrain->addModel(model, object.breakModel, data.bones, data.idleAnimation);
 
@@ -1950,22 +1923,6 @@ static util::ObjectDurabilityParser durp;
 				object.data.ambientSound = getMetaValue(i, "ambient_sound");
 				object.data.ambientSoundRange = str2int(getMetaValue(i, "ambient_sound_range").c_str());
 				object.data.ambientSoundRollOff = str2int(getMetaValue(i, "ambient_sound_rolloff").c_str());
-			}
-
-			if (hasMetaValue(i, "collision_group"))
-			{
-				if (getMetaValue(i, "collision_group") == "nocollision")
-				{
-					object.data.collisionGroup = PHYSICS_COLLISIONGROUP_NOCOLLISION;
-				} else {
-					Logger::getInstance()->warning("Terrain::loadScene - Terrain object has unsupported collision group.");
-					Logger::getInstance()->debug(data.fileName.c_str());
-				}
-			}
-
-			if (hasMetaValue(i, "script"))
-			{
-				object.data.script = getMetaValue(i, "script");
 			}
 
 			for(int j = 0; j < instanceAmount; ++j)
@@ -1999,15 +1956,6 @@ static util::ObjectDurabilityParser durp;
 
 				terrain->addInstance(i, objectPosition, instance.setRotation, instance.ambient);
 				createAmbientSoundForObject(i, j);
-
-				if (!object.data.script.empty())
-				{
-					ScriptRunStuff srf;
-					srf.scriptName = object.data.script;
-					srf.position = objectPosition;
-					srf.uh = getUnifiedHandle(i, j);
-					scriptsToRun.push_back(srf);
-				}
 
 				if(version >= 4)
 				{
@@ -2126,10 +2074,7 @@ static util::ObjectDurabilityParser durp;
 					stream >> upper;
 					instance.uniqueEditorObjectHandle = 0;
 					instance.uniqueEditorObjectHandle |= (UniqueEditorObjectHandle)lower;
-					instance.uniqueEditorObjectHandle |= (UniqueEditorObjectHandle(upper) << 32);
-
-//		std::string foofoo = boost::lexical_cast<std::string> (instance.uniqueEditorObjectHandle);
-//		Logger::getInstance()->error(foofoo.c_str());
+					instance.uniqueEditorObjectHandle |= ((UniqueEditorObjectHandle)upper << 32);
 				}
 
 				if(object.data.breakTexture == TERRAIN_OBJECT_BREAK_TEXTURE_TYPE_ALWAYS)
@@ -2158,7 +2103,6 @@ static util::ObjectDurabilityParser durp;
 		}
 
 		{
-			bool singleTexturing = terrain->legacyTexturing();
 			std::vector<DWORD> weights(BLOCK_SIZE * BLOCK_SIZE);
 
 			std::map<int, std::vector<BlendPass> >::iterator it = blendings.begin();
@@ -2171,35 +2115,6 @@ static util::ObjectDurabilityParser durp;
 				{
 					BlendPass &pass = passes[i];
 
-					if(singleTexturing)
-					{
-						pass.texture1 = boost::shared_ptr<IStorm3D_Texture> (storm->CreateNewTexture(BLOCK_SIZE, BLOCK_SIZE, IStorm3D_Texture::TEXTYPE_BASIC), std::mem_fun(&IStorm3D_Texture::Release));
-						pass.texture2 = boost::shared_ptr<IStorm3D_Texture> (storm->CreateNewTexture(BLOCK_SIZE, BLOCK_SIZE, IStorm3D_Texture::TEXTYPE_BASIC), std::mem_fun(&IStorm3D_Texture::Release));
-
-						for(unsigned int j = 0; j < BLOCK_SIZE * BLOCK_SIZE; ++j)
-						{
-							unsigned char value = unsigned char(pass.weights[j] & 0x000000FF);
-							weights[j] = (value << 24) | (value << 16) | (value << 8) | value;
-						}
-
-						pass.texture1->Copy32BitSysMembufferToTexture(&weights[0]);
-						terrain->setBlendMap(blockIndex, *pass.texture1, pass.textureA, -1);
-
-						if(pass.textureB == -1)
-							continue;
-
-						for(unsigned int k = 0; k < BLOCK_SIZE * BLOCK_SIZE; ++k)
-						{
-							DWORD weight = (pass.weights[k] & 0xFF000000);
-							unsigned char value = unsigned char(weight >> 24);
-							weights[k] = (value << 24) | (value << 16) | (value << 8) | value;
-						}
-
-						pass.texture2->Copy32BitSysMembufferToTexture(&weights[0]);
-						terrain->setBlendMap(blockIndex, *pass.texture2, pass.textureB, -1);
-					}
-					else
-					{
 						pass.texture1 = boost::shared_ptr<IStorm3D_Texture> (storm->CreateNewTexture(BLOCK_SIZE, BLOCK_SIZE, IStorm3D_Texture::TEXTYPE_BASIC));
 						pass.texture1->Copy32BitSysMembufferToTexture(&pass.weights[0]);
 
@@ -2207,7 +2122,6 @@ static util::ObjectDurabilityParser durp;
 					}
 				}
 			}
-		}
 
 		{
 			// SCALE DOWN IF LOW TEXTURE QUALITY
@@ -2230,10 +2144,10 @@ static util::ObjectDurabilityParser durp;
 
 			for(int blockIndex = 0; blockIndex < blockAmount; ++blockIndex)
 			{
-				std::map<int, LightMap >::iterator it = lightMaps.find(blockIndex);
+				std::map<int, TerrainLightMap >::iterator it = lightMaps.find(blockIndex);
 				if(it != lightMaps.end() && !it->second.values.empty())
 				{
-					LightMap &map = it->second;
+					TerrainLightMap &map = it->second;
 					map.texture = boost::shared_ptr<IStorm3D_Texture> (storm->CreateNewTexture(textureSize, textureSize, IStorm3D_Texture::TEXTYPE_BASIC), std::mem_fun(&IStorm3D_Texture::Release));
 
 					if(scaleDown)
@@ -2376,11 +2290,10 @@ static util::ObjectDurabilityParser durp;
 	}
 
 
-	bool breakObjects(int modelId, int objectId, int damage, std::vector<TerrainObstacle> &removedObjects, std::vector<ExplosionEvent> &events, const VC2 &position, const VC3 &velocity_, const VC3 &explosion_position, bool use_explosion, bool only_breaktexture, bool physics_damage)
+	bool breakObjects(int modelId, int objectId, int damage, std::vector<TerrainObstacle> &removedObjects, std::vector<ExplosionEvent> &events, const VC2 &position, const VC3 &velocity_, const VC3 &explosion_position, bool use_explosion, bool only_breaktexture)
 	{
 		Object &originalObject = objects[modelId];
 		ObjectInstance &instance = originalObject.instances[objectId];
-		bool removed = false;
 
 #ifdef PROJECT_CLAW_PROTO
 		bool isClawObject = false;
@@ -2391,27 +2304,10 @@ static util::ObjectDurabilityParser durp;
 		}
 #endif
 
-#ifdef PROJECT_CLAW_PROTO
-		if(!physics_damage)
-		{
-			// hack: projectiles do no damage for
-      // Data\Models\Terrain_objects\Statue\obelisk_monument\obelisk_chainholder.s3d
-			if(originalObject.data.fileName.length() == 75)
-			{
-				const char *name = originalObject.data.fileName.c_str();
-				if(strcmp(name + 52, "obelisk_chainholder.s3d") == 0)
-				{
-					return false;
-				}
-			}
-		}
-#endif
-
 		// This enough to fix continuous sounds?
 		if(instance.hp < 0)
 			return false;
 
-		int originalDamage = damage;
 		if(instance.hp > damage)
 		{
 			if(originalObject.data.breakTexture == TERRAIN_OBJECT_BREAK_TEXTURE_TYPE_SCALE_HP)
@@ -2605,33 +2501,6 @@ if(newObject.data.explosionObstacle.find("_loop") != std::string::npos)
 				}
 			}
 
-#ifdef PROJECT_CLAW_PROTO
-			// ground joint hack
-			//
-			bool uses_ground_joint = false;
-			struct GroundJointData
-			{
-				float breakForce;
-				float bendAngle;
-				float breakAngle;
-				float angularDurability;
-				float angularDamping;
-			};
-			GroundJointData gjd;
-
-			std::map<std::string, std::string>::iterator it = originalObject.data.metaValues.find("ground_joint_hack");
-			if (it != originalObject.data.metaValues.end())
-			{
-				if(sscanf(it->second.c_str(), "%f,%f,%f,%f,%f",
-					&gjd.breakForce, &gjd.bendAngle, &gjd.breakAngle, &gjd.angularDurability, &gjd.angularDamping)
-					== 5)
-				{
-					uses_ground_joint = true;
-				}
-			}
-#endif
-
-
 			ObjectData &data = newObject.data;
 
 			if(data.fileExists)
@@ -2656,57 +2525,6 @@ static util::ObjectDurabilityParser durp;
 				{
 					newObject.instances[newInstanceId].physicsObject->setVelocity(physVel);
 					newObject.instances[newInstanceId].physicsObject->setAngularVelocity(physAngVel);
-
-#ifdef PROJECT_CLAW_PROTO			
-					// transfer joint to new object
-					//terrain_gamePhysics->reconnectJoints(instance.physicsObject, newObject.instances[newInstanceId].physicsObject);
-
-					if(uses_ground_joint)
-					{
-						frozenbyte::physics::PhysicsJoint jointInfo;
-						jointInfo.globalAnchor = position;
-						jointInfo.globalAxis = VC3(0,1,0);
-						jointInfo.globalNormal = VC3(0,0,1);
-						jointInfo.low.angle.x = 0.0f * PI / 180.f;
-						jointInfo.low.angle.y = 0.0f * PI / 180.f;
-						jointInfo.low.angle.z = 0.0f * PI / 180.f;
-						jointInfo.high.angle.x = 0.1f * PI / 180.f;
-						jointInfo.high.angle.y = 0.1f * PI / 180.f;
-						jointInfo.high.angle.z = 0.1f * PI / 180.f;
-						jointInfo.low.spring.x = 0.0f;
-						jointInfo.low.spring.y = 0.0f;
-						jointInfo.low.spring.z = 0.0f;
-						jointInfo.high.spring.x = 0.0f;
-						jointInfo.high.spring.y = 0.0f;
-						jointInfo.high.spring.z = 0.0f;
-						jointInfo.low.damping.x = 0.0f;
-						jointInfo.low.damping.y = 0.0f;
-						jointInfo.low.damping.z = 0.0f;
-						jointInfo.high.damping.x = 0.0f;
-						jointInfo.high.damping.y = 0.0f;
-						jointInfo.high.damping.z = 0.0f;
-						jointInfo.breakForce = gjd.breakForce;
-
-						// create new joint
-						boost::shared_ptr<game::AbstractPhysicsObject> nullPtr;
-						terrain_gamePhysics->addJoint(nullPtr, newObject.instances[newInstanceId].physicsObject, jointInfo, "");
-
-						frozenbyte::physics::JointDeformingInfo info;
-						info.bendAngle = gjd.bendAngle * PI / 180.f;
-						info.breakAngle = gjd.breakAngle * PI / 180.f;
-						info.durability = gjd.angularDurability;
-						info.resetCollisionGroupOnBreak = newObject.data.collisionGroup;
-						info.resetAngularDampingOnBreak = 0.0f;
-						terrain_gamePhysics->addDeformingToPreviousJoint(&info);
-
-						// hack: disable collision with terrain (floor objects)
-						newObject.instances[newInstanceId].physicsObject->setCollisionGroup(PHYSICS_COLLISIONGROUP_DYNAMIC_NOTERRAIN);
-
-						// set angular damping
-						newObject.instances[newInstanceId].physicsObject->setAngularDamping(gjd.angularDamping);
-					}
-#endif
-
 				}
 			}
 		}
@@ -2757,13 +2575,13 @@ static util::ObjectDurabilityParser durp;
 					// TEMPHAX -- this seem to be cause infinte recursion which blows up our stack
 #ifdef PHYSICS_NONE
 					VC2 position2(objectPosition.x, objectPosition.z);
-					if(breakObjects(modelId, instanceId, 100000, removedObjects, events,  position2, velocity, explosion_position, use_explosion, physics_damage) )
+					if(breakObjects(modelId, instanceId, 100000, removedObjects, events,  position2, velocity, explosion_position, use_explosion, only_breaktexture) )
 						it->erase();
 					else
 						it->next();
 #else
 					VC2 position2(objectPosition.x, objectPosition.z);
-					if(!collisionObject.data.hasPhysics() && breakObjects(modelId, instanceId, 100000, removedObjects, events,  position2, velocity, explosion_position, use_explosion, false, physics_damage))
+					if(!collisionObject.data.hasPhysics() && breakObjects(modelId, instanceId, 100000, removedObjects, events,  position2, velocity, explosion_position, use_explosion, false))
 						it->erase();
 					else
 						it->next();
@@ -2829,7 +2647,7 @@ static util::ObjectDurabilityParser durp;
 				instance.movedByPhysics = false;
 				// also update the instance euler angle rotation to match the physics rotation...
 				// (this is needed after the stabilizing physics simulation done for the physics cache)
-				instance.rotation = getEulerAngles(instance.setRotation);
+				instance.rotation = instance.setRotation.getEulerAngles();
 			}
 		}
 	}
@@ -2923,18 +2741,7 @@ static util::ObjectDurabilityParser durp;
 
 			if(data.physicsType == TERRAIN_OBJECT_PHYSICS_TYPE_BOX)
 			{
-				game::BoxPhysicsObject *bp;
-
-				std::map<std::string, std::string>::iterator it = data.metaValues.find("dynamic_box_shapes");
-				if (it != data.metaValues.end() && !it->second.empty())
-				{
-					bp = new game::BoxPhysicsObject(gamePhysics, it->second, data.physicsMass, object.data.collisionGroup, pos);
-				}
-				else
-				{
-					bp = new game::BoxPhysicsObject(gamePhysics, data.physicsData1, data.physicsMass, object.data.collisionGroup, pos);
-				}
-
+				game::BoxPhysicsObject *bp = new game::BoxPhysicsObject(gamePhysics, data.physicsData1, data.physicsMass, PHYSICS_COLLISIONGROUP_DYNAMIC_TERRAINOBJECTS, pos);
 				if (sleepPhysicsObject)
 					bp->setToSleep();
 				bp->setRotation(rot);
@@ -2949,11 +2756,11 @@ static util::ObjectDurabilityParser durp;
 			}
 			else if(data.physicsType == TERRAIN_OBJECT_PHYSICS_TYPE_CYLINDER)
 			{
+#ifdef PHYSICS_ODE
 				float height = data.physicsData1.x;
 				float radius = data.physicsData1.y;
 
-#ifdef PHYSICS_ODE
-				game::CylinderPhysicsObject *cp = new game::CylinderPhysicsObject(gamePhysics, height, radius, data.physicsMass, object.data.collisionGroup, pos);
+				game::CylinderPhysicsObject *cp = new game::CylinderPhysicsObject(gamePhysics, height, radius, data.physicsMass, PHYSICS_COLLISIONGROUP_DYNAMIC_TERRAINOBJECTS, pos);
 				if (sleepPhysicsObjects)
 					cp->setToSleep();
 				cp->setRotation(rot);
@@ -2962,7 +2769,7 @@ static util::ObjectDurabilityParser durp;
 				instance.physicsObject.reset(cp);
 #endif
 #ifdef PHYSICS_PHYSX
-				game::ConvexPhysicsObject *cp = new game::ConvexPhysicsObject(gamePhysics, cylinderFile.c_str(), data.physicsMass, object.data.collisionGroup, pos);
+				game::ConvexPhysicsObject *cp = new game::ConvexPhysicsObject(gamePhysics, cylinderFile.c_str(), data.physicsMass, PHYSICS_COLLISIONGROUP_DYNAMIC_TERRAINOBJECTS, pos);
 				if (sleepPhysicsObject)
 					cp->setToSleep();
 				cp->setRotation(rot);
@@ -2981,7 +2788,7 @@ static util::ObjectDurabilityParser durp;
 				float height = data.physicsData1.x;
 				float radius = data.physicsData1.y;
 
-				game::CapsulePhysicsObject *cp = new game::CapsulePhysicsObject(gamePhysics, height, radius, data.physicsMass, object.data.collisionGroup, pos);
+				game::CapsulePhysicsObject *cp = new game::CapsulePhysicsObject(gamePhysics, height, radius, data.physicsMass, PHYSICS_COLLISIONGROUP_DYNAMIC_TERRAINOBJECTS, pos);
 				if (sleepPhysicsObject)
 					cp->setToSleep();
 				cp->setRotation(rot);
@@ -2997,7 +2804,7 @@ static util::ObjectDurabilityParser durp;
 #ifdef PHYSICS_PHYSX
 			else if(data.physicsType == 5)
 			{
-				game::RackPhysicsObject *rp = new game::RackPhysicsObject(gamePhysics, data.physicsMass, object.data.collisionGroup, pos);
+				game::RackPhysicsObject *rp = new game::RackPhysicsObject(gamePhysics, data.physicsMass, PHYSICS_COLLISIONGROUP_DYNAMIC_TERRAINOBJECTS, pos);
 				if (sleepPhysicsObject)
 					rp->setToSleep();
 				rp->setRotation(rot);
@@ -3013,7 +2820,7 @@ static util::ObjectDurabilityParser durp;
 #ifdef PROJECT_CLAW_PROTO
 			else if(data.physicsType == 6)
 			{
-				game::CarPhysicsObject *rp = new game::CarPhysicsObject(gamePhysics, data.physicsMass, object.data.collisionGroup, pos);
+				game::CarPhysicsObject *rp = new game::CarPhysicsObject(gamePhysics, data.physicsMass, PHYSICS_COLLISIONGROUP_DYNAMIC_TERRAINOBJECTS, pos);
 				if (sleepPhysicsObject)
 					rp->setToSleep();
 				rp->setRotation(rot);
@@ -3047,16 +2854,7 @@ static util::ObjectDurabilityParser durp;
 				sp->setCustomData((void *)game::PhysicsContactUtils::calcCustomPhysicsObjectDataForTerrainObject(modelId, instanceId));
 #endif
 #ifdef PHYSICS_PHYSX
-
-				int collisionGroup = PHYSICS_COLLISIONGROUP_STATIC;
-
-#ifdef PROJECT_CLAW_PROTO
-				// hack: mark floor objects as terrain
-				if(strstr(data.fileName.c_str(), "Data\\Models\\Terrain_objects\\Streets") != NULL)
-					collisionGroup = PHYSICS_COLLISIONGROUP_TERRAIN;
-#endif
-
-				game::StaticPhysicsObject *sp = new game::StaticPhysicsObject(gamePhysics, data.fileName.c_str(), meshmodel, pos, rot, collisionGroup);
+				game::StaticPhysicsObject *sp = new game::StaticPhysicsObject(gamePhysics, data.fileName.c_str(), meshmodel, pos, rot);
 				instance.physicsObject.reset(sp);
 				sp->setSoundMaterial(soundmp.getMaterialIndexByName(data.physicsSoundMaterial));
 				sp->setDurabilityType(durp.getDurabilityTypeIndexByName(data.durabilityType));
@@ -3099,37 +2897,6 @@ Terrain::~Terrain()
 {
 	uninit_terrain_object_variables();
 }
-
-
-void Terrain::runAddedScriptsPhase1(game::GameScripting *gameScripting)
-{
-	for (int i = 0; i < (int)scriptsToRun.size(); i++)
-	{			
-		gameScripting->runOtherScriptForUnifiedHandle(scriptsToRun[i].scriptName.c_str(), "added_pre", scriptsToRun[i].uh, scriptsToRun[i].position);
-	}
-}
-
-void Terrain::runAddedScriptsPhaseJoint(game::GameScripting *gameScripting)
-{
-	for (int i = 0; i < (int)scriptsToRun.size(); i++)
-	{			
-		gameScripting->runOtherScriptForUnifiedHandle(scriptsToRun[i].scriptName.c_str(), "added_joint", scriptsToRun[i].uh, scriptsToRun[i].position);
-	}
-}
-
-void Terrain::runAddedScriptsPhase2(game::GameScripting *gameScripting)
-{
-	for (int i = 0; i < (int)scriptsToRun.size(); i++)
-	{			
-		gameScripting->runOtherScriptForUnifiedHandle(scriptsToRun[i].scriptName.c_str(), "added_post", scriptsToRun[i].uh, scriptsToRun[i].position);
-	}
-}
-
-void Terrain::doneAddedScripts()
-{
-	scriptsToRun.clear();
-}
-
 
 IStorm3D_Terrain *Terrain::GetTerrain()
 {
@@ -3184,7 +2951,9 @@ void Terrain::loadPhysicsCache(game::GamePhysics *gamePhysics, char *mapFilename
 	for(; it != data->objects.end(); ++it)
 	{
 		Object &object = *it;
+#ifndef NDEBUG
 		ObjectData &data = object.data;
+#endif
 		for(unsigned int i = 0; i < object.instances.size(); ++i)
 		{
 			ObjectInstance &instance = object.instances[i];
@@ -3213,13 +2982,13 @@ void Terrain::loadPhysicsCache(game::GamePhysics *gamePhysics, char *mapFilename
 				//assert(data.hasPhysics());
 				assert(data.physicsType >= 1);
 
-				VC3 rota = getEulerAngles(rotq);
+				VC3 rota = rotq.getEulerAngles();
 				instance.position = VC2(pos.x, pos.z);
 				instance.height = pos.y;
 				instance.setRotation = rotq;
 				instance.rotation = rota;
 			} else {
-				assert(data.physicsType < 1);
+				//assert(data.physicsType < 1);
 				//assert(!data.hasPhysics());
 			}
 		}
@@ -3254,17 +3023,17 @@ void Terrain::updateAllPhysicsObjectsLighting()
 
 			if(data->lightManager && data->gameMap)
 			{
-				//int ox = data->gameMap->scaledToObstacleX(pos.x);
-				//int oy = data->gameMap->scaledToObstacleY(pos.z);
+				int ox = data->gameMap->scaledToObstacleX(pos.x);
+				int oy = data->gameMap->scaledToObstacleY(pos.z);
 				if (data->gameMap->isWellInScaledBoundaries(pos.x, pos.z))
 				{
 					//lights.ambient = data->gameMap->colorMap->getColor(pos.x / data->gameMap->getScaledSizeX() + .5f, pos.z / data->gameMap->getScaledSizeY() + .5f);
 					lights.ambient = data->gameMap->colorMap->getUnmultipliedColor(pos.x / data->gameMap->getScaledSizeX() + .5f, pos.z / data->gameMap->getScaledSizeY() + .5f);
 
-					//if(data->gameMap->getAreaMap()->isAreaAnyValue(ox, oy, AREAMASK_INBUILDING))
+					if(data->gameMap->getAreaMap()->isAreaAnyValue(ox, oy, AREAMASK_INBUILDING))
 						data->lightManager->getLighting(pos, lights, o.data.radius, false, false, data->terrain->getInstanceModel(i, j) );
-					//else
-					//	data->lightManager->getLighting(pos, lights, o.data.radius, false, false, data->terrain->getInstanceModel(i, j) );
+					else
+						data->lightManager->getLighting(pos, lights, o.data.radius, false, false, data->terrain->getInstanceModel(i, j) );
 				}
 			}
 
@@ -3292,6 +3061,8 @@ void Terrain::savePhysicsCache(game::GamePhysics *gamePhysics, char *mapFilename
 	std::string filenamestr = std::string(mapFilename) + std::string("/pcache.bin");
 	FILE *f = fopen(filenamestr.c_str(), "wb");
 
+	if (f != NULL)
+	{
 	int savedDataSize = 0;
 	int expectedDataSize = 0;
 
@@ -3299,7 +3070,6 @@ void Terrain::savePhysicsCache(game::GamePhysics *gamePhysics, char *mapFilename
 	for(; it != data->objects.end(); ++it)
 	{
 		Object &object = *it;
-		ObjectData &data = object.data;
 		for(unsigned int i = 0; i < object.instances.size(); ++i)
 		{
 			ObjectInstance &instance = object.instances[i];
@@ -3332,10 +3102,13 @@ void Terrain::savePhysicsCache(game::GamePhysics *gamePhysics, char *mapFilename
 
 	fclose(f);
 }
+}
 
 void Terrain::releasePhysicsResources(void)
 {
+#ifdef PHYSICS_PHYSX
 	data->terrainPhysics.reset();
+#endif
 }
 
 void Terrain::deletePhysics(game::GamePhysics *gamePhysics)
@@ -3396,13 +3169,7 @@ void Terrain::createPhysics(game::GamePhysics *gamePhysics, unsigned char *clipM
 			if( game::Unit::getVisualizationOffsetInUse() )
 				physics_mesh_offset.y = game::Unit::getVisualizationOffset();
 
-			int collisionGroup = PHYSICS_COLLISIONGROUP_STATIC;
-
-#ifdef PROJECT_CLAW_PROTO
-			collisionGroup = PHYSICS_COLLISIONGROUP_TERRAIN;
-#endif
-
-			game::StaticPhysicsObject *sp = new game::StaticPhysicsObject(gamePhysics, mesh, physics_mesh_offset, QUAT(), collisionGroup);
+			game::StaticPhysicsObject *sp = new game::StaticPhysicsObject(gamePhysics, mesh, physics_mesh_offset, QUAT());
 			sp->setSoundMaterial(terrainSoundMatIndex);
 			data->terrainPhysics.reset(sp);
 		}
@@ -3413,7 +3180,7 @@ void Terrain::createPhysics(game::GamePhysics *gamePhysics, unsigned char *clipM
 			tpo->setSoundMaterial(terrainSoundMatIndex);
 			data->terrainPhysics.reset(tpo);
 		}
-		/**/
+		*/
 #endif
 
 	}
@@ -3437,8 +3204,6 @@ void Terrain::createPhysics(game::GamePhysics *gamePhysics, unsigned char *clipM
 
 		for(unsigned int i = 0; i < object.instances.size(); ++i)
 		{
-			ObjectInstance &instance = object.instances[i];
-
 			this->data->createPhysicsForObject(gamePhysics, modelId, i, sleepPhysicsObjects, soundmp, durp, totalCreated);
 		}
 	}
@@ -3449,28 +3214,6 @@ void Terrain::createPhysics(game::GamePhysics *gamePhysics, unsigned char *clipM
 
 void Terrain::updatePhysics(game::GamePhysics *gamePhysics, std::vector<TerrainObstacle> &objectsMovedFirstTime, util::GridOcclusionCuller *culler)
 {
-	/*
-	ObjectList::iterator it = data->objects.begin();
-	for(; it != data->objects.end(); ++it)
-	{
-		Object &object = *it;
-		ObjectData &data = object.data;
-
-		for(unsigned int i = 0; i < object.instances.size(); ++i)
-		{
-			ObjectInstance &instance = object.instances[i];
-
-			if (instance.physicsObject != NULL)
-			{
-				game::BoxPhysicsObject *bp = (game::BoxPhysicsObject)instance.physicsObject;
-				VC3 pos = bp.getPosition();
-				QUAT rot = bp.getRotation();
-
-			}
-		}
-	}
-	*/
-
 	bool useOcclusionCulling = false;
 	if (culler != NULL)
 		useOcclusionCulling = true;
@@ -3537,17 +3280,17 @@ void Terrain::updatePhysics(game::GamePhysics *gamePhysics, std::vector<TerrainO
 
 						if(data->lightManager && data->gameMap)
 						{
-							//int ox = data->gameMap->scaledToObstacleX(pos.x);
-							//int oy = data->gameMap->scaledToObstacleY(pos.z);
+							int ox = data->gameMap->scaledToObstacleX(pos.x);
+							int oy = data->gameMap->scaledToObstacleY(pos.z);
 							if (data->gameMap->isWellInScaledBoundaries(pos.x, pos.z))
 							{
 								//lights.ambient = data->gameMap->colorMap->getColor(pos.x / data->gameMap->getScaledSizeX() + .5f, pos.z / data->gameMap->getScaledSizeY() + .5f);
 								lights.ambient = data->gameMap->colorMap->getUnmultipliedColor(pos.x / data->gameMap->getScaledSizeX() + .5f, pos.z / data->gameMap->getScaledSizeY() + .5f);
 
-								//if(data->gameMap->getAreaMap()->isAreaAnyValue(ox, oy, AREAMASK_INBUILDING))
+								if(data->gameMap->getAreaMap()->isAreaAnyValue(ox, oy, AREAMASK_INBUILDING))
 									data->lightManager->getLighting(pos, lights, o.data.radius, false, false, data->terrain->getInstanceModel(i, j)  );
-								//else
-								//	data->lightManager->getLighting(pos, lights, o.data.radius, false, false, data->terrain->getInstanceModel(i, j) );
+								else
+									data->lightManager->getLighting(pos, lights, o.data.radius, false, false, data->terrain->getInstanceModel(i, j) );
 
 								if (useOcclusionCulling)
 								{
@@ -3642,7 +3385,6 @@ void Terrain::BlastTerrainObjects(const VC3 &position3, float radius, std::vecto
 		const VC3 &objectPosition = it->getPosition();
 		VC2 objectPosition2(objectPosition.x, objectPosition.z);
 
-		float distance = position.GetRangeTo(objectPosition2);
 		{
 			int modelId = it->getModelId();
 			int objectId = it->getInstanceId();
@@ -3745,18 +3487,9 @@ UnifiedHandle Terrain::findClosestTerrainObjectOfMaterial(const VC3 &position, c
 
 UnifiedHandle Terrain::findClosestContainer(const VC3 &position, float maxRadius)
 {
-	// FIXME: if i've understood correctly, this is basically the same as the above seek by material and has
-	// the same flaw - it chooses a random container within the given radius, not really the closest one? --jpk
-	// See findClosestTerrainObjectWithFilenamePart for correct behaviour.
-
-	// this might be a better choice though not exactly the same...?
-	// return findClosestTerrainObjectWithFilenamePart(position, "item_", maxRadius);
-
-	assert(!"Terrain::findClosestContainer - FIXME!");
-
-	int closestModel = -1;
+	/*int closestModel = -1;
 	int closestInstance = -1;
-	//data->terrain->findObject(position, maxRadius * data->terrainScale, closestModel, closestInstance);
+	data->terrain->findObject(position, maxRadius * data->terrainScale, closestModel, closestInstance);*/
 	boost::shared_ptr<IStorm3D_TerrainModelIterator> it = data->terrain->getModelIterator(position, maxRadius);
 	for(; !it->end(); it->next())
 	{
@@ -3770,41 +3503,6 @@ UnifiedHandle Terrain::findClosestContainer(const VC3 &position, float maxRadius
 	}
 
 	return UNIFIED_HANDLE_NONE;
-}
-
-
-UnifiedHandle Terrain::findClosestTerrainObjectWithFilenamePart(const VC3 &position, const char *filenamePart, float maxRadius)
-{
-	int closestModel = -1;
-	int closestInstance = -1;
-	float closestDistSq = 99999.0f*99999.0f;
-
-	boost::shared_ptr<IStorm3D_TerrainModelIterator> it = data->terrain->getModelIterator(position, maxRadius);
-	for(; !it->end(); it->next())
-	{
-		int modelId = it->getModelId();
-		int instanceId = it->getInstanceId();
-
-		if (strstr(data->objects[modelId].data.fileName.c_str(), filenamePart) != NULL)
-		{			
-			VC3 tpos = getTerrainObjectPosition(modelId, instanceId);
-			VC3 diff = tpos - position;
-			float diffLenSq = diff.GetSquareLength();
-			if (diffLenSq < closestDistSq)
-			{
-				closestDistSq = diffLenSq;
-				closestModel = modelId;
-				closestInstance = instanceId;
-			}
-		}
-	}
-
-	if (closestModel != -1 && closestInstance != -1)
-	{
-		return this->getUnifiedHandle(closestModel, closestInstance);
-	} else {
-		return UNIFIED_HANDLE_NONE;
-	}
 }
 
 
@@ -3830,6 +3528,9 @@ const char *Terrain::getTerrainObjectIdString(UnifiedHandle unifiedHandle) const
 	else
 		return str.c_str();
 }
+#ifdef _MSC_VER
+#define strcasecmp(a, b) _stricmp((a), (b))
+#endif
 
 UnifiedHandle Terrain::findTerrainObjectByIdString(const char *idString)
 {
@@ -3867,7 +3568,11 @@ UnifiedHandle Terrain::findTerrainObjectByIdString(const char *idString)
 	for(unsigned int i = 0; i < data->objects.size(); ++i)
 	{
 		Object &object = data->objects[i];
-		if(_stricmp(object.data.fileName.c_str(), "data\\models\\terrain_objects\\statue\\obelisk_monument\\obelisk_chainholder.s3d") != 0)
+
+		igiosWarning("check slashes: \"%s\"\n", object.data.fileName.c_str());
+		igios_unimplemented();
+
+		if(strcasecmp(object.data.fileName.c_str(), "data\\models\\terrain_objects\\statue\\obelisk_monument\\obelisk_chainholder.s3d") != 0)
 			continue;
 
 		if(index >= int(object.instances.size()))
@@ -3914,33 +3619,8 @@ UnifiedHandle Terrain::findTerrainObjectByIdString(const char *idString)
 	return UNIFIED_HANDLE_NONE;
 }
 
-UnifiedHandle Terrain::findTerrainObjectByHex(__int64 hex) const
-{
-	for(unsigned int i = 0; i < data->objects.size(); ++i)
-	{
-		Object &object = data->objects[i];
 
-		for(unsigned int j = 0; j < object.instances.size(); ++j)
-		{
-			ObjectInstance &instance = object.instances[j];
-			if(instance.uniqueEditorObjectHandle == hex)
-				return getUnifiedHandle(i, j);
-		}
-	}
 
-	return UNIFIED_HANDLE_NONE;
-}
-
-boost::shared_ptr<game::AbstractPhysicsObject> Terrain::getPhysicsActor(UnifiedHandle handle)
-{
-	int modelId = 0;
-	int objectId = 0;
-	data->unifiedHandleToTerrainIds(handle, &modelId, &objectId);
-
-	Object &object = data->objects[modelId];
-	ObjectInstance &instance = object.instances[objectId];
-	return instance.physicsObject;
-}
 
 void Terrain::physicsImpulse(const VC3 &position, const VC3 &velocity, float radius, float factor, bool closestOnly)
 {
@@ -3975,8 +3655,8 @@ void Terrain::BreakTerrainObject(UnifiedHandle uh, std::vector<TerrainObstacle> 
 	VC3 velocity(0,0,10);
 	VC3 position3(position.x, data->objects[modelId].instances[objectId].height, position.y);
 
-	bool physics_damage = true;
-	if(data->breakObjects(modelId, objectId, damage, removedObjects, events, position, velocity, position3, false, only_breaktexture, physics_damage))
+
+	if(data->breakObjects(modelId, objectId, damage, removedObjects, events, position, velocity, position3, false, only_breaktexture))
 	{
 		data->terrain->removeInstance(modelId, objectId); 
 	}
@@ -3995,113 +3675,18 @@ void Terrain::BreakTerrainObjects(const VC3 &position3, const VC3 &velocity, flo
 		{
 			const VC3 &objectPosition = it->getPosition();
 			VC2 objectPosition2(objectPosition.x, objectPosition.z);
-			float distance = position.GetRangeTo(objectPosition2);
 
 			{
 				int modelId = it->getModelId();
 				int instanceId = it->getInstanceId();
 
-				//damage = int(damage * (radius - distance) / radius);
-				/*
-				if(distance > radius * .5f)
-				{
-					float scale = ((radius - distance) / (radius)) * 2.f;
-					damage = int(damage * scale);
-				}
-				*/
-
 				if(damage <= 0)
 					damage = 1;
 
-				bool physics_damage = false;
-				if(data->breakObjects(modelId, instanceId, damage, removedObjects, events, position, velocity, position3, !closestOnly, only_breaktexture, physics_damage))
+				if(data->breakObjects(modelId, instanceId, damage, removedObjects, events, position, velocity, position3, !closestOnly, only_breaktexture))
 					it->erase();
 				else
 					it->next();
-
-				/*
-				Object &object = data->objects[modelId];
-				ObjectInstance &instance = object.instances[instanceId];
-
-				if(object.data.explosionObstacle.empty())
-				{
-					it->next();
-					continue;
-				}
-				// Tree
-				if(object.data.fallType == 1)
-				{
-					it->next();
-					continue;
-				}
-
-				damage = int(damage * (radius - distance) / radius);
-				if(damage <= 0)
-					damage = 1;
-
-				instance.hp -= damage;
-				if(instance.hp > 0)
-				{
-					it->next();
-					continue;
-				}
-
-				// Create new object
-				if(object.data.explosionObstacle != "(disappear)")
-				{
-					//if(!object.data.explosionObstacle.empty())
-					{
-						ObjectIndices::iterator i = data->objectIndices.find(object.data.explosionObstacle);
-						if(i == data->objectIndices.end())
-						{
-							Logger::getInstance()->warning("Terrain explosion object not properly loaded");
-							Logger::getInstance()->warning(object.data.explosionObstacle.c_str());
-
-							it->next();
-							continue;
-						}
-
-						int index = i->second;
-						Object &newObject = data->objects[index];
-
-						VC3 position(instance.position.x, 0, instance.position.y);
-						position.y = data->terrain->getHeight(instance.position) + instance.heightOffset;
-
-						COL lightColor = instance.lightColor;
-						COL ambient = instance.ambient;
-						if(instance.inBuilding)
-						{
-							lightColor *= data->colorFactor;
-							ambient *= data->colorFactor;
-						}
-
-						QUAT rotation = getRotation(instance.rotation);
-						data->terrain->addInstance(index, position, rotation, instance.ambient);
-						data->terrain->setInstanceLight(index, newObject.instances.size(), instance.lightPos, lightColor, ambient);
-						data->terrain->setInstanceLightmapped(index, newObject.instances.size(), instance.lightmapped);
-						data->terrain->setInstanceSun(index, newObject.instances.size(), instance.sunDir, instance.sunStrength);
-
-						ObjectInstance copy = instance;
-						copy.originalName = object.data.fileName;
-						copy.hp = newObject.data.hp;
-						newObject.instances.push_back(copy);
-					}
-				}
-				else
-				{
-					TerrainObstacle obstacle = createObstacle(object.data, instance);
-					removedObjects.push_back(obstacle);
-				}
-
-				if(object.data.hasExplosion())
-				{
-					ExplosionEvent event = createEvent(object.data, instance, position, velocity, data->terrain);
-					events.push_back(event);
-				}
-
-				if(!object.data.explosionObstacle.empty())
-					it->erase();
-				*/
 			}
 		}
 	}
@@ -4113,72 +3698,8 @@ void Terrain::BreakTerrainObjects(const VC3 &position3, const VC3 &velocity, flo
 		data->terrain->findObject(position3, radius * data->terrainScale, closestModel, closestInstance);
 		if(closestModel >= 0 && closestInstance >= 0)
 		{
-			bool physics_damage = false;
-			if(data->breakObjects(closestModel, closestInstance, damage, removedObjects, events, position, velocity, position3, !closestOnly, only_breaktexture, physics_damage))
+			if(data->breakObjects(closestModel, closestInstance, damage, removedObjects, events, position, velocity, position3, !closestOnly, only_breaktexture))
 				data->terrain->removeInstance(closestModel, closestInstance);
-			/*
-			Object &object = data->objects[closestModel];
-			ObjectInstance &instance = object.instances[closestInstance];
-
-			instance.hp -= damage;
-			if(instance.hp <= 0)
-			{
-				// Create new object
-				if(object.data.explosionObstacle != "(disappear)")
-				{
-					if(!object.data.explosionObstacle.empty())
-					{
-						ObjectIndices::iterator i = data->objectIndices.find(object.data.explosionObstacle);
-						if(i == data->objectIndices.end())
-						{
-							Logger::getInstance()->warning("Terrain explosion object not properly loaded");
-							Logger::getInstance()->warning(object.data.explosionObstacle.c_str());
-						}
-						else
-						{
-							int index = i->second;
-							Object &newObject = data->objects[index];
-
-							VC3 position(instance.position.x, 0, instance.position.y);
-							position.y = data->terrain->getHeight(instance.position) + instance.heightOffset;
-
-							COL lightColor = instance.lightColor;
-							COL ambient = instance.ambient;
-							if(instance.inBuilding)
-							{
-								lightColor *= data->colorFactor;
-								ambient *= data->colorFactor;
-							}
-
-							QUAT rotation = getRotation(instance.rotation);
-							data->terrain->addInstance(index, position, rotation, instance.ambient);
-							data->terrain->setInstanceLight(index, newObject.instances.size(), instance.lightPos, lightColor, ambient);
-							data->terrain->setInstanceLightmapped(index, newObject.instances.size(), instance.lightmapped);
-							data->terrain->setInstanceSun(index, newObject.instances.size(), instance.sunDir, instance.sunStrength);
-
-							ObjectInstance copy = instance;
-							copy.originalName = object.data.fileName;
-							copy.hp = newObject.data.hp;
-							newObject.instances.push_back(copy);
-						}
-					}
-				}
-				else
-				{
-					TerrainObstacle obstacle = createObstacle(object.data, instance);
-					removedObjects.push_back(obstacle);
-				}
-
-				if(object.data.hasExplosion())
-				{
-					ExplosionEvent event = createEvent(object.data, instance, position, velocity, data->terrain);
-					events.push_back(event);
-				}
-
-				if(!object.data.explosionObstacle.empty())
-					data->terrain->removeInstance(closestModel, closestInstance);
-			}
-			*/
 		}
 	}
 }
@@ -4305,128 +3826,6 @@ VC3 Terrain::getTerrainObjectPosition(int terrainModelId, int terrainObstacleId)
 	VC2 tmp = data->objects[terrainModelId].instances[terrainObstacleId].position;
 	float height = data->objects[terrainModelId].instances[terrainObstacleId].height; 
 	return VC3(tmp.x, height, tmp.y);
-}
-
-
-void Terrain::updateTerrainObject(int terrainModelId, int terrainObstacleId, VC3 position, QUAT rotation)
-{
-	// TODO: get this as parameter
-	util::GridOcclusionCuller *culler = NULL;
-
-
-	VC2 tmp = VC2(position.x, position.z);
-	float height = position.y;
-
-	Object &o = data->objects[terrainModelId];
-	ObjectInstance &instance = data->objects[terrainModelId].instances[terrainObstacleId];
-
-	bool useOcclusionCulling = false;
-	if (culler != NULL)
-		useOcclusionCulling = true;
-
-	// TODO: remove old static obstacle (if one exists - if static)
-
-	instance.position = tmp;
-	instance.height = height; 
-	instance.setRotation = rotation;
-
-	// TODO: add new static obstacle (if one should exist - if static)
-
-	data->terrain->setInstancePosition(terrainModelId, terrainObstacleId, position);
-	data->terrain->setInstanceRotation(terrainModelId, terrainObstacleId, rotation);
-
-	if (data->useDynamicObstacles)
-	{
-		data->removeDynamicObstacle(terrainModelId, terrainObstacleId);
-		data->addDynamicObstacle(terrainModelId, terrainObstacleId);
-	}
-
-	if(instance.ambientSound != -1)
-	{
-		data->ambientSoundManager->setAmbientSoundPosition(instance.ambientSound, position);
-	}
-
-	// NOTE: COPY&PASTED from updatePhysics
-
-	// Update lighting less often
-	if (fabs(instance.position.x - instance.lightUpdatePosition.x) > UPDATE_LIGHT_RANGE || fabs(instance.position.y - instance.lightUpdatePosition.z) > UPDATE_LIGHT_RANGE || fabs(instance.height - instance.lightUpdatePosition.y) > UPDATE_LIGHT_RANGE)
-	{
-		ui::PointLights lights;
-		//lights.ambient = instance.ambient;
-
-		if(data->lightManager && data->gameMap)
-		{
-			//int ox = data->gameMap->scaledToObstacleX(pos.x);
-			//int oy = data->gameMap->scaledToObstacleY(pos.z);
-			if (data->gameMap->isWellInScaledBoundaries(position.x, position.z))
-			{
-				//lights.ambient = data->gameMap->colorMap->getColor(pos.x / data->gameMap->getScaledSizeX() + .5f, pos.z / data->gameMap->getScaledSizeY() + .5f);
-				lights.ambient = data->gameMap->colorMap->getUnmultipliedColor(position.x / data->gameMap->getScaledSizeX() + .5f, position.z / data->gameMap->getScaledSizeY() + .5f);
-
-				//if(data->gameMap->getAreaMap()->isAreaAnyValue(ox, oy, AREAMASK_INBUILDING))
-					data->lightManager->getLighting(position, lights, o.data.radius, false, false, data->terrain->getInstanceModel(terrainModelId, terrainObstacleId)  );
-				//else
-				//	data->lightManager->getLighting(pos, lights, o.data.radius, false, false, data->terrain->getInstanceModel(i, j) );
-
-				if (useOcclusionCulling)
-				{
-					//assert(culler->isWellInScaledBoundaries(pos.x, pos.z));
-					// this is an unnecessary check... the gameMap's boundary check few lines above should do the trick.
-					//if (culler->isWellInScaledBoundaries(pos.x, pos.z))
-					//{
-						// TODO: could optimize, an calc these directly from the obstacle ox,oy
-						// (but we don't have access the obstacle:occlusion ratio..)
-						int occx = culler->scaledToOcclusionX(position.x);
-						int occy = culler->scaledToOcclusionY(position.z);
-						if (culler->isVisibleToArea(occx, occy, data->occlusionCameraArea))
-							data->terrain->setInstanceOccluded(terrainModelId, terrainObstacleId, false);
-						else
-							data->terrain->setInstanceOccluded(terrainModelId, terrainObstacleId, true);
-					//}
-				}
-			} else {
-				if (useOcclusionCulling)
-				{
-					// outside map, everything is visible...
-					data->terrain->setInstanceOccluded(terrainModelId, terrainObstacleId, false);
-				}
-			}
-		}
-
-		for(int k = 0; k < LIGHT_MAX_AMOUNT; ++k)
-		{
-			instance.ambient = lights.ambient;
-			instance.lightIndices[k] = lights.lightIndices[k];
-			//instance.lightPos[k] = lights.lights[k].position;
-			//instance.lightRange[k] = lights.lights[k].range;
-			//instance.lightColor[k] = lights.lights[k].color;
-
-			data->terrain->setInstanceLight(terrainModelId, terrainObstacleId, k, instance.lightIndices[k], instance.ambient);
-		}
-
-		instance.lightUpdatePosition = position;
-	}
-
-	if (instance.physicsObject != NULL)
-	{
-		instance.physicsObject->setPosition(position);
-		instance.physicsObject->setRotation(rotation);
-	}
-
-}
-
-
-void Terrain::setTerrainObjectPosition(int terrainModelId, int terrainObstacleId, const VC3 &position)
-{
-	ObjectInstance &instance = data->objects[terrainModelId].instances[terrainObstacleId];
-	updateTerrainObject(terrainModelId, terrainObstacleId, position, instance.setRotation);
-}
-
-void Terrain::setTerrainObjectRotation(int terrainModelId, int terrainObstacleId, const QUAT &rotation)
-{
-	ObjectInstance &instance = data->objects[terrainModelId].instances[terrainObstacleId];
-	VC3 pos = VC3(instance.position.x, instance.height, instance.position.y);
-	updateTerrainObject(terrainModelId, terrainObstacleId, pos, rotation);
 }
 
 
@@ -4781,8 +4180,7 @@ void Terrain::Animate(int time_elapsed)
 
 bool Terrain::breakObjects(int modelId, int objectId, int damage, std::vector<TerrainObstacle> &removedObjects, std::vector<ExplosionEvent> &events, const VC2 &position, const VC3 &velocity_, const VC3 &explosion_position, bool use_explosion, bool only_breaktexture)
 {
-	bool physics_damage = true;
-	if (data->breakObjects(modelId, objectId, damage, removedObjects, events, position, velocity_, explosion_position, use_explosion, only_breaktexture, physics_damage))
+	if (data->breakObjects(modelId, objectId, damage, removedObjects, events, position, velocity_, explosion_position, use_explosion, only_breaktexture))
 	{
 		data->terrain->removeInstance(modelId, objectId);
 		return true;
@@ -4798,7 +4196,6 @@ void Terrain::updateOcclusionForAllObjects(util::GridOcclusionCuller *culler, GR
 	for (int modelId = 0; modelId < (int)data->objects.size(); modelId++)
 	{
 		Object &object = data->objects[modelId];
-		ObjectData &data = object.data;
 
 		for(unsigned int i = 0; i < object.instances.size(); ++i)
 		{
@@ -4845,16 +4242,16 @@ void Terrain::calculateLighting()
 			{
 				VC3 pos(instance.position.x, instance.height, instance.position.y);
 
-				//int ox = this->data->gameMap->scaledToObstacleX(pos.x);
-				//int oy = this->data->gameMap->scaledToObstacleY(pos.z);
+				int ox = this->data->gameMap->scaledToObstacleX(pos.x);
+				int oy = this->data->gameMap->scaledToObstacleY(pos.z);
 				if(this->data->gameMap->isWellInScaledBoundaries(pos.x, pos.z))
 				{
 					lights.ambient = this->data->gameMap->colorMap->getUnmultipliedColor(pos.x / this->data->gameMap->getScaledSizeX() + .5f, pos.z / this->data->gameMap->getScaledSizeY() + .5f);
 
-					//if(this->data->gameMap->getAreaMap()->isAreaAnyValue(ox, oy, AREAMASK_INBUILDING))
+					if(this->data->gameMap->getAreaMap()->isAreaAnyValue(ox, oy, AREAMASK_INBUILDING))
 						this->data->lightManager->getLighting(pos, lights, data.radius, false, false, this->data->terrain->getInstanceModel(i, j) );
-					//else
-					//	this->data->lightManager->getLighting(pos, lights, data.radius, false, false, this->data->terrain->getInstanceModel(i, j) );
+					else
+						this->data->lightManager->getLighting(pos, lights, data.radius, false, false, this->data->terrain->getInstanceModel(i, j) );
 				}
 			}
 
@@ -4886,16 +4283,16 @@ void Terrain::updateLighting(const VC3 &position, float radius)
 		{
 			VC3 pos(instance.position.x, instance.height, instance.position.y);
 
-			//int ox = this->data->gameMap->scaledToObstacleX(pos.x);
-			//int oy = this->data->gameMap->scaledToObstacleY(pos.z);
+			int ox = this->data->gameMap->scaledToObstacleX(pos.x);
+			int oy = this->data->gameMap->scaledToObstacleY(pos.z);
 			if(this->data->gameMap->isWellInScaledBoundaries(pos.x, pos.z))
 			{
 				lights.ambient = this->data->gameMap->colorMap->getUnmultipliedColor(pos.x / this->data->gameMap->getScaledSizeX() + .5f, pos.z / this->data->gameMap->getScaledSizeY() + .5f);
 
-				//if(this->data->gameMap->getAreaMap()->isAreaAnyValue(ox, oy, AREAMASK_INBUILDING))
+				if(this->data->gameMap->getAreaMap()->isAreaAnyValue(ox, oy, AREAMASK_INBUILDING))
 					this->data->lightManager->getLighting(pos, lights, data.radius, false, false, this->data->terrain->getInstanceModel( modelId, instanceId ) );
-				//else
-				//	this->data->lightManager->getLighting(pos, lights, data.radius, false, false, this->data->terrain->getInstanceModel( modelId, instanceId ) );
+				else
+					this->data->lightManager->getLighting(pos, lights, data.radius, false, false, this->data->terrain->getInstanceModel( modelId, instanceId ) );
 			}
 		}
 
@@ -4970,100 +4367,5 @@ void Terrain::setInstanceDamageTexture(UnifiedHandle uh, float damageTextureFade
 	data->setInstanceDamageTexture(uh, damageTextureFadeFactor);
 }
 
-UnifiedHandle Terrain::findUnifiedHandleByUniqueEditorObjectHandle(UniqueEditorObjectHandle ueoh) const
-{
-	return findTerrainObjectByHex((__int64)ueoh);
-}
-
-std::string Terrain::getTypeFilename(int terrainModelId)
-{
-	assert(terrainModelId >= 0 && terrainModelId < (int)data->objects.size());
-	return std::string(data->objects[terrainModelId].data.fileName);
-}
-
-std::string Terrain::getTypeFilenameByUnifiedHandle(UnifiedHandle unifiedHandle)
-{
-	int modelId = 0;
-	int instanceId = 0;
-
-	unifiedHandleToTerrainIds(unifiedHandle, &modelId, &instanceId);
-
-	return getTypeFilename(modelId);
-}
-
-UnifiedHandle Terrain::getFirstTerrainObject()
-{
-	UnifiedHandle first = getUnifiedHandle(0,0);
-	if (this->doesTerrainObjectExist(0,0))
-		return first;
-	else
-	  return getNextTerrainObject(first);
-}
-
-UnifiedHandle Terrain::getNextTerrainObject(UnifiedHandle uh)
-{
-	int origModelId = 0;
-	int origInstanceId = 0;
-
-	unifiedHandleToTerrainIds(uh, &origModelId, &origInstanceId);
-
-	for (int modelId = origModelId; modelId < (int)data->objects.size(); modelId++)
-	{
-		Object &object = data->objects[modelId];
-		ObjectData &data = object.data;
-
-		int startFrom = 0;
-		if (modelId == origModelId)
-			startFrom = origInstanceId + 1;
-
-		for(unsigned int i = startFrom; i < object.instances.size(); ++i)
-		{
-			if (doesTerrainObjectExist(modelId, i))
-			{
-				return getUnifiedHandle(modelId, i);
-			}
-		}
-	}
-
-	return UNIFIED_HANDLE_NONE;
-}
-
-OOBB Terrain::getOOBB(UnifiedHandle uh)
-{
-	int modelId = 0;
-	int instanceId = 0;
-
-	unifiedHandleToTerrainIds(uh, &modelId, &instanceId);
-
-	Object &object = data->objects[modelId];
-	//ObjectData &data = object.data;
-	ObjectInstance &instance = object.instances[instanceId];
-
-	IStorm3D_Model *model = data->terrain->getInstanceModel(modelId, instanceId);
-
-	//VC3 pos = VC3(instance.position.x, instance.height, instance.position.y);
-	QUAT orot = model->GetRotation();
-	VC3 pos = model->GetPosition();
-	model->SetRotation(QUAT(0,0,0,0));
-
-	AABB aabb = model->GetBoundingBox();
-	OOBB oobb;
-
-	model->SetRotation(orot);
-
-	VC3 aabbCenter = (aabb.mmax + aabb.mmin) * 0.5f - pos; 
-	MAT transf = model->GetMX();
-
-	//MAT rotMat = transf.GetWithoutTranslation();
-	//rotMat.TransformVector ( bboxCenter );
-	transf.RotateVector(aabbCenter);
-	oobb.center  = pos + aabbCenter;
-	oobb.axes[0] = VC3( transf.Get( 0 ), transf.Get( 1 ), transf.Get( 2 ) ) ;
-	oobb.axes[1] = VC3( transf.Get( 4 ), transf.Get( 5 ), transf.Get( 6 ) ) ;
-	oobb.axes[2] = VC3( transf.Get( 8 ), transf.Get( 9 ), transf.Get( 10 )) ;
-	oobb.extents = (aabb.mmax - aabb.mmin) / 2.0f;
-
-	return oobb;
-}
 
 

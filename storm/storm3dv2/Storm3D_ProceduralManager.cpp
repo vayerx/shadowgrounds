@@ -1,18 +1,20 @@
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
+
+#include <vector>
 
 #include "Storm3D_ProceduralManager.h"
 #include "storm3d.h"
 #include "storm3d_texture.h"
 #include "storm3d_terrain_utils.h"
-#include "storm3d_shadermanager.h"
-#include <istorm3d_logger.h>
+#include "Storm3D_ShaderManager.h"
+#include <IStorm3D_Logger.h>
 #include <d3d9.h>
 #include <boost/shared_ptr.hpp>
 
 using namespace boost;
 using namespace std;
-
-namespace {
 
 	struct NullDeleter
 	{
@@ -180,8 +182,7 @@ namespace {
 		}
 	};
 
-	typedef map<string, ProceduralEffect> EffectList;
-}
+	typedef map<string, ProceduralEffect> ProceduralEffectList;
 
 struct Storm3D_ProceduralManager::Data
 {
@@ -189,7 +190,7 @@ struct Storm3D_ProceduralManager::Data
 	CComPtr<IDirect3DTexture9> target;
 	CComPtr<IDirect3DTexture9> offsetTarget;
 
-	EffectList effects;
+	ProceduralEffectList effects;
 	string active;
 
 	IStorm3D_Logger *logger;
@@ -303,7 +304,7 @@ struct Storm3D_ProceduralManager::Data
 			return;
 		}
 
-		EffectList::iterator it = effects.find(name);
+		ProceduralEffectList::iterator it = effects.find(name);
 		if(it == effects.end())
 			return;
 
@@ -314,16 +315,7 @@ struct Storm3D_ProceduralManager::Data
 	void render(const ProceduralEffect &e, float width, float height, bool offsetTarget)
 	{
 		IDirect3DDevice9 &device = *storm.GetD3DDevice();
-
-		float textureOffset = -.5f;
-		float buffer[] = 
-		{
-			textureOffset, height,         1.f, 1.f,   0.f, 1.f, 0.f, 1.f,
-			textureOffset, textureOffset,  1.f, 1.f,   0.f, 0.f, 0.f, 0.f,
-			width, height,                 1.f, 1.f,   1.f, 1.f, 1.f, 1.f,
-			width, textureOffset,          1.f, 1.f,   1.f, 0.f, 1.f, 0.f
-		};
-
+		
 		if(e.texture1)
 			e.texture1->Apply(1);
 		if(e.texture2)

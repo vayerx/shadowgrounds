@@ -7,7 +7,7 @@
 
 #include "GuiItem.h"
 
-#include "../ogui/ogui.h"
+#include "../ogui/Ogui.h"
 #include "ICombatSubWindow.h"
 
 namespace game 

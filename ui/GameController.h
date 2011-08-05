@@ -2,10 +2,14 @@
 #ifndef GAMECONTROLLER_H
 #define GAMECONTROLLER_H
 
+#include <string>
+
 #include "IGameControllerKeyreader.h"
 
-#include <RawInputMouseHandler.h>
-#include <string>
+#include "../storm/keyb3/RawInputMouseHandler.h"
+
+#include "igios.h"
+
 // Note: these camera ctrl values equal the camera move values in GameCamera
 // They do not need to be the same, but keeping it so may be a good idea.
 
@@ -210,7 +214,7 @@ public:
 
 	// NEW: depends on ogui (due to need for hotkey disabling)
 	GameController(Ogui *ogui);
-	~GameController();
+	virtual ~GameController();
 
 	// load and save configuration (TODO at the time of writing this text)
 	void reloadConfiguration();
@@ -219,10 +223,10 @@ public:
 	void unloadConfiguration();
 
 	// returns a string name for the given control
-	char *getControlName(int controlNum);
+	const char *getControlName(int controlNum);
 
 	// returns the name of the key
-	char* getKeycodeName( int keycode );
+	const char* getKeycodeName( int keycode );
 
 	// returns true if the button bind to this control is down
 	bool isKeyDown(int controlNum);
@@ -289,7 +293,10 @@ public:
 
 	// supply either ascii or keycode (and the other _may_ be filled in by the keyreader)
 	// leave the other to 0 value.
-	void addReadKey(char ascii, int keycode);
+	virtual void addReadKey(char ascii, int keycode);
+
+	// user signalled quit
+	virtual void suicide() __attribute__((noreturn));
 
 	void run();
 
@@ -300,13 +307,19 @@ public:
 	JOYSTICK_AXIS	getDetectedAxis();
 
 	void getJoystickValues(int joynum, int *x, int *y, int *rx, int *ry, int *throttle, int *rudder);
-	void getJoystickValues(int joynum, int *x, int *y );
-	
-	void setJoystickXAxis( JOYSTICK_AXIS axis );
-	void setJoystickYAxis( JOYSTICK_AXIS axis );
 
-	JOYSTICK_AXIS getJoystickXAxis() const;
-	JOYSTICK_AXIS getJoystickYAxis() const;
+	void getJoystickValues(int *moveX, int *moveY, int *dirX, int *dirY );
+	void getJoystickValues(int joynum, int *moveX, int *moveY, int *dirX, int *dirY );
+
+	void setJoystickMoveXAxis( JOYSTICK_AXIS axis );
+	void setJoystickMoveYAxis( JOYSTICK_AXIS axis );
+	void setJoystickDirXAxis( JOYSTICK_AXIS axis );
+	void setJoystickDirYAxis( JOYSTICK_AXIS axis );
+
+	JOYSTICK_AXIS getJoystickMoveXAxis() const;
+	JOYSTICK_AXIS getJoystickMoveYAxis() const;
+	JOYSTICK_AXIS getJoystickDirXAxis() const;
+	JOYSTICK_AXIS getJoystickDirYAxis() const;
 
 	std::string getJoystickAxisName( JOYSTICK_AXIS axis ) const;
 
@@ -372,8 +385,10 @@ private:
 
 	CONTROLLER_TYPE	controllerType;
 
-	JOYSTICK_AXIS	joystickXAxis;
-	JOYSTICK_AXIS	joystickYAxis;
+	JOYSTICK_AXIS	joystickMoveXAxis;
+	JOYSTICK_AXIS	joystickMoveYAxis;
+	JOYSTICK_AXIS	joystickDirXAxis;
+	JOYSTICK_AXIS	joystickDirYAxis;
 	JoystickValues*	joystickMaxiumValues[4];
 
 

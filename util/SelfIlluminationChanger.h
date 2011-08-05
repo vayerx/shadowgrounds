@@ -2,7 +2,7 @@
 #define INCLUDED_UTIL_SELF_ILLUMINATION_CHANGER_H
 
 #include <boost/scoped_ptr.hpp>
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 
 class IStorm3D_Model;
 class IStorm3D_Scene;

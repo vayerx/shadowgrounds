@@ -21,16 +21,6 @@ namespace game
 		this->collisionGroup = collisionGroup;
 	}
 
-	BoxPhysicsObject::BoxPhysicsObject(GamePhysics *gamePhysics, const std::string &shapes, float mass, int collisionGroup, const VC3 &position) 
-		: AbstractPhysicsObject(gamePhysics)
-	{ 
-		this->position = position;
-		this->sizes = sizes;
-		this->mass = mass;
-		this->collisionGroup = collisionGroup;
-		this->shapes = shapes;
-	}
-
 	BoxPhysicsObject::~BoxPhysicsObject() 
 	{
 		// nop, ~AbstractPhysicsObject handles everything of any interest...
@@ -42,11 +32,7 @@ namespace game
 #ifdef GAME_SIDEWAYS
 		boost::shared_ptr<frozenbyte::physics::ActorBase> actor = gamePhysics->getPhysicsLib()->createBoxActor(sizes, position, VC3(0,-sizes.y,0));
 #else
-		boost::shared_ptr<frozenbyte::physics::ActorBase> actor;
-		if(this->shapes.empty())
-			actor = gamePhysics->getPhysicsLib()->createBoxActor(sizes, position);
-		else
-			actor = gamePhysics->getPhysicsLib()->createBoxActor(shapes, position);
+		boost::shared_ptr<frozenbyte::physics::ActorBase> actor = gamePhysics->getPhysicsLib()->createBoxActor(sizes, position);
 #endif
 		if(actor)
 		{

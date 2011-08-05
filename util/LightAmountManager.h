@@ -3,7 +3,7 @@
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/weak_ptr.hpp>
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 
 class IStorm3D_Terrain;
 namespace ui {

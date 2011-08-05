@@ -248,7 +248,7 @@ extern int cursor_y[OG_CURSORS];
 extern char og_readchar;
 extern int og_readkey;
 
-extern char *og_errorfile;
+extern const char *og_errorfile;
 
 extern int og_escape;
 
@@ -370,7 +370,7 @@ void og_write_text_transp(orvgui_win *win, IStorm3D_Font *font, short x, short y
 int og_get_scr_size_x(void);
 int og_get_scr_size_y(void);
 
-void og_show_error(char *msg);
+void og_show_error(const char *msg);
 
 #endif
 

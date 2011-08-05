@@ -47,7 +47,7 @@ namespace game
 
     virtual const char *getStatusInfo() const;
 
-    virtual void *getVisualObjectDataId();
+    virtual void *getVisualObjectDataId() const;
 
     char *getModelFilename();
 

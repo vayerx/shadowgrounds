@@ -3,6 +3,7 @@
 #define SCRIPT_H
 
 #include <map>
+
 #include <string>
 #include <vector>
 
@@ -95,9 +96,8 @@
 #define SCRIPT_CMD_POPCALLSTACK_MARKER 52
 #define SCRIPT_CMD_PARAMGETVARIABLE 53
 #define SCRIPT_CMD_VARIABLEEQUALSVALUE 54
-#define SCRIPT_CMD_INTERFACE 55
 
-#define SCRIPT_KEYWORDS_AMOUNT 56
+#define SCRIPT_KEYWORDS_AMOUNT 55
 
 
 namespace util
@@ -236,7 +236,7 @@ namespace util
 
 		bool hasSub(const char *subName);
 
-		char *Script::matchSuitableCommands(int *amount, const char *command,
+		char *matchSuitableCommands(int *amount, const char *command,
 			int *smallestMatchLength);
 
 		char *getName();
@@ -314,7 +314,7 @@ namespace util
 
 		int commandAmount;
 		int *commandArray;
-		int *intDataArray;
+		floatint *intDataArray;
 		char **stringDataArray;
 		VarOptimizeData **varOptimizeDataArray;
 

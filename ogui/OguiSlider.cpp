@@ -1,12 +1,11 @@
 
 #include "precompiled.h"
 
-#include "OGuiSlider.h"
-#include "../ogui/ogui.h"
+#include "OguiSlider.h"
+#include "../ogui/Ogui.h"
 #include "../util/assert.h"
 
 // #include <assert.h>
-#include <windows.h>
 
 OguiSlider*		OguiSlider::updateThis = NULL;
 OguiSlider*		OguiSlider::updateThisIfHold = NULL;
@@ -14,22 +13,22 @@ OguiSlider*		OguiSlider::updateThisIfHold = NULL;
 OguiSlider::OguiSlider( OguiWindow* win, Ogui* ogui, int x, int y, int w, int h, 
 		const std::string& background_norm, const std::string& background_down, const std::string& background_high,
 		const std::string& foreground_norm, const std::string& foreground_down, const std::string& foreground_high, int id, float value ) :
-  win( win ),
-  ogui( ogui ),
-  w( w ),
-	h( h ),
-  x( x ),
-  y( y ),
-  id( id ),
-  value( value ),
   backgroundId( 1 ),
   foregroundId( 2 ),
-  listener( NULL ),
-  disabledBackground( NULL ),
-  disabledForeground( NULL ),
+  ogui( ogui ),
+  win( win ),
+  x( x ),
+  y( y ),
+  w( w ),
+  h( h ),
+  id( id ),
+  value( value ),
   offset_x( 0 ),
   offset_y( 0 ),
-	horizontal( true )
+  horizontal( true ),
+  listener( NULL ),
+  disabledBackground( NULL ),
+  disabledForeground( NULL )
 {
 	assert( win );
 	assert( ogui );

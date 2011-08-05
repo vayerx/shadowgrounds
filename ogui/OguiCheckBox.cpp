@@ -19,8 +19,14 @@ OguiCheckBox::OguiCheckBox(  OguiWindow* win, Ogui* ogui, int x, int y, int w, i
 	
 	listener( NULL ),
 
+	textButton( NULL ),
+	textW( 0 ),
+	textH( 0 ),
+	textAlign( TEXT_ALIGN_LEFT ),
+
 	value( value ),
 	id( id ),
+	changeOnClick( changeOnClick ),
 
 	button( NULL ),
 	buttonX( x ),
@@ -28,19 +34,12 @@ OguiCheckBox::OguiCheckBox(  OguiWindow* win, Ogui* ogui, int x, int y, int w, i
 	buttonW( w ),
 	buttonH( h ),
 
-	textButton( NULL ),
-	textW( 0 ),
-	textH( 0 ),
-	textAlign( TEXT_ALIGN_LEFT ),
-
 	button_false_norm( NULL ),
 	button_false_down( NULL ),
 	button_false_high( NULL ),
 	button_true_norm( NULL ),
 	button_true_down( NULL ),
-	button_true_high( NULL ),
-
-	changeOnClick( changeOnClick )
+	button_true_high( NULL )
 {
 	assert( win );
 	assert( ogui );
@@ -192,7 +191,7 @@ void OguiCheckBox::setText( const std::string& text, TEXT_ALIGN align, int w, IO
 
 	{
 		int buttonSpace = 0;
-		int x, y, w, h;
+		int x = 0, y, w, h;
 		
 		std::string foo_text;
 		if( font != NULL )

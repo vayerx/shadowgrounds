@@ -3,12 +3,45 @@
 #pragma once
 #include <math.h>
 #include <assert.h>
+#include "c2_common.h"
 
 //------------------------------------------------------------------
 // Prototypes and typedefs
 //------------------------------------------------------------------
+template <class A> class Vec4;
 template <class A> class Vec3;
 template <class A> class Vec2;
+
+template <class A> class Vec4
+{
+public:
+
+	// Data (public for speed)
+	union {
+		struct {
+			A x, y, z, w;
+		};
+		A v[4];
+	};
+
+	// Constructors
+	Vec4() : x(0), y(0), z(0), w(0) {};
+	Vec4(A d) : x(d), y(d), z(d), w(d) {};
+	Vec4(A _x, A _y, A _z, A _w) : x(_x), y(_y), z(_z), w(_w) {};
+	Vec4(A a[4]) : x(a[0]), y(a[1]), z(a[2]), w(a[3]) {};
+
+    // Operators
+	Vec4<A> operator-() const
+	{
+		return Vec4<A>(-x,-y,-z,-w);
+	}
+
+	// Get contents as array
+	const A *GetAsFloat() const
+	{
+		return v;
+	}
+};
 
 //------------------------------------------------------------------
 // Vec3
@@ -333,6 +366,7 @@ public:
 
 };
 
+typedef Vec4<float> VC4;
 typedef Vec3<float> VC3;
 typedef Vec2<float> VC2;
 typedef Vec3<int> VC3I;

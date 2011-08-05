@@ -1,20 +1,22 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
+
+#include <string>
+#include <vector>
+#include <fstream>
+#include <boost/scoped_array.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include "storm3d_terrain_heightmap.h"
 #include "storm3d_terrain_lod.h"
 #include "storm3d_terrain_utils.h"
-#include "storm3d_shadermanager.h"
+#include "Storm3D_ShaderManager.h"
 #include "storm3d_spotlight.h"
 #include <c2_oobb.h>
 #include <c2_frustum.h>
-
-#include <boost/scoped_array.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <string>
-#include <vector>
-#include <fstream>
 
 #include <cassert>
 #include "storm3d.h"
@@ -22,14 +24,13 @@
 #include "storm3d_texture.h"
 
 #include "Storm3D_ObstacleMapDefs.h"
-#include "..\..\util\AreaMap.h"
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/AreaMap.h"
+#include "../../util/Debug_MemoryManager.h"
 
 #include <d3dx9core.h>
 #include <d3dx9math.h>
 #include <atlbase.h>
 
-namespace {
 	static const int BLOCK_SIZE = IStorm3D_Terrain::BLOCK_SIZE;
 	static const int VERTEX_COUNT = BLOCK_SIZE + 1;
 
@@ -148,7 +149,7 @@ namespace {
 			{
 				int yPosition = j + blockY * BLOCK_SIZE;
 				int xPosition = i + blockX * BLOCK_SIZE;
-				int index = yPosition * resolution.x + xPosition;
+				// int index = yPosition * resolution.x + xPosition;
 				
 				getPosition(position, xPosition, yPosition, buffer.get(), size, resolution, scale);
 				if(position.y < minHeight)
@@ -244,7 +245,6 @@ namespace {
 	{
 		return a.range < b.range;
 	}
-}
 
 struct Storm3D_TerrainHeightmapData
 {
@@ -304,15 +304,6 @@ struct Storm3D_TerrainHeightmapData
 	:	storm(storm_),
 		device(*storm.GetD3DDevice()),
 		textureDetail(0),
-		indexBuffer(new Storm3D_TerrainLod(storm)),
-		obstacleHeightmap(0),
-		areaMap(0),
-		radius(0),
-		obstaclemapMultiplier(1),
-		obstaclemapShiftMult(0),
-		heightmapMultiplier(1),
-		heightmapShiftMult(0),
-		ps13(ps13_),
 
 		pixelShader(device),
 		lightPixelShader(device),
@@ -329,7 +320,17 @@ struct Storm3D_TerrainHeightmapData
 		nvLightingShader(device),
 		nvShadowShaderDirectional(device),
 		nvShadowShaderPoint(device),
-		nvShadowShaderFlat(device)
+		nvShadowShaderFlat(device),
+
+		indexBuffer(new Storm3D_TerrainLod(storm)),
+		obstacleHeightmap(0),
+		areaMap(0),
+		obstaclemapMultiplier(1),
+		obstaclemapShiftMult(0),
+		heightmapMultiplier(1),
+		heightmapShiftMult(0),
+		radius(0),
+		ps13(ps13_)
 	{
 		lightPixelShader.createTerrainLightShader();
 
@@ -834,7 +835,7 @@ void Storm3D_TerrainHeightmap::setHeightMap(const unsigned short *buffer, const 
 					}*/
 
 					int destIndex = ((j * heightmapMultiplier) + y) * destRes.x + ((i * heightmapMultiplier) + x);
-					destBuffer[destIndex] = unsigned short(value);
+					destBuffer[destIndex] = (unsigned short)(value);
 
 					ipX += factorDelta;
 				}
@@ -963,8 +964,6 @@ void Storm3D_TerrainHeightmap::setClipMap(const unsigned char *buffer)
 
 void Storm3D_TerrainHeightmap::updateHeightMap(const unsigned short *buffer, const VC2I &start, const VC2I &end)
 {
-	VC2I &resolution = data->resolution;
-
 	for(int y = start.y; y < end.y; ++y)
 	for(int x = start.x; x < end.x; ++x)
 	{
@@ -1090,11 +1089,8 @@ void Storm3D_TerrainHeightmap::renderTextures(Storm3D_Scene &scene, bool atiShad
 {
 	IDirect3DDevice9 &device = data->device;
 
-	D3DMATRIX dm = { 0 };
-	dm._11 = 1.f;
-	dm._22 = 1.f;
-	dm._33 = 1.f;
-	dm._44 = 1.f;
+	D3DXMATRIX dm;
+	D3DXMatrixIdentity(&dm);
 
 	D3DXMATRIX tm = dm;
 	Storm3D_ShaderManager::GetSingleton()->SetWorldTransform(device, tm);
@@ -1204,23 +1200,20 @@ void Storm3D_TerrainHeightmap::renderTextures(Storm3D_Scene &scene, bool atiShad
 	device.SetStreamSource(1, 0, 0, 0);
 }
 
-void Storm3D_TerrainHeightmap::renderDepth(Storm3D_Scene &scene, Storm3D_Camera *camera, RenderMode mode, RenderType type, int spot_type, Storm3D_Spotlight *spot)
+void Storm3D_TerrainHeightmap::renderDepth(Storm3D_Scene &scene, Storm3D_Camera *camera, RenderMode mode, RenderType type, IStorm3D_Spotlight::Type spot_type, Storm3D_Spotlight *spot)
 {
 	IDirect3DDevice9 &device = data->device;
 	std::vector<RenderBlock> &visibleBlocks = data->visibleBlocks;
 
-Frustum *frustum1 = 0;
-Frustum realFrustum1;
-Frustum *frustum2 = 0;
-Frustum realFrustum2;
+	Frustum *frustum1 = 0;
+	Frustum realFrustum1;
+	Frustum *frustum2 = 0;
+	Frustum realFrustum2;
 
 	if(mode == Projection)
 	{
-		D3DMATRIX dm = { 0 };
-		dm._11 = 1.f;
-		dm._22 = 1.f;
-		dm._33 = 1.f;
-		dm._44 = 1.f;
+		D3DXMATRIX dm;
+		D3DXMatrixIdentity(&dm);
 
 		D3DXMATRIX tm = dm;
 		Storm3D_ShaderManager::GetSingleton()->SetWorldTransform(device, tm, false, true);
@@ -1267,11 +1260,8 @@ Frustum realFrustum2;
 			frustum1 = &realFrustum1;
 		}
 
-		D3DMATRIX dm = { 0 };
-		dm._11 = 1.f;
-		dm._22 = 1.f;
-		dm._33 = 1.f;
-		dm._44 = 1.f;
+		D3DXMATRIX dm;
+		D3DXMatrixIdentity(&dm);
 
 		D3DXMATRIX tm = dm;
 		Storm3D_ShaderManager::GetSingleton()->SetWorldTransform(device, tm, false, true);
@@ -1295,11 +1285,8 @@ Frustum realFrustum2;
 			frustum1 = &realFrustum1;
 		}
 
-		D3DMATRIX dm = { 0 };
-		dm._11 = 1.f;
-		dm._22 = 1.f;
-		dm._33 = 1.f;
-		dm._44 = 1.f;
+		D3DXMATRIX dm;
+		D3DXMatrixIdentity(&dm);
 
 		D3DXMATRIX tm = dm;
 		Storm3D_ShaderManager::GetSingleton()->SetWorldTransform(device, tm, false, true);

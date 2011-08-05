@@ -3,7 +3,7 @@
 #ifndef INCLUDED_ISTORM3D_SPOTLIGHT_H
 #define INCLUDED_ISTORM3D_SPOTLIGHT_H
 
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 #include <boost/shared_ptr.hpp>
 
 class IStorm3D_Texture;
@@ -35,6 +35,7 @@ public:
 
 	enum Type
 	{
+        None = -1,
 		Flat = 0,
 		Point = 1,
 		Directional = 2

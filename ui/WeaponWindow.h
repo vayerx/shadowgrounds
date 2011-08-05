@@ -9,7 +9,11 @@
 #include <string>
 #include <vector>
 
-#define WEAPONWINDOW_MAX_WEAPONS 10
+#ifdef PROJECT_SURVIVOR
+	#define WEAPONWINDOW_MAX_WEAPONS 5
+#else
+	#define WEAPONWINDOW_MAX_WEAPONS 10
+#endif
 
 namespace game
 {

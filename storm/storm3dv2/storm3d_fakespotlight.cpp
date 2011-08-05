@@ -1,18 +1,23 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
+
+#include <string>
+#include <vector>
 
 #include "storm3d_fakespotlight.h"
 #include "storm3d_spotlight_shared.h"
-#include "storm3d_shadermanager.h"
+#include "Storm3D_ShaderManager.h"
 #include "storm3d_camera.h"
 #include "storm3d_terrain_utils.h"
 #include "storm3d.h"
-#include <istorm3d_logger.h>
+#include <IStorm3D_Logger.h>
 #include <atlbase.h>
 #include <d3d9.h>
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 using namespace boost;
 
@@ -20,13 +25,12 @@ using namespace boost;
 // - SetViewport
 // - Scale texcoords for reading
 
-namespace {
 
 	int BUFFER_WIDTH = 512;
 	int BUFFER_HEIGHT = 512;
 	static const bool SHARE_BUFFERS = true;
 
-	bool targetActive = false;
+	static bool fakeTargetActive = false;
 
 	struct RenderTarget
 	{
@@ -72,9 +76,9 @@ namespace {
 			if(!color || !depth)
 				return false;
 
-			if(!targetActive || !SHARE_BUFFERS)
+			if(!fakeTargetActive || !SHARE_BUFFERS)
 			{
-				targetActive = true;
+				fakeTargetActive = true;
 
 				CComPtr<IDirect3DSurface9> colorSurface;
 				color->GetSurfaceLevel(0, &colorSurface);
@@ -313,7 +317,6 @@ namespace {
 		}
 	};
 
-} // unnamed
 
 struct Storm3D_FakeSpotlight::Data
 {
@@ -495,26 +498,6 @@ float Storm3D_FakeSpotlight::getPlaneHeight() const
 	return data->properties.position.y - data->plane.height;
 }
 
-void Storm3D_FakeSpotlight::getArea(AABB &area) const
-{
-	/*
-	min = data->plane.min;
-	min.x += data->properties.position.x;
-	min.y += data->properties.position.z;
-
-	max = data->plane.max;
-	max.x += data->properties.position.x;
-	max.y += data->properties.position.z;
-	*/
-
-	area.mmin.x = data->plane.min.x + data->properties.position.x;
-	area.mmin.z = data->plane.min.y + data->properties.position.z;
-	area.mmax.x = data->plane.max.x + data->properties.position.x;
-	area.mmax.z = data->plane.max.y + data->properties.position.z;
-	area.mmin.y = data->properties.position.y - data->plane.height;
-	area.mmax.y = data->properties.position.y;
-}
-
 bool Storm3D_FakeSpotlight::shouldRenderObjectShadows() const
 {
 	return data->renderObjects;
@@ -541,7 +524,7 @@ void Storm3D_FakeSpotlight::setScissorRect(Storm3D_Camera &camera, const VC2I &s
 	data->properties.setScissorRect(camera, screenSize);
 }
 
-bool Storm3D_FakeSpotlight::setAsRenderTarget(const float *cameraView)
+bool Storm3D_FakeSpotlight::setAsRenderTarget(const D3DXMATRIX &cameraView)
 {
 	if(BUFFER_WIDTH <= 0 || BUFFER_HEIGHT <= 0)
 		return false;
@@ -571,7 +554,7 @@ bool Storm3D_FakeSpotlight::setAsRenderTarget(const float *cameraView)
 	return true;
 }
 
-void Storm3D_FakeSpotlight::applyTextures(const float *cameraView)
+void Storm3D_FakeSpotlight::applyTextures(const D3DXMATRIX &cameraView)
 {
 	if(BUFFER_WIDTH <= 0 || BUFFER_HEIGHT <= 0)
 		return;
@@ -779,10 +762,8 @@ void Storm3D_FakeSpotlight::querySizes(Storm3D &storm, int shadowQuality)
 {
 	if(shadowQuality >= 100)
 	{
-		//BUFFER_WIDTH = 1024;
-		//BUFFER_HEIGHT = 1024;
-		BUFFER_WIDTH = 2048;
-		BUFFER_HEIGHT = 2048;
+		BUFFER_WIDTH = 1024;
+		BUFFER_HEIGHT = 1024;
 	}
 	else if(shadowQuality >= 75)
 	{
@@ -886,5 +867,5 @@ void Storm3D_FakeSpotlight::freeBuffers()
 
 void Storm3D_FakeSpotlight::clearCache()
 {
-	targetActive = false;
+	fakeTargetActive = false;
 }

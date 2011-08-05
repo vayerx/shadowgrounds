@@ -7,7 +7,7 @@
 // Includes
 //------------------------------------------------------------------
 #include "storm3d_common_imp.h"
-#include "istorm3d_scene.h"
+#include "IStorm3D_Scene.h"
 
 template<class T>
 struct TFrustum;
@@ -69,9 +69,9 @@ public:
 
 	//void ApplyAdjusted(const VC2 &siz);
 
-	void SetPosition(VC3 &v);
-	void SetTarget(VC3 &v);
-	void SetUpVec(VC3 &v);
+	void SetPosition(const VC3 &v);
+	void SetTarget(const VC3 &v);
+	void SetUpVec(const VC3 &v);
 	void SetFieldOfView(float fov_ang);
 	void SetFieldOfViewFactor(float fov_factor);
 	void SetVisibilityRange(float range);
@@ -84,9 +84,9 @@ public:
 
 	void SetTime(unsigned long timeMsec);
 
-	VC3 &GetPosition();
-	VC3 &GetTarget();
-	VC3 &GetUpVec();
+	const VC3 &GetPosition() const;
+	const VC3 &GetTarget() const;
+	const VC3 &GetUpVec() const;
 	VC3 GetUpVecReal() const;
 	VC3 GetDirection() const;
 	float GetFieldOfView() const;
@@ -97,10 +97,10 @@ public:
 	void UseCameraHelperValues(IStorm3D_Helper_Camera *helper);
 
 	// Get view matrix
-	D3DMATRIX &GetVP() {return vp;}
-	D3DMATRIX &GetV() {return mv;}
-	float *GetViewProjection4x4Matrix();
-	float *GetView4x4Matrix();
+	const D3DMATRIX &GetVP() {return vp;}
+	const D3DMATRIX &GetV() {return mv;}
+	const float *GetViewProjection4x4Matrix();
+	const float *GetView4x4Matrix();
 
 	// Visibility testing
 	bool TestSphereVisibility(const VC3 &position,float radius);
@@ -112,7 +112,9 @@ public:
 	bool GetTransformedToScreen(const VC3 &source,VC3 &result,float &rhw,float &real_z);
 	void SetAspectRatio(float ratio);
 
-	Storm3D_Camera(Storm3D *Storm3D2,VC3 &_position=VC3(1,0,0),VC3 &_target=VC3(0,0,0),float _vis_range=1000,float _fov=PI/3,VC3 &_upvec=VC3(0,1,0));
+	void getRayVector(int x, int y, VC3 &dir, VC3 &origin, float near_z);
+
+	Storm3D_Camera(Storm3D *Storm3D2, const VC3 &_position=VC3(1,0,0), const VC3 &_target=VC3(0,0,0), float _vis_range=1000, float _fov=PI/3, const VC3 &_upvec=VC3(0,1,0));
 
 	inline bool GetForcedOrthogonalProjectionEnabled() { return forcedOrthogonalProjection; };
 

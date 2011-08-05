@@ -6,7 +6,6 @@
 #include "IGamePhysicsScriptRunner.h"
 #include "IPhysicsContactListener.h"
 #include <boost/shared_ptr.hpp>
-#include <string>
 
 #ifdef PROJECT_CLAW_PROTO
 class NxActor;
@@ -16,10 +15,7 @@ namespace frozenbyte
 {
 namespace physics
 {
-	class JointDeformingInfo;
 	class PhysicsLib;
-	class ActorBase;
-	struct PhysicsJoint;
 }
 namespace particle
 {
@@ -29,10 +25,8 @@ namespace particle
 
 class IStorm3D_Scene;
 
-
 namespace game
 {
-	class AbstractPhysicsObject;
 	class GamePhysicsImpl;
 	class IGamePhysicsObject;
 
@@ -76,18 +70,9 @@ namespace game
 
 		IGamePhysicsObject *getInterfaceObjectForHandle(int handle);
 
-#ifdef PHYSICS_PHYSX
-		void deleteJoints();
-		void addJoint(boost::shared_ptr<AbstractPhysicsObject> &objectA, boost::shared_ptr<AbstractPhysicsObject> &objectB, const frozenbyte::physics::PhysicsJoint &joint, const std::string &id);
-		void addDeformingToPreviousJoint(const frozenbyte::physics::JointDeformingInfo *info);
-		void reconnectJoints(boost::shared_ptr<AbstractPhysicsObject> &oldObject, boost::shared_ptr<AbstractPhysicsObject> &newObject);
-		bool hasJointAttachedToWorld(frozenbyte::physics::ActorBase *actor);
-#endif
-
 #ifdef PROJECT_CLAW_PROTO
 		// HACK: get the implementing physx object...
 		NxActor *getImplementingObject(IGamePhysicsObject *interfaceObject);
-		boost::shared_ptr<frozenbyte::physics::ActorBase> getImplementingBaseObject(IGamePhysicsObject *interfaceObject);
 #endif
 
 	private:

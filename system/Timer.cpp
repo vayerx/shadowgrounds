@@ -3,17 +3,31 @@
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
-#pragma warning(disable:4103)
-#pragma warning(disable:4786)
+#ifdef _WIN32
 
 #include <windows.h>
+#include <boost/cstdint.hpp>
+
+using namespace boost;
+
+#else  // _WIN32
+
+#include <SDL.h>
+
+#endif  // _WIN32
+
+#ifdef _MSC_VER
+#pragma warning(disable:4103)
+#pragma warning(disable:4786)
+#endif
+
 #include "Timer.h"
 
 // TEMP!!
 #include <string.h>
 #include "Logger.h"
 
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 #define TIMER_FACTOR_MULTIPLIER 256
 #define TIMER_FACTOR_MULTIPLIER_SHIFT 8
@@ -23,19 +37,6 @@ int Timer::currentUnfactoredTime = 0;
 int Timer::factorTimeAdd = 0;
 int Timer::timeHaxSub = 0;
 int Timer::timeFactor = TIMER_FACTOR_MULTIPLIER;
-
-
-void Timer::init()
-{
-	timeBeginPeriod(1);
-	update();
-}
-
-
-void Timer::uninit()
-{
-	timeEndPeriod(1);
-}
 
 
 int Timer::getTime()
@@ -59,7 +60,7 @@ void Timer::setTimeFactor(float factor)
 	// factor as that is not really used (would cause a cumulative error)
 	float newFactor = float(int(factor * TIMER_FACTOR_MULTIPLIER)) / TIMER_FACTOR_MULTIPLIER;
 
-	__int64 curActualTime = timeGetTime();
+	int64_t curActualTime = Timer::getCurrentTime();
 	int newFactorTimeAdd = 
 		oldFactorTimeAdd + (int)((float)curActualTime * (oldFactor - newFactor));
 
@@ -80,6 +81,7 @@ void Timer::setTimeFactor(float factor)
 
 }
 
+
 float Timer::getTimeFactor()
 {
 	return timeFactor/(float)TIMER_FACTOR_MULTIPLIER;
@@ -92,15 +94,15 @@ void Timer::update()
   // May well need a more accurate timer!
   //currentTime = GetTickCount();
 	// fixed like this...
-	currentUnfactoredTime = timeGetTime();
+	currentUnfactoredTime = Timer::getCurrentTime();
 	currentTime = currentUnfactoredTime;
-	currentTime = (int)(((__int64)currentTime * (__int64)timeFactor) >> TIMER_FACTOR_MULTIPLIER_SHIFT);
+	currentTime = (int)(((int64_t)currentTime * (int64_t)timeFactor) >> TIMER_FACTOR_MULTIPLIER_SHIFT);
 	currentTime += factorTimeAdd;
 	currentTime -= timeHaxSub;
 }
+
 
 void Timer::addTimeSub(int time)
 {
 	timeHaxSub += time;
 }
-

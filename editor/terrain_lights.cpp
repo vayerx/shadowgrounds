@@ -55,9 +55,7 @@ struct Spot
 		unsigned int internalHandle = _time32(NULL);
 
 		uniqueEditorObjectHandle = UniqueEditorObjectHandleManager::createNewUniqueHandle(internalHandle);
-
-		// why the heck was this here?
-		//uniqueEditorObjectHandle = 0;
+		uniqueEditorObjectHandle = 0;
 	}
 
 	void setVisualization(const Visualization &visualization_)
@@ -500,9 +498,6 @@ struct TerrainLights::Data
 				spot.uniqueEditorObjectHandle = 0;
 				spot.uniqueEditorObjectHandle |= (UniqueEditorObjectHandle)lower;
 				spot.uniqueEditorObjectHandle |= ((UniqueEditorObjectHandle)upper << 32);
-			} else {
-				unsigned int internalHandle = _time32(NULL);
-				spot.uniqueEditorObjectHandle = UniqueEditorObjectHandleManager::createNewUniqueHandle(internalHandle);
 			}
 
 			spots.push_back(spot);

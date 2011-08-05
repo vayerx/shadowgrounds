@@ -252,7 +252,7 @@
 				AdditionalIncludeDirectories="../../storm/include,../../storm/keyb3,../../editor"
 				PreprocessorDefinitions="LEGACY_FILES;WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;LIGHT_MAX_AMOUNT=5;PROJECT_EDITOR"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				PrecompiledHeaderFile=".\Debug/editor.pch"
 				AssemblerListingLocation=".\Debug/"
 				ObjectFile=".\Debug/"
@@ -2461,18 +2461,6 @@
 			<Filter
 				Name="external"
 				>
-				<File
-					RelativePath="..\..\convert\int64_to_hex.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\util\RGBtoHSV.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\ueoh_to_id_string.cpp"
-					>
-				</File>
 				<Filter
 					Name="util source"
 					>
@@ -5052,18 +5040,6 @@
 			</File>
 			<File
 				RelativePath="..\resource\e_32.ico"
-				>
-			</File>
-			<File
-				RelativePath="..\resource\ico00001.ico"
-				>
-			</File>
-			<File
-				RelativePath="..\resource\icon1.ico"
-				>
-			</File>
-			<File
-				RelativePath="..\resource\icon2.ico"
 				>
 			</File>
 			<File

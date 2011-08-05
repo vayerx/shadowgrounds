@@ -1,7 +1,7 @@
 #ifndef INCLUDED_HELPER_POSITION_CALCULATOR_H
 #define INCLUDED_HELPER_POSITION_CALCULATOR_H
 
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 class IStorm3D_Model;
 
 namespace util {

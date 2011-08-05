@@ -89,7 +89,7 @@ namespace ui
 	}
 
 
-	void Muzzleflasher::updateMuzzleflash(IPointableObject *unit, VisualObject *muzzleflash, const std::string &name, const std::string &helper, VC3 &pos, VC3 &scale)
+	void Muzzleflasher::updateMuzzleflash(IPointableObject *unit, VisualObject *muzzleflash, const std::string &name, const std::string &helper, const VC3 &pos, const VC3 &scale)
 	{
 		game::Unit *u = (game::Unit *)unit;
 

@@ -3,7 +3,6 @@
 
 #include <string>
 
-namespace frozenbyte {
 namespace util {
 
 void convertToWide(const std::string &source, std::wstring &destination);
@@ -15,6 +14,5 @@ void convertToMultiByte(const wchar_t *source, std::string &destination);
 char *convertToMultiByte(const wchar_t *source);
 
 } // util
-} // frozenbyte
 
 #endif

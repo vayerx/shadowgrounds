@@ -14,8 +14,8 @@
 //#include <map>
 #include <vector>
 #include <list>
-#include <istorm3d_model.h>
-#include <istorm3d_mesh.h>
+#include <IStorm3D_Model.h>
+#include <IStorm3D_Mesh.h>
 
 #define PHYSX_GRAVITY
 //#define PHYSX_SPAWN_TEST
@@ -34,17 +34,6 @@ struct BoxStruct
 
 namespace frozenbyte {
 namespace particle {
-namespace {
-
-	//const float MIN_BOX_SIZE = 0.15f;
-	const float MIN_BOX_SIZE = 0.20f;
-
-	//const int MAX_ACTOR_AMOUNT = 500;
-	//const int MAX_ACTOR_CREATE_PER_TICK = 20;
-	//const int MAX_ACTOR_CREATE_PER_TICK = 1;
-
-	const float MAX_VELOCITY = 5.f;
-	const int MAX_WAIT_FOR_CREATE = 30;
 
 	void rotateToward(const VC3 &a, const VC3 &b, QUAT &result)
 	{
@@ -63,6 +52,17 @@ namespace {
 		result.w = (dot + 1.0f);
 		result.Normalize();
 	}
+
+
+	//const float MIN_BOX_SIZE = 0.15f;
+	static const float MIN_BOX_SIZE = 0.20f;
+
+	//const int MAX_ACTOR_AMOUNT = 500;
+	//const int MAX_ACTOR_CREATE_PER_TICK = 20;
+	//const int MAX_ACTOR_CREATE_PER_TICK = 1;
+
+	static const float MAX_VELOCITY = 5.f;
+	static const int MAX_WAIT_FOR_CREATE = 30;
 
 	struct ActorData
 	{
@@ -98,6 +98,7 @@ namespace {
 		}
 	};
 
+#ifndef NX_DISABLE_FLUIDS
 	struct FluidData
 	{
 		boost::weak_ptr<PhysicsFluid> fluid;
@@ -139,6 +140,7 @@ namespace {
 		{
 		}
 	};
+#endif
 
 	struct ActorListSorter
 	{
@@ -161,13 +163,18 @@ namespace {
 
 	typedef std::vector<ActorData> ActorList;
 	typedef std::vector<MeshData> MeshList;
+#ifndef NX_DISABLE_FLUIDS
 	typedef std::vector<FluidData> FluidList;
+#endif
 	typedef std::vector<boost::shared_ptr<physics::ActorBase> > ActorBaseList;
+#ifndef NX_DISABLE_FLUIDS
 	typedef std::vector<boost::shared_ptr<physics::Fluid> > FluidBaseList;
+#endif
 
 	typedef std::list<PhysicsActor *> PhysicsActorList;
+#ifndef NX_DISABLE_FLUIDS
 	typedef std::list<PhysicsFluid *> FluidActorList;
-}
+#endif
 
 struct ParticlePhysics::Data
 {
@@ -179,15 +186,21 @@ struct ParticlePhysics::Data
 	// Create lists
 	ActorList actorList;
 	MeshList meshList;
+#ifndef NX_DISABLE_FLUIDS
 	FluidList fluidList;
+#endif
 
 	// Delete lists
 	ActorBaseList actorBaseList;
+#ifndef NX_DISABLE_FLUIDS
 	FluidBaseList fluidBaseList;
+#endif
 	
 	// Update lists
 	PhysicsActorList physicsActorList;
+#ifndef NX_DISABLE_FLUIDS
 	FluidActorList fluidActorList;
+#endif
 
 	int createdActors;
 
@@ -200,10 +213,6 @@ struct ParticlePhysics::Data
 
 	~Data()
 	{
-		int f1 = fluidBaseList.size();
-		int f2 = fluidActorList.size();
-		int f3 = fluidList.size();
-		int a = 0;
 	}
 /*
 	boost::shared_ptr<PhysicsMesh> createConvexMesh(const char *filename, IStorm3D_Model_Object *object)
@@ -237,6 +246,7 @@ struct ParticlePhysics::Data
 		return actor;
 	}
 
+#ifndef NX_DISABLE_FLUIDS
 	boost::shared_ptr<PhysicsFluid> createFluid(int type, int maxParticles, float fluidStaticRestitution, float fluidStaticAdhesion, float fluidDynamicRestitution, float fluidDynamicAdhesion, float fluidDamping, float fluidStiffness, float fluidViscosity, float fluidKernelRadiusMultiplier, float fluidRestParticlesPerMeter, float fluidRestDensity, float fluidMotionLimit, int fluidPacketSizeMultiplier, int collGroup)
 	{
 		boost::shared_ptr<PhysicsFluid> fluid(new PhysicsFluid());
@@ -263,6 +273,7 @@ struct ParticlePhysics::Data
 		fluidList.push_back(data);
 		return fluid;
 	}
+#endif
 
 };
 
@@ -391,6 +402,7 @@ boost::shared_ptr<PhysicsActor> ParticlePhysics::createActor(boost::shared_ptr<P
 	return actor;
 }
 
+#ifndef NX_DISABLE_FLUIDS
 boost::shared_ptr<PhysicsFluid> ParticlePhysics::createFluid(int type, int maxParticles, float fluidStaticRestitution, float fluidStaticAdhesion, float fluidDynamicRestitution, float fluidDynamicAdhesion, float fluidDamping, float fluidStiffness, float fluidViscosity, float fluidKernelRadiusMultiplier, float fluidRestParticlesPerMeter, float fluidRestDensity, float fluidMotionLimit, int fluidPacketSizeMultiplier, int collGroup)
 {
 	boost::shared_ptr<PhysicsFluid> fluid = data->createFluid(type, maxParticles, fluidStaticRestitution, fluidStaticAdhesion, fluidDynamicRestitution, fluidDynamicAdhesion, fluidDamping, fluidStiffness, fluidViscosity, fluidKernelRadiusMultiplier, fluidRestParticlesPerMeter, fluidRestDensity, fluidMotionLimit, fluidPacketSizeMultiplier, collGroup);
@@ -399,6 +411,7 @@ boost::shared_ptr<PhysicsFluid> ParticlePhysics::createFluid(int type, int maxPa
 
 	return fluid;
 }
+#endif
 
 void ParticlePhysics::setPhysics(boost::shared_ptr<physics::PhysicsLib> &physics)
 {
@@ -407,10 +420,13 @@ void ParticlePhysics::setPhysics(boost::shared_ptr<physics::PhysicsLib> &physics
 	if(!physics)
 	{
 		data->actorBaseList.clear();
+#ifndef NX_DISABLE_FLUIDS
 		data->fluidBaseList.clear();
+#endif
 	}
 }
 
+#ifndef NX_DISABLE_FLUIDS
 void ParticlePhysics::resetFluidRendering()
 {
 	//physics::resetFluidParticleCount();
@@ -423,6 +439,7 @@ void ParticlePhysics::resetFluidRendering()
 		fluid->renderFlag = false;
 	}
 }
+#endif
 
 void ParticlePhysics::update()
 {
@@ -430,7 +447,9 @@ void ParticlePhysics::update()
 		return;
 
 	data->actorBaseList.clear();
+#ifndef NX_DISABLE_FLUIDS
 	data->fluidBaseList.clear();
+#endif
 
 	// Update physics actors
 	{
@@ -533,6 +552,7 @@ void ParticlePhysics::update()
 			actor->forceUpdate = false;
 		}
 
+#ifndef NX_DISABLE_FLUIDS
 		physics::resetFluidParticleCount();
 		for(FluidActorList::iterator it = data->fluidActorList.begin(); it != data->fluidActorList.end(); ++it)
 		{
@@ -551,6 +571,7 @@ void ParticlePhysics::update()
 			fluid->fluid->update();
 			//fluid->renderFlag = false;
 		}
+#endif
 	}
 
 	/*
@@ -730,6 +751,7 @@ void ParticlePhysics::update()
 
 	// Fluids
 	{
+#ifndef NX_DISABLE_FLUIDS
 		for(FluidList::iterator it = data->fluidList.begin(); it != data->fluidList.end(); ++it)
 		{
 			FluidData &fluidData = *it;
@@ -743,6 +765,7 @@ void ParticlePhysics::update()
 		}
 
 		data->fluidList.clear();
+#endif
 	}
 }
 
@@ -820,6 +843,7 @@ void PhysicsActor::applyForce(const VC3 &force_)
 
 // --
 
+#ifndef NX_DISABLE_FLUIDS
 PhysicsFluid::PhysicsFluid()
 :	addAmount(0),
 	renderFlag(false)
@@ -872,6 +896,8 @@ void PhysicsFluid::setAcceleration(const VC3 &force)
 	if(fluid)
 		acceleration = force;
 }
+
+#endif
 
 } // particle
 } // frozenbyte

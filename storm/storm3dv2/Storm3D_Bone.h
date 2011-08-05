@@ -1,13 +1,17 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
-#pragma once
+#ifndef STORM3D_BONE_H
+#define STORM3D_BONE_H
+
+#ifdef _MSC_VER
 #pragma warning(disable: 4786) // debug info truncate
+#endif
 
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
 #include "storm3d_common_imp.h"
-#include "istorm3d_bone.h"
+#include "IStorm3D_Bone.h"
 
 #include "Storm3D_Datatypes.h"
 #include <vector>
@@ -101,9 +105,6 @@ class Storm3D_Bone: public IStorm3D_Bone
 	// State
 	int parent_index;
 
-	// the new "no collision" flag for kind-of removed bones
-	bool noCollision;
-
 	// Childs
 	std::set<Storm3D_Model_Object *> objects;
 	std::set<Storm3D_Helper_AInterface *> helpers;
@@ -168,9 +169,6 @@ public:
 	void SetSpecialProperties(float length, float thickness);
 	void SetParentIndex(int index);
 
-	void SetNoCollision(bool noCollision);
-	bool HasNoCollision() { return noCollision; }
-
 	// Get properties
 	float GetLenght() const
 	{
@@ -228,3 +226,5 @@ public:
 	static void TransformBones(std::vector<Storm3D_Bone*> *bones);
 	friend class Storm3D_Model;
 };
+
+#endif // STORM3D_BONE_H

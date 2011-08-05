@@ -3,7 +3,7 @@
 #ifndef INCLUDED_ISTORM3D_TERRAIN_DECALSYSTEM_H
 #define INCLUDED_ISTORM3D_TERRAIN_DECALSYSTEM_H
 
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 
 class IStorm3D_Material;
 

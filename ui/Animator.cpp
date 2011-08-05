@@ -15,7 +15,7 @@
 #include "../util/SimpleParser.h"
 //#include "../util/fb_assert.h"
 
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 namespace ui
 {
@@ -448,29 +448,6 @@ void Animator::clearAnimations()
   } else {
     Logger::getInstance()->error("Animator::clearAnimations - Animator uninitialized.");
   }
-}
-
-void Animator::preloadAnimation(const char *name)
-{
-	if (animations != NULL)
-	{
-		int animNumber = Animator::getAnimationNumberByFilename(name);
-		if(animNumber == -1)
-		{
-			animNumber = Animator::addAnimationFilename(name);
-		}
-
-		if(animNumber >= 0 && animNumber < MAX_ANIMATIONS)
-		{
-			if(animations[animNumber] == NULL)
-			{
-				animations[animNumber] = storm3d->CreateNewBoneAnimation(animfiles[animNumber]);
-			}
-			return;
-		}
-	}
-	Logger::getInstance()->error("Animator::preloadAnimation - Failed to preload animation");
-	Logger::getInstance()->debug(name);
 }
 
 }

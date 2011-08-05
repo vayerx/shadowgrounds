@@ -17,8 +17,8 @@ const static int	log_collected = 1;
 const static int	log_not_read = 1;
 const static int	log_read = 2;
 
-const static std::string variable_state_prefix = "log_entry_state_";
-const static std::string variable_time_prefix = "log_entry_time_";
+const static std::string log_variable_state_prefix = "log_entry_state_";
+const static std::string log_variable_time_prefix = "log_entry_time_";
 
 const static std::string variable_text_prefix = "log_entry_text_";
 const static std::string variable_desc_prefix = "log_entry_desc_";
@@ -42,9 +42,9 @@ LogEntry::LogEntry( const std::string& var_name ) :
 	watchVariable( var_name ),
 	text( getLocaleGuiString( ( variable_text_prefix + var_name ).c_str()  ) ),
 	description( getLocaleGuiString( ( variable_desc_prefix + var_name ).c_str() ) ),
-	variableType( getLocaleGuiInt( ( variable_type_prefix + var_name ).c_str(), 0 ) ),
 	variableState( log_none ),
-	variableTime( 0 )
+	variableTime( 0 ),
+	variableType( getLocaleGuiInt( ( variable_type_prefix + var_name ).c_str(), 0 ) )
 {
 
 }
@@ -104,8 +104,8 @@ const LogEntry& LogEntry::operator=( const LogEntry& other )
 
 void LogEntry::update( Game* game )
 {
-	variableState = game->gameScripting->getGlobalIntVariableValue( ( variable_state_prefix + watchVariable ).c_str() );
-	variableTime = game->gameScripting->getGlobalIntVariableValue( ( variable_time_prefix + watchVariable ).c_str() );
+	variableState = game->gameScripting->getGlobalIntVariableValue( ( log_variable_state_prefix + watchVariable ).c_str() );
+	variableTime = game->gameScripting->getGlobalIntVariableValue( ( log_variable_time_prefix + watchVariable ).c_str() );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -154,7 +154,7 @@ void LogEntry::setRead( bool read, Game* game )
 			FB_ASSERT( game != NULL );
 			variableState = log_read;
 			if( game )
-				game->gameScripting->setGlobalIntVariableValue( ( variable_state_prefix + watchVariable ).c_str(), log_read );
+				game->gameScripting->setGlobalIntVariableValue( ( log_variable_state_prefix + watchVariable ).c_str(), log_read );
 		}
 	}
 	else
@@ -164,7 +164,7 @@ void LogEntry::setRead( bool read, Game* game )
 			FB_ASSERT( game != NULL );
 			variableState = log_not_read;
 			if( game )
-				game->gameScripting->setGlobalIntVariableValue( ( variable_state_prefix + watchVariable ).c_str(), log_not_read );
+				game->gameScripting->setGlobalIntVariableValue( ( log_variable_state_prefix + watchVariable ).c_str(), log_not_read );
 		}
 	}
 }

@@ -188,7 +188,7 @@ namespace ui
 					int sizex = getLocaleGuiInt("gui_upgrades_slot_size_x", 0);
 					int sizey = getLocaleGuiInt("gui_upgrades_slot_size_y", 0);
 
-					slotBGs[i] = ogui->CreateSimpleImageButton(win, wx, wy, sizex, sizey, NULL, NULL, NULL, NULL);
+					slotBGs[i] = ogui->CreateSimpleImageButton(win, wx, wy, sizex, sizey, NULL, NULL, NULL, 0);
 					slotBGs[i]->SetReactMask(0);
 					slotBGs[i]->SetDisabled(true);
 					if (wnum != -1)
@@ -283,7 +283,7 @@ namespace ui
 
 							x += firstpadx + j * padx;
 
-							upgradeSelections[i][j] = ogui->CreateSimpleImageButton(win, x, y, sizex, sizey, NULL, NULL, NULL, NULL, NULL, NULL);
+							upgradeSelections[i][j] = ogui->CreateSimpleImageButton(win, x, y, sizex, sizey, NULL, NULL, NULL, NULL, 0, NULL);
 							upgradeSelections[i][j]->SetReactMask(0);
 							upgradeSelections[i][j]->SetDisabled(true);
 
@@ -297,7 +297,7 @@ namespace ui
 							upgradeButtons[i][j]->SetListener(this);
 							upgradeButtons[i][j]->SetEventMask(OGUI_EMASK_CLICK | OGUI_EMASK_OVER | OGUI_EMASK_LEAVE);
 
-							int tmp = this->upgradesPendingCost;
+							//int tmp = this->upgradesPendingCost;
 							//if (game->upgradeManager->canUpgrade(unit, upgIds[j], &tmp))
 							//{
 								upgradeButtons[i][j]->SetDisabled(false);
@@ -447,15 +447,24 @@ namespace ui
 		// TODO: delete a lot of buttons and stuff!!!!
 
 		delete effectWindow;
+		effectWindow = NULL;
 
 		for (int i = 0; i < UPGRADEWINDOW_MAX_WEAPONS; i++)
 		{
 			if (weaponButtons[i] != NULL)
+			{
 				delete weaponButtons[i];
+				weaponButtons[i] = NULL;
+			}
 			if (weaponImages[i] != NULL)
+			{
 				delete weaponImages[i];
+				weaponImages[i] = NULL;
+			}
 		}
+
 		delete win;
+		win = NULL;
 	}
 
 
@@ -517,8 +526,8 @@ namespace ui
 			{
 				if (upgradeButtons[i][j] != NULL)
 				{
-					int upgid = (int)upgradeButtons[i][j]->GetArgument();
-					int tmp = this->upgradesPendingCost;
+					intptr_t upgid = (intptr_t)upgradeButtons[i][j]->GetArgument();
+					//int tmp = this->upgradesPendingCost;
 
 					//if (game->upgradeManager->canUpgrade(unit, upgid, &tmp))
 					//{
@@ -539,7 +548,7 @@ namespace ui
 					while (iter.iterateAvailable())
 					{
 						// WARNING: void * -> int cast
-						int other = (int)iter.iterateNext();
+						intptr_t other = (intptr_t)iter.iterateNext();
 						if (other == upgid)
 						{
 							pending = true;
@@ -686,7 +695,7 @@ namespace ui
 			{
 				highlightedWeaponSlot = (eve->triggerButton->GetId() - UPGRADEW_UPGRADEBUT_FIRST) / UPGRADEWINDOW_MAX_UPGRADES_PER_WEAPON;
 				highlightedUpgradeSlot = (eve->triggerButton->GetId() - UPGRADEW_UPGRADEBUT_FIRST) % UPGRADEWINDOW_MAX_UPGRADES_PER_WEAPON;
-				highlightedUpgradeId = (int)eve->extraArgument;
+				highlightedUpgradeId = (intptr_t)eve->extraArgument;
 				highlightOn = true;
 			}
 		}
@@ -724,7 +733,7 @@ namespace ui
 				bool playDoneSound = false;
 
 				// upgrade button
-				int upgid = (int)eve->extraArgument;
+				intptr_t upgid = (intptr_t)eve->extraArgument;
 
 				bool alreadyPending = false;
 
@@ -732,7 +741,7 @@ namespace ui
 				while (iter.iterateAvailable())
 				{
 					// WARNING: void * -> int cast
-					int other = (int)iter.iterateNext();
+					intptr_t other = (intptr_t)iter.iterateNext();
 					if (other == upgid)
 					{
 						alreadyPending = true;
@@ -764,7 +773,7 @@ namespace ui
 					{
 						// WARNING: void * -> int cast
 						void* ptr = iter.iterateNext();
-						if ( (int)ptr == upgid)
+						if ( (intptr_t)ptr == upgid)
 						{
 							upgradesPending->remove( ptr );
 						}
@@ -815,7 +824,7 @@ namespace ui
 		while (!upgradesPending->isEmpty())
 		{
 			// WARNING: void * -> int cast!
-			int upgid = (int)upgradesPending->popLast();
+			intptr_t upgid = (intptr_t)upgradesPending->popLast();
 
 			if (game->upgradeManager->canUpgrade(unit, upgid))
 			{

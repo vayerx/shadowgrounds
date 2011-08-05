@@ -2,12 +2,17 @@
 #include "precompiled.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <boost/lexical_cast.hpp>
+#ifdef _WIN32
+#include <malloc.h>
+#endif
 
+#ifdef _MSC_VER
 #pragma warning(disable : 4786)
+#endif
 
-// bad dependency, because of raytrace
-#include <Storm3D_UI.h>
+#include "IStorm3D_Terrain.h"
 
 #include "Game.h"
 
@@ -21,7 +26,7 @@
 #include "../ui/VisualEffectManager.h"
 #include "../ui/Map.h"
 #include "../ui/GameController.h"	// Probably breaks the design here but is used a to fix a bug. -Pete
-#include "../particle_editor2/ParticleEffect.h"
+#include "../particle_editor2/particleeffect.h"
 
 #ifdef PROJECT_SHADOWGROUNDS
 #include "../shadowgrounds/version.h"
@@ -142,30 +147,19 @@
 #ifdef USE_CLAW_CONTROLLER
 #include "ClawController.h"
 extern game::ClawController *gamephysics_clawController;
-extern game::Game *gamephysics_game;
-#endif
-
-#ifdef PROJECT_CLAW_PROTO
-	extern int pathfind_claw_x;
-	extern int pathfind_claw_y;
-	extern int pathfind_claw_dist;
-
-	extern int pathfind_player_x;
-	extern int pathfind_player_y;
-	extern int pathfind_player_dist;
-
-	#include "BurningMap.h"
-	extern BurningMap *burningMap;
 #endif
 
 #ifdef PROJECT_SURVIVOR
 	#include "BonusManager.h"
 #endif
 
+#include "../system/Miscellaneous.h"
+
+#include "userdata.h"
+
 #define GAME_UNIT_LOW_ACT_RANGE_SQ (25*25)
 
 #define TOUCHBULLET_INTERVAL 4
-
 
 // HACK: HACK...
 static game::Game *developerGame = NULL;
@@ -341,6 +335,9 @@ namespace {
 
 	Game::Game()
 	{
+		missionSuccessCounter = 0;
+		missionFailureCounter = 0;
+
 		developerGame = this;
 
 		UnitVariables::init();
@@ -391,7 +388,7 @@ namespace {
 
 		currentMission = NULL;
 
-		char *mdefs = SimpleOptions::getString(DH_OPT_S_GAME_MISSIONDEFS);
+		const char *mdefs = SimpleOptions::getString(DH_OPT_S_GAME_MISSIONDEFS);
 		assert(mdefs != NULL);
 		if (mdefs == NULL)
 		{
@@ -430,6 +427,10 @@ namespace {
 		missionStartTime = 0;
 		pauseStartTime = 0;
 		missionPausedTime = 0;
+		paused = false;
+
+		lastSaveNumber = 0;
+
 		script = NULL;
 		missionId = NULL;
 		buildingsScript = NULL;
@@ -511,7 +512,7 @@ namespace {
 		// ...
 #else
 		bool user_autoexec_exists = false;
-		FILE *autoexecf = fopen("config/user_autoexec.dhs", "rb");
+		FILE *autoexecf = fopen(igios_mapUserDataPrefix("config/user_autoexec.dhs").c_str(), "rb");
 		if (autoexecf != NULL)
 		{
 			fclose(autoexecf);
@@ -521,7 +522,7 @@ namespace {
 		{
 			char *f1_cstr = "data/misc/default_user_autoexec.dhs";
 			std::string f1 = std::string(f1_cstr);
-			std::string f2 = std::string("config/user_autoexec.dhs");
+			std::string f2 = std::string(igios_mapUserDataPrefix("config/user_autoexec.dhs"));
 			util::FBCopyFile::copyFile(f1, f2);
 		}
 #endif
@@ -530,7 +531,6 @@ namespace {
 		clawController = new ClawController();
 		clawController->setGame(this);
 		gamephysics_clawController = clawController;
-		gamephysics_game = this;
 #endif
 		this->physics = new GamePhysics();
 
@@ -999,36 +999,6 @@ static VC3 last_attemptedPos = VC3(0,0,0);
 
 					objectTracker->run(GAME_TICK_MSEC);
 
-#ifdef PROJECT_CLAW_PROTO
-					// update claw position for pathfinding
-					{
-						VC3 pos = getClawController()->getClawPosition();
-						pathfind_claw_x = gameMap->scaledToPathfindX(pos.x);
-						pathfind_claw_y = gameMap->scaledToPathfindY(pos.z);
-
-						// avoid in 7m radius
-						int dx = (gameMap->scaledToPathfindX(pos.x + 7.0f) - pathfind_claw_x);
-						int dy = (gameMap->scaledToPathfindY(pos.z + 7.0f) - pathfind_claw_y);
-						pathfind_claw_dist = dx * dx + dy * dy;
-					}
-					// update player position for pathfinding
-					if(gameUI->firstPerson[0])
-					{
-						VC3 pos = gameUI->firstPerson[0]->getPosition();
-						pathfind_player_x = gameMap->scaledToPathfindX(pos.x);
-						pathfind_player_y = gameMap->scaledToPathfindY(pos.z);
-
-						// avoid in 5m radius
-						int dx = (gameMap->scaledToPathfindX(pos.x + 5.0f) - pathfind_claw_x);
-						int dy = (gameMap->scaledToPathfindY(pos.z + 5.0f) - pathfind_claw_y);
-						pathfind_player_dist = dx * dx + dy * dy;
-					}
-					// update burning map
-					if((gameTimer & 31) == 3 && burningMap)
-					{
-						burningMap->update(this);
-					}
-#endif
 					// update ground focus height for physics (fluid containment) every once a while...
 					if ((gameTimer & 15) == 3)
 					{
@@ -1497,33 +1467,32 @@ Logger::getInstance()->error(int2str(projAmount));
 // HACK:...loading screen?????????????????
 {
 char *foocrap = this->missionId;
+char *foocrap2 = this->currentMission;
 std::string fooid = std::string(this->nextMissionOnSuccess);
-//std::string fooid = std::string(NULL);
 
 // HACK: some real crap here!
-for (int i = fooid.length()-1; i >= 0; i--)
-{
-	if (fooid[i] == '.')
-	{
-		for (int j = i; j >= 0; j--)
-		{
+// FIX: less crap now
+int end = fooid.find_last_of(".");
 #ifdef PROJECT_SURVIVOR
-			if (fooid[j] == '/')
+int start = fooid.find_last_of("/");
 #else
-			if (fooid[j] == '/' || fooid[j] == '_')
+int s1 = fooid.find_last_of("/");
+int s2 = fooid.find_last_of("_");
+int start = std::max(s1, s2);
 #endif
-			{
-				std::string tmp = fooid.substr(j + 1, i - (j + 1));
-				fooid = tmp;
-				break;
-			}
-		}
-	}
-}
-this->missionId = (char *)fooid.c_str();
+std::string tmp = fooid.substr(start + 1, end - start - 1);
+
+this->missionId = (char *)tmp.c_str();
+this->currentMission = this->nextMissionOnSuccess;
 
 gameUI->openLoadingWindow(singlePlayerNumber);
+
+// HACK: save game here so we have a savegame before the random crash in endCombat
+// inside PhysX when deleting game physics
+saveGame(strPrintf("%d", (lastSaveNumber + 1)).c_str());
+
 this->missionId = foocrap;
+this->currentMission = foocrap2;
 }
 
 							gameScripting->setGlobalIntVariableValue("save_requested", 1);
@@ -1573,9 +1542,7 @@ this->missionId = foocrap;
 #ifdef PROJECT_CLAW_PROTO
 						gameUI->getCameraSystem()->setAimPosition(clawController->getTargetPosition());
 						if (clawController->getPrepareAction() != ClawController::ActionNone) {
-							// aiming mode camera
 							gameUI->getCameraSystem()->setMode(1);
-							gameUI->getCameraSystem()->setCameraBetaAngle(clawController->getThrowBetaAngle());
 						} else {
 							gameUI->getCameraSystem()->setMode(0);
 						}
@@ -1933,6 +1900,12 @@ bool game_in_start_combat = false;
 		int timeAtCombatStart = Timer::getTime();
 
 #ifdef PROJECT_SURVIVOR
+		// re-enable AI
+		for (int i = 0; i < ABS_MAX_PLAYERS; i++)
+			UnitLevelAI::setPlayerAIEnabled(i, true);
+#endif
+
+#ifdef PROJECT_SURVIVOR
 		// apply new options
 		bonusManager->applyOptions(true, BonusManager::APPLYING_BEFORE_LOAD);
 #endif
@@ -1979,14 +1952,17 @@ bool game_in_start_combat = false;
 		{
 			Logger::getInstance()->warning("Game::startCombat - No mission script set.");
 		}
-
 		gameScripting->runMissionScript(script, "begin");
+
+		SHOW_LOADING_BAR(56);
 
 		// set visual objects for buildings
 		// make obstacle maps for them
 
 		// fill area map with terrain material
 		gameScene->initTerrainMaterial();
+
+		SHOW_LOADING_BAR(57);
 
 #ifdef LEGACY_FILES
 		// nop
@@ -1996,12 +1972,10 @@ bool game_in_start_combat = false;
 
 		gameScripting->runMissionScript(buildingsScript, "create");
 
-		if (gameUI->getTerrain() != NULL)
-			gameUI->getTerrain()->runAddedScriptsPhase1(gameScripting);
-
-		std::string jointScript = std::string(missionId) + "_joints";
+		SHOW_LOADING_BAR(58);
 
 		unsigned char *clipMap = gameScene->generateTerrainTexturing();
+
 		SHOW_LOADING_BAR(60);
 
 		// require physics cache recreate?
@@ -2030,12 +2004,6 @@ bool game_in_start_combat = false;
 			bool usedDynamicObst = gameUI->getTerrain()->doesUseDynamicObstacles();
 			gameUI->getTerrain()->setUseDynamicObstacles(false);
 			gameUI->getTerrain()->createPhysics(physics, clipMap, false, currentMap);
-
-			physics->deleteJoints();
-			gameScripting->runMissionScript(jointScript.c_str(), "addjoints");
-
-			if (gameUI->getTerrain() != NULL)
-				gameUI->getTerrain()->runAddedScriptsPhaseJoint(gameScripting);
 
 			physics->setIgnoreContacts(true);
 			// simulate for a while... (about 180 secs or so ok?)
@@ -2122,9 +2090,6 @@ bool game_in_start_combat = false;
 			setSectionScript(NULL);
 		}
 
-		if (gameUI->getTerrain() != NULL)
-			gameUI->getTerrain()->runAddedScriptsPhase2(gameScripting);
-
 		if (loadedCache)
 		{
 			Timer::update();
@@ -2158,9 +2123,9 @@ bool game_in_start_combat = false;
 
 				// WARNING: COPY & PASTE PROGRAMMING AHEAD (SEE Game.cpp)
 
+				/*
 				bool armorOk = true;
 
-				/*
 				if (p == NULL)
 				{
 					armorOk = false;
@@ -2251,9 +2216,10 @@ gameUI->getTerrain()->calculateLighting();
 		//gameUI->closeLoadingWindow(singlePlayerNumber); // TODO: for players on this client in netgame...
 		gameUI->doneLoading(singlePlayerNumber);
 
+#ifndef PROJECT_SHADOWGROUNDS
 		gameScripting->runMissionScript("player_selection", "activation");
-		// NEW: now handled by a script...
-		/*
+#else
+		// NEW: now handled by a script... or maybe not...		
 		Unit *firstUnit = NULL;
 		Unit *secondUnit = NULL;
 		Unit *thirdUnit = NULL;
@@ -2319,7 +2285,7 @@ gameUI->getTerrain()->calculateLighting();
 				Logger::getInstance()->warning("Game::startCombat - No fourth unit available.");
 			}
 		}
-		*/
+#endif
 
 		// prepare all units' ai...
 		LinkedListIterator prepareiter = LinkedListIterator(ulist);
@@ -2374,9 +2340,17 @@ gameUI->getTerrain()->calculateLighting();
 		//gameUI->getMusicPlaylist(singlePlayerNumber)->setBank(PLAYLIST_CALM);
 		//gameUI->getMusicPlaylist(singlePlayerNumber)->play();
 
+		std::string pendingLoadBackup;
+		if (this->getPendingLoad() != NULL)
+		{
+			pendingLoadBackup = this->getPendingLoad();
+			this->applyPendingLoad();
+		}
+
 		// NEW: now handled by script...
+#ifndef PROJECT_SHADOWGROUNDS
 		gameScripting->runMissionScript("player_selection", "control_selection");
-		/*
+#else
 		if (SimpleOptions::getBool(DH_OPT_B_GAME_MODE_TOPDOWN_SHOOTER))
 		{
 			if (firstUnit != NULL)
@@ -2389,7 +2363,7 @@ gameUI->getTerrain()->calculateLighting();
 				gameUI->setFirstPerson(singlePlayerNumber, fourthUnit, 3);
 			//visibilityChecker->setUpdateEnabled(false);
 		}
-		*/
+#endif		
 
 		gameUI->missionStarted();
 
@@ -2397,6 +2371,10 @@ gameUI->getTerrain()->calculateLighting();
 		if(environmentalEffectManager)
 			environmentalEffectManager->init();
 
+		if(!pendingLoadBackup.empty())
+		{
+			setPendingLoad(pendingLoadBackup.c_str());
+		}
 		if (this->getPendingLoad() != NULL)
 		{
 			this->applyPendingLoad();
@@ -2419,19 +2397,10 @@ gameUI->getTerrain()->calculateLighting();
 			physics->createPhysics(gameScripting);
 			gameUI->getTerrain()->createPhysics(physics, clipMap, true, currentMap);
 
-			physics->deleteJoints();
-			gameScripting->runMissionScript(jointScript.c_str(), "addjoints");
-
-			if (gameUI->getTerrain() != NULL)
-				gameUI->getTerrain()->runAddedScriptsPhaseJoint(gameScripting);
-
 			Logger::getInstance()->debug("Game::startCombat - Physics created.");
 		} else {
 			Logger::getInstance()->debug("Game::startCombat - Physics are not enabled, so skipping physics object creation.");
 		}
-
-		if (gameUI->getTerrain() != NULL)
-			gameUI->getTerrain()->doneAddedScripts();
 
 		delete[] clipMap;
 
@@ -2603,26 +2572,17 @@ gameUI->getTerrain()->calculateLighting();
 				std::string fooid = std::string(this->nextMissionOnSuccess);
 
 				// HACK: some real crap here!
-				for (int i = fooid.length()-1; i >= 0; i--)
-				{
-					if (fooid[i] == '.')
-					{
-						for (int j = i; j >= 0; j--)
-						{
+				// FIX: less crap now
+				int end = fooid.find_last_of(".");
 #ifdef PROJECT_SURVIVOR
-							if (fooid[j] == '/')
+				int start = fooid.find_last_of("/");
 #else
-							if (fooid[j] == '/' || fooid[j] == '_')
+				int s1 = fooid.find_last_of("/");
+				int s2 = fooid.find_last_of("_");
+				int start = std::max(s1, s2);
 #endif
-							{
-								std::string tmp = fooid.substr(j + 1, i - (j + 1));
-								fooid = tmp;
-								break;
-							}
-						}
-					}
-				}
-				this->missionId = (char *)fooid.c_str();
+				std::string tmp = fooid.substr(start + 1, end - start - 1);
+				this->missionId = (char *)tmp.c_str();
 				
 				gameUI->openLoadingWindow(singlePlayerNumber);
 				this->missionId = foocrap;
@@ -2665,10 +2625,6 @@ gameUI->getTerrain()->calculateLighting();
 		::next_interface_generation_request = true;
 
 		gameUI->missionEnded();
-
-#ifdef PROJECT_CLAW_PROTO
-		skippingCinematic = false;
-#endif
 
 		if(gameUI->isQuitRequested() && shouldResetAimUpwardMode)
 		{
@@ -2963,7 +2919,7 @@ gameUI->getTerrain()->calculateLighting();
 			expstats += boost::lexical_cast<std::string>(level+1);
 #endif
 
-			char *time = time2str(timeValue);
+			const char *time = time2str(timeValue);
 
 			std::string kills = boost::lexical_cast<std::string>(totalKills);
 			std::string secrets = boost::lexical_cast<std::string>(gameScripting->getGlobalIntVariableValue("secretpart_amount"));
@@ -3085,7 +3041,7 @@ gameUI->getTerrain()->calculateLighting();
 			{
 				// make a map of pointers to variables
 				//
-				std::hash_map<int, util::VariableDataType *> variablePointerHash;
+				std::map<int, util::VariableDataType *> variablePointerHash;
 				util::VariableHashType *globalVariableHash = util::Script::getGlobalVariableHash();
 				util::VariableHashType::iterator iter = globalVariableHash->begin();
 				for (; iter != globalVariableHash->end(); ++iter)
@@ -3116,7 +3072,7 @@ gameUI->getTerrain()->calculateLighting();
 						// find in hash
 						int hc = 0;
 						SCRIPT_HASHCODE_CALC(varname.c_str(), &hc);
-						std::hash_map<int, util::VariableDataType *>::iterator iter = variablePointerHash.find(hc);
+						std::map<int, util::VariableDataType *>::iterator iter = variablePointerHash.find(hc);
 						if (iter != variablePointerHash.end() && iter->second != NULL)
 						{
 							writeVariable(tfm, varname.c_str());
@@ -3145,7 +3101,7 @@ gameUI->getTerrain()->calculateLighting();
 				//
 				tmp = new LinkedList();
 				{
-					std::hash_map<int, util::VariableDataType *>::iterator iter = variablePointerHash.begin();
+					std::map<int, util::VariableDataType *>::iterator iter = variablePointerHash.begin();
 					for (; iter != variablePointerHash.end(); ++iter)
 					{
 						if(iter->second != NULL)
@@ -3731,8 +3687,8 @@ gameUI->getTerrain()->calculateLighting();
 			// therefore, weapons and other are always left sided!!!
 			// fix that. (add side info to part class or just check grandparents)
 
-			char *partName = "";
-			char *helperName = NULL;
+			const char *partName = "";
+			const char *helperName = NULL;
 			bool rightSide = false;
 			if (part->getParent() != NULL)
 			{
@@ -3833,7 +3789,7 @@ gameUI->getTerrain()->calculateLighting();
 
 				// torso model override
 				VisualObjectModel *vom = part->getType()->getVisualObjectModel();
-				if(!unit->getTorsoModelOverride().empty() && partName == "Torso")
+				if(!unit->getTorsoModelOverride().empty() && strcmp(partName, "Torso") == 0)
 				{
 					vom = visualObjectModelStorage->getVisualObjectModel(unit->getTorsoModelOverride().c_str());
 				}
@@ -4301,7 +4257,7 @@ gameUI->getTerrain()->calculateLighting();
 		}
 	}
 
-	bool Game::isPaused()
+	bool Game::isPaused() const
 	{
 		return paused;
 	}
@@ -4633,7 +4589,7 @@ gameUI->getTerrain()->calculateLighting();
 
 		const char *profiledir = profiles->getProfileDirectory( 0 );
 
-		char *saveGameType = "invalid";
+		const char *saveGameType = "invalid";
 		char *savefile = NULL;
 		// new game
 		if (strcmp(saveId, "new") == 0)
@@ -4710,6 +4666,7 @@ gameUI->getTerrain()->calculateLighting();
 		automaticallyStartMission_loop2 = false;
 
 		lastSaveId = saveId;
+		lastSaveNumber = atoi(saveId);
 		return true;
 	}
 
@@ -4725,7 +4682,7 @@ gameUI->getTerrain()->calculateLighting();
 
 		const char *profiledir = profiles->getProfileDirectory( 0 );
 
-		char *saveGameType = "invalid";
+		const char *saveGameType = "invalid";
 		char *savefile = NULL;
 		// new game
 		if (strcmp(saveId, "new") == 0)
@@ -4920,7 +4877,12 @@ gameUI->getTerrain()->calculateLighting();
 		if(sscanf(saveId, "%i", &save_number) == 1)
 		{
 			char buf[32];
-			sprintf_s(buf, 32, "%i", save_number);
+#ifdef _MSC_VER
+			sprintf_s
+#else
+			snprintf
+#endif
+			(buf, 32, "%i", save_number);
 
 			// write for each player
 			int numPlayers = getNumberOfPlayers();
@@ -4979,6 +4941,7 @@ gameUI->getTerrain()->calculateLighting();
 		delete [] savefile;
 
 		lastSaveId = saveId;
+		lastSaveNumber = atoi(saveId);
 		return true;
 	}
 
@@ -4997,7 +4960,7 @@ gameUI->getTerrain()->calculateLighting();
 		FILE *f = fopen(filename, "wb");
 		if (f == NULL) return false;
 
-		char *ver_buf = "SAVE1.0";
+		const char *ver_buf = "SAVE1.0";
 		//int hdr_buf[5];
 		//BYTE *data_buf;
 	

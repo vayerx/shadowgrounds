@@ -20,7 +20,7 @@ namespace game
 
     virtual void act(Unit *unit);
 
-    virtual bool setPathTo(Unit *unit, VC3 &destination);
+    virtual bool setPathTo(Unit *unit, const VC3 &destination);
 
     virtual frozenbyte::ai::Path *solvePath(Unit *unit, const VC3 &startPosition, VC3 &endPosition, int maxDepth = 100);
 

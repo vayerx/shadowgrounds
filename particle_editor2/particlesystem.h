@@ -3,6 +3,8 @@
 #ifndef PARTICLE_SYSTEM_H
 #define PARTICLE_SYSTEM_H
 
+#include <IStorm3D_Particle.h>
+
 namespace util {
 	class SoundMaterialParser;
 } // util
@@ -289,10 +291,6 @@ protected:
 
 	IStorm3D_Model *spawnModel;
 	std::vector<IStorm3D_Helper *> spawnHelpers;
-	std::vector<int> spawnHelperEnds;
-	VC3 lastModelPosition;
-	VC3 lastModelVelocity;
-	int modelPositionSamplingCounter;
 
 	void copyTo(GenParticleSystem& other);
 	void defaultInit(IStorm3D* s3d, IStorm3D_Scene* scene, const GenParticleSystemEditables& eds);

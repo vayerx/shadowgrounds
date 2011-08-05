@@ -11,44 +11,13 @@
 
 #include "../util/Debug_MemoryManager.h"
 
-#include <map>
-
 
 namespace game
 {
   char *UnitVariables::unitVariableNames[MAX_UNIT_VARIABLES] = { NULL };
   bool UnitVariables::inited = false;
 
-	class UnitVariables::CustomVariables
-	{
-	public:
-		typedef std::map<std::string, int> VariableMap;
-		VariableMap vars;
 
-	public:
-
-		inline int get(const std::string &name)
-		{
-			if(name.empty()) return 0;
-
-			VariableMap::iterator it = vars.find(name);
-			if(it == vars.end())
-			{
-				//char str[1024];
-				//sprintf(str, "UnitVariables::getCustomVariable - Read uninitialized variable %s", name.c_str());
-				//Logger::getInstance()->warning(str);
-				return 0;
-			}
-
-			return it->second;
-		}
-
-		inline void set(const std::string &name, int value)
-		{
-			if(name.empty()) return;
-			vars[name] = value;
-		}
-	};
   void UnitVariables::init()
   {
     if (inited)    
@@ -124,14 +93,12 @@ namespace game
     {
       variable[i] = 0;
     }
-		customVariables = NULL;
   }
 
 
   UnitVariables::~UnitVariables()
   {
     delete [] variable;
-		delete customVariables;
   }
 
 	void UnitVariables::clearVariables()
@@ -144,8 +111,6 @@ namespace game
 				variable[i] = 0;
 			}
 		}
-		delete customVariables;
-		customVariables = NULL;
 	}
 
   int UnitVariables::getVariableNumberByName(const char *varName)
@@ -217,19 +182,6 @@ namespace game
     return getVariable(num);
   }
 
-	int UnitVariables::getCustomVariable(const std::string &varName)
-	{
-		if(customVariables == NULL)
-			customVariables = new CustomVariables();
-		return customVariables->get(varName);
-	}
-
-	void UnitVariables::setCustomVariable(const std::string &varName, int value)
-	{
-		if(customVariables == NULL)
-			customVariables = new CustomVariables();
-		return customVariables->set(varName, value);
-	}
 
 }
 

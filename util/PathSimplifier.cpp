@@ -1,13 +1,16 @@
+#include <vector>
 
 #include "precompiled.h"
 
 #include "PathSimplifier.h"
 
 #include <assert.h>
-#include <vector>
 
 #include "Debug_MemoryManager.h"
 
+
+namespace frozenbyte {
+namespace ai {
 
 frozenbyte::ai::Path *PathSimplifier::getSimplifiedPath(
 	frozenbyte::ai::PathFind *pathfinder,
@@ -44,8 +47,8 @@ frozenbyte::ai::Path *PathSimplifier::getSimplifiedPath(
 		int sy = path->getPointY(i - 1);
 		int dx = path->getPointX(i);
 		int dy = path->getPointY(i);
-		int dx2;
-		int dy2;
+		int dx2 = 0;
+		int dy2 = 0;
 		bool canSimplify = false;
 		int simpAmount = 0;
 
@@ -142,5 +145,7 @@ frozenbyte::ai::Path *PathSimplifier::getSimplifiedPath(
 	return ret;
 }
 
+} // end of namespace ai
+} // end of namespace frozenbyte
 
 

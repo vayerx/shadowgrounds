@@ -4,7 +4,6 @@
 #include "SelectionVisualizer.h"
 #include "DebugVisualizerTextUtil.h"
 #include "DebugUnitVisualizer.h"
-#include "DebugTerrainObjectVisualizer.h"
 #include "../game/unified_handle.h"
 #include "../game/Game.h"
 #include "../game/GameUI.h"
@@ -71,8 +70,9 @@ namespace ui
 		{
 			if (IS_UNIFIED_HANDLE_TERRAIN_OBJECT(selectionUnifiedHandles[i]))
 			{
-				DebugTerrainObjectVisFlags flags = DEBUGTERRAINOBJECTVISUALIZER_FLAG_SELECTED;
-				DebugTerrainObjectVisualizer::visualizeTerrainObject(game, selectionUnifiedHandles[i], campos, flags);
+				// TODO: ...
+				//DebugUnitVisFlags flags = DEBUGTERRAINOBJECTVISUALIZER_FLAG_SELECTED;
+				//DebugTerrainObjectVisualizer::visualizeTerrainObject(selectionUnifiedHandles[i], campos, flags);
 			}
 			else if (IS_UNIFIED_HANDLE_UNIT(selectionUnifiedHandles[i]))
 			{

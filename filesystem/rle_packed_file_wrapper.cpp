@@ -1,10 +1,11 @@
 
 #include "precompiled.h"
 
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
 #include "rle_packed_file_wrapper.h"
 #include "../util/jpak.h"
-#include <stdio.h>
-#include <assert.h>
 
 #define USE_FB_INPUT_STREAM_WRAPPER
 
@@ -143,8 +144,8 @@ size_t rle_packed_fread(void *buffer, size_t size, size_t count, RLE_PACKED_FILE
 	int tmpgot = 0;
 	int chunkId = 0;
 	char isPacked = 0;
-	int packedSize = 0;
-	int unpackedSize = 0;
+	size_t packedSize = 0;
+	size_t unpackedSize = 0;
 
 #ifdef USE_FB_INPUT_STREAM_WRAPPER
 	tmpgot = fb_fread(&chunkId, sizeof(int), 1, stream->inputFile);
@@ -197,7 +198,7 @@ size_t rle_packed_fread(void *buffer, size_t size, size_t count, RLE_PACKED_FILE
 		stream->errorFlag = true;
 		return 0;
 	}
-	if (packedSize > (int)count * (int)size)
+	if (packedSize > count * size)
 	{
 		assert(!"rle_packed_fread - invalid data (size of packed chunk is larger than requested data).");
 		stream->errorFlag = true;
@@ -246,7 +247,7 @@ size_t rle_packed_fread(void *buffer, size_t size, size_t count, RLE_PACKED_FILE
 		{
 			jpak_set_bits(16);
 			jpak_set_16bit_params(0xA0EA, 0xA0EB, 0xA0EC);
-			int resultSize = jpak_unpack(packedSize, packedbuf, (unsigned char *)buffer, unpackedSize);
+			size_t resultSize = jpak_unpack(packedSize, packedbuf, (unsigned char *)buffer, unpackedSize);
 			if(resultSize != unpackedSize)
 			{
 				assert(!"rle_packed_fread - invalid data (chunk header unpacked size did not match actual resulting unpacked size).");

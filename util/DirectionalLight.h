@@ -1,7 +1,7 @@
 #ifndef INCLUDED_DIRECTIONAL_LIGHT_H
 #define INCLUDED_DIRECTIONAL_LIGHT_H
 
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 
 namespace util {
 

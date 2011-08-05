@@ -14,8 +14,6 @@ namespace game
 	public:
 		BoxPhysicsObject(GamePhysics *gamePhysics, const VC3 &sizes, float mass, int collisionGroup, const VC3 &position);
 
-		BoxPhysicsObject(GamePhysics *gamePhysics, const std::string &shapes, float mass, int collisionGroup, const VC3 &position);
-
 		virtual ~BoxPhysicsObject();
 
 	protected:
@@ -26,7 +24,6 @@ namespace game
 		VC3 sizes;
 		float mass;
 		int collisionGroup;
-		std::string shapes;
 	};
 }
 

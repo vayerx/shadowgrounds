@@ -3,11 +3,11 @@
 #ifndef INCLUDED_STORM3D_TERRAIN_RENDERER_H
 #define INCLUDED_STORM3D_TERRAIN_RENDERER_H
 
-#include <istorm3d_terrain_renderer.h>
+#include <istorm3D_terrain_renderer.h>
 #include "istorm3d_terrain_rendererbase.h"
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 
 class Storm3D_TerrainHeightmap;
 class Storm3D_TerrainGroup;

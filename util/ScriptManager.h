@@ -13,10 +13,9 @@ class LinkedList;
 
 namespace util
 {
-	class ScriptParsingData;
 
 	typedef std::map<int, Script *> ScriptHashType;
-	
+
 	// < hashcode, < filename, timestamp > >
 	typedef std::map<int, std::pair<char *, unsigned long> > ScriptFileHashType;
 
@@ -42,7 +41,7 @@ namespace util
 		// (note, used buffer size may still be slightly smaller than actually allocated memory block size)
 		bool doInternalPreprocess(const char *filename, char **bufOut, int *bufLenOut, const char *sourceBuf, int sourceBufLen);
 
-		void setKeywords(int amount, char **keywords, int *datatypes);
+		void setKeywords(int amount, const char **keywords, int *datatypes);
 		
 		void setProcessor(IScriptProcessor *processor);
 
@@ -51,7 +50,7 @@ namespace util
 		void setForcePreprocessForNextLoad(bool forcepp);
 
 		// For Script class access only...
-		void scriptCompileError(char *err, bool isError);
+		void scriptCompileError(const char *err, bool isError);
 
 		void loadInternalPreprocessorMacros(const char *filename);
 		void clearInternalPreprocessorMacros();
@@ -60,8 +59,6 @@ namespace util
 		std::string getStatusInfo();
 
 	private:
-
-		bool processScriptLine(const char *filename, const char *cmd, const char *data, bool replace, Script **currentScriptPtr, int lineNumber, ScriptParsingData *d);
 
 		void error(const char *err, int linenum, bool isError);
 

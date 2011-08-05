@@ -10,7 +10,7 @@ void TearDownJacket( void );
 int SetEffect( int nEffect );
 int SetEffect2( int nLen, int nID ) ;
 int GetErrorCode (void);
-char *GetErrorText (void );
+const char *GetErrorText (void );
 
 #define E_MACHINEGUN_FRONT 0
 #define E_MACHINEGUN_BACK 0

@@ -386,7 +386,7 @@ void UnitFormation::addMovePoint(std::vector<Unit *> *units,
 			}
 		}
 
-		// now go to destination...		
+		// now go to destination...
 		ua->setPathTo(u, VC3(okDestX, 0, okDestZ));
 
 		

@@ -11,7 +11,7 @@
 #include "Spotlight.h"
 #include "../game/gamedefs.h"
 #include "../system/Logger.h"
-#include "../util/decalmanager.h"
+#include "../util/DecalManager.h"
 #include "../game/unified_handle.h"
 #include "../ui/LightManager.h"
 #include "../ui/DynamicLightManager.h"
@@ -25,7 +25,7 @@
 #include "../editor/parser.h"
 #include "../particle_editor2/particleeffect.h"
 #include "../particle_editor2/track.h"
-#include <istorm3d_particle.h>
+#include <IStorm3D_Particle.h>
 #include "../particle_editor2/particlesystem.h"
 #include "../game/scaledefs.h"
 
@@ -53,7 +53,6 @@ namespace ui
 		this->pointlightManager = NULL;
 		this->deleteFrameCounter = 0;
 		this->advanceDeleteCounter = false;
-		this->originUnifiedHandle = UNIFIED_HANDLE_NONE;
 
 		init(object, origin, position, endPosition, rotation, muzzleFlashBarrelNumber);
 
@@ -190,17 +189,6 @@ namespace ui
 		visualObject->setPosition(this->position);
 		visualObject->setRotation(rotation.x, rotation.y, rotation.z);
 	
-	}
-
-
-	void VisualEffect::setOriginUnifiedHandle(UnifiedHandle origin)
-	{
-		originUnifiedHandle = origin;
-	}
-
-	UnifiedHandle VisualEffect::getOriginUnifiedHandle()
-	{
-		return originUnifiedHandle;
 	}
 
 	
@@ -439,7 +427,7 @@ namespace ui
 		}
 	}
 
-	void VisualEffect::updateMuzzleAttachment(const std::string &name, const std::string &helper, VC3 &pos, VC3 &scale)
+	void VisualEffect::updateMuzzleAttachment(const std::string &name, const std::string &helper, const VC3 &pos, const VC3 &scale)
 	{
 		if (effectType->getType() != VisualEffectType::VISUALEFFECT_TYPE_MUZZLEFLASH && muzzleAttachment.empty())
 			return;

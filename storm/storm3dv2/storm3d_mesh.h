@@ -7,7 +7,7 @@
 // Includes
 //------------------------------------------------------------------
 #include "storm3d_common_imp.h"
-#include "istorm3d_mesh.h"
+#include "IStorm3D_Mesh.h"
 #include "storm3d_mesh_collisiontable.h"
 #include "storm3d_resourcemanager.h"
 #include <c2_sphere.h>
@@ -142,8 +142,6 @@ class Storm3D_Mesh : public IStorm3D_Mesh
 	//bool lod_rebuild_needed_collision;
 	bool col_rebuild_needed;
 
-	int collision_faces;
-
 	// Precalculation (speed up)
 	void CalculateRadiusAndBox();
 
@@ -203,12 +201,7 @@ public:
 	void ChangeFaceCount(int new_face_count);
 	void ChangeVertexCount(int new_vertex_count);
 	void UpdateCollisionTable();	// Use this after editing, if you want collisions to this object
-
-	// set the amount of faces used for collision (used by blackedge to use only first half of faces for collision)
-	// (the default value of -1 means use actual face count)
-	void SetCollisionFaces(int collision_faces) { this->collision_faces = collision_faces; }
-	int GetCollisionFaces() { return collision_faces; }
-
+	
 	bool HasWeights() const;
 
 	// Test ray collision (these return true if collided)

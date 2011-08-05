@@ -1,11 +1,20 @@
 #include "precompiled.h"
 
+#include <map>
+#include <vector>
+#include <algorithm>
+#include <string>
+#include <sstream>
+#include <fstream>
+#include <boost/scoped_ptr.hpp>
+#include <boost/utility.hpp>
+
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
 #pragma warning(disable:4786)
 
-#ifdef _MSC_VER
 #pragma warning(disable: 4786)
 #endif
 
@@ -15,11 +24,6 @@
 #include "../filesystem/file_package_manager.h"
 #include "../filesystem/ifile_list.h"
 #include "../filesystem/input_stream_wrapper.h"
-#include <map>
-#include <vector>
-#include <boost/scoped_ptr.hpp>
-#include <algorithm>
-#include <windows.h>
 
 // for profiling...
 #include "../system/Timer.h"
@@ -31,12 +35,11 @@ using namespace frozenbyte::filesystem;
 
 namespace frozenbyte {
 namespace editor {
-namespace {
 
 	// hacking to get things work with STLport 5.1.0-RC3 and later... (intrinsic std::vector impl)
 	// TODO: make sure this does not leak.
 	struct Dir;
-	struct DirInternal
+	struct DirInternal : public boost::noncopyable
 	{
 		Dir *dir;
 		DirInternal(Dir *p_dir);
@@ -73,9 +76,8 @@ namespace {
 	};
 
 	DirInternal::DirInternal(Dir *p_dir) 
+			: dir(new Dir(*p_dir))
 	{
-		assert(p_dir != this->dir);
-		dir = new Dir(*p_dir);
 	}
 	DirInternal::~DirInternal()
 	{
@@ -94,7 +96,7 @@ namespace {
 		return *this;
 	}
 
-	std::string findFile(const Dir &dir, const std::string &fileName)
+	static std::string findFile(const Dir &dir, const std::string &fileName)
 	{
 		for(unsigned int i = 0; i < dir.files.size(); ++i)
 		{
@@ -112,7 +114,47 @@ namespace {
 		return "";
 	}
 
-} // unnamed
+
+// turol: do these belong here?
+// probably not. FIXME
+
+std::string getFileName(const std::string &fullFileName)
+{
+	for(int i = fullFileName.size() - 1; i >= 0; --i)
+	{
+		if(fullFileName[i] == '\\')
+		{
+			++i;
+			return fullFileName.substr(i, fullFileName.size() - i);
+		}
+	}
+
+	return fullFileName;
+}
+
+std::string getDirName(const std::string &fullFileName)
+{
+	for(int i = fullFileName.size() - 1; i >= 0; --i)
+	{
+		if(fullFileName[i] == '\\')
+		{
+			++i;
+			return fullFileName.substr(0, i);
+		}
+	}
+
+	return fullFileName;
+}
+
+bool fileExists(const std::string &fileName)
+{
+	if(std::ifstream(fileName.c_str()))
+		return true;
+
+	filesystem::InputStream stream = filesystem::FilePackageManager::getInstance().getFile(fileName);
+	return stream.getSize() > 0;
+}
+
 
 struct FileWrapper::Data
 {
@@ -140,7 +182,7 @@ struct FileWrapper::Data
 			const std::string &file = fileList[i];
 			
 			int start = root.size() + 1;
-			int end = file.find_last_of("/");
+			std::string::size_type end = file.find_last_of("/");
 			if(end == file.npos)
 				continue;
 
@@ -150,7 +192,7 @@ struct FileWrapper::Data
 
 			for(;;)
 			{
-				int index = dirPath.find_first_of("/");
+				std::string::size_type index = dirPath.find_first_of("/");
 				std::string dir = (index != dir.npos) ? dirPath.substr(0, index) : dirPath;
 
 				bool found = false;
@@ -244,7 +286,7 @@ if (extension == "*.s3d")
 			const std::string &file = fileList[i];
 
 			int start = root.size() + 1;
-			int end = file.find_last_of("/");
+			std::string::size_type end = file.find_last_of("/");
 			if(end == file.npos)
 				continue;
 
@@ -267,7 +309,7 @@ if (extension == "*.s3d")
 				}
 				*/
 
-				int index = dirPath.find_first_of("/");
+				std::string::size_type index = dirPath.find_first_of("/");
 				std::string dir = (index != dir.npos) ? dirPath.substr(0, index) : dirPath;
 
 				bool found = false;
@@ -359,8 +401,10 @@ int FileWrapper::getRootDirAmount() const
 
 const std::string &FileWrapper::getRootDir(int index) const
 {
+#ifndef NDEBUG
 	Dir &root = data->root;
 	assert(index < int(root.dirs.size()));
+#endif
 
 	return data->root.dirs[index].dir->name;
 }
@@ -426,6 +470,10 @@ vector<string> FileWrapper::getAllFiles() const
 {
 	vector<string> files;
 	data->getFiles(data->root, files);
+  // TODO: Hax to fix deleting of player profiles
+	for(unsigned int i=0;i<files.size();++i)
+		for(unsigned int j=0;j<files[i].length();++j)
+			if (files[i][j] == '\\') files[i][j] = '/';
 
 	return files;
 }
@@ -448,6 +496,18 @@ std::string FileWrapper::resolveModelName(const std::string &rootDir, const std:
 	if(!result.empty())
 		return result;
 
+	std::string file = fileName.substr(fileName.find_last_of('\\') + 1);
+	boost::shared_ptr<IFileList> fileList = filesystem::FilePackageManager::getInstance().findFiles(rootDir, "*" + file);
+	int dirs = fileList->getDirAmount(rootDir);
+	for(int i = 0; i < dirs; i++)
+	{
+		std::string dir = fileList->getDirName(rootDir, i);
+		if(fileList->getFileAmount(dir) > 0)
+		{
+			return fileList->getFileName(dir, 0);
+		}
+	}
+
 	return fileName;
 }
 
@@ -464,16 +524,18 @@ bool fileExists(const char *name)
 	filesystem::fb_fclose(fp);
 	return true;
 	*/
-
 	if(!name)
 		return false;
 
 	FILE *fp = fopen(name, "rb");
-	if(fp == 0)
-		return false;
+	if(fp != 0)
+	{
+		return true;
+		fclose(fp);
+	}
 
-	fclose(fp);
-	return true;
+	filesystem::InputStream stream = filesystem::FilePackageManager::getInstance().getFile(name);
+	return stream.getSize() > 0;
 }
 
 } // editor

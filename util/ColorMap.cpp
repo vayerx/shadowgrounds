@@ -1,15 +1,16 @@
 
 #include "precompiled.h"
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
 #pragma warning(disable:4786)
+#endif
 
 #include "ColorMap.h"
-#include "areamap.h"
-#include "../game/gamemap.h"
+#include "AreaMap.h"
+#include "../game/GameMap.h"
 #include <stdio.h>
 #include <boost/scoped_array.hpp>
-#include <windows.h>
 #include "../util/Debug_MemoryManager.h"
 #include "../filesystem/input_file_stream.h"
 #include "../filesystem/file_package_manager.h"

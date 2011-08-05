@@ -2,11 +2,11 @@
 #include "precompiled.h"
 
 #include "Spotlight.h"
-#include "istorm3d.h"
-#include "istorm3d_scene.h"
-#include "istorm3d_terrain.h"
-#include "istorm3d_terrain_renderer.h"
-#include "istorm3d_texture.h"
+#include "IStorm3D.h"
+#include "IStorm3D_Scene.h"
+#include "IStorm3D_Terrain.h"
+#include "istorm3D_terrain_renderer.h"
+#include "IStorm3D_Texture.h"
 #include "istorm3d_spotlight.h"
 #include <boost/shared_ptr.hpp>
 
@@ -18,17 +18,9 @@
 #include "../util/PositionsDirectionCalculator.h"
 #include "../game/SimpleOptions.h"
 #include "../game/options/options_graphics.h"
+#include "igios.h"
 
 namespace ui {
-namespace {
-
-	struct NullDeleter
-	{
-		void operator() (void *)
-		{
-		}
-	};
-} // unnamed
 
 struct SpotlightData
 {
@@ -65,11 +57,11 @@ struct SpotlightData
 		const std::string &spottype)
 	:	terrain(terrain_),
 		scene(scene_),
-		effectTimeElapsed(0),
-		flashType(SpotTypeProperties::FLASH_TYPE_NONE),
 		fakeLight(false),
+		positionOffset(0,0,0),
 		spotlightClippingEnabled(true),
-		positionOffset(0,0,0)
+		effectTimeElapsed(0),
+		flashType(SpotTypeProperties::FLASH_TYPE_NONE)
 	{
 #ifdef LEGACY_FILES
 		// the old hardcoded spotlight types...
@@ -1069,8 +1061,7 @@ void Spotlight::addNewTypeDone()
 
 void Spotlight::setRange ( float range )
 {
-	if (data->spot)
-		data->spot->setRange (range);
+	data->spot->setRange (range);
 }
 
 } // ui

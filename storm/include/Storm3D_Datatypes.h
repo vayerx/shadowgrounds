@@ -17,7 +17,7 @@
 // Includes
 //------------------------------------------------------------------
 #include "DatatypeDef.h"
-#include "storm3d_common.h"
+#include "Storm3D_Common.h"
 #include <c2_collisioninfo.h>
 
 
@@ -109,7 +109,12 @@ public:
 	//IStorm3D_Model *model;				// Model that was collided
 	//IStorm3D_Model_Object *object;		// Object that was collided
 
-	ObstacleCollisionInfo() : hit(false), hitAmount(0), range(static_cast<float>(HUGE)) {};
+	ObstacleCollisionInfo() :
+		hit(false),
+		hitAmount(0),
+		position(0.0f),
+		range(static_cast<float>(HUGE))
+	{};
 };
 
 
@@ -128,7 +133,7 @@ public:
 	// Creation
 	Storm3D_SurfaceInfo(int _width,int _height,int _bpp=0) : width(_width),
 		height(_height), bpp(_bpp) {};
-	Storm3D_SurfaceInfo() : bpp(0) {};
+	Storm3D_SurfaceInfo() : width(0), height(0), bpp(0) {};
 };
 
 

@@ -3,15 +3,13 @@
 #ifndef INCLUDED_C2_COLLISION_H
 #define INCLUDED_C2_COLLISION_H
 
-#pragma once
+#include <stdlib.h>
 #include "c2_vectors.h"
 #include "c2_sphere.h"
 #include "c2_aabb.h"
 #include "c2_ray.h"
 #include "c2_oobb.h"
 
-namespace detail
-{
 	enum Outcode
 	{
 		RightClip = 1 << 0,
@@ -22,7 +20,7 @@ namespace detail
 		BackClip = 1 << 5
 	};
 
-	inline int getCohenSutherlandOutcode(const AABB &box, const VC3 &point)
+static inline int getCohenSutherlandOutcode(const AABB &box, const VC3 &point)
 	{
 		int code = 0;
 
@@ -50,7 +48,6 @@ namespace detail
 
 		return code;
 	}
-} // detail
 
 inline bool collision(const Ray &ray, const Sphere &sphere)
 {
@@ -112,11 +109,11 @@ inline bool collision(const Ray &ray, const AABB &box)
 	VC3 directionVector = ray.direction * ray.range;
 	VC3 end = start + directionVector;
 
-	int outcode1 = detail::getCohenSutherlandOutcode(box, start);
+	int outcode1 = getCohenSutherlandOutcode(box, start);
 	if(!outcode1)
 		return true; // inside?
 
-	int outcode2 = detail::getCohenSutherlandOutcode(box, end);
+	int outcode2 = getCohenSutherlandOutcode(box, end);
 	if(!outcode2)
 		return true; // inside?
 
@@ -130,10 +127,10 @@ inline bool collision(const Ray &ray, const AABB &box)
 	// Find actual intersection
 	// Div by zero if ray is degenerate
 
-	if(outcode1 & (detail::RightClip | detail::LeftClip)) 
+	if(outcode1 & (RightClip | LeftClip)) 
 	{
 		float x = 0;
-		if(outcode1 & detail::RightClip) 
+		if(outcode1 & RightClip) 
 			x = max.x;
 		else
 			x = min.x;
@@ -147,10 +144,10 @@ inline bool collision(const Ray &ray, const AABB &box)
 			return true;
 	}
 
-	if(outcode1 & (detail::TopClip | detail::BottomClip)) 
+	if(outcode1 & (TopClip | BottomClip)) 
 	{
 		float y = 0;
-		if(outcode1 & detail::TopClip)
+		if(outcode1 & TopClip)
 			y = max.y;
 		else
 			y = min.y;
@@ -164,10 +161,10 @@ inline bool collision(const Ray &ray, const AABB &box)
 			return true;
 	}
 
-	if(outcode1 & (detail::FrontClip | detail::BackClip)) 
+	if(outcode1 & (FrontClip | BackClip)) 
 	{
 		float z = 0;
-		if(outcode1 & detail::BackClip)
+		if(outcode1 & BackClip)
 			z = max.z;
 		else
 			z = min.z;

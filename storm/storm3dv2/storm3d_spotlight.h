@@ -22,8 +22,7 @@ public:
 	{
 		Legacy = 0,
 		DepthBuffer = 1,
-		AtiBuffer = 2,
-		AtiFloatBuffer = 3
+		AtiBuffer = 2
 	};
 
 	Storm3D_Spotlight(Storm3D &storm, IDirect3D9 &d3d, IDirect3DDevice9 &device, bool ps14, bool ps20);

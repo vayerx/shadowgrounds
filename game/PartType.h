@@ -138,7 +138,7 @@ namespace game
     // parser calls this function to tell that we're in a sub conf
     // called with NULL key when exiting a sub conf
     // should return true if valid sub key
-    virtual bool setSub(char *key);
+    virtual bool setSub(const char *key);
 
     // parser calls this function to configure the part type based on file
     // should return true if key and value pair was identified and valid
@@ -281,8 +281,8 @@ namespace game
 
     // root level methods, pass setSub and setData to these in extending 
     // classes if the data is not recognized by the extending class.
-    bool setRootSub(char *key);
-    bool setRootData(char *key, char *value);
+    bool setRootSub(const char *key);
+    bool setRootData(const char *key, char *value);
 
   public:
     // to get a new cloned parttype for a new inherited parttype
@@ -330,7 +330,7 @@ namespace game
 
   extern PartType *getPartTypeById(int id);
 
-  extern char *slotPositionStrings[SLOT_POSITIONS];
+  extern const char *slotPositionStrings[SLOT_POSITIONS];
 
 #ifdef PARTTYPE_ID_STRING_EXTENDED
   extern int partTypeIdStringToIntConv(const char *idstr);

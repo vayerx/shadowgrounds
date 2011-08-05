@@ -49,7 +49,6 @@ UnitLevelAI::UnitLevelAI(game::Game *game, Unit *unit)
 	this->tempDisabled = false;
 	this->eventMask = 0;
 	this->lastSpeed = Unit::UNIT_SPEED_FAST;
-	this->runContinueJumpEvent = false;
 	this->force_hitscript_enabled = false;
 	rescriptRequested = false;
   reScriptMain();
@@ -77,11 +76,6 @@ void UnitLevelAI::setPlayerAIEnabled(int player, bool enabled)
 	// individual ai enabled/disabled (but that might screw up some
 	// specifically disabled unit AIs?)
 	UnitLevelAI::playerAIEnabled[player] = enabled;
-}
-
-bool UnitLevelAI::isPlayerAIEnabled(int player)
-{
-	return UnitLevelAI::playerAIEnabled[player];
 }
 
 void UnitLevelAI::reScriptMain()
@@ -317,7 +311,7 @@ void UnitLevelAI::runUnitAI()
 		}
 
 		// jump start/end script sub
-		if (this->eventMask & (UNITLEVELAI_EVENT_MASK_JUMP_START | UNITLEVELAI_EVENT_MASK_JUMP_END | UNITLEVELAI_EVENT_MASK_JUMP_CONTINUE))
+		if (this->eventMask & (UNITLEVELAI_EVENT_MASK_JUMP_START | UNITLEVELAI_EVENT_MASK_JUMP_END))
 		{
 			if (unit->getSpeed() != this->lastSpeed)
 			{
@@ -332,12 +326,6 @@ void UnitLevelAI::runUnitAI()
 					game->gameScripting->runEventScript(unit, "event_jump_end");
 				}
 				this->lastSpeed = unit->getSpeed();
-			}
-			if ((this->eventMask & UNITLEVELAI_EVENT_MASK_JUMP_CONTINUE) != 0
-				&& this->runContinueJumpEvent)
-			{
-				game->gameScripting->runEventScript(unit, "event_jump_continue");
-				this->runContinueJumpEvent = false;
 			}
 		}
 	}

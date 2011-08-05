@@ -39,12 +39,13 @@ SoundMaterialParser::SoundMaterialParser()
 		soundMaterials.push_back(material);
 	}
 
-	Parser parser;
+	EditorParser parser;
 #ifdef LEGACY_FILES
-	filesystem::FilePackageManager::getInstance().getFile("Data/Effects/sound_materials.txt") >> parser;
+	filesystem::InputStream matfile = filesystem::createInputFileStream("Data/Effects/sound_materials.txt");
 #else
-	filesystem::FilePackageManager::getInstance().getFile("data/effect/contact_materials.txt") >> parser;
+	filesystem::InputStream matfile = filesystem::createInputFileStream("data/effect/contact_materials.txt");
 #endif
+    matfile >> parser;
 
 	const ParserGroup &globals = parser.getGlobals();
 	int groups = globals.getSubGroupAmount();

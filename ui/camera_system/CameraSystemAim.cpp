@@ -55,7 +55,7 @@ void CameraSystemAim::update( VC3 positionOfInterest, int elapsedTime )
 
 	cameraPosition = positionOfInterest + VC3(0, 1.395f, 0);
 	targetPosition = aimPosition;
-	targetPosition.y = cameraPosition.y + sinf(betaAngle);
+	targetPosition.y = cameraPosition.y;
 	cameraPosition = cameraPosition + (cameraPosition-targetPosition).GetNormalized()*1.687f;
 	upVector = VC3(0, 1, 0);
 	QUAT tmp_quat3( (targetPosition-cameraPosition).GetNormalized(), DEG2RAD( -7.7f ));
@@ -71,7 +71,6 @@ void CameraSystemAim::setCameraAngle(float a)
 
 void CameraSystemAim::setCameraBetaAngle(float a)
 {
-	betaAngle = a;
 }
 
 void CameraSystemAim::setCameraBank(float a)

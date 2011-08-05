@@ -389,8 +389,6 @@ void SidewaysUnitActor::act(Unit *unit)
 
 	float rotationAngle = 0.0f;
 
-	float oldYRotation = unit->getRotation().y;
-
 	UnitActAnimationRequests animRequests;
 	
 	// animated units don't do normal acting...
@@ -420,9 +418,6 @@ void SidewaysUnitActor::act(Unit *unit)
 		bool doLeftMove = false;
 		bool doRightMove = false;
 		bool doBackMove = false;
-		bool doLeftRotation = false;
-		bool doRightRotation = false;
-		bool doFire = false;
 
 		if (unit->getWalkDelay() > 0)
 		{

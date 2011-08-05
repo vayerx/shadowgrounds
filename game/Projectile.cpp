@@ -1,9 +1,6 @@
 
 #include "precompiled.h"
 
-// NO NO NO!!!
-#include <Storm3D_UI.h>
-
 #include "Projectile.h"
 #include "ProjectileTrackerObjectType.h"
 #include "projectilevisdefs.h"
@@ -13,7 +10,6 @@
 #include "../game/SimpleOptions.h"
 #include "../game/options/options_game.h"
 #include "IProjectileTrackerFactory.h"
-#include "unified_handle.h"
 
 #include "tracking/trackable_typeid.h"
 
@@ -90,7 +86,6 @@ namespace game
 		parentUnit = NULL;
 
 		originUnit = NULL;
-		originUnifiedHandle = UNIFIED_HANDLE_NONE;
 
 		this->doHitSound = true;
 		this->followOrigin = false;
@@ -375,12 +370,12 @@ namespace game
 		*/
 	}
 
-	const VC3 &Projectile::getPointerPosition()
+	const VC3 &Projectile::getPointerPosition() const
 	{
 		return position;
 	}
 
-	const VC3 Projectile::getPointerMiddleOffset()
+	const VC3 Projectile::getPointerMiddleOffset() const
 	{
 		return VC3(0,0,0);
 	}
@@ -668,11 +663,6 @@ namespace game
 	void Projectile::setOriginUnit(Unit *originUnit)
 	{
 		this->originUnit = originUnit;
-	}
-
-	void Projectile::setOriginUnifiedHandle(UnifiedHandle originUnifiedHandle)
-	{
-		this->originUnifiedHandle = originUnifiedHandle;
 	}
 
 	bool Projectile::doesHitSound() const

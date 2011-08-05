@@ -352,7 +352,7 @@ namespace util
   }
 
 
-  void SimpleParser::error(char *err)
+  void SimpleParser::error(const char *err)
   {
     char *errbuf = new char[strlen(err) + 1 + 60 + strlen(currentFile)];
     strcpy(errbuf, err);

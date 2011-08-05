@@ -6,9 +6,9 @@
 #include <assert.h>
 
 #include "uidefaults.h"
-#include "..\util\Debug_MemoryManager.h"
-#include "..\game\SimpleOptions.h"
-#include "..\game\options\options_debug.h"
+#include "../util/Debug_MemoryManager.h"
+#include "../game/SimpleOptions.h"
+#include "../game/options/options_debug.h"
 
 #define ERRORWINDOW_MSG_TEXTS 16
 

@@ -1,13 +1,14 @@
 #ifndef INCLUDED_FROZENBYTE_FLUID_H
 #define INCLUDED_FROZENBYTE_FLUID_H
 
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 #include <vector>
 
 class NxFluid;
 class NxScene;
 class NxFluidDesc;
 
+#ifndef NX_DISABLE_FLUIDS
 namespace frozenbyte {
 namespace physics {
 
@@ -59,5 +60,7 @@ public:
 
 } // physics
 } // frozenbyte
+
+#endif
 
 #endif

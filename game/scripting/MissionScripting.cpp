@@ -44,9 +44,10 @@ using namespace ui;
 namespace game
 {
 	void MissionScripting::process(util::ScriptProcess *sp, 
-		int command, int intData, char *stringData, ScriptLastValueType *lastValue, 
+		int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue,
 		GameScriptData *gsd, Game *game)
 	{
+		int intData = intFloat.i;
 		switch(command)
 		{
 		case GS_CMD_SETMISSIONSUCCESSCOUNTER:
@@ -448,22 +449,7 @@ namespace game
 		case GS_CMD_setAlphaTestPassEnabled:
 			game->gameUI->enableAlphaTestPass(intData == 0 ? false : true);
 			break;
-
-		case GS_CMD_playerSpawnPosition:
-			if (gsd->player >= 0 && gsd->player < ABS_MAX_PLAYERS)
-			{
-				float sx = game->gameMap->configToScaledX(game->spawnX[gsd->player]);
-				float sz = game->gameMap->configToScaledY(game->spawnY[gsd->player]);
-				gsd->position = VC3(sx, 0, sz);
-				if (game->gameMap->isWellInScaledBoundaries(sx, sz))
-				{
-					gsd->position.y = game->gameMap->getScaledHeightAt(sx, sz);
-				}
-			} else {
-				sp->error("MissionScripting::process - playerSpawnPosition, internal error (invalid player number).");
-			}
-			break;
-
+		
 		case GS_CMD_unlockSurvivalMission:
 			if(stringData != NULL)
 			{

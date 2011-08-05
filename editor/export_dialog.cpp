@@ -122,11 +122,6 @@ namespace {
 				//std::string string = sharedData.fileNames[i];
 
 				SendDlgItemMessage(dialog.getWindowHandle(), IDC_MISSION_NAMES, LB_ADDSTRING, 0, reinterpret_cast<LPARAM> (string.c_str()));
-
-				// if the added dialog item matches part of current editor filename, select it by default
-				// something like this maybe, but need the dig out the frigging filename first..?
-				//if (currentMissionName.find(string) != std::string::npos)
-				//  SendDlgItemMessage(dialog.getWindowHandle(), IDC_MISSIONFOLDER, CB_SETCURSEL, i, 0);
 			}
 		}
 
@@ -247,9 +242,9 @@ namespace {
 			dir = dir.substr(0, end);
 
 #ifdef LEGACY_FILES
-			std::string command = dir + "\\tools\\missioncreator.exe " + mission_folder + " Template " + mission_name;
+			std::string command = "\"" + dir + "\\tools\\missioncreator.exe\" " + mission_folder + " Template " + mission_name;
 #else
-			std::string command = dir + "\\tools\\missioncreator.exe " + mission_folder + " template " + mission_name;
+			std::string command = "\"" + dir + "\\tools\\missioncreator.exe\" " + mission_folder + " template " + mission_name;
 #endif
 			int ret = system(command.c_str());
 			if(ret == 1)

@@ -1,13 +1,21 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
+
+#ifdef NVPERFSDK
+#include "NVPerfSDK.h"
+#endif
 
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
+#include <SDL.h>
+
 #include "storm3d.h"
 #include "RenderWindow.h"
-#include "iterator.h"
+#include "Iterator.h"
 #include "storm3d_adapter.h"
 #include "storm3d_texture.h"
 #include "storm3d_material.h"
@@ -23,18 +31,18 @@
 #include "Storm3D_Bone.h"
 #include "Storm3D_Line.h"
 #include "Storm3D_ShaderManager.h"
-#include "Storm3D_VideoStreamer.h"
+#include "storm3d_videostreamer.h"
 #include <stdio.h>
 #include <fstream>
-#include "IStorm3d_Logger.h"
-#include "..\..\filesystem\file_package_manager.h"
-#include "..\..\filesystem\ifile_package.h"
-#include "..\..\filesystem\standard_package.h"
-#include "..\..\filesystem\input_stream_wrapper.h"
-#include "..\..\util\Debug_MemoryManager.h"
+#include "IStorm3D_Logger.h"
+#include "../../filesystem/file_package_manager.h"
+#include "../../filesystem/ifile_package.h"
+#include "../../filesystem/standard_package.h"
+#include "../../filesystem/input_stream_wrapper.h"
+#include "../../util/Debug_MemoryManager.h"
 
 // HACK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#include "..\..\system\Logger.h"
+#include "../../system/Logger.h"
 
 using namespace frozenbyte;
 
@@ -333,35 +341,8 @@ bool Storm3D::SetFullScreenMode(int width,int height,int bpp)
 		MessageBox(NULL,s,"Selected mode",0);
 	}
 
-	// Create window class
-	WNDCLASS window_class={0,RenderWindow_MessageProc,0,0,GetModuleHandle(NULL),
-                           LoadIcon(GetModuleHandle(NULL),NULL/*MAKEINTRESOURCE(IDI_MAIN_ICON)*/),
-                           /*LoadCursor(NULL,IDC_ARROW)*/NULL,
-                           //(HBRUSH)GetStockObject(WHITE_BRUSH),
-						   0,
-                           NULL,application_shortname};
-
-	// Register window class
-    RegisterClass(&window_class);
-
-	// Set the window's initial style
-	//DWORD winstyle=WS_POPUP|WS_THICKFRAME|WS_VISIBLE;
-	DWORD winstyle=WS_POPUP|WS_VISIBLE;
-
-	// Set the window's initial size
-	RECT rc;
-	SetRect(&rc,0,0,mode->Width,mode->Height);
-	AdjustWindowRect(&rc,winstyle,TRUE);
-
-	// Create the render window
-	window_handle=CreateWindow(application_shortname,application_name,winstyle,
-		CW_USEDEFAULT, CW_USEDEFAULT,(rc.right-rc.left),(rc.bottom-rc.top),0,
-		NULL,window_class.hInstance,0);
-
-	// Show the window
-	ShowWindow(window_handle,SW_SHOWDEFAULT);
-	UpdateWindow(window_handle);
-	SetForegroundWindow(window_handle);
+	SDL_SetVideoMode(mode->Width, mode->Height, GetDisplayModeBPP(*mode), SDL_FULLSCREEN);
+	window_handle = GetActiveWindow();
 
     // Set up the presentation parameters
     //D3DPRESENT_PARAMETERS pp; 
@@ -506,42 +487,9 @@ bool Storm3D::SetWindowedMode(int width,int height,bool titlebar)
 		MessageBox(NULL,s,"Selected mode",0);
 	}
 
-	// Create window class
-	WNDCLASS window_class={0,RenderWindow_MessageProc,0,0,GetModuleHandle(NULL),
-                           LoadIcon(GetModuleHandle(NULL),NULL/*MAKEINTRESOURCE(IDI_MAIN_ICON)*/),
-                           /*LoadCursor(NULL,IDC_ARROW)*/NULL,
-                           /*(HBRUSH)GetStockObject(WHITE_BRUSH)*/ 0,
-                           NULL,application_shortname};
-
-	// Register window class
-    RegisterClass(&window_class);
-
-	// Set the window's initial style
-	//DWORD winstyle=WS_POPUP|WS_CAPTION|WS_THICKFRAME|WS_MINIMIZEBOX|WS_VISIBLE;
-	//DWORD winstyle=WS_POPUP|WS_THICKFRAME|WS_VISIBLE;
-	DWORD winstyle=WS_POPUP|WS_VISIBLE;
-	if (titlebar)
-	{
-		winstyle = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
-	}
-
-	// Set the window's initial size
-	RECT rc;
-	SetRect(&rc,0,0,width,height);
-	AdjustWindowRect(&rc,winstyle,TRUE);
-
-	// Create the render window
-	//window_handle=CreateWindow(application_shortname,application_name,winstyle,
-	//	CW_USEDEFAULT, CW_USEDEFAULT, (rc.right-rc.left),0 (rc.bottom-rc.top),0,
-	//	NULL,window_class.hInstance,0);
-	window_handle=CreateWindow(application_shortname,application_name,winstyle,
-		0, 0, (rc.right-rc.left),(rc.bottom-rc.top),0,
-		NULL,window_class.hInstance,0);
-
-	// Show the window
-	ShowWindow(window_handle,SW_SHOWDEFAULT);
-	UpdateWindow(window_handle);
-	SetForegroundWindow(window_handle);
+	SDL_SetVideoMode(width, height, GetDisplayModeBPP(desktopmode), 0);
+	SDL_WM_SetCaption(application_name, NULL);
+	window_handle = GetActiveWindow();
 
     // Set up the presentation parameters
     //D3DPRESENT_PARAMETERS pp; 
@@ -648,7 +596,7 @@ bool Storm3D::SetWindowedMode(int width,int height,bool titlebar)
 	return true;
 }
 
-bool Storm3D::SetWindowedMode(HWND hwnd, bool disableBuffers = false)
+bool Storm3D::SetWindowedMode(bool disableBuffers = false)
 {
 	destroy_window = false;
 
@@ -664,9 +612,9 @@ bool Storm3D::SetWindowedMode(HWND hwnd, bool disableBuffers = false)
 	D3DFORMAT DSFormat=GetDSBufferModeForDisplayMode(active_adapter,desktopmode);
 	support_stencil=GetDSModeStencilSupport(DSFormat);
 
-	window_handle = hwnd;
+	window_handle = GetActiveWindow();
 	RECT window_rect = { 0 };
-	GetClientRect(hwnd, &window_rect);
+	GetClientRect(window_handle, &window_rect);
 	int width = window_rect.right;
 	int height = window_rect.bottom;
 
@@ -807,22 +755,22 @@ void Storm3D::SetReflectionQuality(int quality)
 // Storm3D::Storm3D
 //------------------------------------------------------------------
 Storm3D::Storm3D(bool _no_info, filesystem::FilePackageManager *fileManager, IStorm3D_Logger *logger_) : 
-	D3D(NULL),
-	D3DDevice(NULL),
 	logger(logger_),
-	adapters(NULL),
-	active_adapter(D3DADAPTER_DEFAULT),
 	active_material((Storm3D_Material*)1),	// NULL is not right!
 	active_mesh(NULL),
+	adapters(NULL),
+	active_adapter(D3DADAPTER_DEFAULT),
+	destroy_window(true),
+	D3D(NULL),
+	D3DDevice(NULL),
+	textureLODLevel(0),
 	bbuf_orig(NULL),
 	zbuf_orig(NULL),
-	textureLODLevel(0),
 	no_info(_no_info),
 	application_name(NULL),
 	application_shortname(NULL),
-	allocated_meshes(0),
 	allocated_models(0),
-
+	allocated_meshes(0),
 	shadow_quality(100),
 	fake_shadow_quality(100),
 	lighting_quality(100),
@@ -830,18 +778,17 @@ Storm3D::Storm3D(bool _no_info, filesystem::FilePackageManager *fileManager, ISt
 	enable_glow(false),
 	enable_distortion(false),
 	high_quality_textures(true),
+	downscale_videos(false),
+	highcolorrange_videos(true),
+	use_reference_driver(false),
+	enableReflection(false),
+	halfReflection(false),
+	reflectionQuality(0),
 	proceduralManager(*this),
 	needValueTargets(false),
 	antialiasing_level(0),
-	downscale_videos(false),
-	highcolorrange_videos(true),
-	destroy_window(true),
 	allocate_procedural_target(true),
-	force_reset(false),
-	halfReflection(false),
-	enableReflection(false),
-	use_reference_driver(false),
-	reflectionQuality(0)
+	force_reset(false)
 { 
 	if(fileManager)
 		filesystem::FilePackageManager::setInstancePtr(fileManager);
@@ -876,8 +823,12 @@ Storm3D::Storm3D(bool _no_info, filesystem::FilePackageManager *fileManager, ISt
 	timeFactor = 1.0f;
 	gammaPeakEnabled = false;
 	SetApplicationName("Storm3D", "Storm3D v2.0 - Render Window");
+
+#ifdef NVPERFSDK
+	NVPMInit();
+	NVPMAddCounterByName("GPU Bottleneck");
+#endif
 }
-	
 
 
 //------------------------------------------------------------------
@@ -885,6 +836,10 @@ Storm3D::Storm3D(bool _no_info, filesystem::FilePackageManager *fileManager, ISt
 //------------------------------------------------------------------
 Storm3D::~Storm3D()
 {
+#ifdef NVPERFSDK
+	NVPMShutdown();
+#endif
+
 	// Delete iterators
 	delete ITTexture;
 	delete ITMaterial;
@@ -931,6 +886,9 @@ Storm3D::~Storm3D()
 	// Delete shader manager
 	delete Storm3D_ShaderManager::GetSingleton();
 
+	proceduralManager.reset();
+
+	// May now leak memory, but otherwise crashes on Windows
 	while(textures.begin()!=textures.end())
 	{
 		delete (*textures.begin());
@@ -967,8 +925,11 @@ Storm3D::~Storm3D()
 
 
 // Few usefull macros
+#ifndef D3DSHADER_VERSION_MAJOR
 #define D3DSHADER_VERSION_MAJOR(_Version) (((_Version)>>8)&0xFF)
 #define D3DSHADER_VERSION_MINOR(_Version) (((_Version)>>0)&0xFF)
+#endif
+
 
 void Storm3D::createRenderTargets()
 {
@@ -1384,6 +1345,7 @@ D3DFORMAT Storm3D::GetDSBufferModeForDisplayMode(int adapter,D3DDISPLAYMODE &mod
 		case D3DFMT_X8R8G8B8: moud=D3DFMT_D32;break;
 		case D3DFMT_R5G6B5: moud=D3DFMT_D16;break;
 		case D3DFMT_X1R5G5B5: moud=D3DFMT_D16;break;
+		default: break;
 	}
 
 	switch (moud)
@@ -1505,6 +1467,7 @@ D3DFORMAT Storm3D::GetDSBufferModeForDisplayMode(int adapter,D3DDISPLAYMODE &mod
 				if(SUCCEEDED(D3D->CheckDepthStencilMatch(adapter,D3DDEVTYPE_HAL,
 					mode.Format,mode.Format,D3DFMT_D15S1))) return D3DFMT_D15S1;
 			}
+		default: break;
 	}
 
 	// No compatible modes found
@@ -1528,6 +1491,7 @@ int Storm3D::GetDisplayModeBPP(D3DDISPLAYMODE &mode)
 		case D3DFMT_R5G6B5: return 16;
 		case D3DFMT_X1R5G5B5: return 16;
 		case D3DFMT_A1R5G5B5: return 16;
+		default: break;
 	}
 
 	// fail (mode cannot be identified)
@@ -1551,6 +1515,7 @@ int Storm3D::GetDSModeBPP(D3DFORMAT &form)
 		case D3DFMT_D16: return 16;
 		case D3DFMT_D24X8: return 24;
 		case D3DFMT_D24X4S4: return 24;
+		default: break;
 	}
 
 	// fail (mode cannot be identified)
@@ -1574,6 +1539,7 @@ bool Storm3D::GetDSModeStencilSupport(D3DFORMAT &form)
 		case D3DFMT_D16: return false;
 		case D3DFMT_D24X8: return false;
 		case D3DFMT_D24X4S4: return true;
+		default: break;
 	}
 
 	// fail (mode cannot be identified)
@@ -2195,26 +2161,6 @@ void Storm3D::Empty()
 
 
 //------------------------------------------------------------------
-// Storm3D::GetRenderWindow
-//------------------------------------------------------------------
-HWND Storm3D::GetRenderWindow()
-{
-	return window_handle;
-}
-
-
-
-//------------------------------------------------------------------
-// Storm3D::SetUserWindowMessageProc
-//------------------------------------------------------------------
-void Storm3D::SetUserWindowMessageProc(LRESULT (WINAPI *User_MsgProc)(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam))
-{
-	User_MessageProc=User_MsgProc;
-}
-
-
-
-//------------------------------------------------------------------
 // Storm3D::GetCurrentDisplayMode
 //------------------------------------------------------------------
 Storm3D_SurfaceInfo Storm3D::GetCurrentDisplayMode()
@@ -2445,7 +2391,7 @@ bool Storm3D::SetRenderTarget(Storm3D_Texture *newtarget,int map)
 	{
 		if (bbuf_orig)
 		{
-			HRESULT hr = D3DDevice->SetRenderTarget(0, bbuf_orig);
+			D3DDevice->SetRenderTarget(0, bbuf_orig);
 			D3DDevice->SetDepthStencilSurface(zbuf_orig);
 			SAFE_RELEASE(bbuf_orig);	// Sets bbuf_orig to NULL
 			SAFE_RELEASE(zbuf_orig);	// Sets zbuf_orig to NULL
@@ -2455,7 +2401,7 @@ bool Storm3D::SetRenderTarget(Storm3D_Texture *newtarget,int map)
 		// Set viewport
 		viewport_size=screen_size;
 		D3DVIEWPORT9 viewData={0,0,screen_size.width,screen_size.height,0.0f,1.0f};
-		HRESULT hr=D3DDevice->SetViewport(&viewData);
+		D3DDevice->SetViewport(&viewData);
 
 		// Everything went ok
 		return true;

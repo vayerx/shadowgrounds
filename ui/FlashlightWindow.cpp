@@ -95,19 +95,25 @@ REGISTER_COMBATSUBWINDOW( FlashlightWindow );
 
 	void FlashlightWindow::hide(int fadeTime)
 	{
+    /*
 		if(fadeTime)
 			win->StartEffect(OGUI_WINDOW_EFFECT_FADEOUT, fadeTime);
 		else
 			win->Hide();
+    */
+    win->Hide();
 	}
 
 
 	void FlashlightWindow::show(int fadeTime)
 	{
+    /*
 		if(fadeTime)
 			win->StartEffect(OGUI_WINDOW_EFFECT_FADEIN, fadeTime);
 
 		win->Show();
+    */
+    win->Show();
 	}
 
 

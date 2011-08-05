@@ -12,7 +12,7 @@
 namespace game
 {
 
-	extern char *hitChainName[HITCHAIN_AMOUNT];
+	extern const char *hitChainName[HITCHAIN_AMOUNT];
 
 	class Bullet : public PartType
 	{
@@ -38,7 +38,8 @@ namespace game
 		Bullet(int id);
 		virtual ~Bullet();
 
-		virtual bool setSub(char *key);
+		virtual bool setSub(const char *key);
+		// FIXME: making key const breaks stuff, WHY?
 		virtual bool setData(char *key, char *value);
 
 		FLYPATH getFlyPath();

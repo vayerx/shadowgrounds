@@ -148,7 +148,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../storm/include,../storm/keyb3,."
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;FROZENBYTE_DEBUG_MEMORY"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
@@ -177,8 +177,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dinput8.lib dxguid.lib winmm.lib"
-				OutputFile="Debug/survivor.exe"
+				AdditionalDependencies="dinput8.lib dxguid.lib winmm.lib sdl.lib SDLmain.lib user32.lib Comdlg32.lib Gdi32.lib"
+				OutputFile="$(OutDir)/disposable.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories=".\..\storm\lib"
@@ -317,7 +317,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="."
+			OutputDirectory="C:\Program Files\Shadowgrounds Survivor"
 			IntermediateDirectory=".\Release"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
@@ -383,12 +383,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dinput8.lib dxguid.lib winmm.lib sdl.lib SDLmain.lib sdl_sound.lib user32.lib Comdlg32.lib Gdi32.lib"
-				OutputFile="Release/survivor.exe"
+				AdditionalDependencies="dinput8.lib dxguid.lib winmm.lib sdl.lib SDLmain.lib user32.lib Comdlg32.lib Gdi32.lib"
+				OutputFile="$(OutDir)/survivor.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../storm/lib;.\..\storm\keyb3\Release"
-				IgnoreDefaultLibraryNames="libci.lib, libc.lib,stlport_vc6_static.lib"
+				IgnoreDefaultLibraryNames="libci.lib, libc.lib,stlport_vc6_static.lib,msvcrtd.lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="./disposable.pdb"
 				SubSystem="2"
@@ -444,7 +444,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ScrambledZipPackage.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ScrambledZipPackage.h"
+				>
+			</File>
+			<File
 				RelativePath=".\survivor.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SurvivorConfig.h"
 				>
 			</File>
 			<File
@@ -453,6 +465,10 @@
 			</File>
 			<File
 				RelativePath=".\ui_credits_text.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\game\userdata.cpp"
 				>
 			</File>
 			<File
@@ -717,10 +733,6 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\game\BlockedHeightAreaFillMapper.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\game\BonusManager.cpp"
 					>
 				</File>
@@ -856,10 +868,6 @@
 							ForcedIncludeFiles=""
 						/>
 					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\game\areas\CameraArea.cpp"
-					>
 				</File>
 				<File
 					RelativePath="..\game\Character.cpp"
@@ -1212,10 +1220,6 @@
 							ForcedIncludeFiles=""
 						/>
 					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\game\areas\GameAreaManager.cpp"
-					>
 				</File>
 				<File
 					RelativePath="..\game\GameConfigs.cpp"
@@ -1732,10 +1736,6 @@
 							ForcedIncludeFiles=""
 						/>
 					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\game\GameUEOHManager.cpp"
-					>
 				</File>
 				<File
 					RelativePath="..\game\GameUI.cpp"
@@ -2430,10 +2430,6 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\game\areas\PrioritizedWeightedQuadArea.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\game\ProgressBar.cpp"
 					>
 					<FileConfiguration
@@ -2653,10 +2649,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\game\areas\QuadArea.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\game\ReconChecker.cpp"
 					>
 					<FileConfiguration
@@ -2838,10 +2830,6 @@
 				</File>
 				<File
 					RelativePath="..\game\UnifiedHandleManager.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\editor\UniqueEditorObjectHandleManager.cpp"
 					>
 				</File>
 				<File
@@ -3101,10 +3089,6 @@
 							ForcedIncludeFiles=""
 						/>
 					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\game\physics\UnitPhysicsObject.cpp"
-					>
 				</File>
 				<File
 					RelativePath="..\game\UnitPhysicsUpdater.cpp"
@@ -3496,10 +3480,6 @@
 							ForcedIncludeFiles=""
 						/>
 					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\game\UnreachableAreaFillMapper.cpp"
-					>
 				</File>
 				<File
 					RelativePath="..\game\UpgradeManager.cpp"
@@ -4545,10 +4525,6 @@
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath="..\game\scripting\PhysicsScripting.cpp"
-						>
-					</File>
-					<File
 						RelativePath="..\game\scripting\PositionScripting.cpp"
 						>
 						<FileConfiguration
@@ -4676,10 +4652,6 @@
 								ForcedIncludeFiles=""
 							/>
 						</FileConfiguration>
-					</File>
-					<File
-						RelativePath="..\game\scripting\TerrainObjectScripting.cpp"
-						>
 					</File>
 					<File
 						RelativePath="..\game\scripting\TrackingScripting.cpp"
@@ -5879,14 +5851,6 @@
 						>
 					</File>
 					<File
-						RelativePath="..\game\physics\ControllerJoint.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\game\physics\ConvexCompoundPhysicsObject.cpp"
-						>
-					</File>
-					<File
 						RelativePath="..\game\physics\ConvexPhysicsObject.cpp"
 						>
 					</File>
@@ -6004,26 +5968,6 @@
 					</File>
 					<File
 						RelativePath="..\game\tngaming.h"
-						>
-					</File>
-				</Filter>
-				<Filter
-					Name="sync"
-					>
-					<File
-						RelativePath="..\game\sync\GameSyncerManager.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\game\sync\GameSyncerRegistrar.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\game\sync\commands\InvalidCommand.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\game\sync\SyncCommandManager.cpp"
 						>
 					</File>
 				</Filter>
@@ -10542,23 +10486,11 @@
 					Name="debug_visualizers"
 					>
 					<File
-						RelativePath="..\ui\DebugCameraAreaVisualizer.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\ui\DebugLightVisualizer.cpp"
-						>
-					</File>
-					<File
 						RelativePath="..\ui\DebugMapVisualizer.cpp"
 						>
 					</File>
 					<File
 						RelativePath="..\ui\DebugProjectileVisualizer.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\ui\DebugTerrainObjectVisualizer.cpp"
 						>
 					</File>
 					<File
@@ -10705,8 +10637,47 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\util\assert_wrapper.cpp"
+					RelativePath="..\util\assert.cpp"
 					>
+					<FileConfiguration
+						Name="Profile|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalIncludeDirectories=""
+							PreprocessorDefinitions=""
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalIncludeDirectories=""
+							PreprocessorDefinitions=""
+							ForcedIncludeFiles=""
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Test|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalIncludeDirectories=""
+							PreprocessorDefinitions=""
+							ForcedIncludeFiles=""
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							AdditionalIncludeDirectories=""
+							PreprocessorDefinitions=""
+							ForcedIncludeFiles=""
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\util\BlinkerManager.cpp"
@@ -11192,10 +11163,6 @@
 							ForcedIncludeFiles=""
 						/>
 					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\util\scriptparser\DynamicTypeVariable.cpp"
-					>
 				</File>
 				<File
 					RelativePath="..\util\FBCopyFile.cpp"
@@ -11841,10 +11808,6 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\util\scriptparser\scriptlexer.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\util\ScriptManager.cpp"
 					>
 					<FileConfiguration
@@ -11886,10 +11849,6 @@
 							ForcedIncludeFiles=""
 						/>
 					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\util\scriptparser\scriptparser.cpp"
-					>
 				</File>
 				<File
 					RelativePath="..\util\ScriptProcess.cpp"
@@ -12021,10 +11980,6 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\util\SimpleStringPool.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\util\SoundMaterialParser.cpp"
 					>
 				</File>
@@ -12070,10 +12025,6 @@
 							ForcedIncludeFiles=""
 						/>
 					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\util\StringHash.cpp"
-					>
 				</File>
 				<File
 					RelativePath="..\util\StringUtil.cpp"
@@ -12835,6 +12786,50 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\system\windows\Logger.cpp"
+					>
+					<FileConfiguration
+						Name="Profile|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Test|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\system\Miscellaneous.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\system\SystemRandom.cpp"
 					>
 					<FileConfiguration
@@ -12960,6 +12955,46 @@
 							AdditionalIncludeDirectories=""
 							PreprocessorDefinitions=""
 							ForcedIncludeFiles=""
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\system\windows\Timer.cpp"
+					>
+					<FileConfiguration
+						Name="Profile|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Test|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 						/>
 					</FileConfiguration>
 				</File>
@@ -13240,47 +13275,8 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\sound\SoundLib.cpp"
+					RelativePath="..\sound\fmod\SoundLib.cpp"
 					>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Test|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\sound\SoundLooper.cpp"
@@ -13462,10 +13458,6 @@
 			<Filter
 				Name="convert"
 				>
-				<File
-					RelativePath="..\convert\int64_to_hex.cpp"
-					>
-				</File>
 				<File
 					RelativePath="..\convert\str2int.cpp"
 					>
@@ -14098,10 +14090,6 @@
 						/>
 					</FileConfiguration>
 				</File>
-				<File
-					RelativePath="..\editor\ueoh_to_id_string.cpp"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="physics_ode"
@@ -14167,74 +14155,66 @@
 						/>
 					</FileConfiguration>
 				</File>
-			</Filter>
-			<Filter
-				Name="physics_physx"
-				>
-				<File
-					RelativePath="..\physics\actor_base.cpp"
+				<Filter
+					Name="physics_physx"
 					>
-				</File>
-				<File
-					RelativePath="..\physics\box_actor.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\physics\capsule_actor.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\physics\convex_actor.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\physics\convexcompound_actor.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\physics\cooker.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\physics\d6_joint.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\physics\file_stream.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\physics\fluid.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\physics\heightmap_actor.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\physics\joint_base.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\physics\physics_lib.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\physics\rack_actor.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\physics\spherical_joint.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\physics\static_mesh_actor.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\physics\visualizer.cpp"
-					>
-				</File>
+					<File
+						RelativePath="..\physics\actor_base.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\physics\box_actor.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\physics\capsule_actor.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\physics\convex_actor.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\physics\cooker.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\physics\file_stream.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\physics\fluid.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\physics\heightmap_actor.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\physics\joint_base.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\physics\physics_lib.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\physics\rack_actor.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\physics\spherical_joint.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\physics\static_mesh_actor.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\physics\visualizer.cpp"
+						>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="chat"

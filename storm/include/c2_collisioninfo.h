@@ -30,6 +30,8 @@ struct Storm3D_CollisionInfo
 
 	Storm3D_CollisionInfo() 
 	:	hit(false), 
+		position(0.0f),
+		plane_normal(0.0f),
 		range(static_cast<float>(HUGE)),
 		model(0),
 		object(0),

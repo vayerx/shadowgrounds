@@ -4,9 +4,9 @@
 #include "ParticleCollision.h"
 #include "../game/GameMap.h"
 #include "../game/GameScene.h"
-#include "../game/AreaMasks.h"
+#include "../game/areamasks.h"
 #include "../util/AreaMap.h"
-#include <istorm3d_scene.h>
+#include <IStorm3D_Scene.h>
 
 using namespace util;
 using namespace game;

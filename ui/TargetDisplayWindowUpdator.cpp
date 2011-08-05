@@ -1,6 +1,8 @@
 
 #include "precompiled.h"
 
+#include <sstream>
+
 #include "TargetDisplayWindowUpdator.h"
 #include "TargetDisplayButtonManager.h"
 #include "TargetDisplayWindow.h"
@@ -42,7 +44,7 @@ public:
 	}
 };
 
-TargetDisplayWindowUpdatorRegisterer* temp_static_haxoring_constructing_thing = new TargetDisplayWindowUpdatorRegisterer( "TargetDisplayWindow" );
+TargetDisplayWindowUpdatorRegisterer* __attribute__((used)) temp_static_haxoring_constructing_thing = new TargetDisplayWindowUpdatorRegisterer( "TargetDisplayWindow" );
 
 
 }
@@ -256,7 +258,7 @@ void TargetDisplayWindowUpdator::show( int time )
 
 void TargetDisplayWindowUpdator::update()
 {
-	TargetDisplayButtonManager *manager = window->getManager();
+	// TargetDisplayButtonManager *manager = window->getManager();
 	// rect tmp = getTargetScreenRect( game );
 	// window->setRect( 0, tmp.x, tmp.y, tmp.w, tmp.h );
 	
@@ -315,7 +317,7 @@ void TargetDisplayWindowUpdator::update()
 					UnitType *ut = unit->getUnitType();
 
 					IStorm3D_Model *m = unit->getVisualObject()->getStormModel();
-					Rect rect;
+					Rect rect = {0, 0, 0, 0};
 
 					// two rects, one for highlight and another for target lock rect
 					for(int i = 0; i < 2; i++)

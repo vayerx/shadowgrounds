@@ -1,6 +1,9 @@
 
 #include "precompiled.h"
+#include <stdlib.h>
+#include <stdio.h>
 
+#include "../system/Logger.h"
 #include "Preprocessor.h"
 #include "hiddencommand.h"
 

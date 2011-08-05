@@ -1,6 +1,12 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
+
+#ifdef NVPERFSDK
+#include "NVPerfSDK.h"
+#endif
 
 //------------------------------------------------------------------
 // Includes
@@ -16,14 +22,14 @@
 #include "storm3d_model.h"
 #include "storm3d_texture.h"
 #include "storm3d_particle.h"
-#include "storm3d_structs.h"
+#include "Storm3D_structs.h"
 #include "storm3d_scene.h"
 #include "storm3d_terrain.h"
 #include "storm3d_terrain_renderer.h"
 #include "storm3d_terrain_models.h"
 #include "storm3d_video_player.h"
-#include <istorm3d_logger.h>
-#include "iterator.h"
+#include <IStorm3D_Logger.h>
+#include "Iterator.h"
 #include "VertexFormats.h"
 #include <boost/lexical_cast.hpp>
 #include <d3dx9shape.h>
@@ -32,7 +38,7 @@
 #include "Storm3D_Bone.h"
 #include "Storm3D_ShaderManager.h"
 #include "Storm3D_Line.h"
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 #ifdef WORLD_FOLDING_ENABLED
 #include "WorldFold.h"
@@ -61,18 +67,18 @@ Mirror mirrors[MAX_MIRRORS];
 //------------------------------------------------------------------
 Storm3D_Scene::Storm3D_Scene(Storm3D *s2) :
 	Storm3D2(s2),
-	camera(Storm3D2),
-	fog_active(false),
+	bg_model(NULL),
 	ambient(0,0,0),
 	bgcolor(0,0,0),
+	fog_active(false),
 	anisotropic_level(0),
-	bg_model(NULL),
 	renderlist_size(10),
 	renderlistmir_size(10),
 	time(0),
 	scene_paused(false),
 	draw_bones(false),
-	basic_shader(*s2->GetD3DDevice())
+	basic_shader(*s2->GetD3DDevice()),
+	camera(Storm3D2)
 {
 	basic_shader.createBasicBoneLightingShader();
 	// Create iterators
@@ -87,6 +93,11 @@ Storm3D_Scene::Storm3D_Scene(Storm3D *s2) :
 	renderlist_points=new float[renderlist_size];
 	renderlistmir_obj=new PStorm3D_Model_Object[renderlistmir_size];
 	renderlistmir_points=new float[renderlistmir_size];
+
+#ifdef NVPERFSDK
+	for( int i = 0; i < 9; i++ )
+		bottlenecks[i] = 0;
+#endif
 
 #ifdef WORLD_FOLDING_ENABLED
 	static bool storm_scene_inited_world_fold = false;
@@ -136,6 +147,14 @@ Storm3D_Scene::~Storm3D_Scene()
 
 	// Delete stuff
 	delete particlesystem;
+#ifdef NVPERFSDK
+	char *bname = new char[50];
+	for( int i = 1; i < 9; i++ )
+	{
+		NVPMGetGPUBottleneckName(i, bname);
+		fprintf(stderr, "%i: %d \n", i, bottlenecks[i]);
+	}
+#endif
 }
 
 
@@ -143,7 +162,7 @@ Storm3D_Scene::~Storm3D_Scene()
 //------------------------------------------------------------------
 // Storm3D_Scene::RenderSceneWithParams
 //------------------------------------------------------------------
-void Storm3D_Scene::RenderSceneWithParams(bool flip,bool disable_hsr, bool update_time, bool render_mirrored)
+void Storm3D_Scene::RenderSceneWithParams(bool flip,bool disable_hsr, bool update_time, bool render_mirrored, IStorm3D_Texture *target)
 {
 	storm3d_dip_calls = 0;
 
@@ -218,47 +237,11 @@ void Storm3D_Scene::RenderSceneWithParams(bool flip,bool disable_hsr, bool updat
 	Storm3D2->D3DDevice->SetRenderState(D3DRS_NORMALIZENORMALS,FALSE);
 	Storm3D2->D3DDevice->SetRenderState(D3DRS_LOCALVIEWER,TRUE);
 
-	/*
-	// Basic stage states
-	if (anisotropic_level>1)
-	{
-		for (int i=0;i<4;i++)
-		{
-			//float fBias=-1.0f;
-			//Storm3D2->D3DDevice->SetTextureStageState(i,D3DTSS_MIPMAPLODBIAS,*((LPDWORD)(&fBias)));
-		}
-	}
-	else
-	{
-		for (int i=0;i<4;i++)
-		{
-			//float fBias=-1.0f;
-			//Storm3D2->D3DDevice->SetTextureStageState(i,D3DTSS_MIPMAPLODBIAS,*((LPDWORD)(&fBias)));
-		}
-
-		float bias = 0.f;
-		if(anisotropic_level)
-			bias = -0.5f;
-
-		int bias = 0;
-		if(anisotropic_level)
-			bias = -1;
-
-		//Storm3D2->D3DDevice->SetSamplerState(i, D3DSAMP_MIPMAPLODBIAS,*((LPDWORD)(&bias)));
-		Storm3D2->D3DDevice->SetSamplerState(i, D3DSAMP_MIPMAPLODBIAS, bias);
-
-	}
-	*/
 
 	frozenbyte::storm::setCurrentAnisotrophy(anisotropic_level);
 	frozenbyte::storm::applyMaxAnisotrophy(*Storm3D2->D3DDevice, Storm3D2->adapters[Storm3D2->active_adapter].multitex_layers);
 	frozenbyte::storm::enableMinMagFiltering(*Storm3D2->D3DDevice, 0, Storm3D2->adapters[Storm3D2->active_adapter].multitex_layers, true);
 	frozenbyte::storm::enableMipFiltering(*Storm3D2->D3DDevice, 0, Storm3D2->adapters[Storm3D2->active_adapter].multitex_layers, true);
-
-	// Renderlist stuff
-	int list_pos=0;
-	int mirlistpos=0;
-	int shadlistpos=0;
 
 	// Clear renderlists
 	for (int i=0;i<renderlist_size;i++)
@@ -446,11 +429,53 @@ void Storm3D_Scene::RenderSceneWithParams(bool flip,bool disable_hsr, bool updat
 		}
 	}
 
+	CComPtr<IDirect3DSurface9> originalDepthBuffer;
+	Storm3D2->D3DDevice->GetDepthStencilSurface(&originalDepthBuffer);
+
+
 	// Start REAL scene rendering
+#ifdef NVPERFSDK
+	if (flip) {
+		int nCount = 0;
+		NVPMBeginExperiment(&nCount);
+		if (nCount > 0) {
+			fprintf(stderr, "begin experiment, %d cycles\n", nCount);
+			for (int i = 0; i < nCount; i++ ) {
+				NVPMBeginPass(i);
+				renderRealScene(flip, render_mirrored);
+				NVPMEndPass(i);
+			}
+			NVPMEndExperiment();
+
+			UINT64 value = 0, cycles = 0;
+			char *bname = new char[50];
+			NVPMGetCounterValueByName("GPU Bottleneck", 0, &value, &cycles);
+			NVPMGetGPUBottleneckName(value, bname);
+			bottlenecks[value]++;
+			fprintf(stderr, "GPU Bottleneck value: %lu cycles: %lu\n", value, cycles);
+			fprintf(stderr, "Bottleneck : %s\n", bname);
+			delete[] bname;
+		} else {
+			renderRealScene(flip, render_mirrored);
+		}
+	} else {
+		renderRealScene(flip, render_mirrored);
+	}
+#else
+	renderRealScene(flip, render_mirrored);
+#endif
+
+
+	// Present the scene (flip)
+	if (flip)
+		Storm3D2->D3DDevice->Present(NULL,NULL,NULL,NULL);
+	else if(!render_mirrored)
+		Storm3D2->D3DDevice->SetDepthStencilSurface(originalDepthBuffer);
+}
+
+void Storm3D_Scene::renderRealScene(bool flip, bool render_mirrored) {
 	Storm3D2->D3DDevice->BeginScene();
 	Storm3D2->D3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
-
-	CComPtr<IDirect3DSurface9> originalDepthBuffer;
 
 	if(!flip && !render_mirrored)
 	{
@@ -459,7 +484,6 @@ void Storm3D_Scene::RenderSceneWithParams(bool flip,bool disable_hsr, bool updat
 			clearFlag |= D3DCLEAR_STENCIL;
 
 		Storm3D2->D3DDevice->SetDepthStencilSurface(Storm3D2->getDepthTarget());
-		Storm3D2->D3DDevice->GetDepthStencilSurface(&originalDepthBuffer);
 
 		DWORD color = bgcolor.GetAsD3DCompatibleARGB() & 0x00FFFFFF;
 		Storm3D2->D3DDevice->Clear(0,0,D3DCLEAR_TARGET | clearFlag, color, 1, 0);
@@ -682,42 +706,30 @@ void Storm3D_Scene::RenderSceneWithParams(bool flip,bool disable_hsr, bool updat
 			if(alphaType == IStorm3D_Material::ATYPE_NONE)
 			{
 				device.SetRenderState(D3DRS_ALPHABLENDENABLE,FALSE);
-				device.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
 			}
 			else
 			{
-				// apparently, the alphatest was totally missing from this old fixed pipe renderer...
-				// which was a pain in the ass with the talking face rendering, thus trying this hacky fix...
-				// -- jpk
-				if(alphaType == IStorm3D_Material::ATYPE_USE_ALPHATEST)
-				{
-					device.SetRenderState(D3DRS_ALPHABLENDENABLE,FALSE);
-					device.SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
-					device.SetRenderState(D3DRS_ALPHAREF, 0x80);
-					device.SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
-				} else {
-					device.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+				device.SetRenderState(D3DRS_ALPHABLENDENABLE,TRUE);
 
-					if(alphaType == IStorm3D_Material::ATYPE_ADD)
-					{
-						device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);				
-						device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
-					}
-					else if(alphaType == IStorm3D_Material::ATYPE_MUL)
-					{
-						device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ZERO);
-						device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_SRCCOLOR);
-					}
-					else if(alphaType == IStorm3D_Material::ATYPE_USE_TRANSPARENCY)
-					{
-						device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-						device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-					}
-					else if(alphaType == IStorm3D_Material::ATYPE_USE_TEXTRANSPARENCY || renderlist_obj[i]->force_alpha > 0.0001f)
-					{
-						device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-						device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-					}
+				if(alphaType == IStorm3D_Material::ATYPE_ADD)
+				{
+					device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);				
+					device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+				}
+				else if(alphaType == IStorm3D_Material::ATYPE_MUL)
+				{
+					device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ZERO);
+					device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_SRCCOLOR);
+				}
+				else if(alphaType == IStorm3D_Material::ATYPE_USE_TRANSPARENCY)
+				{
+					device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+					device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+				}
+				else if(alphaType == IStorm3D_Material::ATYPE_USE_TEXTRANSPARENCY || renderlist_obj[i]->force_alpha > 0.0001f)
+				{
+					device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+					device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
 				}
 			}
 
@@ -786,8 +798,6 @@ void Storm3D_Scene::RenderSceneWithParams(bool flip,bool disable_hsr, bool updat
 		//renderlist_obj[i]->mesh->Render(this,false,renderlist_obj[i]); // always has a mesh!
 	}
 
-	Storm3D2->D3DDevice->SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-
 	//Storm3D2->D3DDevice->SetRenderState(D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_ALPHA | D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE);
 
 	Storm3D2->D3DDevice->SetTexture(0,0);
@@ -855,8 +865,8 @@ void Storm3D_Scene::RenderSceneWithParams(bool flip,bool disable_hsr, bool updat
 		//Storm3D2->D3DDevice->SetRenderState(D3DRS_CULLMODE,D3DCULL_NONE);
 		frozenbyte::storm::setCulling(*Storm3D2->D3DDevice, D3DCULL_NONE);
 
-		D3DMATRIX dm = { 0 };
-		dm._11 = dm._22 = dm._33 = dm._44 = 1;
+		D3DXMATRIX dm;
+		D3DXMatrixIdentity(&dm);
 		Storm3D2->D3DDevice->SetTransform(D3DTS_WORLD,&dm);
 
 		if(!depth_lines.empty())
@@ -883,8 +893,8 @@ void Storm3D_Scene::RenderSceneWithParams(bool flip,bool disable_hsr, bool updat
 	// Debug rendering
 	if(!debugTriangles.empty() || !debugLines.empty() || !debugPoints.empty())
 	{
-		D3DMATRIX dm = { 0 };
-		dm._11 = dm._22 = dm._33 = dm._44 = 1;
+		D3DXMATRIX dm;
+		D3DXMatrixIdentity(&dm);
 		Storm3D2->D3DDevice->SetTransform(D3DTS_WORLD,&dm);
 
 		int vertexAmount = (debugTriangles.size() * 3) + (debugLines.size() * 2) + (debugPoints.size());
@@ -893,7 +903,6 @@ void Storm3D_Scene::RenderSceneWithParams(bool flip,bool disable_hsr, bool updat
 		vertexBuffer.create(*Storm3D2->D3DDevice, vertexAmount, sizeof(VXFORMAT_PSD), true);
 		VXFORMAT_PSD *buffer = static_cast<VXFORMAT_PSD *> (vertexBuffer.lock());
 
-		int triangleOffset = 0;
 		for(unsigned int i = 0; i < debugTriangles.size(); ++i)
 		{
 			const Debug3 &d = debugTriangles[i];
@@ -973,8 +982,8 @@ void Storm3D_Scene::RenderSceneWithParams(bool flip,bool disable_hsr, bool updat
 	//		-- psd
 	if(draw_bones)
 	{
-		D3DMATRIX dm = { 0 };
-		dm._11 = dm._22 = dm._33 = dm._44 = 1;
+		D3DXMATRIX dm;
+		D3DXMatrixIdentity(&dm);
 		Storm3D2->D3DDevice->SetTransform(D3DTS_WORLD,&dm);
 
 		for(set<IStorm3D_Model *>::iterator mit=models.begin();mit!=models.end();++mit)
@@ -1085,8 +1094,6 @@ void Storm3D_Scene::RenderSceneWithParams(bool flip,bool disable_hsr, bool updat
 
 	Storm3D2->D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
 	Storm3D2->D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
-	//Storm3D2->D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
-	//Storm3D2->D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
 
 	frozenbyte::storm::enableMipFiltering(*Storm3D2->D3DDevice, 0, 0, false);
 
@@ -1126,13 +1133,8 @@ void Storm3D_Scene::RenderSceneWithParams(bool flip,bool disable_hsr, bool updat
 
 	// End REAL scene rendering
 	Storm3D2->D3DDevice->EndScene();
-
-	// Present the scene (flip)
-	if (flip)
-		Storm3D2->D3DDevice->Present(NULL,NULL,NULL,NULL);
-	else if(!render_mirrored)
-		Storm3D2->D3DDevice->SetDepthStencilSurface(originalDepthBuffer);
 }
+
 
 void Storm3D_Scene::RenderVideo(const char *fileName, IStorm3D_StreamBuilder *streamBuilder)
 {
@@ -1594,8 +1596,7 @@ int Storm3D_Scene::RenderScene(bool present)
 		++haxValue;
 
 		IStorm3D_Texture *target = Storm3D2->getReflectionTexture();
-		//if(target /*&& haxValue > 1*/) 
-		if(target && haxValue > 1) 
+		if(target /*&& haxValue > 1*/) 
 		{
 			haxValue = 0;
 
@@ -1617,7 +1618,6 @@ int Storm3D_Scene::RenderScene(bool present)
 				bool renderFakes = true;
 				bool renderFakeShadows = true;
 				bool renderSpotShadows = true;
-				bool renderParticleReflection = true;
 				bool renderParticles = true;
 
 				// ToDo: disable spots / cones as well

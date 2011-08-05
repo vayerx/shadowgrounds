@@ -1,8 +1,10 @@
 
 #include "precompiled.h"
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
 #pragma warning(disable:4786)
+#endif
 
 #include "Decoration.h"
 
@@ -13,7 +15,7 @@
 
 namespace ui
 {
-	char *decorEffectNames[DECORATION_MAX_EFFECTS + 1] =
+	const char *decorEffectNames[DECORATION_MAX_EFFECTS + 1] =
 	{
 		"_invalid_",
 		"wave_x",

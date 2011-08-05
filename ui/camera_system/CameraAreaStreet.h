@@ -1,3 +1,6 @@
+#ifndef CAMERAAREASTREET_H
+#define CAMERAAREASTREET_H
+
 #include "ICameraArea.h"
 #include <string>
 
@@ -90,3 +93,5 @@ public:
 };
 
 } // end of namespace ui
+
+#endif // CAMERAAREASTREET_H

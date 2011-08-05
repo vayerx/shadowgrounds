@@ -1,3 +1,6 @@
+#ifndef CAMERASYSTEM_H
+#define CAMERASYSTEM_H
+
 #include "ICameraSystem.h"
 #include "../../util/Dampers.h"
 
@@ -77,3 +80,5 @@ public:
 };
 
 } // end of namespace ui
+
+#endif // CAMERASYSTEM_H

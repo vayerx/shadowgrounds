@@ -3,8 +3,6 @@
 
 #include "box_actor.h"
 #include "NxPhysics.h"
-#include <vector>
-#include <stdio.h>
 
 namespace frozenbyte {
 namespace physics {
@@ -89,93 +87,6 @@ BoxActor::BoxActor(NxScene &scene, const VC3 &sizes, const VC3 &position, const 
 	this->scene = &scene;
 	init();
 }
-
-
-BoxActor::BoxActor(NxScene &scene, const std::string &shapes, const VC3 &position, bool ccd, float ccdMaxThickness)
-{
-	NxBodyDesc bodyDesc;
-	//bodyDesc.solverIterationCount = 2;
-
-	NxBoxShapeDesc boxes[64];
-	int numBoxes = 0;
-	
-	// parse shapes string, format:
-	// (sizeX,sizeY,sizeZ;posX,posY,posZ;rotX,rotY,rotZ),(sizeX,sizeY,sizeZ;posX,posY,posZ;rotX,rotY,rotZ)
-	std::string::size_type pos_start = 0;
-	std::string::size_type pos_end = 0;
-	while(pos_end + 1 < shapes.length())
-	{
-		// find ( )
-		pos_start = shapes.find('(', pos_end);
-		pos_end = shapes.find(')', pos_start);
-
-		// end of string
-		if(pos_start == std::string::npos && pos_end == std::string::npos)
-		{
-			break;
-		}
-		else if(pos_end == std::string::npos || pos_start == std::string::npos)
-		{
-#ifndef PROJECT_PARTICLE_EDITOR
-			Logger::getInstance()->error("BoxActor::BoxActor - parsing shape string failed: braces not properly closed");
-			Logger::getInstance()->error(shapes.c_str());
-#endif
-			break;
-		}
-
-		std::string data = shapes.substr(pos_start + 1, pos_end - pos_start - 1);
-
-		float sizeX,sizeY,sizeZ, posX,posY,posZ, rotX,rotY,rotZ;
-		if(sscanf(data.c_str(), "%f,%f,%f;%f,%f,%f;%f,%f,%f",
-			&sizeX,&sizeY,&sizeZ,&posX,&posY,&posZ,&rotX,&rotY,&rotZ) != 9)
-		{
-#ifndef PROJECT_PARTICLE_EDITOR
-			char str[256];
-			sprintf(str, "BoxActor::BoxActor - parsing shape string failed: data \"%s\" format not valid", data.c_str());
-			Logger::getInstance()->error(str);
-			Logger::getInstance()->error(shapes.c_str());
-#endif
-			break;
-		}
-
-		NxBoxShapeDesc &boxDesc = boxes[numBoxes++];
-		boxDesc.dimensions = NxVec3(sizeX,sizeY,sizeZ);
-		boxDesc.localPose.t.set(NxVec3(posX,posY,posZ));
-		NxMat33 mX,mZ;
-		mX.rotX(rotX * PI / 180.0f);
-		mZ.rotZ(rotZ * PI / 180.0f);
-		boxDesc.localPose.M.rotY(rotY * PI / 180.0f);
-		boxDesc.localPose.M *= mX;
-		boxDesc.localPose.M *= mZ;
-		
-		// CCD, but for thin objects only... --jpk
-		if (ccd && (sizeX*2 < ccdMaxThickness || sizeY*2 < ccdMaxThickness || sizeZ*2 < ccdMaxThickness))
-		{
-			VC3 ccdSizes(sizeX * 0.6f, sizeY * 0.6f, sizeZ * 0.6f);
-			boxDesc.ccdSkeleton = CreateCCDSkeleton(ccdSizes);
-			boxDesc.shapeFlags |= NX_SF_DYNAMIC_DYNAMIC_CCD;
-
-			// also, in this case, a minimal skin width too.
-			boxDesc.skinWidth = 0.002f;
-		}
-	}
-
-	NxActorDesc actorDesc;
-	actorDesc.body = &bodyDesc;
-	actorDesc.density = 10.f;
-	for(int i = 0; i < numBoxes; i++)
-		actorDesc.shapes.pushBack(&boxes[i]);
-	actorDesc.globalPose.t.set(NxVec3(position.x, position.y, position.z));
-
-	// !!!!!!!!!!!!!!
-	//actorDesc.managedHwSceneIndex = 1;
-
-	actor = scene.createActor(actorDesc);
-
-	this->scene = &scene;
-	init();
-}
-
 
 BoxActor::~BoxActor()
 {

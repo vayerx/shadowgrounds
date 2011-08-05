@@ -1,77 +1,25 @@
+#include <vector>
+#include <string>
+
 #include <istorm3d_streambuffer.h>
 #include "storm3d_videostreamer.h"
-#ifndef VIDEO_ENABLED
-
-struct Storm3D_VideoStreamer::Data
-{};
-Storm3D_VideoStreamer::Storm3D_VideoStreamer(Storm3D &storm, const char *fileName, IStorm3D_StreamBuilder *streamBuilder, bool loop, bool downscale, bool higherColorRange)
-{
-}
-Storm3D_VideoStreamer::~Storm3D_VideoStreamer()
-{
-}
-
-bool Storm3D_VideoStreamer::hasVideo() const
-{
-	return true;
-}
-
-bool Storm3D_VideoStreamer::hasEnded() const
-{
-	return true;
-}
-
-int Storm3D_VideoStreamer::getTime() const
-{
-	return 0;
-}
-
-bool Storm3D_VideoStreamer::isPlaying() const
-{
-	return false;
-}
-
-IStorm3D_Material *Storm3D_VideoStreamer::getMaterial()
-{
-	return 0;
-}
-
-void Storm3D_VideoStreamer::setPosition(const VC2 &position, const VC2 &size)
-{
-}
-
-void Storm3D_VideoStreamer::setAlpha(float alpha)
-{
-}
-
-void Storm3D_VideoStreamer::update()
-{
-}
-
-void Storm3D_VideoStreamer::render(IStorm3D_Scene *scene)
-{
-}
-
-#else
-
 #include "storm3d.h"
 #include "storm3d_texture.h"
 #include "storm3d_material.h"
 #include "storm3d_scene.h"
 #include "storm3d_string_util.h"
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 //#pragma pack(8)
 
 #include <windows.h>
 #include <atlbase.h>
-#include <vector>
 #include <boost/shared_ptr.hpp>
-#include <string>
 
+#ifndef __GNUC__
 #include <wmsdkidl.h>
-#include "wmvsync\rostream.h"
-#include "wmvsync\reader.h"
+#include "wmvsync/rostream.h"
+#include "wmvsync/reader.h"
 #pragma comment(lib, "wmvcore.lib")
 
 #if defined(DEBUG) || defined(_DEBUG)
@@ -475,7 +423,6 @@ void Storm3D_VideoStreamer::update()
 	int testFrame = data->test.frameIndex;
 	LeaveCriticalSection(&data->test.lock);
 
-	/*
 	if(!data->test.playing && data->lastFrame == testFrame)
 	{
 		if(data->test.streamBuffer)
@@ -492,53 +439,7 @@ void Storm3D_VideoStreamer::update()
 		else
 			data->test.Start();
 	}
-	*/
 
-	/*
-	if(!data->test.playing && data->lastFrame == testFrame)
-	{
-		if(data->test.streamBuffer)
-		{
-			if(data->test.streamBuffer)
-				data->test.streamBuffer->deactivate();
-		}
-
-		if(!data->looping)
-		{
-			data->test.Stop();
-			data->finished = true;
-		}
-		else
-			data->test.Start();
-	}
-	*/
-	if(data->looping)
-	{
-		if(!data->test.playing)
-		{
-			if(data->test.streamBuffer)
-			{
-				if(data->test.streamBuffer)
-					data->test.streamBuffer->deactivate();
-			}
-
-			data->test.Start();
-		}
-	}
-	else
-	{
-		if(!data->test.playing && data->lastFrame == testFrame)
-		{
-			if(data->test.streamBuffer)
-			{
-				if(data->test.streamBuffer)
-					data->test.streamBuffer->deactivate();
-			}
-
-			data->test.Stop();
-			data->finished = true;
-		}
-	}
 }
 
 void Storm3D_VideoStreamer::render(IStorm3D_Scene *scene)
@@ -549,4 +450,109 @@ void Storm3D_VideoStreamer::render(IStorm3D_Scene *scene)
 	update();
 	scene->Render2D_Picture(data->material.get(), data->start, data->end, data->alpha, 0, 0,0,1,1);
 }
-#endif
+
+
+void Storm3D_VideoStreamer::getTextureCoords(float &x, float &y)
+{
+	x = 1.0f; y = 1.0f;
+}
+
+#else
+
+
+// FIXME: placeholders
+
+
+struct Storm3D_VideoStreamer::Data
+{
+	Storm3D &storm;
+	boost::shared_ptr<Storm3D_Material> material;
+
+	Data(Storm3D &storm_, bool downscale_, bool higherColorRange_)
+	:	storm(storm_)
+	{
+	}
+
+	bool initStormResources()
+	{
+		material.reset(new Storm3D_Material(&storm, "video material"));
+		return false;
+	}
+};
+
+
+Storm3D_VideoStreamer::Storm3D_VideoStreamer(Storm3D &storm, const char *fileName, IStorm3D_StreamBuilder *streamBuilder, bool loop, bool downscale, bool higherColorRange)
+{
+	boost::scoped_ptr<Data> tempData(new Data(storm, downscale, higherColorRange));
+	data.swap(tempData);
+
+	if(!data->initStormResources())
+		return;
+}
+
+
+Storm3D_VideoStreamer::~Storm3D_VideoStreamer()
+{
+}
+
+
+
+bool Storm3D_VideoStreamer::hasEnded() const
+{
+	return true;
+}
+
+
+bool Storm3D_VideoStreamer::hasVideo() const
+{
+	return false;
+}
+
+
+void Storm3D_VideoStreamer::render(IStorm3D_Scene *scene)
+{
+	return;
+}
+
+
+void Storm3D_VideoStreamer::update()
+{
+	return;
+}
+
+
+int Storm3D_VideoStreamer::getTime() const
+{
+	return 0;
+}
+
+
+bool Storm3D_VideoStreamer::isPlaying() const
+{
+	return !hasEnded();
+}
+
+
+void Storm3D_VideoStreamer::setPosition(const VC2 &position, const VC2 &size)
+{
+    return;
+}
+
+
+void Storm3D_VideoStreamer::setAlpha(float alpha)
+{
+}
+
+
+IStorm3D_Material *Storm3D_VideoStreamer::getMaterial()
+{
+	return data->material.get();
+}
+
+void Storm3D_VideoStreamer::getTextureCoords(float &x, float &y)
+{
+	x = 1.0f; y = 1.0f;
+}
+
+#endif // __GNUC__
+

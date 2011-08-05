@@ -22,26 +22,18 @@ using namespace game;
 namespace ui {
 
 #ifdef LEGACY_FILES
-static std::string fileName = "Data/GUI/Ingame/Unitpointers/gui_unitpointers.txt";
+static std::string unitpointersFileName = "Data/GUI/Ingame/Unitpointers/gui_unitpointers.txt";
 #else
-static std::string fileName = "data/GUI/hud/unitpointer/gui_unitpointers.txt";
+static std::string unitpointersFileName = "data/GUI/hud/unitpointer/gui_unitpointers.txt";
 #endif
 
-
-enum directions
-{
-	topleft = 0,
-	topright = 1,
-	bottomright = 2,
-	bottomleft = 3
-};
 
 ///////////////////////////////////////////////////////////////////////////////
 
 TargetDisplayWindow::TargetDisplayWindow( Ogui* ogui, Game* game, int player ) :
-	ogui( ogui ),
-	window( NULL ),
 	buttons(),
+	window( NULL ),
+	ogui( ogui ),
 	currentTicks( 0 )
 {
 	FB_ASSERT( ogui != NULL );
@@ -55,9 +47,10 @@ TargetDisplayWindow::TargetDisplayWindow( Ogui* ogui, Game* game, int player ) :
 
 	// FOR SOME REASON, THIS PARTICULAR PARSER INSTANCE TOTALLY DOES NOT GET THE REFERENCED FLAGS CORRECTLY SET
 	// WHY??? (THUS, NEED TO DISABLE REFERENCED ERROR LOGGING - THE NON EXISTING LOGGING DOES NOT WORK EITHER EVEN THOUGH ENABLED)
-	Parser parser(false, true);
+	EditorParser parser(false, true);
 
-	filesystem::FilePackageManager::getInstance().getFile( fileName ) >> parser;
+	filesystem::InputStream fileStream = filesystem::FilePackageManager::getInstance().getFile( unitpointersFileName );
+	fileStream >> parser;
 
 	int i;
 	for ( i = 0; i < parser.getGlobals().getSubGroupAmount(); i++ )

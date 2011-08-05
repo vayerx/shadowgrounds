@@ -26,10 +26,10 @@ namespace util
 			void setEndSelectionToEnd();
 
 			// move selection to the beginning of the file
-			void TextFileModifier::setBothSelectionsToStart();
+			void setBothSelectionsToStart();
 
 			// move selection to the end of the file
-			void TextFileModifier::setBothSelectionsToEnd();
+			void setBothSelectionsToEnd();
 
 			// returns true if found, else false
 			// (inclusive, includes the marker line)

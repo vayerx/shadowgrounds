@@ -401,6 +401,11 @@ if (unit->isActive())
 			delete fl;
 			u->setFlashlight(NULL);
 		}
+
+		// remove visual attachments
+		u->setEjectVisualEffect(NULL, 0);
+		u->setMuzzleflashVisualEffect(NULL, 0);
+
 		/*
 		ui::Spotlight *sp = u->getSpotlight();
 		if (sp != NULL)

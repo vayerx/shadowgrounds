@@ -68,9 +68,6 @@ namespace ui
 		void setParticleEffectEmitRate(float rate);
 		void setParticleExplosion(const VC3 &position, bool useExplosion);
 
-		void setOriginUnifiedHandle(UnifiedHandle origin);
-		UnifiedHandle getOriginUnifiedHandle();
-
 		void setSpotlight(Spotlight *spotlight);
 		void resetSpotlightFadeout(int atTime = 0);
 
@@ -83,7 +80,7 @@ namespace ui
 
 		void makeMuzzleAttachment(IPointableObject *unit, const std::string &name, const std::string &helper);
 		bool isMuzzleAttachment(IPointableObject *unit, const std::string &name, const std::string &helper);
-		void updateMuzzleAttachment(const std::string &name, const std::string &helper, VC3 &pos, VC3 &scale); 
+		void updateMuzzleAttachment(const std::string &name, const std::string &helper, const VC3 &pos, const VC3 &scale);
 
 	private:
 		void init(IPointableObject *object, IPointableObject *origin,
@@ -101,7 +98,6 @@ namespace ui
 		int refCount;
 		int deleteFrameCounter;
 		bool advanceDeleteCounter;
-		UnifiedHandle originUnifiedHandle;
 
 		friend class VisualEffectManager;
 		boost::shared_ptr<frozenbyte::particle::IParticleEffect> particleEffect;

@@ -12,12 +12,12 @@ GS_CMD_SIMPLE(3, editSendRotateUnifiedHandleObjectX, NONE)
 GS_CMD_SIMPLE(4, editSendRotateUnifiedHandleObjectY, NONE)
 GS_CMD_SIMPLE(5, editSendRotateUnifiedHandleObjectZ, NONE)
 
-//GS_CMD_SIMPLE(6, editRecvMoveUnifiedHandleObjectToPosition, NONE)
-//GS_CMD_SIMPLE(7, editRecvDeleteUnifiedHandleObject, NONE)
-//GS_CMD_SIMPLE(8, editRecvDuplicateUnifiedHandleObject, NONE)
-//GS_CMD_SIMPLE(9, editRecvRotateUnifiedHandleObjectX, NONE)
-//GS_CMD_SIMPLE(10, editRecvRotateUnifiedHandleObjectY, NONE)
-//GS_CMD_SIMPLE(11, editRecvRotateUnifiedHandleObjectZ, NONE)
+GS_CMD_SIMPLE(6, editRecvMoveUnifiedHandleObjectToPosition, NONE)
+GS_CMD_SIMPLE(7, editRecvDeleteUnifiedHandleObject, NONE)
+GS_CMD_SIMPLE(8, editRecvDuplicateUnifiedHandleObject, NONE)
+GS_CMD_SIMPLE(9, editRecvRotateUnifiedHandleObjectX, NONE)
+GS_CMD_SIMPLE(10, editRecvRotateUnifiedHandleObjectY, NONE)
+GS_CMD_SIMPLE(11, editRecvRotateUnifiedHandleObjectZ, NONE)
 
 #undef GS_CMD_BASE
 

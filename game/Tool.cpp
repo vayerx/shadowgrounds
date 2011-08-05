@@ -2,7 +2,7 @@
 #include "precompiled.h"
 
 #include "Tool.h"
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 #define TOOL_SLOTS 0
 

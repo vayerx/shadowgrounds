@@ -100,7 +100,7 @@ namespace ui
 
     int cursorMode; // what does the cursor do... (normal, repair, buy)
 
-    void ArmorConstructWindow::addPartButton(game::Part *p, game::Part *pp, 
+    void addPartButton(game::Part *p, game::Part *pp, 
       int slotNum, int x, int y);
   };
 

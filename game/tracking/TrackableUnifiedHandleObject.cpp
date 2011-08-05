@@ -28,9 +28,9 @@ namespace tracking
 	TrackableUnifiedHandleObject * tuho_pool = NULL;
 	int tuho_pool_used = 0;
 
-	static int typeId_data;
+	static int TUHOtypeId_data;
 
-	void *TrackableUnifiedHandleObject::typeId = &typeId_data;
+	void *TrackableUnifiedHandleObject::typeId = &TUHOtypeId_data;
 
 
 	TrackableUnifiedHandleObject::TrackableUnifiedHandleObject()

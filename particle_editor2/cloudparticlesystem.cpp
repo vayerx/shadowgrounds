@@ -1,9 +1,12 @@
+#include <boost/lexical_cast.hpp>
 
 #include "precompiled.h"
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning( disable : 4800 )
+#endif
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -13,9 +16,9 @@
 #include <map>
 #include <list>
 //#include <fstream>
-#include <storm3d_ui.h>
-#include "..\editor\string_conversions.h"
-#include "..\editor\parser.h"
+#include <Storm3D_UI.h>
+#include "../editor/string_conversions.h"
+#include "../editor/parser.h"
 #include "track.h"
 //#include "paramblock.h"
 #include "parseutil.h"
@@ -30,7 +33,7 @@ namespace particle
 {
 
 namespace {
-	int id = 0;
+	int CPSid = 0;
 }
 
 using namespace frozenbyte::editor;
@@ -194,12 +197,12 @@ void CloudParticleSystem::setParticleVelocity(Vector& v, const Vector& direction
 
 void *CloudParticleSystem::getId() const
 {
-	return &id;
+	return &CPSid;
 }
 
 void *CloudParticleSystem::getType()
 {
-	return &id;
+	return &CPSid;
 }
 
 } // frozenbyte

@@ -1,0 +1,42 @@
+sp             := $(sp).x
+dirstack_$(sp) := $(d)
+d              := $(dir)
+
+renderer_d3d:=storm3dv2
+
+
+FILES:=Clipper.cpp IStorm3D.cpp RenderWindow.cpp Storm3D_Adapter.cpp \
+       Storm3D_Bone.cpp Storm3D_Camera.cpp Storm3D.cpp Storm3D_Face.cpp \
+	   storm3d_fakespotlight.cpp Storm3D_Font.cpp \
+	   Storm3D_Helper_AInterface.cpp Storm3D_Helper_Animation.cpp \
+	   Storm3D_Helpers.cpp Storm3D_KeyFrames.cpp \
+	   Storm3D_Light_AInterface.cpp \
+	   Storm3D_Light_Animation.cpp Storm3D_Line.cpp Storm3D_Material.cpp \
+	   Storm3D_Material_TextureLayer.cpp \
+	   Storm3D_Mesh_Animation.cpp Storm3D_Mesh_CollisionTable.cpp \
+	   Storm3D_Mesh.cpp Storm3D_Model.cpp Storm3D_Model_Object_Animation.cpp \
+	   Storm3D_Model_Object.cpp Storm3D_ParticleSystem.cpp \
+	   Storm3D_ParticleSystem_PMH.cpp Storm3D_PicList.cpp \
+	   Storm3D_ProceduralManager.cpp storm3d_resourcemanager.cpp \
+	   Storm3D_Scene.cpp Storm3D_Scene_PicList.cpp \
+	   Storm3D_Scene_PicList_Font.cpp \
+	   Storm3D_Scene_PicList_Texture.cpp Storm3D_ShaderManager.cpp \
+	   storm3d_spotlight.cpp storm3d_spotlight_shared.cpp \
+	   Storm3D_SurfaceInfo.cpp \
+	   Storm3D_Terrain.cpp storm3d_terrain_decalsystem.cpp \
+	   storm3d_terrain_groups.cpp storm3d_terrain_heightmap.cpp \
+	   storm3d_terrain_lightmanager.cpp storm3d_terrain_lod.cpp \
+	   storm3d_terrain_models.cpp storm3d_terrain_renderer.cpp \
+	   storm3d_terrain_utils.cpp Storm3d_Texture.cpp \
+	   Storm3D_Texture_Video.cpp Storm3D_Vertex.cpp \
+	   storm3d_video_player.cpp storm3d_videostreamer.cpp v3_Delete.cpp
+
+
+SRC_$(d):=$(addprefix $(d)/,$(FILES))
+
+CLEANDIRS+=$(d)
+
+-include $(foreach FILE,$(FILES),$(d)/$(FILE:.cpp=.d))
+
+d  := $(dirstack_$(sp))
+sp := $(basename $(sp))

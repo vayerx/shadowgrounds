@@ -1,26 +1,28 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
-#include <d3d9.h>
-#include <d3dx9core.h>
-
-#include "Storm3D_ShaderManager.h"
-#include "Storm3D_Model.h"
-#include "Storm3D_Model_Object.h"
-#include "Storm3D_Bone.h"
-#include "Storm3D_Mesh.h"
-
 #include <vector>
 #include <string>
 #include <stdio.h>
 #include <boost/static_assert.hpp>
 
-#include "..\..\filesystem\input_stream_wrapper.h"
-#include "..\..\util\Debug_MemoryManager.h"
+#include <d3d9.h>
+#include <d3dx9core.h>
+
+#include "Storm3D_ShaderManager.h"
+#include "storm3d_model.h"
+#include "storm3d_model_object.h"
+#include "Storm3D_Bone.h"
+#include "storm3d_mesh.h"
+
+#include "../../filesystem/input_stream_wrapper.h"
+#include "../../util/Debug_MemoryManager.h"
 
 using namespace frozenbyte;
 
@@ -74,19 +76,11 @@ Storm3D_ShaderManager::Storm3D_ShaderManager(IDirect3DDevice9 &device)
 :	ambient_color(.7f,.7f,.7f,0),
 	ambient_force_color(0,0,0,0),
 	fog(-20.f,1.f / 100.f,0.0f,1.f),
-	update_values(true),
 
-	object_diffuse_color(1.f,1.f,1.f,0),
 	object_ambient_color(0,0,0,0),
+	object_diffuse_color(1.f,1.f,1.f,0),
 
-	model(0),
-	current_shader(0),
-	software_shaders(true),
-	projected_shaders(false),
-	ati_depth_shaders(false),
-	ati_shadow_shaders(false),
-	fake_depth_shaders(false),
-	fake_shadow_shaders(false),
+	update_values(true),
 
 	default_shader(device),
 	lighting_shader_0light_noreflection(device),
@@ -144,13 +138,22 @@ Storm3D_ShaderManager::Storm3D_ShaderManager(IDirect3DDevice9 &device)
 	fake_depth_bone_shader(device),
 	fake_shadow_bone_shader(device),
 
-	spot_type(Directional),
+	current_shader(0),
+	software_shaders(true),
+	projected_shaders(false),
+	ati_depth_shaders(false),
+	ati_shadow_shaders(false),
+	fake_depth_shaders(false),
+	fake_shadow_shaders(false),
+	model(0),
+
 	transparency_factor(1.f),
 
 	reflection(false),
 	local_reflection(false),
 	light_count(0),
-	light_params_changed(true)
+	light_params_changed(true),
+	spot_type(Directional)
 {
 	for(int i = 0; i < LIGHT_MAX_AMOUNT; ++i)
 	{
@@ -281,7 +284,7 @@ void Storm3D_ShaderManager::SetViewProjectionMatrix(const D3DXMATRIX &vp, const 
 	if(enableLocalReflection)
 	{
 #ifdef PROJECT_CLAW_PROTO
-		reflection_height = 17.8f;
+		//reflection_height = 17.8f;
 #endif
 		{
 			reflection_matrix._22 = -1.f;
@@ -346,7 +349,7 @@ void Storm3D_ShaderManager::SetForceAmbient(const Color &color)
 	ambient_force_color.z = color.b;
 }
 
-void Storm3D_ShaderManager::SetLight(int index, Vector &direction, const Color &color, float range)
+void Storm3D_ShaderManager::SetLight(int index, const Vector &direction, const Color &color, float range)
 {
 	if(index >= 0 && index < LIGHT_MAX_AMOUNT)
 	{
@@ -630,12 +633,24 @@ void Storm3D_ShaderManager::SetShader(IDirect3DDevice9 *device, Storm3D_Model_Ob
 		ambient.y = max(ambient.y, object_ambient_color.y);
 		ambient.z = max(ambient.z, object_ambient_color.z);
 
+#ifdef HACKY_SG_AMBIENT_LIGHT_FIX
+		// EVIL HAX around too dark characters etc.
+		const float MIN_AMBIENT_LIGHT = 0.05f;
+		ambient.x = max(ambient.x, MIN_AMBIENT_LIGHT);
+		ambient.y = max(ambient.y, MIN_AMBIENT_LIGHT);
+		ambient.z = max(ambient.z, MIN_AMBIENT_LIGHT);
+
+		ambient.x = min(ambient.x, 1.0f);
+		ambient.y = min(ambient.y, 1.0f);
+		ambient.z = min(ambient.z, 1.0f);
+#else
 		if(ambient.x > 1.f)
 			ambient.x = 1.f;
 		if(ambient.y > 1.f)
 			ambient.y = 1.f;
 		if(ambient.z > 1.f)
 			ambient.z = 1.f;
+#endif
 
 		ambient.w = alpha; //1.f;
 

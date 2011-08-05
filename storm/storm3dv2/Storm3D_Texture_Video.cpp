@@ -1,6 +1,8 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 //------------------------------------------------------------------
 // Includes
@@ -9,13 +11,14 @@
 #include "storm3d_texture.h"
 #include <vfw.h>		// Video for Windows header (to load AVIs)
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 
 namespace {
 	int id;
 }
 
+#ifndef __GNUC__
 
 //------------------------------------------------------------------
 // Storm3D_Texture_Video::Storm3D_Texture_Video
@@ -501,3 +504,82 @@ void Storm3D_Texture_Video::swapTexture(IStorm3D_Texture *otherI)
 	std::swap(bpp, other->bpp);
 	std::swap(last_time, other->last_time);
 }
+
+#else
+
+// FIXME: placeholders
+
+Storm3D_Texture_Video::Storm3D_Texture_Video(Storm3D *s2,const char *_filename,DWORD texloadcaps) :
+	Storm3D_Texture(s2),
+	frames(NULL),
+	frame_amount(1),
+	frame(0),
+	framechangetime(0),
+	framechangecounter(0),
+	loop_params(VIDEOLOOP_DEFAULT),
+	last_time(timeGetTime())
+{
+}
+
+Storm3D_Texture_Video::~Storm3D_Texture_Video()
+{
+}
+
+void Storm3D_Texture_Video::AnimateVideo()
+{
+}
+
+void Storm3D_Texture_Video::VideoSetFrame(int num)
+{
+}
+
+
+void Storm3D_Texture_Video::VideoSetFrameChangeSpeed(int millisecs)
+{
+}
+
+
+void Storm3D_Texture_Video::VideoSetLoopingParameters(VIDEOLOOP params)
+{
+}
+
+
+int Storm3D_Texture_Video::VideoGetFrameAmount()
+{
+	return 0;
+}
+
+int Storm3D_Texture_Video::VideoGetCurrentFrame()
+{
+	return 0;
+}
+
+
+void Storm3D_Texture_Video::ReadAVIVideoInfo()
+{
+}
+
+
+void Storm3D_Texture_Video::LoadAVIVideoFrames()
+{
+}
+
+
+void *Storm3D_Texture_Video::classId()
+{
+	return &id;
+}
+
+
+void *Storm3D_Texture_Video::getId() const
+{
+	return &id;
+}
+
+
+void Storm3D_Texture_Video::swapTexture(IStorm3D_Texture *otherI)
+{
+}
+
+
+#endif // __GNUC__

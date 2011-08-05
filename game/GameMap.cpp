@@ -4,8 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 
-// this is a bad dependency (see setTerrain method)
-#include <Storm3D_UI.h>
+#include <IStorm3D_Terrain.h>
 
 #include "GameMap.h"
 #include "DHLocaleManager.h"
@@ -13,8 +12,6 @@
 #include "options/options_precalc.h"
 #include "CoverMap.h"
 //#include "HideMap.h"
-#include "BlockedHeightAreaFillMapper.h"
-#include "UnreachableAreaFillMapper.h"
 #include "../ui/VisualObjectModel.h"
 #include "../ui/VisualObject.h"
 #include "../ui/LoadingMessage.h"
@@ -25,15 +22,12 @@
 #include "../util/AI_PathFind.h"
 #include "../util/AreaMap.h"
 #include "areamasks.h"
+#include "../util/Floodfill.h"
 #include "../filesystem/input_stream_wrapper.h"
 #include "../filesystem/rle_packed_file_wrapper.h"
 
 #include "../util/Debug_MemoryManager.h"
 
-#ifdef PROJECT_CLAW_PROTO
-	#include "BurningMap.h"
-	BurningMap *burningMap = NULL;
-#endif
 
 using namespace ui;
 using namespace frozenbyte;
@@ -41,6 +35,80 @@ using namespace frozenbyte;
 
 namespace game
 {
+	// to assist in "BlockedHeightArea" floodfilling, implements the 
+	// required mapper interface.
+	class BlockedHeightAreaFillMapper : public util::IFloodfillByteMapper
+	{
+	private:
+		GameMap *data;
+		int height;
+
+	public:
+		// in this case, 2 means "has blocked this height area"
+		// 1 means "height are to be blocked"
+		// 0 means "some other height (do nothing here)"
+		BlockedHeightAreaFillMapper(GameMap *data, int height)
+		{
+			this->height = height;
+			this->data = data;
+		}
+
+		virtual unsigned char getByte(int x, int y)
+		{
+			if (data->getHeightmapHeightAt(x,y) != height)
+			{
+				return 0;
+			}
+
+			int ox = x * GAMEMAP_PATHFIND_ACCURACY;
+			int oy = y * GAMEMAP_PATHFIND_ACCURACY;
+
+			for (int ty = 0; ty < GAMEMAP_PATHFIND_ACCURACY; ty++)
+			{
+				for (int tx = 0; tx < GAMEMAP_PATHFIND_ACCURACY; tx++)
+				{
+					if (data->getObstacleHeight(ox + tx, oy + ty) <= 200)
+					{
+						// please, do floodfill me.
+						return 1;
+					}
+				}
+			}
+
+			// this has already been floodfilled 
+			// (or just otherwise fully blocked)
+			return 0;
+		}
+
+		virtual void setByte(int x, int y, unsigned char value)
+		{
+			int ox = x * GAMEMAP_PATHFIND_ACCURACY;
+			int oy = y * GAMEMAP_PATHFIND_ACCURACY;
+
+			int obstSizeX = data->getObstacleSizeX();
+			int obstSizeY = data->getObstacleSizeY();
+
+			for (int ty = -1; ty < GAMEMAP_PATHFIND_ACCURACY+1; ty++)
+			{
+				for (int tx = -1; tx < GAMEMAP_PATHFIND_ACCURACY+1; tx++)
+				{
+					if (ox + tx >= 0 && ox + tx < obstSizeX
+						&& oy + ty >= 0 && oy + ty < obstSizeY)
+					{
+						// HACK: just using some strange number for the height :)
+						// in this case, 200 seems to be somewhat nice...
+						if (data->getObstacleHeight(ox + tx, oy + ty) <= 200)
+						{
+							data->addObstacleHeight(ox + tx, oy + ty, 201, AREAVALUE_OBSTACLE_TERRAINOBJECT);
+							assert(data->getObstacleHeight(ox + tx, oy + ty) > 200);
+						}
+					}
+				}
+			}
+		}
+
+	};
+
  
   GameMap::GameMap()
   {
@@ -228,12 +296,6 @@ namespace game
 				lightMap = new util::LightMap(colorMap, pathfindSizeX, pathfindSizeY, scaledSizeX, scaledSizeY);
 			}
 		}
-
-#ifdef PROJECT_CLAW_PROTO
-		if(burningMap != NULL)
-			delete burningMap;
-		burningMap = new BurningMap(pathfindSizeX, pathfindSizeY);
-#endif
 
 		// the coverFilename is actually vegeFilename...
 		// not sure about the logic there. ;)
@@ -673,26 +735,11 @@ namespace game
 		int yResolution = this->sizeY * GAMEMAP_HEIGHTMAP_MULTIPLIER;
 
 		// in this case, 2 means "has blocked this height area"
-		// 1 means "height area to be blocked"
+		// 1 means "height are to be blocked"
 		// 0 means "some other height (do nothing here)"
 		util::Floodfill::fillWithByte(0, 1, xResolution, yResolution, &mapper, false, false);
 	}
 
-	// TODO: this should reallly take in a list of positions, not just one!
-	void GameMap::makeUnreachableAreasBlocked(int obstacleX, int obstacleY)
-	{
-		UnreachableAreaFillMapper mapper = UnreachableAreaFillMapper(this);
-
-		int xResolution = this->getObstacleSizeX();
-		int yResolution = this->getObstacleSizeY();
-
-		mapper.addReachablePoint(obstacleX, obstacleY);
-		// TODO: add more reachable points to mapper here when supported
-
-		util::Floodfill::fillWithByte(UNR_VALUE_REACHABLE, UNR_VALUE_EMPTY, xResolution, yResolution, &mapper, false, false);
-
-		mapper.applyResult();
-	}
 
 	bool GameMap::loadObstacleAndAreaImpl(const char *filename, frozenbyte::ai::PathFind *pathfinder)
 	{

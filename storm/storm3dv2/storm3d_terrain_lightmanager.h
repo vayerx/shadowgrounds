@@ -1,7 +1,7 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
 #ifndef INCLUDED_STORM3D_TERRAIN_LIGHTMANAGER_H
-#define INCLUDED_STORM3D_TERRAIN_LIGHTMANAGEr_H
+#define INCLUDED_STORM3D_TERRAIN_LIGHTMANAGER_H
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>

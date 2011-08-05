@@ -15,10 +15,67 @@
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
-#include <windows.h>
-#include <process.h>
 #include "c2_thread.h"
 
+
+#ifdef IGIOS_THREADS
+
+//------------------------------------------------------------------
+// Thread function
+//------------------------------------------------------------------
+int ThreadFunction(void *pt)
+{
+	// Typecast
+	Thread *tob=(Thread*)pt;
+
+	// Run thread
+	tob->ThreadCode();
+
+	// Thread is finished
+	tob->finished=true;
+
+	return 0;
+}
+
+
+//------------------------------------------------------------------
+// Constructor & Destructor
+//------------------------------------------------------------------
+Thread::Thread() : thread_handle(NULL), finished(true), running(false)
+{
+}
+
+
+Thread::~Thread()
+{
+	// Stop thread
+	running=false;
+
+	// Wait thread to close
+    SDL_WaitThread(thread_handle, NULL);
+}
+
+
+//------------------------------------------------------------------
+// Start executing
+//------------------------------------------------------------------
+void Thread::ExecuteThread()
+{
+	running=true;
+	finished=false;
+	thread_handle=SDL_CreateThread(ThreadFunction, this);
+}
+
+
+//------------------------------------------------------------------
+// Is thead finished (ie thread no longer exists)
+//------------------------------------------------------------------
+bool Thread::IsThreadFinished()
+{
+	return finished;
+}
+
+#else
 
 //------------------------------------------------------------------
 // Thread function
@@ -42,7 +99,7 @@ void ThreadFunction(void *pt)
 //------------------------------------------------------------------
 // Constructor & Destructor
 //------------------------------------------------------------------
-Thread::Thread() : thread_handle(0), running(false), finished(true)
+Thread::Thread() : thread_handle(0), finished(true), running(false)
 {
 }
 
@@ -75,4 +132,4 @@ bool Thread::IsThreadFinished()
 {
 	return finished;
 }
-
+#endif

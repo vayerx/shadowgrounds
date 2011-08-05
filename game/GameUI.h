@@ -27,6 +27,7 @@
 #include "../util/CursorRayTracer.h"
 #include "../util/BuildingHandler.h"
 #include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 
 
 
@@ -146,28 +147,11 @@ namespace game
 	class SceneSelection
 	{
 	public:
-		SceneSelection() 
-		{ 
-			hit=false; 
-			scaledMapX=0; 
-			scaledMapY=0; 
-			unit=NULL; 
-#ifdef LEGACY_FILES
-			// no support for unified handle objects...
-#else
-			unifiedHandle = UNIFIED_HANDLE_NONE;
-#endif
-		}
-
+		SceneSelection() { hit=false; scaledMapX=0; scaledMapY=0; unit=NULL; };
 		bool hit; // hit somewhere on map or some unit
 		float scaledMapX; // map coordinates (of unit if not null, else just map)
 		float scaledMapY;
 		Unit *unit;
-#ifdef LEGACY_FILES
-		// no support for unified handle objects...
-#else
-		UnifiedHandle unifiedHandle;
-#endif
 	};
 
 
@@ -485,7 +469,7 @@ namespace game
 
 		ui::AniRecorderWindow *getAniRecorderWindow();
 
-		ui::GameConsole *GameUI::getConsole();
+		ui::GameConsole *getConsole();
 
 		VC3 getListenerPosition();
 
@@ -526,7 +510,7 @@ namespace game
 
 		void enableAlphaTestPass(bool enabled);
 
-		inline LoadingWindow * getLoadingWindow() { return loadingWindow; };
+		inline boost::shared_ptr<LoadingWindow> getLoadingWindow() const { return loadingWindow; };
 
 		void setTimeFactor(float factor);
 
@@ -534,6 +518,8 @@ namespace game
 
 		int getLastRunUITime() const;
 
+		void SwapCursorImages(int cursor1, int cursor2);
+		void ResetSwappedCursorImages();
 	private:
 
 		bool wasKeyClicked( int key );
@@ -581,7 +567,7 @@ namespace game
 		MenuCollection **commandWindows;
 		StorageWindow **storageWindows;
 		CombatWindow **combatWindows;
-		LoadingWindow *loadingWindow;
+		boost::shared_ptr<LoadingWindow> loadingWindow;
 		AniRecorderWindow *aniRecorderWindow;
 		MessageBoxWindow **armorIncompleteConfirmWindows;
 		MessageBoxWindow **quitBox;
@@ -664,6 +650,9 @@ namespace game
 		bool rightDirectRotation;
 
 		JoystickAimer *joystickAimer[MAX_PLAYERS_PER_CLIENT];
+
+		// HACK for keeping character facing the correct direction
+		VC2 oldJoystickXY[MAX_PLAYERS_PER_CLIENT];
 
 		bool leftMovementEnabled[MAX_PLAYERS_PER_CLIENT];
 		bool rightMovementEnabled[MAX_PLAYERS_PER_CLIENT];

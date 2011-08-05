@@ -7,7 +7,6 @@
 #include "gamedefs.h"
 #include "unified_handle.h"
 #include "tracking/ITrackableUnifiedHandleObjectImplementationManager.h"
-#include "../editor/UniqueEditorObjectHandle.h"
 
 #include <DatatypeDef.h>
 
@@ -47,10 +46,6 @@ namespace game
 
 		int getIdForUnit(Unit *unit);
 		Unit *getUnitById(int id);
-
-		// get unified handle for unit with given unique editor object handle
-		// or return UNIFIED_HANDLE_NONE if no such unit found.
-		UnifiedHandle findUnifiedHandleByUniqueEditorObjectHandle(UniqueEditorObjectHandle ueoh) const;
 
 		UnifiedHandle getUnifiedHandle(int unitId) const;
 		int unifiedHandleToUnitId(UnifiedHandle unifiedHandle) const;

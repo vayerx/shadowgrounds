@@ -7,21 +7,19 @@
 #include "../game/Game.h"
 #include "../game/GameUI.h"
 #include "../ui/GameCamera.h"
-#include "../game/gameProfiles.h"
+#include "../game/GameProfiles.h"
 #include "MenuCollection.h"
 #include "../game/DHLocaleManager.h"
 #include "../game/SimpleOptions.h"
 #include "../game/options/options_sounds.h"
-#include "gameController.h"
 #include "../game/scripting/GameScripting.h"
 #include "../ogui/OguiSlider.h"
-#include "../system/timer.h"
 #include "../sound/SoundMixer.h"
 #include "../game/OptionApplier.h"
-#include "../system/logger.h"
 #include "../ogui/OguiCheckBox.h"
 #include "../game/options/options_all.h"
 #include "../storm/keyb3/keyb3.h"
+#include "CombatWindow.h" // for getNumberOfPlayers()
 
 #include "../util/Debug_MemoryManager.h"
 
@@ -29,6 +27,8 @@
 #include <sstream>
 #include <fstream>
 #include <assert.h>
+
+#include "../game/userdata.h"
 
 using namespace game;
 
@@ -39,21 +39,6 @@ namespace ui
 
 ///////////////////////////////////////////////////////////////////////////////
 namespace {
-	int getNumberOfPlayers()
-	{
-		int result = 0;
-		int c;
-		for( c = 0; c < MAX_PLAYERS_PER_CLIENT; c++ )
-		{
-			if( SimpleOptions::getBool( DH_OPT_B_1ST_PLAYER_ENABLED + c ) )
-			{
-				result++;
-			}
-		}
-
-		return result;
-	}
-
 	float getCameraRotateRate()
 	{
 		float result = 0;
@@ -164,35 +149,34 @@ OptionsMenu::OptionsMenu( MenuCollection* menu, MenuCollection::Fonts* fonts, Og
 
   lastPlayTime( 0 ),
 
-  menuCollection( menu ),
-  fonts( fonts ),
-	
-  discartNextCursorEvent( false ),
-  fromGame( false ),
-
-  cameraModeHack( NULL ),
-  cameraLockYAxis( NULL ),
-  cameraModeTextHack( NULL ),
-  cameraRotateSpeed( getCameraRotateRate() ),
-  mouseSpring( getMouseSpring() ),
-  cameraRotateStrength( NULL ),
-  cameraSpringStrength( NULL ),
-
-
   joystickBigText( NULL ),
+  joystickMenuOpen( false ),
   joystickUpdate( -1 ),
   currentController( -1 ),
-  joystickMenuOpen( false ),
 
   cooperativeBigText( NULL ),
   cooperativeProfileList( NULL ),
   styles(),
   selectListStyle( NULL ),
 
+  menuCollection( menu ),
+  fonts( fonts ),
+  discartNextCursorEvent( false ),
+  fromGame( false ),
+
+  cameraModeHack( NULL ),
+  cameraLockYAxis( NULL ),
+  cameraModeTextHack( NULL ),
+  
+  cameraRotateStrength( NULL ),
+  cameraSpringStrength( NULL ),
+  cameraRotateSpeed( getCameraRotateRate() ),
+  mouseSpring( getMouseSpring() ),
+
 	controllerTypeButton( NULL ),
+	controllerTypeListCaptureEvents( NULL ),
 	controllerTypeList( NULL ),
 	controllerTypeListStyle( NULL ),
-	controllerTypeListCaptureEvents( NULL ),
 
   currentProfile( "" )
 {
@@ -604,7 +588,7 @@ OptionsMenu::OptionsMenu( MenuCollection* menu, MenuCollection::Fonts* fonts, Og
 	buttonX = getLocaleGuiInt( "gui_optionsmenu_defaults_x", 0 );
 	buttonY = getLocaleGuiInt( "gui_optionsmenu_defaults_y", 0 );
 #endif
-	OguiButton* b = addButton( getLocaleGuiString( "gui_om_defaults" ), COMMANDS_DEFAULTS, fonts->medium.normal, fonts->medium.highlighted, fonts->medium.down, fonts->medium.disabled );
+	/*OguiButton* b = */addButton( getLocaleGuiString( "gui_om_defaults" ), COMMANDS_DEFAULTS, fonts->medium.normal, fonts->medium.highlighted, fonts->medium.down, fonts->medium.disabled );
 
 	if( getNumberOfPlayers() == 1 )
 	{
@@ -632,7 +616,6 @@ OptionsMenu::OptionsMenu( MenuCollection* menu, MenuCollection::Fonts* fonts, Og
 
 	}
 
-
 	// controller type
 	{
 		int x = getLocaleGuiInt( "gui_optionsmenu_controllertype_x", 0 );
@@ -645,7 +628,6 @@ OptionsMenu::OptionsMenu( MenuCollection* menu, MenuCollection::Fonts* fonts, Og
 		controllerTypeButton->SetHighlightedFont( fonts->medium.highlighted );
 		controllerTypeButton->SetListener(this);
 	}
-
 	
 	///////////////////////////////////////////////////////////////////////////
 	// GAMMA Ramp
@@ -850,7 +832,7 @@ void OptionsMenu::setProfile( const std::string& profile )
 	tmp += currentProfile;
 	tmp += "/config/keybinds.txt";
 #endif
-	gameController->loadConfiguration( tmp.c_str() );
+	gameController->loadConfiguration( igios_mapUserDataPrefix(tmp).c_str() );
 	
 	readControls();
 	updateControlDescriptions();
@@ -955,7 +937,7 @@ void OptionsMenu::applyChanges()
 	tmp += currentProfile;
 	tmp += "/config/keybinds.txt";
 #endif
-	gameController->saveConfiguration( tmp.c_str() );
+	gameController->saveConfiguration( igios_mapUserDataPrefix(tmp).c_str() );
 
 	if(game->gameUI)
 		game->gameUI->setCursorControllers();
@@ -1066,8 +1048,10 @@ void OptionsMenu::CursorEvent( OguiButtonEvent* eve )
 			menuClose();
 			break;
 
-		case COMMANDS_JOYSTICKXAXIS:
-		case COMMANDS_JOYSTICKYAXIS:
+		case COMMANDS_JOYSTICK_MOVE_XAXIS:
+		case COMMANDS_JOYSTICK_MOVE_YAXIS:
+		case COMMANDS_JOYSTICK_DIR_XAXIS:
+		case COMMANDS_JOYSTICK_DIR_YAXIS:
 			joystickSelection( eve->triggerButton->GetId() );
 			break;
 
@@ -1327,7 +1311,34 @@ void OptionsMenu::update()
 			gameController->unbindKey( controlNumArray[ controlUpdate ],  0 );
 			gameController->unbindKey( controlNumArray[ controlUpdate ],  1 );
 			gameController->bindKey( controlNumArray[ controlUpdate ], keycode );
-			
+
+#ifdef PROJECT_SURVIVOR
+			// hack: if pressed a keyboard button, reassign weapon selection keys
+			if(keycode < 256 || keycode > BASIC_KEYCODE_AMOUNT)
+			{
+				int kb_id = KEYCODE_KEYBID(keycode);
+				for(int i = 0; i < 10; i++)
+				{
+					int original_key = gameController->getBoundKey(DH_CTRL_WEAPON_1 + i, 0);
+
+					gameController->unbindKey(DH_CTRL_WEAPON_1 + i, 0);
+
+					int new_key = original_key;
+					if(new_key >= BASIC_KEYCODE_AMOUNT)
+					{
+						new_key = KEYCODE_KEYID(new_key);
+					}
+
+					if(kb_id > 0)
+					{
+						new_key = KEYCODE_GEN_KEYBID(kb_id, new_key);
+					}
+					
+					gameController->bindKey(DH_CTRL_WEAPON_1 + i, new_key, 0, false);
+				}
+			}
+#endif
+
 			// keycodeArray[ controlUpdate ] = keycode;
 			// redraw the descrption button for that key in the
 			// controlDescriptions
@@ -1339,6 +1350,13 @@ void OptionsMenu::update()
 			controlUpdate = -1;
 			// closeMenuByEsc = true;
 			canWeCloseTheMenuNow = true;
+
+			// To prevent joy button click being interpreted as new rebind request
+			if (gameController->isKeyDownByKeyCode(KEYCODE_JOY_BUTTON1)
+				|| gameController->isKeyDownByKeyCode(KEYCODE_JOY_BUTTON2)
+				|| gameController->isKeyDownByKeyCode(KEYCODE_JOY_BUTTON5)
+				|| gameController->isKeyDownByKeyCode(KEYCODE_JOY_BUTTON6))
+				discartNextCursorEvent = true;
 		}
 		
 	} 
@@ -1421,10 +1439,14 @@ std::string	OptionsMenu::getOptionsKeyName( int i )
 {
 	if( i <= options_max )
 		return getKeyNameFromLocales( gameController->getKeycodeName( keycodeArray[ i ] ) );
-	else if ( i == COMMANDS_JOYSTICKXAXIS )
-		return getKeyNameFromLocales( gameController->getJoystickAxisName( gameController->getJoystickXAxis() ) );
-	else if ( i == COMMANDS_JOYSTICKYAXIS )
-		return getKeyNameFromLocales( gameController->getJoystickAxisName( gameController->getJoystickYAxis() ) );
+	else if ( i == COMMANDS_JOYSTICK_MOVE_XAXIS )
+		return getKeyNameFromLocales( gameController->getJoystickAxisName( gameController->getJoystickMoveXAxis() ) );
+	else if ( i == COMMANDS_JOYSTICK_MOVE_YAXIS )
+		return getKeyNameFromLocales( gameController->getJoystickAxisName( gameController->getJoystickMoveYAxis() ) );
+	else if ( i == COMMANDS_JOYSTICK_DIR_XAXIS )
+		return getKeyNameFromLocales( gameController->getJoystickAxisName( gameController->getJoystickDirXAxis() ) );
+	else if ( i == COMMANDS_JOYSTICK_DIR_YAXIS )
+		return getKeyNameFromLocales( gameController->getJoystickAxisName( gameController->getJoystickDirYAxis() ) );
 
 	std::stringstream ss;
 	ss << i;
@@ -1673,11 +1695,17 @@ void OptionsMenu::setJoystickAxis( int axis, GameController::JOYSTICK_AXIS butto
 {
 	switch( axis )
 	{
-	case COMMANDS_JOYSTICKXAXIS:
-		gameController->setJoystickXAxis( button );
+	case COMMANDS_JOYSTICK_MOVE_XAXIS:
+		gameController->setJoystickMoveXAxis( button );
 		break;
-	case COMMANDS_JOYSTICKYAXIS:
-		gameController->setJoystickYAxis( button );
+	case COMMANDS_JOYSTICK_MOVE_YAXIS:
+		gameController->setJoystickMoveYAxis( button );
+		break;
+	case COMMANDS_JOYSTICK_DIR_XAXIS:
+		gameController->setJoystickDirXAxis( button );
+		break;
+	case COMMANDS_JOYSTICK_DIR_YAXIS:
+		gameController->setJoystickDirYAxis( button );
 		break;
 	}
 
@@ -1710,11 +1738,11 @@ void OptionsMenu::createJoystickButtons()
 			SelectionButtonDescs* descs = new SelectionButtonDescs;
 
 			std::string axis_key_name = getLocaleGuiString( "gui_optionsmenu_joystick_x_axis" );
-			std::string button_name = getKeyNameFromLocales( gameController->getJoystickAxisName( gameController->getJoystickXAxis() ) );
+			std::string button_name = getKeyNameFromLocales( gameController->getJoystickAxisName( gameController->getJoystickMoveXAxis() ) );
 
-			addControlDescription( button_name, COMMANDS_JOYSTICKXAXIS, key_name_add_x, 0, fonts->little.normal, fonts->little.highlighted, fonts->little.down, fonts->little.disabled );
-			descs->first = controlDescriptions[ COMMANDS_JOYSTICKXAXIS ];
-			addSelectionButton( axis_key_name, COMMANDS_JOYSTICKXAXIS, fonts->medium.normal, descs );
+			addControlDescription( button_name, COMMANDS_JOYSTICK_MOVE_XAXIS, key_name_add_x, 0, fonts->little.normal, fonts->little.highlighted, fonts->little.down, fonts->little.disabled );
+			descs->first = controlDescriptions[ COMMANDS_JOYSTICK_MOVE_XAXIS ];
+			addSelectionButton( axis_key_name, COMMANDS_JOYSTICK_MOVE_XAXIS, fonts->medium.normal, descs );
 			selectionButtonDescs.push_back( descs );
 		}
 		//.....................................................................
@@ -1722,11 +1750,35 @@ void OptionsMenu::createJoystickButtons()
 			SelectionButtonDescs* descs = new SelectionButtonDescs;
 
 			std::string axis_key_name = getLocaleGuiString( "gui_optionsmenu_joystick_y_axis" );
-			std::string button_name = getKeyNameFromLocales( gameController->getJoystickAxisName( gameController->getJoystickYAxis() ) );
+			std::string button_name = getKeyNameFromLocales( gameController->getJoystickAxisName( gameController->getJoystickMoveYAxis() ) );
 
-			addControlDescription( button_name, COMMANDS_JOYSTICKYAXIS, key_name_add_x, 0, fonts->little.normal, fonts->little.highlighted, fonts->little.down, fonts->little.disabled );
-			descs->first = controlDescriptions[ COMMANDS_JOYSTICKYAXIS ];
-			addSelectionButton( axis_key_name, COMMANDS_JOYSTICKYAXIS, fonts->medium.normal, descs );
+			addControlDescription( button_name, COMMANDS_JOYSTICK_MOVE_YAXIS, key_name_add_x, 0, fonts->little.normal, fonts->little.highlighted, fonts->little.down, fonts->little.disabled );
+			descs->first = controlDescriptions[ COMMANDS_JOYSTICK_MOVE_YAXIS ];
+			addSelectionButton( axis_key_name, COMMANDS_JOYSTICK_MOVE_YAXIS, fonts->medium.normal, descs );
+			selectionButtonDescs.push_back( descs );
+		}
+		//.....................................................................
+		{
+			SelectionButtonDescs* descs = new SelectionButtonDescs;
+
+			std::string axis_key_name = getLocaleGuiString( "gui_optionsmenu_joystick_dir_x_axis" );
+			std::string button_name = getKeyNameFromLocales( gameController->getJoystickAxisName( gameController->getJoystickDirXAxis() ) );
+
+			addControlDescription( button_name, COMMANDS_JOYSTICK_DIR_XAXIS, key_name_add_x, 0, fonts->little.normal, fonts->little.highlighted, fonts->little.down, fonts->little.disabled );
+			descs->first = controlDescriptions[ COMMANDS_JOYSTICK_DIR_XAXIS ];
+			addSelectionButton( axis_key_name, COMMANDS_JOYSTICK_DIR_XAXIS, fonts->medium.normal, descs );
+			selectionButtonDescs.push_back( descs );
+		}
+		//.....................................................................
+		{
+			SelectionButtonDescs* descs = new SelectionButtonDescs;
+
+			std::string axis_key_name = getLocaleGuiString( "gui_optionsmenu_joystick_dir_y_axis" );
+			std::string button_name = getKeyNameFromLocales( gameController->getJoystickAxisName( gameController->getJoystickDirYAxis() ) );
+
+			addControlDescription( button_name, COMMANDS_JOYSTICK_DIR_YAXIS, key_name_add_x, 0, fonts->little.normal, fonts->little.highlighted, fonts->little.down, fonts->little.disabled );
+			descs->first = controlDescriptions[ COMMANDS_JOYSTICK_DIR_YAXIS ];
+			addSelectionButton( axis_key_name, COMMANDS_JOYSTICK_DIR_YAXIS, fonts->medium.normal, descs );
 			selectionButtonDescs.push_back( descs );
 		}
 		//.....................................................................
@@ -1759,15 +1811,21 @@ void OptionsMenu::freeJoystickButtons()
 	delete joystickBigText;
 	joystickBigText = NULL;
 
-	delete controlDescriptions[ COMMANDS_JOYSTICKXAXIS ];
-	controlDescriptions[ COMMANDS_JOYSTICKXAXIS ] = NULL;
+	delete controlDescriptions[ COMMANDS_JOYSTICK_MOVE_XAXIS ];
+	controlDescriptions[ COMMANDS_JOYSTICK_MOVE_XAXIS ] = NULL;
 
-	delete controlDescriptions[ COMMANDS_JOYSTICKYAXIS ];
-	controlDescriptions[ COMMANDS_JOYSTICKYAXIS ] = NULL;
+	delete controlDescriptions[ COMMANDS_JOYSTICK_MOVE_YAXIS ];
+	controlDescriptions[ COMMANDS_JOYSTICK_MOVE_YAXIS ] = NULL;
+
+	delete controlDescriptions[ COMMANDS_JOYSTICK_DIR_XAXIS ];
+	controlDescriptions[ COMMANDS_JOYSTICK_DIR_XAXIS ] = NULL;
+
+	delete controlDescriptions[ COMMANDS_JOYSTICK_DIR_YAXIS ];
+	controlDescriptions[ COMMANDS_JOYSTICK_DIR_YAXIS ] = NULL;
 
 	std::map< int, OguiButton* >::iterator i;
 
-	i = selectButtons.find( COMMANDS_JOYSTICKXAXIS );
+	i = selectButtons.find( COMMANDS_JOYSTICK_MOVE_XAXIS );
 	if( i != selectButtons.end() )
 	{
 		SelectionButtonDescs* desc = (SelectionButtonDescs*)i->second->GetArgument();
@@ -1778,7 +1836,29 @@ void OptionsMenu::freeJoystickButtons()
 		selectButtons.erase( i );
 	}
 
-	i = selectButtons.find( COMMANDS_JOYSTICKYAXIS );
+	i = selectButtons.find( COMMANDS_JOYSTICK_MOVE_YAXIS );
+	if( i != selectButtons.end() )
+	{
+		SelectionButtonDescs* desc = (SelectionButtonDescs*)i->second->GetArgument();
+		delete desc;
+		selectionButtonDescs.erase( std::find( selectionButtonDescs.begin(), selectionButtonDescs.end(), desc ) );
+
+		delete i->second;
+		selectButtons.erase( i );
+	}
+
+	i = selectButtons.find( COMMANDS_JOYSTICK_DIR_XAXIS );
+	if( i != selectButtons.end() )
+	{
+		SelectionButtonDescs* desc = (SelectionButtonDescs*)i->second->GetArgument();
+		delete desc;
+		selectionButtonDescs.erase( std::find( selectionButtonDescs.begin(), selectionButtonDescs.end(), desc ) );
+
+		delete i->second;
+		selectButtons.erase( i );
+	}
+
+	i = selectButtons.find( COMMANDS_JOYSTICK_DIR_YAXIS );
 	if( i != selectButtons.end() )
 	{
 		SelectionButtonDescs* desc = (SelectionButtonDescs*)i->second->GetArgument();
@@ -1884,9 +1964,6 @@ void OptionsMenu::openCoopProfileMenu()
 		/*x += buttonAddX * convertToRunningNum( i );
 		y += buttonAddY * convertToRunningNum( i );
 		y += buttonH;*/
-
-		int w	= buttonW + scroll_button_w;
-		int h	= MAX_PLAYERS_PER_CLIENT * buttonAddY;
 
 		cooperativeProfileList = ogui->CreateSelectList( win, x, y, selectListStyle, 0, NULL, NULL );
 		cooperativeProfileList->setListener( this );
@@ -2077,6 +2154,7 @@ void OptionsMenu::updateControllerTypeText(void)
 {
 	GameController::CONTROLLER_TYPE type = (GameController::CONTROLLER_TYPE)currentController;
 
+#ifndef PROJECT_SHADOWGROUNDS
 	// mouse controller
 	if(type >= GameController::CONTROLLER_TYPE_KEYBOARD_AND_MOUSE1 && type <= GameController::CONTROLLER_TYPE_KEYBOARD_AND_MOUSE4)
 	{
@@ -2096,6 +2174,7 @@ void OptionsMenu::updateControllerTypeText(void)
 		std::string keyboard_desc = getLocaleGuiString("gui_optionsmenu_controllertype_keyboard");
 		controllerTypeButton->SetText(keyboard_desc.c_str());
 	}
+#endif
 }
 
 void OptionsMenu::setControllerType(int type)
@@ -2113,7 +2192,7 @@ void OptionsMenu::setControllerType(int type)
 		int key = controlNumArray[ i ];
 		// convert keys to new controller
 		int keycode_0 = gameController->convertKeyToController(gameController->getBoundKey( key, 0 ), (GameController::CONTROLLER_TYPE)currentController);
-		int keycode_1 = gameController->convertKeyToController(gameController->getBoundKey( key, 1 ), (GameController::CONTROLLER_TYPE)currentController);
+		// int keycode_1 = gameController->convertKeyToController(gameController->getBoundKey( key, 1 ), (GameController::CONTROLLER_TYPE)currentController);
 		gameController->unbindKey( key,  0 );
 		gameController->unbindKey( key,  1 );
 		gameController->bindKey( key, keycode_0, 0 );
@@ -2139,7 +2218,7 @@ void OptionsMenu::openControllerTypeList()
 	if(controllerTypeListCaptureEvents)
 		delete controllerTypeListCaptureEvents;
 
-	controllerTypeListCaptureEvents = ogui->CreateSimpleImageButton( win, getLocaleGuiInt( "gui_optionsmenu_window_x", 0 ), getLocaleGuiInt( "gui_optionsmenu_window_y", 0 ), getLocaleGuiInt( "gui_optionsmenu_window_w", 1024 ), getLocaleGuiInt( "gui_optionsmenu_window_h", 768 ), NULL, NULL, NULL, NULL );
+	controllerTypeListCaptureEvents = ogui->CreateSimpleImageButton( win, getLocaleGuiInt( "gui_optionsmenu_window_x", 0 ), getLocaleGuiInt( "gui_optionsmenu_window_y", 0 ), getLocaleGuiInt( "gui_optionsmenu_window_w", 1024 ), getLocaleGuiInt( "gui_optionsmenu_window_h", 768 ), NULL, NULL, NULL, 0 );
 	controllerTypeListCaptureEvents->SetListener( this );
 
 	int num_mouses = Keyb3_GetNumberOfMouseDevices();

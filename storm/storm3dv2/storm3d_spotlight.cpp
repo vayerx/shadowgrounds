@@ -1,25 +1,29 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
+
+#include <vector>
+#include <string>
 
 #include "storm3d_spotlight.h"
 #include "storm3d_spotlight_shared.h"
 #include "storm3d_terrain_utils.h"
 #include "storm3d_texture.h"
-#include "storm3d_shadermanager.h"
+#include "Storm3D_ShaderManager.h"
 #include "storm3d_adapter.h"
 #include "storm3d_camera.h"
 #include "storm3d.h"
-#include <istorm3d_logger.h>
+#include <IStorm3D_Logger.h>
 #include "c2_sphere.h"
 #include <atlbase.h>
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <math.h>
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
-namespace {
 	int SHADOW_WIDTH = 512;
 	int SHADOW_HEIGHT = 512;
 	int SHADOW_DEPTH = 24;
@@ -30,8 +34,9 @@ namespace {
 	static const int CONE_VERTICES = CONE_CIRCLE_VERTICES + CONE_BASE_VERTICES + 1;
 	static const int CONE_FACES = (CONE_CIRCLE_VERTICES);
 
+	static bool spotTargetActive = false;
+namespace {
 	struct StaticBuffers;
-	bool targetActive = false;
 
 	bool checkDepthSupport(IDirect3D9 &d3d)
 	{
@@ -53,40 +58,23 @@ namespace {
 		return true;
 	}
 
-	bool checkFloatSupport(IDirect3D9 &d3d)
-	{
-/*
-#pragma message("**************************")
-#pragma message("*******   REMOVEEEE   ****")
-#pragma message("**************************")
-*/
-		return false;
-
-		HRESULT hr = d3d.CheckDeviceFormat(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_RENDERTARGET, D3DRTYPE_TEXTURE, D3DFMT_R32F);
-		if(FAILED(hr))
-			return false;
-
-		return true;
-	}
-
-	Storm3D_Spotlight::SpotType type = Storm3D_Spotlight::Legacy;
+	Storm3D_Spotlight::SpotType spotType = Storm3D_Spotlight::Legacy;
 
 	void findDepthType(IDirect3D9 &d3d, bool ps14, bool enableFloats)
 	{
 		if(checkDepthSupport(d3d))
-			type = Storm3D_Spotlight::DepthBuffer;
-		else if(enableFloats && checkFloatSupport(d3d))
-			type = Storm3D_Spotlight::AtiFloatBuffer;
+			spotType = Storm3D_Spotlight::DepthBuffer;
 		else if(ps14)
-			type = Storm3D_Spotlight::AtiBuffer;
+			spotType = Storm3D_Spotlight::AtiBuffer;
 	}
+
+}
 
 	struct ShadowMap
 	{
 		IDirect3DDevice9 &device;
 		bool ps14;
 		bool depthSupport;
-		bool floatSupport;
 
 		CComPtr<IDirect3DTexture9> color;
 		CComPtr<IDirect3DTexture9> depthTexture;
@@ -104,30 +92,10 @@ namespace {
 		:	device(device_),
 			ps14(ps14_),
 			depthSupport(false),
-			floatSupport(false),
 			pos(pos_)
 		{
-			/*
-			checkDepthSupport(d3d);
-			if(!depthSupport && enableFloats)
-				checkFloatSupport(d3d);
-			if(!depthSupport && !floatSupport && !ps14)
-				return;
-			*/
-			/*
-			depthSupport = checkDepthSupport(d3d);
-			if(!depthSupport && enableFloats)
-				floatSupport = checkFloatSupport(d3d);
-			if(!depthSupport && !floatSupport && !ps14)
-				return;
-			*/
-
-			depthSupport = false;
-			floatSupport = false;
-			if(type == Storm3D_Spotlight::DepthBuffer)
+			if(spotType == Storm3D_Spotlight::DepthBuffer)
 				depthSupport = true;
-			else if(type == Storm3D_Spotlight::AtiFloatBuffer)
-				floatSupport = true;
 
 			color = sharedColor;
 			depthSurface = sharedDepth;
@@ -136,16 +104,11 @@ namespace {
 			device.EvictManagedResources();
 			if(!color)
 			{
-				if(floatSupport)
-					device.CreateTexture(SHADOW_WIDTH * 2, SHADOW_HEIGHT * 2, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, D3DPOOL_DEFAULT, &color, 0);
+				if(depthSupport)
+					//device.CreateTexture(SHADOW_WIDTH * 2, SHADOW_HEIGHT * 2, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R5G6B5, D3DPOOL_DEFAULT, &color, 0);
+					device.CreateTexture(SHADOW_WIDTH * 2, SHADOW_HEIGHT * 2, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &color, 0);
 				else
-				{
-					if(depthSupport)
-						//device.CreateTexture(SHADOW_WIDTH * 2, SHADOW_HEIGHT * 2, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R5G6B5, D3DPOOL_DEFAULT, &color, 0);
-						device.CreateTexture(SHADOW_WIDTH * 2, SHADOW_HEIGHT * 2, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &color, 0);
-					else
-						device.CreateTexture(SHADOW_WIDTH * 2, SHADOW_HEIGHT * 2, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &color, 0);
-				}
+					device.CreateTexture(SHADOW_WIDTH * 2, SHADOW_HEIGHT * 2, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &color, 0);
 			}
 
 			if(depthSupport)
@@ -173,9 +136,9 @@ namespace {
 			if(!hasInitialized())
 				return false;
 
-			if(!targetActive || !SHARE_BUFFERS)
+			if(!spotTargetActive || !SHARE_BUFFERS)
 			{
-				targetActive = true;
+				spotTargetActive = true;
 
 				CComPtr<IDirect3DSurface9> colorSurface;
 				color->GetSurfaceLevel(0, &colorSurface);
@@ -262,13 +225,10 @@ namespace {
 			return depthSupport;
 		}
 
-		bool hasAtiFloatSupport() const
-		{
-			return floatSupport;
-		}
-
 		friend struct StaticBuffers;
 	};
+
+namespace {
 
 	struct StaticBuffers
 	{
@@ -318,7 +278,7 @@ namespace {
 
 			if(SHARE_BUFFERS)
 			{
-				if(type != Storm3D_Spotlight::DepthBuffer)
+				if(spotType != Storm3D_Spotlight::DepthBuffer)
 					sharedDepth = storm.getDepthTarget();
 				//else
 					//sharedColor = storm.getColorTarget();
@@ -477,25 +437,24 @@ struct Storm3D_SpotlightData
 		device(device_),
 		properties(device),
 		coneColorMultiplier(0.3f),
-		//smoothness(5.f),
 		smoothness(5.f),
 		ps14(ps14_),
 		ps20(ps20_),
 		smoothing(false),
-		spotlightAlwaysVisible(false),
 		camera(&storm),
 		hasFade(false),
 		hasCone(false),
-		scissorRect(true),
 		hasShadows(false),
 		enabled(true),
 		visible(false),
 		coneUpdated(false),
 
 		updateCone(true),
+		scissorRect(true),
 		noShadowModel(0),
 		light_type(IStorm3D_Spotlight::Directional),
-		coneFov(0)
+		coneFov(0),
+		spotlightAlwaysVisible(false)
 	{
 		properties.direction = VC3(0, 0, 1.f);
 		properties.color = COL(1.f, 1.f, 1.f);
@@ -508,20 +467,9 @@ struct Storm3D_SpotlightData
 
 	float getBias() const
 	{
-		/*
-		//float bias = -0.001f;
-		float bias = -0.00025f;
-		if(type == Storm3D_Spotlight::AtiBuffer)
-			bias = -.015f;
-		else if(type == Storm3D_Spotlight::AtiFloatBuffer)
-			bias = -.02f;
-		*/
-
 		float bias = 0.9989f;
-		if(type == Storm3D_Spotlight::AtiBuffer)
+		if(spotType == Storm3D_Spotlight::AtiBuffer)
 			bias = 0.975f;
-		else if(type == Storm3D_Spotlight::AtiFloatBuffer)
-			bias = 0.99f;
 
 		return bias;
 	}
@@ -1007,11 +955,8 @@ bool Storm3D_Spotlight::setAsRenderTarget(const float *cameraView)
 	{
 		if(data->shadowMap->set())
 		{
-			D3DMATRIX dm = { 0 };
-			dm._11 = 1.f;
-			dm._22 = 1.f;
-			dm._33 = 1.f;
-			dm._44 = 1.f;
+			D3DXMATRIX dm;
+			D3DXMatrixIdentity(&dm);
 
 			data->device.SetTransform(D3DTS_WORLD, &dm);
 			data->device.SetTransform(D3DTS_VIEW, &data->properties.lightView[1]);
@@ -1020,9 +965,7 @@ bool Storm3D_Spotlight::setAsRenderTarget(const float *cameraView)
 			Storm3D_ShaderManager::GetSingleton()->SetViewProjectionMatrix(data->properties.lightViewProjection[1], data->properties.lightViewProjection[1]);
 			Storm3D_ShaderManager::GetSingleton()->setSpot(data->properties.color, data->properties.position, data->properties.direction, data->properties.range, .1f);
 
-			if(type == Storm3D_Spotlight::AtiFloatBuffer)
-				data->atiFloatDepthPixelShader->apply();
-			else if(type == Storm3D_Spotlight::AtiBuffer)
+			if(spotType == Storm3D_Spotlight::AtiBuffer)
 			{
 				data->device.SetSamplerState(1, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
 				data->device.SetSamplerState(1, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
@@ -1109,21 +1052,14 @@ void Storm3D_Spotlight::applyTextures(const float *cameraView, const float *came
 
 	//data->device.SetTexture(0, data->shadowMap->color);
 
-	if(type == Storm3D_Spotlight::AtiFloatBuffer)
-	{
-		if(data->hasShadows && renderShadows && data->shadowMap && data->shadowMap->hasInitialized())
-			data->atiFloatShadowPixelShader->apply();
-		else
-			data->atiFloatNoShadowPixelShader->apply();
-	}
-	else if(type == Storm3D_Spotlight::AtiBuffer)
+	if(spotType == Storm3D_Spotlight::AtiBuffer)
 	{
 		if(data->hasShadows && renderShadows && data->shadowMap && data->shadowMap->hasInitialized())
 			data->atiShadowPixelShader->apply();
 		else
 			data->atiNoShadowPixelShader->apply();
 	}
-	else if(type == Storm3D_Spotlight::DepthBuffer)
+	else if(spotType == Storm3D_Spotlight::DepthBuffer)
 	{
 		/*
 		IDirect3DDevice9 &device = data->device;
@@ -1175,6 +1111,11 @@ void Storm3D_Spotlight::applyTextures(const float *cameraView, const float *came
 		}
 		else
 			data->nvNoShadowPixelShader->apply();
+		/*data->device.SetPixelShader(0);
+		data->device.SetTexture(1, 0);
+		data->device.SetTexture(2, 0);
+		data->device.SetTexture(3, 0);*/
+
 
 		data->device.SetTextureStageState(2, D3DTSS_TEXTURETRANSFORMFLAGS, 0);
 	}
@@ -1202,35 +1143,10 @@ void Storm3D_Spotlight::applyTextures(const float *cameraView, const float *came
 	//float c[4] = { color.r, color.g, color.b, 1.f };
 	//data->device.SetVertexShaderConstantF(17, c, 1);
 
-	if(type == Storm3D_Spotlight::AtiBuffer)
+	if(spotType == Storm3D_Spotlight::AtiBuffer)
 	{
 		frozenbyte::storm::enableMinMagFiltering(data->device, shadow, shadow, true);
 		frozenbyte::storm::enableMinMagFiltering(data->device, projection, projection, true);
-	}
-	else if(type == Storm3D_Spotlight::AtiFloatBuffer)
-	{
-		frozenbyte::storm::enableMinMagFiltering(data->device, shadow, shadow, false);
-		frozenbyte::storm::enableMinMagFiltering(data->device, projection, projection, true);
-
-		float xd = 1.f / (SHADOW_WIDTH * 2);
-		float yd = 1.f / (SHADOW_HEIGHT * 2);
-		float xd1 = xd * 2.f;
-		float yd1 = yd * 2.f;
-		float xd2 = xd * 3.f;
-		float yd2 = yd * 3.f;
-
-		//if(true) // filtered
-		{
-			float deltas1[4] = { -xd2,  yd1, 0, 0 };
-			float deltas2[4] = { -xd1, -yd1, 0, 0 };
-			float deltas3[4] = {  xd2,  yd2, 0, 0 };
-			float deltas4[4] = {  xd1, -yd2, 0, 0 };
-
-			data->device.SetPixelShaderConstantF(4, deltas1, 1);
-			data->device.SetPixelShaderConstantF(5, deltas2, 1);
-			data->device.SetPixelShaderConstantF(6, deltas3, 1);
-			data->device.SetPixelShaderConstantF(7, deltas4, 1);
-		}
 	}
 	else
 	{
@@ -1260,13 +1176,6 @@ void Storm3D_Spotlight::applyTextures(const float *cameraView, const float *came
 
 			data->device.SetPixelShaderConstantF(5, &c[0][0], 8);
 		}
-
-		/*
-		Storm3D_Texture *t = (Storm3D_Texture *) data->storm.CreateNewTexture("noise_02.dds");
-		data->device.SetSamplerState(4, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
-		data->device.SetSamplerState(4, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
-		t->Apply(4);
-		*/
 	}
 }
 
@@ -1276,14 +1185,7 @@ void Storm3D_Spotlight::applyTerrainShader(bool renderShadows)
 	float c[4] = { color.r, color.g, color.b, 1.f };
 	data->device.SetVertexShaderConstantF(17, c, 1);
 
-	if(type == Storm3D_Spotlight::AtiFloatBuffer)
-	{
-		if(data->hasShadows && renderShadows && data->shadowMap && data->shadowMap->hasInitialized())
-			data->atiFloatShadowTerrainPixelShader->apply();
-		else
-			data->atiFloatNoShadowTerrainPixelShader->apply();
-	}
-	else if(type == Storm3D_Spotlight::AtiBuffer)
+	if(spotType == Storm3D_Spotlight::AtiBuffer)
 	{
 		if(data->hasShadows && renderShadows && data->shadowMap && data->shadowMap->hasInitialized())
 			data->atiShadowTerrainPixelShader->apply();
@@ -1296,20 +1198,13 @@ void Storm3D_Spotlight::applyTerrainShader(bool renderShadows)
 
 void Storm3D_Spotlight::applySolidShader(bool renderShadows)
 {
-	if(type == Storm3D_Spotlight::AtiBuffer && renderShadows && data->hasShadows && data->shadowMap && data->shadowMap->hasInitialized())
+	if(spotType == Storm3D_Spotlight::AtiBuffer && renderShadows && data->hasShadows && data->shadowMap && data->shadowMap->hasInitialized())
 		data->atiShadowSolidPixelShader->apply();
 }
 
 void Storm3D_Spotlight::applyNormalShader(bool renderShadows)
 {
-	if(type == Storm3D_Spotlight::AtiFloatBuffer)
-	{
-		if(data->hasShadows && renderShadows && data->shadowMap && data->shadowMap->hasInitialized())
-			data->atiFloatShadowPixelShader->apply();
-		else
-			data->atiFloatNoShadowPixelShader->apply();
-	}
-	else if(type == Storm3D_Spotlight::AtiBuffer)
+	if(spotType == Storm3D_Spotlight::AtiBuffer)
 	{
 		if(data->hasShadows && renderShadows && data->shadowMap && data->shadowMap->hasInitialized())
 			data->atiShadowPixelShader->apply();
@@ -1360,26 +1255,19 @@ void Storm3D_Spotlight::renderCone(Storm3D_Camera &camera, float timeFactor, boo
 		data->coneTexture->AnimateVideo();
 		data->coneTexture->Apply(3);
 
-		if(type == AtiBuffer || type == AtiFloatBuffer)
+		if(spotType == AtiBuffer)
 			data->coneTexture->Apply(4);
 		else
 			data->coneTexture->Apply(1);
 	}
 
-	if(type == AtiBuffer)
+	if(spotType == AtiBuffer)
 	{
 		if(data->coneTexture)
 			data->coneAtiPixelShader_Texture->apply();
 		else
 			data->coneAtiPixelShader_NoTexture->apply();
 
-	}
-	else if(type == AtiFloatBuffer)
-	{
-		if(data->coneTexture)
-			data->coneAtiFloatPixelShader_Texture->apply();
-		else
-			data->coneAtiFloatPixelShader_NoTexture->apply();
 	}
 	else
 	{
@@ -1480,8 +1368,6 @@ void Storm3D_Spotlight::querySizes(Storm3D &storm, bool ps14, int shadowQuality)
 	{
 		SHADOW_WIDTH = 1024;
 		SHADOW_HEIGHT = 1024;
-		//SHADOW_WIDTH = 2048;
-		//SHADOW_HEIGHT = 2048;
 	}
 	else if(shadowQuality >= 75)
 	{
@@ -1527,7 +1413,7 @@ void Storm3D_Spotlight::querySizes(Storm3D &storm, bool ps14, int shadowQuality)
 	}
 	*/
 
-	if(type == Legacy)
+	if(spotType == Legacy)
 	{
 		bool enableFloats = true;
 		if(shadowQuality <= 33)
@@ -1536,7 +1422,7 @@ void Storm3D_Spotlight::querySizes(Storm3D &storm, bool ps14, int shadowQuality)
 		findDepthType(*storm.D3D, ps14, enableFloats);
 	}
 
-	if(type != DepthBuffer)
+	if(spotType != DepthBuffer)
 		storm.setNeededDepthTarget(VC2I(SHADOW_WIDTH * 2, SHADOW_HEIGHT * 2));
 	//else
 		//storm.setNeededColorTarget(VC2I(SHADOW_WIDTH * 2, SHADOW_HEIGHT * 2));
@@ -1562,20 +1448,6 @@ void Storm3D_Spotlight::createShadowBuffers(Storm3D &storm, IDirect3D9 &d3d, IDi
 
 	if(ps14)
 	{
-		if(type == Storm3D_Spotlight::AtiFloatBuffer)
-		{
-			Storm3D_SpotlightData::atiFloatDepthPixelShader = new frozenbyte::storm::PixelShader(device);
-			Storm3D_SpotlightData::atiFloatDepthPixelShader->createAtiFloatDepthPixelShader();
-			Storm3D_SpotlightData::atiFloatShadowPixelShader = new frozenbyte::storm::PixelShader(device);
-			Storm3D_SpotlightData::atiFloatShadowPixelShader->createAtiFloatShadowPixelShader();
-			Storm3D_SpotlightData::atiFloatShadowTerrainPixelShader = new frozenbyte::storm::PixelShader(device);
-			Storm3D_SpotlightData::atiFloatShadowTerrainPixelShader->createAtiFloatShadowTerrainPixelShader();
-			Storm3D_SpotlightData::atiFloatNoShadowPixelShader = new frozenbyte::storm::PixelShader(device);
-			Storm3D_SpotlightData::atiFloatNoShadowPixelShader->createAtiFloatNoShadowPixelShader();
-			Storm3D_SpotlightData::atiFloatNoShadowTerrainPixelShader = new frozenbyte::storm::PixelShader(device);
-			Storm3D_SpotlightData::atiFloatNoShadowTerrainPixelShader->createAtiFloatNoShadowTerrainPixelShader();
-		}
-
 		Storm3D_SpotlightData::atiDepthPixelShader = new frozenbyte::storm::PixelShader(device);
 		Storm3D_SpotlightData::atiDepthPixelShader->createAtiDepthPixelShader();
 		Storm3D_SpotlightData::atiShadowPixelShader = new frozenbyte::storm::PixelShader(device);
@@ -1593,16 +1465,8 @@ void Storm3D_Spotlight::createShadowBuffers(Storm3D &storm, IDirect3D9 &d3d, IDi
 		Storm3D_SpotlightData::coneAtiPixelShader_Texture->createAtiLightConeShader_Texture();
 		Storm3D_SpotlightData::coneAtiPixelShader_NoTexture = new frozenbyte::storm::PixelShader(device);
 		Storm3D_SpotlightData::coneAtiPixelShader_NoTexture->createAtiLightConeShader_NoTexture();
-
-		if(type == Storm3D_Spotlight::AtiFloatBuffer)
-		{
-			Storm3D_SpotlightData::coneAtiFloatPixelShader_Texture = new frozenbyte::storm::PixelShader(device);
-			Storm3D_SpotlightData::coneAtiFloatPixelShader_Texture->createAtiFloatLightConeShader_Texture();
-			Storm3D_SpotlightData::coneAtiFloatPixelShader_NoTexture = new frozenbyte::storm::PixelShader(device);
-			Storm3D_SpotlightData::coneAtiFloatPixelShader_NoTexture->createAtiFloatLightConeShader_NoTexture();
-		}
 	}
-	if(type == Storm3D_Spotlight::DepthBuffer)
+	if(spotType == Storm3D_Spotlight::DepthBuffer)
 	{
 		if(ps20)
 		{
@@ -1656,12 +1520,12 @@ void Storm3D_Spotlight::freeShadowBuffers()
 
 void Storm3D_Spotlight::clearCache()
 {
-	targetActive = false;
+	spotTargetActive = false;
 }
 
 Storm3D_Spotlight::SpotType Storm3D_Spotlight::getSpotType()
 {
-	return type;
+	return spotType;
 }
 
 void Storm3D_Spotlight::setEnableClip(bool enableClip)

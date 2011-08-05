@@ -1,5 +1,5 @@
 
-#ifndef CARPHYSICSOBJECT_H
+#ifndef CARHYSICSOBJECT_H
 #define CARPHYSICSOBJECT_H
 
 #include "AbstractPhysicsObject.h"

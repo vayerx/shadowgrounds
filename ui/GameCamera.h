@@ -6,7 +6,7 @@
 #define CAM_DEFAULT_TIME_TO_INTERPOLATE 0.5f
 
 #include "../game/gamedefs.h"
-#include <DataTypeDef.h>
+#include <DatatypeDef.h>
 
 class IStorm3D_Scene;
 
@@ -81,7 +81,7 @@ namespace ui
 
     VC3 getActualInterpolatedPosition();
 
-    void setPosition(VC3 &position);
+    void setPosition(const VC3 &position);
 
     void rotateAroundPosition(VC3 &position, int angle);
 

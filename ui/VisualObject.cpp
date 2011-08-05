@@ -1,8 +1,10 @@
 
 #include "precompiled.h"
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
 #pragma warning(disable:4786)
+#endif
 
 #include <c2_common.h>
 #include "VisualObject.h"
@@ -27,7 +29,7 @@
 // ANOTHER BAD DEPENDENCY FOR EFFECT DURATIONS...
 #include "../game/gamedefs.h"
 
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 namespace ui
 {
@@ -62,6 +64,7 @@ namespace ui
 		interpolatePerFrame = false;
 		dataObject = NULL;
 		effects = 0;
+		effectDuration = 0;
 		staticRotationYAngle = 0.0f;
 
 		renderVisibility = 1.0f;

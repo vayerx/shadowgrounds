@@ -36,8 +36,8 @@ TerminalWindow::TerminalWindow( Ogui* ogui, Game* game, const std::string& style
 	pageMax( 0 ),
 	visible( true ),
 	
-	text(),
-	fonts()
+	fonts(),
+	text()
 {
 	// the window
 	{
@@ -74,7 +74,9 @@ TerminalWindow::TerminalWindow( Ogui* ogui, Game* game, const std::string& style
 		textarea = new OguiFormattedText( window, ogui, x, y, w, h );
 
 		// FIXME: lots of temporary.c_str() crap to convert...
+#ifdef _MSC_VER
 //#pragma message("FIXME: lots of temporary.c_str() crap to convert...")
+#endif
 
 		fonts.push_back( ogui->LoadFont( getLocaleGuiString( ( name + "_font_default" ).c_str()		) ) );
 		fonts.push_back( ogui->LoadFont( getLocaleGuiString( ( name + "_font_bold" ).c_str()		) ) );

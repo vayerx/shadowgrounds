@@ -67,7 +67,7 @@
 
 namespace game
 {
-  extern char *hitChainName[HITCHAIN_AMOUNT];
+  extern const char *hitChainName[HITCHAIN_AMOUNT];
 }
 
 #endif

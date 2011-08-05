@@ -2,7 +2,6 @@
 #ifndef IGAMESYNCER_H
 #define IGAMESYNCER_H
 
-
 namespace game
 {
 namespace sync

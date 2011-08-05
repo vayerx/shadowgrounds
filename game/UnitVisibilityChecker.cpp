@@ -442,8 +442,6 @@ bool UnitVisibilityChecker::runCheckImpl()
 						{
 							int px = game->gameMap->scaledToPathfindX(ownPos.x);
 							int py = game->gameMap->scaledToPathfindY(ownPos.z);
-							int px2 = game->gameMap->scaledToPathfindX(otherPos.x);
-							int py2 = game->gameMap->scaledToPathfindY(otherPos.z);
 							if (dist < 10 
 								|| game->getGameScene()->getBuildingModelAtPathfind(px, py) != NULL)
 							{
@@ -518,8 +516,7 @@ bool UnitVisibilityChecker::runCheckImpl()
           }
         } else {
 					bool isNowSeenByPlayer = unit->visibility.isSeenByPlayer(game->singlePlayerNumber);
-					if (!wasSeenByPlayer && isNowSeenByPlayer
-						|| wasSeenByPlayer && !isNowSeenByPlayer)
+					if ((!wasSeenByPlayer && isNowSeenByPlayer) || (wasSeenByPlayer && !isNowSeenByPlayer))
 					{
 						// pointers changed (add/remove torus for this unit)
 						game->gameUI->setPointersChangedFlag(game->singlePlayerNumber);

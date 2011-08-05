@@ -62,8 +62,6 @@ namespace tracking
 		void deleteAllTrackersOfType(TrackerTypeNumber trackerTypeNumber);
 		void deleteAllTrackers();
 
-		std::vector<ITrackerObject *> getAllTrackersOfType(ITrackerObjectType *trackerType);
-
 		ITrackerObject *getTrackerByUnifiedHandle(UnifiedHandle handle);
 
 		// returns -1 if tracker does not exist.

@@ -4,7 +4,6 @@
 
 #include <DatatypeDef.h>
 #include <string>
-#include <sstream>
 
 namespace ui
 {

@@ -433,7 +433,7 @@ namespace game
 				FILE *f = fopen(filepath, "wb");
 				if (f != NULL)
 				{
-					char *tmp = "#!dhs -nopp\r\n";
+					const char *tmp = "#!dhs -nopp\r\n";
 					fwrite(tmp, strlen(tmp), 1, f);
 
 					tmp = "script ani_";

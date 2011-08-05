@@ -3,8 +3,10 @@
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
 #pragma warning(disable:4786)
+#endif
 
 #include "AreaMap.h"
 
@@ -15,7 +17,7 @@ namespace util
 	{
 		private:
 
-			AreaMapImpl::AreaMapImpl(int sizeX, int sizeY)
+			AreaMapImpl(int sizeX, int sizeY)
 			{
 				this->sizeX = sizeX;
 				this->sizeY = sizeY;
@@ -26,7 +28,7 @@ namespace util
 				}
 			}
 
-			AreaMapImpl::~AreaMapImpl()
+			~AreaMapImpl()
 			{
 				delete [] areamap;
 			}

@@ -1,6 +1,11 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
+
+#include <queue>
+#include <vector>
 
 #include "storm3d_terrain.h"
 #include "storm3d_terrain_heightmap.h"
@@ -11,12 +16,12 @@
 #include "storm3d_texture.h"
 #include "storm3d_model.h"
 #include "storm3d_scene.h"
-#include "storm3d_shadermanager.h"
+#include "Storm3D_ShaderManager.h"
 
 #include "storm3d.h"
 #include <boost/scoped_array.hpp>
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 namespace {
 } // unnamed

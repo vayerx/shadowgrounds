@@ -1,29 +1,30 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
+
+#include <boost/shared_ptr.hpp>
+#include <vector>
+#include <deque>
 
 #include "storm3d_terrain_decalsystem.h"
 #include "storm3d_terrain_utils.h"
 #include "storm3d_texture.h"
 #include "storm3d_material.h"
-#include "storm3d_shadermanager.h"
+#include "Storm3D_ShaderManager.h"
 #include "storm3d_spotlight.h"
 #include <c2_sphere.h>
 #include <c2_frustum.h>
 #include <c2_qtree.h>
 #include "storm3d.h"
 #include "storm3d_scene.h"
-#include <boost/shared_ptr.hpp>
-#include <vector>
-#include <deque>
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 using namespace std;
 using namespace boost;
 using namespace frozenbyte::storm;
-
-namespace {
 
 	struct Decal;
 	struct Material;
@@ -61,6 +62,8 @@ namespace {
 		}
 	};
 
+namespace {
+
 	bool contains2D(const AABB &area, const VC3 &position)
 	{
 		if(position.x < area.mmin.x)
@@ -76,6 +79,7 @@ namespace {
 		return true;
 	}
 
+}
 	typedef Quadtree<Decal> Tree;
 
 	struct Decal
@@ -333,9 +337,9 @@ namespace {
 		}
 	};
 
-	Material createMaterial(Storm3D_Material *material, Tree &tree)
+	Material createMaterial(Storm3D_Material *material, Tree *tree)
 	{
-		Material result(&tree);
+		Material result(tree);
 		result.diffuseColor = material->GetColor();
 
 		Storm3D_Texture *base = static_cast<Storm3D_Texture *> (material->GetBaseTexture());
@@ -344,6 +348,8 @@ namespace {
 
 		return result;
 	}
+
+namespace {
 
 	bool close(const COL &a, const COL &b)
 	{
@@ -366,6 +372,7 @@ namespace {
 
 		return true;
 	}
+}
 
 	struct DecalSorter
 	{
@@ -379,7 +386,6 @@ namespace {
 	};
 
 	typedef std::vector<Decal *> DecalPtrList;
-}
 
 struct Storm3D_TerrainDecalSystem::Data
 {
@@ -439,7 +445,7 @@ struct Storm3D_TerrainDecalSystem::Data
 	int addMaterial(IStorm3D_Material *stormMaterial)
 	{
 		assert(stormMaterial);
-		Material material = createMaterial(static_cast<Storm3D_Material *> (stormMaterial), *tree);
+		Material material = createMaterial(static_cast<Storm3D_Material *> (stormMaterial), tree.get());
 
 		for(unsigned int i = 0; i < materials.size(); ++i)
 		{
@@ -535,7 +541,7 @@ struct Storm3D_TerrainDecalSystem::Data
 		Decal decal;
 		decal.position = position;
 		decal.size = size;
-		decal.alpha = unsigned char(alpha * 255.f);
+		decal.alpha = (unsigned char)(alpha * 255.f);
 		decal.rotation = rotation;
 		decal.light = COL(1.f - alpha, 1.f - alpha, 1.f - alpha);
 
@@ -561,7 +567,7 @@ struct Storm3D_TerrainDecalSystem::Data
 		}
 	}
 
-	void Storm3D_TerrainDecalSystem::Data::createIndexBuffers(IDirect3DDevice9 &device)
+	void createIndexBuffers(IDirect3DDevice9 &device)
 	{
 		if(!indices)
 		{
@@ -793,7 +799,7 @@ struct Storm3D_TerrainDecalSystem::Data
 	{
 		IDirect3DDevice9 &device = *storm.GetD3DDevice();
 		bool atiShader = false;
-		if(Storm3D_Spotlight::getSpotType() == Storm3D_Spotlight::AtiBuffer || Storm3D_Spotlight::getSpotType() == Storm3D_Spotlight::AtiFloatBuffer)
+		if(Storm3D_Spotlight::getSpotType() == Storm3D_Spotlight::AtiBuffer)
 			atiShader = true;
 
 		if(!atiShader)
@@ -968,7 +974,7 @@ void Storm3D_TerrainDecalSystem::setShadowMaterial(IStorm3D_Material *material)
 	assert(data->tree);
 	Storm3D_Material *m = static_cast<Storm3D_Material *> (material);
 
-	Material newMaterial = createMaterial(m, *data->tree.get());
+	Material newMaterial = createMaterial(m, data->tree.get());
 	data->shadowMaterial.reset(new Material(newMaterial));
 }
 

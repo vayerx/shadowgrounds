@@ -136,6 +136,7 @@ namespace {
 			addComboString(dialog, IDC_LIGHTMAP_AREA, "50m radius");
 			addComboString(dialog, IDC_LIGHTMAP_AREA, "20m radius");
 			addComboString(dialog, IDC_LIGHTMAP_AREA, "10m radius");
+			addComboString(dialog, IDC_LIGHTMAP_AREA, "1m radius");
 			setComboIndex(dialog, IDC_LIGHTMAP_AREA, 3);
 
 			setSliderRange(dialog, IDC_SUN_YANGLE, 0, 359);

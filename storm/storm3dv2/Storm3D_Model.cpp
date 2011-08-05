@@ -1,10 +1,16 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
+#include <queue>
+#include <vector>
+#include <boost/lexical_cast.hpp>
+
 #include "S3D_ModelFile.h"
 #include "storm3d.h"
 #include "storm3d_model.h"
@@ -12,21 +18,19 @@
 #include "storm3d_light.h"
 #include "storm3d_helper.h"
 #include "storm3d_mesh.h"
-#include "iterator.h"
+#include "Iterator.h"
 
 // psd
-#include <vector>
 #include <map>
 #include <string>
 #include <stdio.h>
 #include <cassert>
 #include <algorithm>
 #include <functional>
-#include <boost/lexical_cast.hpp>
 #include "Storm3D_Bone.h"
 #include "IStorm3D_Logger.h"
-#include "..\..\filesystem\input_stream_wrapper.h"
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../filesystem/input_stream_wrapper.h"
+#include "../../util/Debug_MemoryManager.h"
 
 #ifdef WORLD_FOLDING_ENABLED
 #include "WorldFold.h"
@@ -35,7 +39,7 @@
 using namespace std;
 
 
-#ifdef BONE_MODEL_SPHERE_TRANSFORM
+#if defined BONE_MODEL_SPHERE_TRANSFORM && defined _MSC_VER
 #pragma message("--- NOTICE!!! Bounding sphere transform enabled for models with bones! ---") 
 #pragma message("---           This may cause inaccuracies to raytraces. (optimization) ---") 
 #endif
@@ -129,29 +133,29 @@ namespace {
 } // unnamed
 
 Model_BoneAnimation::Model_BoneAnimation()
-:	transition(0),
-	animation(NULL),
-	animation_loop(false),
-	blend_time(0),
-	animation_time(0),
+:	animation_time(0),
 	elapsed_time(0),
+	blend_time(0),
 	speed_factor(MODEL_BONEANIMATION_SPEED_FACTOR_MULT),
-	state(Normal),
-	blend_factor(1.f)
+	blend_factor(1.f),
+	animation_loop(false),
+	transition(0),
+	animation(NULL),
+	state(Normal)
 {
 	storm3d_model_boneanimation_allocs++;
 }
 
 Model_BoneAnimation::Model_BoneAnimation(const Model_BoneAnimation &animation_)
-:	transition(0),
-	animation(NULL),
-	animation_loop(false),
-	blend_time(0),
-	animation_time(0),
+:	animation_time(0),
 	elapsed_time(0),
+	blend_time(0),
 	speed_factor(MODEL_BONEANIMATION_SPEED_FACTOR_MULT),
-	state(Normal),
-	blend_factor(1.f)
+	blend_factor(1.f),
+	animation_loop(false),
+	transition(0),
+	animation(NULL),
+	state(Normal)
 {
 	*this = animation_;
 	storm3d_model_boneanimation_allocs++;
@@ -159,15 +163,15 @@ Model_BoneAnimation::Model_BoneAnimation(const Model_BoneAnimation &animation_)
 
 
 Model_BoneAnimation::Model_BoneAnimation(Storm3D_BoneAnimation *transition_, Storm3D_BoneAnimation *animation_, bool looping, int blend_time_, int animation_time_)
-:	transition(transition_),
-	animation(animation_),
-	animation_loop(looping),
-	blend_time(blend_time_),
-	animation_time(animation_time_),
+:	animation_time(animation_time_),
 	elapsed_time(0),
+	blend_time(blend_time_),
 	speed_factor(MODEL_BONEANIMATION_SPEED_FACTOR_MULT),
-	state(Normal),
-	blend_factor(1.f)
+	blend_factor(1.f),
+	animation_loop(looping),
+	transition(transition_),
+	animation(animation_),
+	state(Normal)
 {
 	if(animation)
 		animation->AddReference();
@@ -575,8 +579,6 @@ bool Storm3D_Model::LoadS3D(const char *filename)
 		Storm3D2->getLogger()->debug(filename);
 	}
 
-	bool disableShadows = false;
-
 	bool mirrored = false;
 	bool mirroredX = false;
 	bool mirroredY = false;
@@ -592,8 +594,6 @@ bool Storm3D_Model::LoadS3D(const char *filename)
 
 	bool blackEdge = false;
 	float blackEdgeSize = 0.0f;
-	float blackEdgeU = -1.0f;
-	float blackEdgeV = -1.0f;
 
 	bool fatboy = false;
 	float fatboySize = 0.0f;
@@ -614,9 +614,6 @@ bool Storm3D_Model::LoadS3D(const char *filename)
 	// foobar.s3d@90 - "hard vertex rotation" 
 	// foobar.s3d@F0.01 - "fatboy" (a.k.a. LW smooth scale / move verteices on vertex normals)
 	// foobar.s3d@B0.01 - "blackedge" (duplicate vertices, move on vertex normals, set UV to 0,0 - assuming that is black)
-	// foobar.s3d@BU0.0 - define blackedge u texture coordinate instead of 0
-	// foobar.s3d@BV0.0 - define blackedge v texture coordinate instead of 0
-	// foobar.s3d@NS - no shadows (this model does not get rendered in depth buffer)
 	// foobar.s3d@RM - "reflection mask" (masks the cheap-ass-reflection in depth buffer)
 	// foobar.s3d@DA - "delayed alpha" (delay the rendering of this alpha object - assuming it really is an alpha object!)
 	// foobar.s3d@EA - "early alpha" (make the rendering of this alpha object earlier - assuming it really is an alpha object!)
@@ -629,7 +626,7 @@ bool Storm3D_Model::LoadS3D(const char *filename)
 	// --jpk
 
 
-	char actual_filename[256+1];
+	char actual_filename[256];
 	int filename_len = strlen(filename);
 	int hard_rotation = 0;
 	if (filename_len < 256) 
@@ -652,24 +649,8 @@ bool Storm3D_Model::LoadS3D(const char *filename)
 				actual_filename[i] = '\0';
 				if (actual_filename[i+1] == 'B')
 				{
-					if (actual_filename[i+2] == 'U')
-					{
-						blackEdgeU = (float)atof(&actual_filename[i + 3]);
-					}
-					else if (actual_filename[i+2] == 'V')
-					{
-						blackEdgeV = (float)atof(&actual_filename[i + 3]);
-					} else {
-						blackEdge = true;
-						blackEdgeSize = (float)atof(&actual_filename[i + 2]);
-					}
-				}
-				if (actual_filename[i+1] == 'N')
-				{
-					if (actual_filename[i+2] == 'S')
-					{
-						disableShadows = true;
-					}
+					blackEdge = true;
+					blackEdgeSize = (float)atof(&actual_filename[i + 2]);
 				}
 				else if (actual_filename[i+1] == 'M')
 				{
@@ -1012,7 +993,6 @@ bool Storm3D_Model::LoadS3D(const char *filename)
 		S3D_OBJECT obj;
 		bool has_weights = false;
 		bool hasLods = false;
-		bool blackEdgeThisObject = false;
 
 		int originalVertexAmount = 0;
 		int originalFaceAmount = 0;
@@ -1026,15 +1006,6 @@ bool Storm3D_Model::LoadS3D(const char *filename)
 			
 			filesystem::fb_fread(&obj.material_index, sizeof(short int), 1, f);
 			assert(obj.material_index < header.num_materials);
-
-			// only non-alphablended/non-alphatested objects get black edges
-			if (blackEdge)
-			{
-				if (mathandles[obj.material_index]->GetAlphaType() == IStorm3D_Material::ATYPE_NONE)
-				{
-					blackEdgeThisObject = true;
-				}
-			}
 
 			filesystem::fb_fread(obj.position, sizeof(float), 3, f);
 			filesystem::fb_fread(obj.rotation, sizeof(float), 4, f);
@@ -1131,7 +1102,7 @@ bool Storm3D_Model::LoadS3D(const char *filename)
 			vertexAmountMult = 1;
 			faceAmountMult = 1;
 
-			if (blackEdgeThisObject)
+			if (blackEdge)
 			{
 				vertexAmountMult = 2;
 				faceAmountMult = 2;
@@ -1318,15 +1289,6 @@ bool Storm3D_Model::LoadS3D(const char *filename)
 					vertex.texturecoords2[1] = 1.0f - vertex.texturecoords2[1];
 				}
 			}
-
-#ifdef PROJECT_AOV
-// fix y coords being generally negative (0.0 - -1.0)
-vertex.texturecoords[1] += 1.0f;
-// and use the second set of texture coordinates for black edge purposes instead of lightmap
-// NOTE: this breaks lightmaps!
-vertex.texturecoords2[1] = 1.0f;
-#endif
-
 			if (scaled)
 			{
 				if (scaledX)
@@ -1354,12 +1316,11 @@ vertex.texturecoords2[1] = 1.0f;
 				//tempverts[i2].position += tempverts[i2].normal * fatboySize;
 			//}
 
-			if (blackEdgeThisObject)
+			if (blackEdge)
 			{
 				tempverts[i2 + originalVertexAmount] = tempverts[i2];
-				tempverts[i2 + originalVertexAmount].texturecoordinates = VC2(blackEdgeU,blackEdgeV);
-				//tempverts[i2 + originalVertexAmount].texturecoordinates2 = VC2(blackEdgeU,blackEdgeV);
-				tempverts[i2 + originalVertexAmount].texturecoordinates2 = VC2(0,0);
+				tempverts[i2 + originalVertexAmount].texturecoordinates = VC2(0,1);
+				tempverts[i2 + originalVertexAmount].texturecoordinates2 = VC2(0,1);
 				tempverts[i2 + originalVertexAmount].normal = -tempverts[i2].normal;
 				// old blackedge move, does not handle seams...
 				//tempverts[i2 + originalVertexAmount].position += tempverts[i2].normal * blackEdgeSize;
@@ -1409,7 +1370,7 @@ vertex.texturecoords2[1] = 1.0f;
 					{
 						tempverts[i2].position += seamnorm * fatboySize;
 					}
-					if (blackEdgeThisObject)
+					if (blackEdge)
 					{
 						tempverts[i2 + originalVertexAmount].position = tempverts[i2].position + seamnorm * blackEdgeSize;
 					}
@@ -1418,7 +1379,7 @@ vertex.texturecoords2[1] = 1.0f;
 					{
 						tempverts[i2].position += tempverts[i2].normal * fatboySize;
 					}
-					if (blackEdgeThisObject)
+					if (blackEdge)
 					{
 						tempverts[i2 + originalVertexAmount].position = tempverts[i2].position + tempverts[i2].normal * blackEdgeSize;
 					}
@@ -1458,7 +1419,7 @@ vertex.texturecoords2[1] = 1.0f;
 			*/
 		
 			for(int i = 0; i < 3; ++i)
-				assert(face.vertex[i] >= 0 && face.vertex[i] < obj.vertex_amount);
+				assert(/*face.vertex[i] >= 0 && */ face.vertex[i] < obj.vertex_amount);
 
 			tempfaces[i2]=Storm3D_Face(face.vertex[0],face.vertex[1],face.vertex[2],VC3(0,0,0));
 
@@ -1470,7 +1431,7 @@ vertex.texturecoords2[1] = 1.0f;
 				//tempfaces[i2].vertex_index[1] = tempfaces[i2].vertex_index[1];
 				tempfaces[i2].vertex_index[2] = orig0;
 			}
-			if (blackEdgeThisObject)
+			if (blackEdge)
 			{
 				tempfaces[i2 + originalFaceAmount] = tempfaces[i2];
 				tempfaces[i2 + originalFaceAmount].vertex_index[0] = tempfaces[i2].vertex_index[2] + originalVertexAmount;
@@ -1548,18 +1509,13 @@ vertex.texturecoords2[1] = 1.0f;
 				//tmesh->bone_weights[j].weight2 = 100 - weight1;
 				tmesh->bone_weights[j].weight2 = weight2;
 
-				if (blackEdgeThisObject)
+				if (blackEdge)
 				{
 					tmesh->bone_weights[j + originalVertexAmount] = tmesh->bone_weights[j];
 				}
 
 				//assert(weight1 + weight2 == 100);
 			}
-		}
-
-		if (blackEdgeThisObject)
-		{
-			tmesh->SetCollisionFaces(obj.face_amount / 2);
 		}
 
 		// Rebuild
@@ -1931,12 +1887,6 @@ vertex.texturecoords2[1] = 1.0f;
 
 	storm3d_model_loads++;
 	updateEffectTexture();
-
-	if (disableShadows)
-	{
-		this->cast_shadows = false;
-	}
-
 	return true;
 }
 
@@ -1948,131 +1898,15 @@ bool Storm3D_Model::LoadBones(const char *filename)
 {
 	// First empty model (delete everything)
 //	Empty(true, false);
-	// 
-	// foo.b3d@bar.b3d,wing_lower_l,wing_higher_l,wing_lower_l,wing_higher_l
-	// --jpk
-	bool combine = false;
-	bool removeBones = false;
-	std::string combineWithFilename;
-	std::vector<std::string> combineBoneNames;
-	std::vector<std::string> removeBoneNames;
 
-	char actual_filename[512+1];
-	int filename_len = strlen(filename);
-	if (filename_len < 512) 
-	{
-		strcpy(actual_filename, filename);
-		for (int i = 0; i < filename_len; i++)
-		{
-			if (actual_filename[i] == '@')
-			{
-				int restoreAtPos = -1;
-				for (int j = i+1; j < filename_len; j++)
-				{
-					if (actual_filename[j] == '@')
-					{
-						actual_filename[j] = '\0';
-						restoreAtPos = j;
-						break;
-					}
-				}
-				actual_filename[i] = '\0';
-
-				if (actual_filename[i + 1] == '-')
-				{
-					removeBones = true;
-					removeBoneNames.push_back(&actual_filename[i + 2]);
-				} else {
-					combine = true;
-
-					bool gotFirstOne = false;
-					int lastCommaPos = i;
-					for (int j = i + 1; j < filename_len + 1; j++)
-					{
-						if (actual_filename[j] == ','
-							|| actual_filename[j] == '\0')
-						{
-							// interpret first token as filename, rest as bone names
-							if (!gotFirstOne)
-							{
-								// file name
-								assert(j >= (lastCommaPos + 1));
-								combineWithFilename = std::string(&actual_filename[lastCommaPos + 1]).substr(0, j - (lastCommaPos + 1));
-								if (combineWithFilename.empty())
-								{
-									if (Storm3D2->getLogger() != NULL)
-									{
-										Storm3D2->getLogger()->warning("Storm3D_Model::LoadBones - Combine filename empty.");
-										Storm3D2->getLogger()->debug(filename);
-									}
-								}
-								lastCommaPos = j;
-								gotFirstOne = true;
-							} else {
-								// bone name
-								assert(j >= (lastCommaPos + 1));
-								std::string tmp = std::string(&actual_filename[lastCommaPos + 1]).substr(0, j - (lastCommaPos + 1));
-								if (tmp.empty())
-								{
-									if (Storm3D2->getLogger() != NULL)
-									{
-										Storm3D2->getLogger()->warning("Storm3D_Model::LoadBones - Combine bone name empty.");
-										Storm3D2->getLogger()->debug(filename);
-									}
-								} else {
-									combineBoneNames.push_back(tmp);
-								}
-								lastCommaPos = j;							
-							}
-							if (actual_filename[j] == '\0')
-								break;
-						}
-					}
-				}
-				if (restoreAtPos != -1)
-				{
-					actual_filename[restoreAtPos] = '@';
-				}
-			}	
-		}
-	} else {
-		assert(0);
-		return false;
-	}
-
-	if (combine)
-	{
-		if (Storm3D2->getLogger() != NULL)
-		{
-			Storm3D2->getLogger()->debug((std::string("Storm3D_Model::LoadBones - Combining with model: ") + combineWithFilename).c_str());
-			for (int i = 0; i < (int)combineBoneNames.size(); i++)
-			{
-				Storm3D2->getLogger()->debug((std::string("bone: ") + combineBoneNames[i]).c_str());
-			}
-		}
-		assert(!"Storm3D_Model::LoadBones - combine TODO");
-	}
-		
-	if (removeBones)
-	{
-		if (Storm3D2->getLogger() != NULL)
-		{
-			Storm3D2->getLogger()->debug("Storm3D_Model::LoadBones - Removing bones:");
-			for (int i = 0; i < (int)removeBoneNames.size(); i++)
-			{
-				Storm3D2->getLogger()->debug((std::string("bone: ") + removeBoneNames[i]).c_str());
-			}
-		}
-	}
-		
 	if (Storm3D2->getLogger() != NULL)
 	{
 		Storm3D2->getLogger()->debug("Storm3D_Model::LoadBones - Loading a bones file.");
-		Storm3D2->getLogger()->debug(actual_filename);
+		Storm3D2->getLogger()->debug(filename);
 	}
-
+	
 	// Open file
-	filesystem::FB_FILE *fp = filesystem::fb_fopen(actual_filename, "rb");
+	filesystem::FB_FILE *fp = filesystem::fb_fopen(filename, "rb");
 	if(fp == 0)
 		return false;
 
@@ -2100,31 +1934,10 @@ bool Storm3D_Model::LoadBones(const char *filename)
 
 	for(int i = 0; i < bone_count; ++i)
 	{
+		Storm3D_Bone *bone = new Storm3D_Bone();
+		
 		// Get actual properties
 		std::string name = LoadStringFromFile(fp);
-
-		bool skipThis = false;
-		if (removeBones)
-		{
-			for (int j = 0; j < (int)removeBoneNames.size(); j++)
-			{
-				if (name == removeBoneNames[j])
-				{
-					skipThis = true;
-					break;
-				}
-			}
-		}
-
-		if (skipThis)
-		{
-			// in reality, we cannot just skip bones if we don't remap the bone IDs
-			// thus, we'll instead rather create a silly "dummy bone"
-			//continue;
-		}
-
-		Storm3D_Bone *bone = new Storm3D_Bone();		
-
 		Vector position;
 		Rotation rotation;
 		
@@ -2153,13 +1966,7 @@ bool Storm3D_Model::LoadBones(const char *filename)
 
 		bone->SetName(name.c_str());
 		bone->SetOriginalProperties(position, rotation, original_position, original_rotation);
-		if (skipThis)
-		{
-			bone->SetSpecialProperties(0.01f, 0.01f);
-			bone->SetNoCollision(true);
-		} else {
-			bone->SetSpecialProperties(length, thickness);
-		}
+		bone->SetSpecialProperties(length, thickness);
 		bone->SetParentIndex(parent_index);
 
 		bones.push_back(bone);
@@ -2604,7 +2411,7 @@ void Storm3D_Model::Object_Delete(IStorm3D_Model_Object *iobject)
 //------------------------------------------------------------------
 // Storm3D_Model::Helper_Point_New
 //------------------------------------------------------------------
-IStorm3D_Helper_Point *Storm3D_Model::Helper_Point_New(const char *name,VC3 &_position)
+IStorm3D_Helper_Point *Storm3D_Model::Helper_Point_New(const char *name, const VC3 &_position)
 {
 	// Create new helper and add it into the set
 	Storm3D_Helper_Point *help=new Storm3D_Helper_Point(name,this,_position);
@@ -2619,8 +2426,8 @@ IStorm3D_Helper_Point *Storm3D_Model::Helper_Point_New(const char *name,VC3 &_po
 //------------------------------------------------------------------
 // Storm3D_Model::Helper_Vector_New
 //------------------------------------------------------------------
-IStorm3D_Helper_Vector *Storm3D_Model::Helper_Vector_New(const char *name,VC3 &_position,
-	VC3 &_direction)
+IStorm3D_Helper_Vector *Storm3D_Model::Helper_Vector_New(const char *name, const VC3 &_position,
+	const VC3 &_direction)
 {
 	// Create new helper and add it into the set
 	Storm3D_Helper_Vector *help=new Storm3D_Helper_Vector(name,this,_position,_direction);
@@ -2635,8 +2442,8 @@ IStorm3D_Helper_Vector *Storm3D_Model::Helper_Vector_New(const char *name,VC3 &_
 //------------------------------------------------------------------
 // Storm3D_Model::Helper_Camera_New
 //------------------------------------------------------------------
-IStorm3D_Helper_Camera *Storm3D_Model::Helper_Camera_New(const char *name,VC3 &_position,
-	VC3 &_direction,VC3 &_up)
+IStorm3D_Helper_Camera *Storm3D_Model::Helper_Camera_New(const char *name, const VC3 &_position,
+	const VC3 &_direction, const VC3 &_up)
 {
 	// Create new helper and add it into the set
 	Storm3D_Helper_Camera *help=new Storm3D_Helper_Camera(name,this,_position,_direction,_up);
@@ -2651,8 +2458,8 @@ IStorm3D_Helper_Camera *Storm3D_Model::Helper_Camera_New(const char *name,VC3 &_
 //------------------------------------------------------------------
 // Storm3D_Model::Helper_Box_New
 //------------------------------------------------------------------
-IStorm3D_Helper_Box *Storm3D_Model::Helper_Box_New(const char *name,VC3 &_position,
-	VC3 &_size)
+IStorm3D_Helper_Box *Storm3D_Model::Helper_Box_New(const char *name, const VC3 &_position,
+	const VC3 &_size)
 {
 	// Create new helper and add it into the set
 	Storm3D_Helper_Box *help=new Storm3D_Helper_Box(name,this,_position,_size);
@@ -2667,7 +2474,7 @@ IStorm3D_Helper_Box *Storm3D_Model::Helper_Box_New(const char *name,VC3 &_positi
 //------------------------------------------------------------------
 // Storm3D_Model::Helper_Sphere_New
 //------------------------------------------------------------------
-IStorm3D_Helper_Sphere *Storm3D_Model::Helper_Sphere_New(const char *name,VC3 &_position,
+IStorm3D_Helper_Sphere *Storm3D_Model::Helper_Sphere_New(const char *name, const VC3 &_position,
 	float radius)
 {
 	// Create new helper and add it into the set
@@ -2772,7 +2579,7 @@ bool Storm3D_Model::hasBones ()
 //------------------------------------------------------------------
 // Storm3D_Model::SetPosition
 //------------------------------------------------------------------
-void Storm3D_Model::SetPosition(VC3 &_position)
+void Storm3D_Model::SetPosition(const VC3 &_position)
 {
 	if(fabsf(position.x - _position.x) < 0.01f)
 	if(fabsf(position.y - _position.y) < 0.01f)
@@ -2796,7 +2603,6 @@ for(unsigned int i = 0; i < bones.size(); ++i)
 	bones[i]->ParentPositionMoved(position);
 
 box_ok = false;
-collision_box_ok = false;
 
 	if(observer)
 		observer->updatePosition(position);
@@ -2807,7 +2613,7 @@ collision_box_ok = false;
 //------------------------------------------------------------------
 // Storm3D_Model::SetRotation
 //------------------------------------------------------------------
-void Storm3D_Model::SetRotation(QUAT &_rotation)
+void Storm3D_Model::SetRotation(const QUAT &_rotation)
 {
 	rotation=_rotation;
 
@@ -2816,7 +2622,6 @@ void Storm3D_Model::SetRotation(QUAT &_rotation)
 	if (!mx_update) InformChangeToChilds();
 
 box_ok = false;
-collision_box_ok = false;
 
 	// Set update flag
 	mx_update=true;
@@ -2831,7 +2636,7 @@ collision_box_ok = false;
 //------------------------------------------------------------------
 // Storm3D_Model::SetScale
 //------------------------------------------------------------------
-void Storm3D_Model::SetScale(VC3 &_scale)
+void Storm3D_Model::SetScale(const VC3 &_scale)
 {
 	// HACK: re-scale if already calculated bounding sphere...?
 	// WARNING: incorrect result when calling SetScale several times!!!
@@ -2854,7 +2659,6 @@ void Storm3D_Model::SetScale(VC3 &_scale)
 		observer->updateRadius(bounding_radius * max_scale);
 
 	box_ok = false;
-	collision_box_ok = false;
 	scale=_scale;
 
 	// Inform objects and lights of change
@@ -2904,18 +2708,19 @@ void Storm3D_Model::SetSelfIllumination(const COL &color)
 //------------------------------------------------------------------
 Storm3D_Model::Storm3D_Model(Storm3D *s2) :
 	Storm3D2(s2),
+	scale(1,1,1),
 	mx_update(true),
 	no_collision(false),
-	scale(1,1,1),
+	animation_paused(false),
 	bone_boneid(0),
 	model_boneid(0),
 	lodLevel(0),
 	custom_data(0),
+	observer(0),
 	bounding_radius(0.f),
 	original_bounding_radius(0.f),
 	cast_shadows(true),
 	bone_collision(true),
-	observer(0),
 	type_flag(0),
 	terrain_object(false),
 	terrain_lightmapped_object(false),
@@ -2923,14 +2728,12 @@ Storm3D_Model::Storm3D_Model(Storm3D *s2) :
 	terrainModelId(-1),
 	sun_strength(0),
 	always_use_sun(false),
-	max_scale(1.f),
-	box_ok(false),
-	collision_box_ok(false),
-	use_cylinder_collision(false),
 	occluded(false),
-	skyModel(false),
-	animation_paused(false),
-	need_cull_adding(false)
+	box_ok(false),
+	max_scale(1.f),
+	use_cylinder_collision(false),
+	need_cull_adding(false),
+	skyModel(false)
 {
 	for(int i = 0; i < LIGHT_MAX_AMOUNT; ++i)
 		light_index[i] = -1;
@@ -3044,7 +2847,6 @@ void Storm3D_Model::updateRadiusToContain(const VC3 &pos, float radius)
 	{
 		bounding_radius = need_radius;
 		box_ok = false;
-		collision_box_ok = false;
 		
 		if(observer)
 			observer->updateRadius(bounding_radius * max_scale);
@@ -3104,7 +2906,7 @@ void Storm3D_Model::updateRadiusToContain(const VC3 &pos, float radius)
 	for(set<IStorm3D_Light*>::iterator il=other->lights.begin();il!=other->lights.end();il++)
 	{
 		// Typecast (to simplify code)
-		/*IStorm3D_Light *orig_lgt=(IStorm3D_Light*)*io;
+		IStorm3D_Light *orig_lgt=(IStorm3D_Light*)*io;
 
 		switch (orig_lgt->GetLightType())
 		{
@@ -3274,9 +3076,6 @@ void Storm3D_Model::RayTrace(const VC3 &position,const VC3 &direction_normalized
 			const Matrix &bone_tm = bones[i]->GetTM();
 			float bone_length = bones[i]->GetLenght();
 			float bone_thickness = bones[i]->GetThickness();
-
-			if (bones[i]->HasNoCollision())
-				continue;
 
 float scaleFactor = scale.x;
 bone_length *= scaleFactor;
@@ -3521,12 +3320,6 @@ IStorm3D_Bone *Storm3D_Model::SearchBone(const char *name)
 		return bones[i];
 
 	return 0;
-}
-
-IStorm3D_Bone *Storm3D_Model::GetBone(int i)
-{
-	if(((unsigned int)i) >= bones.size()) return 0;
-	return bones[i];
 }
 
 
@@ -4205,83 +3998,6 @@ const AABB &Storm3D_Model::GetBoundingBox() const
 	return bounding_box;
 }
 
-const AABB &Storm3D_Model::GetCollisionBoundingBox() const
-{
-	if(!objects.empty() && !collision_box_ok)
-	{
-		collision_bounding_box.mmin = VC3(100000.f, 100000.f, 100000.f);
-		collision_bounding_box.mmax = VC3(-100000.f, -100000.f, -100000.f);
-
-		MAT tm = const_cast<Storm3D_Model *> (this)->GetMX();
-		VC3 v[8];
-
-		bool thereWasAtLeastOneCollisionObject = false;
-
-		std::set<IStorm3D_Model_Object *>::const_iterator it = objects.begin();
-		for(; it != objects.end(); ++it)
-		{
-			Storm3D_Model_Object *o = static_cast<Storm3D_Model_Object *> (*it);
-			if(!o)
-				continue;
-
-			// this does not work???
-			if (o->GetNoCollision())
-				continue;
-
-			// maybe this does???
-			if (o->GetName() != NULL 
-				&& strstr(o->GetName(), "_NoCollision") != NULL)
-				continue;
-
-			thereWasAtLeastOneCollisionObject = true;
-
-			const AABB &object_box = o->GetBoundingBox();
-
-			v[0] = VC3(object_box.mmin.x, object_box.mmin.y, object_box.mmin.z);
-			v[1] = VC3(object_box.mmax.x, object_box.mmin.y, object_box.mmin.z);
-			v[2] = VC3(object_box.mmin.x, object_box.mmax.y, object_box.mmin.z);
-			v[3] = VC3(object_box.mmin.x, object_box.mmin.y, object_box.mmax.z);
-			v[4] = VC3(object_box.mmax.x, object_box.mmax.y, object_box.mmin.z);
-			v[5] = VC3(object_box.mmin.x, object_box.mmax.y, object_box.mmax.z);
-			v[6] = VC3(object_box.mmax.x, object_box.mmin.y, object_box.mmax.z);
-			v[7] = VC3(object_box.mmax.x, object_box.mmax.y, object_box.mmax.z);
-
-			for(int i = 0; i < 8; ++i)
-			{
-				tm.TransformVector(v[i]);
-
-				collision_bounding_box.mmin.x = min(collision_bounding_box.mmin.x, v[i].x);
-				collision_bounding_box.mmin.y = min(collision_bounding_box.mmin.y, v[i].y);
-				collision_bounding_box.mmin.z = min(collision_bounding_box.mmin.z, v[i].z);
-				collision_bounding_box.mmax.x = max(collision_bounding_box.mmax.x, v[i].x);
-				collision_bounding_box.mmax.y = max(collision_bounding_box.mmax.y, v[i].y);
-				collision_bounding_box.mmax.z = max(collision_bounding_box.mmax.z, v[i].z);
-			}
-		}
-
-		if (!thereWasAtLeastOneCollisionObject)
-		{
-			// WARNING: this makes a zero volume bounding box! 
-			// I assume that some crappy code may broke when encountering such.
-			// could be fixed by making some silly "really small box" here - which would be incorrect though.
-			collision_bounding_box.mmin = VC3(0.f, 0.f, 0.f);
-			collision_bounding_box.mmax = VC3(0.f, 0.f, 0.f);
-		}
-
-		collision_box_ok = true;
-	}
-
-	return collision_bounding_box;
-}
-
-const AABB &Storm3D_Model::GetPhysicsBoundingBox() const
-{
-	// FIXME: this should be different from GetCollisionBoundingBox, as it should take into account the
-	// "_NoPhysics" tagged objects too.
-	// but for now, collision bounding box shall be good enough.
-	return GetCollisionBoundingBox();
-}
-
 void Storm3D_Model::RemoveCollision(Storm3D_Model_Object *object)
 {
 	//assert(collision_objects.find(object) != collision_objects.end());
@@ -4299,7 +4015,6 @@ void Storm3D_Model::SetCollision(Storm3D_Model_Object *object)
 void Storm3D_Model::MakeSkyModel()
 {
 	skyModel = true;
-	cast_shadows = false;
 
 	std::set<IStorm3D_Model_Object *>::const_iterator it = objects.begin();
 	for(; it != objects.end(); ++it)

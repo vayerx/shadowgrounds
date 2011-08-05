@@ -20,7 +20,6 @@
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
-#include <windows.h>
 
 // Common datatypes
 #include "DatatypeDef.h"
@@ -66,7 +65,7 @@ public:
 	virtual const char *GetName()=0;
 
 	// Change parameters
-	virtual void SetColor(COL &color)=0;
+	virtual void SetColor(const COL &color)=0;
 	virtual void SetMultiplier(float multiplier)=0;
 	virtual void SetDecay(float decay)=0;
 
@@ -96,7 +95,7 @@ class ST3D_EXP_DLLAPI IStorm3D_Light_Directional : public IStorm3D_Light
 public:
 
 	// Change params
-	virtual void SetDirection(VC3 &direction)=0;
+	virtual void SetDirection(const VC3 &direction)=0;
 
 	// Get params
 	virtual VC3 &GetDirection()=0;
@@ -117,7 +116,7 @@ class ST3D_EXP_DLLAPI IStorm3D_Light_Point : public IStorm3D_Light
 public:
 
 	// Change params
-	virtual void SetPosition(VC3 &position)=0;
+	virtual void SetPosition(const VC3 &position)=0;
 	virtual void SetLensFlare(IStorm3D_LensFlare *lflare)=0;
 
 	// Get params
@@ -140,7 +139,7 @@ class ST3D_EXP_DLLAPI IStorm3D_Light_Spot : public IStorm3D_Light_Point
 public:
 
 	// Change params
-	virtual void SetDirection(VC3 &direction)=0;
+	virtual void SetDirection(const VC3 &direction)=0;
 	virtual void SetCones(float inner,float outer)=0;
 
 	// Get params

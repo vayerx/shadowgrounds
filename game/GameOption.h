@@ -52,7 +52,7 @@ namespace game
 
 			GameOption(GameOptionManager *manager, int id);
 
-			~GameOption();
+			virtual ~GameOption();
 
 		private:
 			GameOptionManager *manager;

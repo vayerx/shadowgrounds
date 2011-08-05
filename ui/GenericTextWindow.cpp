@@ -21,7 +21,7 @@ namespace ui {
 	GenericTextWindow *GenericTextWindow::last_opened_window = NULL;
 
 	GenericTextWindow::GenericTextWindow( Ogui* ogui, game::Game* game, int player )
-		: ogui(ogui), game(game), player(player)
+		: ogui(ogui), game(game), player(player), reallyHidden(false)
 	{
 		oguiLoader = new OguiLocaleWrapper(ogui);
 		win = NULL;
@@ -58,12 +58,14 @@ namespace ui {
 	{
 		if(win)
 			win->Hide();
+		reallyHidden = true;
 	}
 
 	void GenericTextWindow::show( int time )
 	{
 		if(win)
 			win->Show();
+		reallyHidden = false;
 	}
 
 	void GenericTextWindow::update()

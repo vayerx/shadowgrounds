@@ -11,7 +11,6 @@ JointBase::JointBase(NxScene &scene_, boost::shared_ptr<ActorBase> &a, boost::sh
 	actor1(a),
 	actor2(b)
 {
-
 }
 
 JointBase::~JointBase()
@@ -28,10 +27,6 @@ void JointBase::init()
 NxJoint *JointBase::getJoint() const
 {
 	return joint;
-}
-
-void JointBase::handleDeforming(NxScene &scene)
-{
 }
 
 } // physics

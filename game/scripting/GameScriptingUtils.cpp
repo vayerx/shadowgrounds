@@ -76,8 +76,8 @@ namespace game
 			int px = 0;
 			int py = 0;
 			bool scaled = false;
-			float sx;
-			float sy;
+			float sx = 0;
+			float sy = 0;
 			if (gs_coordinate_convert(stringData, &px, &py, &scaled, &sx, &sy))
 			{
 				if ((px <= 0 || py <= 0) && !scaled)
@@ -125,7 +125,7 @@ namespace game
 		}
 		if (strlen(stringData) < 64)
 		{
-			float x,y,z;
+			float x = 0, y = 0, z = 0;
 			int paramNum = 0;
 			int prevSplit = 0;
 			char splitbuf[64];

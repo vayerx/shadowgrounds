@@ -14,6 +14,8 @@ namespace tracking
 	{
 	public:
 
+		virtual ~ITrackerObjectType() {};
+
 		virtual std::string getTrackerTypeName() const = 0;
 
 		virtual bool doesGiveOwnershipToObjectTracker() const = 0;

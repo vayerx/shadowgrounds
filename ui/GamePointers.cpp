@@ -27,12 +27,12 @@ namespace ui
   {
   private:
     VisualObject *visualObject;
-    IPointableObject *lockedTo;
+    const IPointableObject *lockedTo;
 
 		// replaced with the Storm3d_Line...
 		IStorm3D_Line *lineObject;
 		IStorm3D_Line *outRangeLineObject;
-    IPointableObject *fromLockedTo;
+    const IPointableObject *fromLockedTo;
 
     friend class GamePointers;
   };
@@ -185,7 +185,7 @@ namespace ui
 
 
   void GamePointers::addPointer(const VC3 &position, int pointerType, 
-    IPointableObject *lockedTo, IPointableObject *lineFrom, 
+    const IPointableObject *lockedTo, const IPointableObject *lineFrom,
 		float maxDistance)
   {
     if (pointerType < 0 || pointerType >= GPOINTER_AMOUNT)

@@ -47,22 +47,6 @@ namespace particle
 	  int getTypeId() const;
   };
 
-  class GravityPointParticleForce : public IParticleForce {
-	  float m_gravity;
-	  VC3 m_point;
-  public:
-	  static int getType();
-
-	  void setGravity(float f);
-	  float getGravity();
-	  void setPoint(const VC3 &point);
-	  VC3 getPoint();
-	  void preCalc(float t);
-	  void calcForce(Vector& force, const Vector& pos, const Vector& vel);
-	  void parseFrom(const editor::ParserGroup& pg);
-	  int getTypeId() const;
-  };
-
   class WindParticleForce : public IParticleForce {
 	  float m_wind_effect_factor;
 	  float m_spiral_amount;

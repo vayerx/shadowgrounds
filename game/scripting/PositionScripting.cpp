@@ -13,8 +13,6 @@
 #include "GameScriptingUtils.h"
 #include "../scaledefs.h"
 #include "../Game.h"
-#include "../GameScene.h"
-#include "../UnitList.h"
 #include "../GameMap.h"
 #include "../GameRandom.h"
 
@@ -22,11 +20,6 @@
 #include "../../util/ScriptProcess.h"
 
 #include "../../util/Debug_MemoryManager.h"
-
-// debug:
-//#include <Storm3D_UI.h>
-//extern IStorm3D_Scene *disposable_scene;
-
 
 using namespace ui;
 
@@ -36,9 +29,10 @@ namespace game
 	bool gs_global_temp_position_used = false;
 
 	void PositionScripting::process(util::ScriptProcess *sp, 
-		int command, int intData, char *stringData, ScriptLastValueType *lastValue, 
+		int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue,
 		GameScriptData *gsd, Game *game)
 	{
+		int intData = intFloat.i;
 		switch(command)
 		{
 		case GS_CMD_SETPOSITION:
@@ -82,14 +76,14 @@ namespace game
 
 		case GS_CMD_MOVEPOSITIONZFLOAT:
 			{
-				float floatData = *((float *)(&intData));
+				float floatData = intFloat.f;
 				gsd->position.z += floatData;
 			}
 			break;
 
 		case GS_CMD_MOVEPOSITIONXFLOAT:
 			{
-				float floatData = *((float *)(&intData));
+				float floatData = intFloat.f;
 				gsd->position.x += floatData;
 			}
 			break;
@@ -326,7 +320,7 @@ namespace game
 				bool success = sp->getScript()->getGlobalPositionVariableValue(stringData, &tmpx, &tmpy, &tmpz);
 				if (success)
 				{
-					gsd->position += VC3(tmpx, tmpy, tmpz);
+					gsd->position = VC3(tmpx, tmpy, tmpz);
 				} else {
 					sp->error("PositionScripting::process - addPositionVariableToPosition, failed to get position variable value (variable does not exist or type mismatch).");
 					sp->debug(stringData);
@@ -351,69 +345,15 @@ namespace game
 
 		case GS_CMD_setPositionXToFloat:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				gsd->position.x = floatData;
 			}
 			break;
 
 		case GS_CMD_setPositionZToFloat:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				gsd->position.z = floatData;
-			}
-			break;
-
-		case GS_CMD_rayTraceToSecondaryPosition:
-			{
-				VC3 middle_pos = (gsd->secondaryPosition + gsd->position) * 0.5f;
-				VC3 dir = gsd->secondaryPosition - gsd->position;
-				float length = dir.GetLength();
-				dir *= 1.0f / length;
-
-				bool no_units = stringData && strstr(stringData, "no_units");
-
-				// disable collision for units
-				if(no_units)
-				{
-					IUnitListIterator *iter = game->units->getNearbyAllUnits(middle_pos, length * length);
-					while (iter->iterateAvailable())
-					{
-						Unit *u = iter->iterateNext();
-						if(u && u->getVisualObject())
-						{
-							u->getVisualObject()->setCollidable(false);
-						}
-					}
-					delete iter;
-				}
-
-				// raycast
-				*lastValue = 0;
-				if(game && game->getGameScene())
-				{
-					GameCollisionInfo cinfo;
-					game->getGameScene()->rayTrace(gsd->position, dir, length, cinfo, true, false);
-					if(cinfo.hit)
-					{
-						gsd->position = cinfo.position;
-						*lastValue = 1;
-					}
-				}
-
-				// re-enable collision for units
-				if(no_units)
-				{
-					IUnitListIterator *iter = game->units->getNearbyAllUnits(middle_pos, length * length);
-					while (iter->iterateAvailable())
-					{
-						Unit *u = iter->iterateNext();
-						if(u && u->getVisualObject())
-						{
-							u->getVisualObject()->setCollidable(true);
-						}
-					}
-					delete iter;
-				}
 			}
 			break;
 

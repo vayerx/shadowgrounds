@@ -3,7 +3,7 @@
 #ifndef INCLUDED_PROCEDURAL_PROPERTIES_H
 #define INCLUDED_PROCEDURAL_PROPERTIES_H
 
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 #include <boost/scoped_ptr.hpp>
 #include <string>
 

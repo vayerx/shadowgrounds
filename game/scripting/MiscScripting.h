@@ -18,8 +18,8 @@ namespace game
 			/** 
 			 * Just processes one command...
 			 */
-			static void MiscScripting::process(util::ScriptProcess *sp, 
-				int command, int intData, char *stringData, ScriptLastValueType *lastValue, 
+			static void process(util::ScriptProcess *sp, 
+				int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue, 
 				GameScriptData *gsd, Game *game, bool *pause);
 	};
 }

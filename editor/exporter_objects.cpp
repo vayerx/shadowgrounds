@@ -93,6 +93,7 @@ namespace  {
 			inBuilding(false),
 			uniqueEditorObjectHandle(0)
 		{
+			
 			for(int i = 0; i < LIGHT_MAX_AMOUNT; ++i)
 				lightIndex[i] = -1;
 		}
@@ -238,7 +239,7 @@ struct ExporterObjectsData
 				stream << objects[i].instances[j].lightmapped;
 				stream << objects[i].instances[j].inBuilding;
 
-				stream << (unsigned int)(objects[i].instances[j].uniqueEditorObjectHandle & ((UniqueEditorObjectHandle(1)<<32)-1));
+				stream << (unsigned int)(objects[i].instances[j].uniqueEditorObjectHandle & (((UniqueEditorObjectHandle)1<<32)-1));
 				stream << (unsigned int)(objects[i].instances[j].uniqueEditorObjectHandle >> (UniqueEditorObjectHandle)32);
 			}
 		}
@@ -333,7 +334,7 @@ int ExporterObjects::addTerrainObject(const std::string &fileName, CollisionType
 	return data->objects.size() - 1;
 }
 
-void ExporterObjects::addObject(int id, const VC3 &position, const VC3 &rotation, const COL &color, float height, signed short int *lightIndices, bool lightmapped, bool inBuilding, const VC3 &sunDir, float sunStrength, UniqueEditorObjectHandle handle)
+void ExporterObjects::addObject(int id, const VC3 &position, const VC3 &rotation, const COL &color, float height, signed short int *lightIndices, bool lightmapped, bool inBuilding, const VC3 &sunDir, float sunStrength)
 {
 	if(!lightIndices)
 		return;
@@ -343,7 +344,6 @@ void ExporterObjects::addObject(int id, const VC3 &position, const VC3 &rotation
 	instance.rotation = rotation;
 	instance.color = color;
 	instance.height = height;
-	instance.uniqueEditorObjectHandle = handle;
 	/*
 	instance.lightPosition1 = lightPos1;
 	instance.lightColor1 = lightCol1;

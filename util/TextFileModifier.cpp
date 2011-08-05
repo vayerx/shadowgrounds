@@ -1,7 +1,7 @@
 
 #include "precompiled.h"
 
-#include "TextfileModifier.h"
+#include "TextFileModifier.h"
 
 #include <stdio.h>
 #include <stdlib.h>

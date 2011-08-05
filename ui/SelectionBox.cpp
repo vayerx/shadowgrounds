@@ -137,41 +137,8 @@ namespace ui
 			// make new lines constantly and not remove the old ones.
 			// thus causing lots of lines...
 			// and if would draw the lines to world coordinates (near terrain)
-      IStorm3D *s3d = game->getGameScene()->getStorm3D();
-      IStorm3D_Scene *scene = game->getGameScene()->getStormScene();
-			/*
-			IStorm3D_Line *line = s3d->CreateNewLine();
-
-			SceneSelection dragUpperLeft=game->gameUI->cursorRayTrace(boxStartX,boxStartY);
-			SceneSelection dragUpperRight=game->gameUI->cursorRayTrace(currentX,currentY);
-			SceneSelection dragLowerLeft=game->gameUI->cursorRayTrace(boxStartX,currentY);
-			SceneSelection dragLowerRight=game->gameUI->cursorRayTrace(currentX,currentY);
+      			IStorm3D_Scene *scene = game->getGameScene()->getStormScene();
 			
-			VC3 v1(dragUpperLeft.scaledMapX, 
-				game->gameMap->getScaledHeightAt(
-				dragUpperLeft.scaledMapX, dragUpperLeft.scaledMapY), 
-				dragUpperLeft.scaledMapY);
-			VC3 v2(dragUpperRight.scaledMapX, 
-				game->gameMap->getScaledHeightAt(
-				dragUpperRight.scaledMapX, dragUpperRight.scaledMapY), 
-				dragUpperRight.scaledMapY);
-			VC3 v3(dragLowerRight.scaledMapX, 
-				game->gameMap->getScaledHeightAt(
-				dragLowerRight.scaledMapX, dragLowerRight.scaledMapY), 
-				dragLowerRight.scaledMapY);
-			VC3 v4(dragLowerLeft.scaledMapX, 
-				game->gameMap->getScaledHeightAt(
-				dragLowerLeft.scaledMapX, dragLowerLeft.scaledMapY), 
-				dragLowerLeft.scaledMapY);
-
-			line->AddPoint(v1);
-			line->AddPoint(v2);
-			line->AddPoint(v3);
-			line->AddPoint(v4);
-			line->AddPoint(v1);
-			line->SetColor(0x00ff00);
-			scene->AddLine(line, false);
-			*/
 			int sx = boxStartX * renderScaleX / OGUI_SCALE_MULTIPLIER;
 			int sy = boxStartY * renderScaleY / OGUI_SCALE_MULTIPLIER;
 			int cx = currentX * renderScaleX / OGUI_SCALE_MULTIPLIER;

@@ -30,7 +30,7 @@
 
 // ---------
 
-char *gs_keywords[GS_CMD_AMOUNT + 1];
+const char *gs_keywords[GS_CMD_AMOUNT + 1];
 int gs_datatypes[GS_CMD_AMOUNT + 1];
 
 struct gs_commands_listtype

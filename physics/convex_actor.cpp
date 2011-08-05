@@ -67,7 +67,11 @@ ConvexActor::ConvexActor(NxScene &scene, const boost::shared_ptr<ConvexMesh> &me
 	NxBodyDesc bodyDesc;
 	NxConvexShapeDesc convexDesc;
 
-	assert(mesh->isValidForHardware());
+	if (!mesh->isValidForHardware()) {
+		// FIXME: need to display mesh name
+		// not easy...
+		Logger::getInstance()->warning("mesh too large for hardware - software fallback\n");
+	}
 	convexDesc.meshData = mesh->mesh;
 
 	NxActorDesc actorDesc;

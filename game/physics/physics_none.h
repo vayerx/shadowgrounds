@@ -35,6 +35,8 @@ public:
 	{
     return this;
 	}
+
+	bool operator!() { return true; }
 };
 
 #endif

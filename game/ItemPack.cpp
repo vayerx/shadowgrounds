@@ -5,7 +5,7 @@
 
 #include "ItemPack.h"
 
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 #define ITEMPACK_SLOTS 0
 

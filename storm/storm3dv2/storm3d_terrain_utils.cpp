@@ -1,24 +1,45 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
-#include "storm3d_terrain_utils.h"
-#include "storm3d_texture.h"
-#include "istorm3d_logger.h"
 #include <fstream>
 #include <vector>
 #include <d3d9.h>
 #include <stdio.h>
 
+#include "storm3d_terrain_utils.h"
+#include "storm3d_texture.h"
+#include "IStorm3D_Logger.h"
+
 extern int storm3d_dip_calls;
 
-#include "..\..\filesystem\input_stream.h"
-#include "..\..\filesystem\file_package_manager.h"
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../filesystem/input_stream.h"
+#include "../../filesystem/file_package_manager.h"
+#include "../../util/Debug_MemoryManager.h"
+
+#ifndef NDEBUG
+static std::string activePixelShader;
+static std::string activeVertexShader;
+static bool tracing = false;
+
+void activeShaderNames() {
+	fprintf(stderr, "vertex: %s\npixel: %s\n", activeVertexShader.c_str(), activePixelShader.c_str());
+}
+
+void setTracing(bool tracing_) {
+	if (tracing != tracing_) {
+		tracing = tracing_;
+		fprintf(stderr, "Tracing %s\nCurrent shaders:", tracing_ ? "enabled" : "disabled");
+		activeShaderNames();
+	}
+}
+
+#endif
 
 namespace frozenbyte {
 namespace storm {
-namespace {
 
 	void readFile(std::string &result, const std::string &fileName)
 	{
@@ -56,9 +77,10 @@ namespace {
 		*/
 	}
 
-	CComPtr<IDirect3DVertexShader9> createVertexShader(IDirect3DDevice9 &device, const std::string &fileName)
+	CComPtr<IDirect3DVertexShader9> VertexShader::createVertexShader(IDirect3DDevice9 &device, const std::string &fileName)
 	{
 		std::string shaderString;
+		name = fileName;
 		readFile(shaderString, fileName);
 
 		ID3DXBuffer *assembledShader = 0;
@@ -105,10 +127,12 @@ namespace {
 		return result;
 	}
 
-	CComPtr<IDirect3DPixelShader9> createPixelShader(IDirect3DDevice9 &device, const std::string &fileName)
+	CComPtr<IDirect3DPixelShader9> PixelShader::createPixelShader(IDirect3DDevice9 &device, const std::string &fileName)
 	{
 		std::string shaderString;
 		readFile(shaderString, fileName);
+
+		name = fileName;
 
 		ID3DXBuffer *assembledShader = 0;
 		ID3DXBuffer *compilationErrors = 0;
@@ -161,7 +185,6 @@ namespace {
 	}
 
 	static D3DVERTEXELEMENT9 end = D3DDECL_END();
-} // unnamed
 
 VertexShader::VertexShader(IDirect3DDevice9 &device_)
 :	handle(0),
@@ -1560,6 +1583,12 @@ void VertexShader::applyDeclaration() const
 
 void VertexShader::apply() const
 {
+#ifndef NDEBUG
+	activeVertexShader = name;
+	if (tracing) {
+		fprintf(stderr, "activated vertex shader %s\n", name.c_str());
+	}
+#endif
 	device.SetVertexDeclaration(declaration);
 	device.SetVertexShader(handle);
 }
@@ -2049,6 +2078,12 @@ void PixelShader::createOffsetBlendShader()
 
 void PixelShader::apply() const
 {
+#ifndef NDEBUG
+	activePixelShader = name;
+	if (tracing) {
+		fprintf(stderr, "activated pixel shader %s\n", name.c_str());
+	}
+#endif
 	device.SetPixelShader(handle);
 }
 
@@ -2270,10 +2305,10 @@ boost::shared_ptr<Storm3D_Texture> createSharedTexture(Storm3D_Texture *texture)
 
 void validateDevice(IDirect3DDevice9 &device, IStorm3D_Logger *logger)
 {
-#ifdef NDEBUG
+//#ifdef NDEBUG
 	return;
-#endif
-
+//#endif
+/*
 	HRESULT deviceState = device.TestCooperativeLevel();
     if(deviceState == D3DERR_DEVICELOST || deviceState == D3DERR_DEVICENOTRESET)
 		return;
@@ -2313,6 +2348,7 @@ void validateDevice(IDirect3DDevice9 &device, IStorm3D_Logger *logger)
 		logger->error(msg);
 
 	assert(!"Whoopsie, validate() failed");
+*/
 }
 
 // ...
@@ -2393,5 +2429,12 @@ void setCulling(IDirect3DDevice9 &device, DWORD type)
 	}
 }
 
+void dumpD3DXMatrix(const D3DXMATRIX &mat) {
+	for (unsigned int i = 0; i < 4; i++) {
+        fprintf(stderr, "%f\t%f\t%f\t%f\n", mat.m[i][0], mat.m[i][1], mat.m[i][2], mat.m[i][3]);
+	}
+}
+
 } // storm
 } // frozenbyte
+

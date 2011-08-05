@@ -1,6 +1,8 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 //------------------------------------------------------------------
 // Includes
@@ -10,9 +12,9 @@
 #include "storm3d_texture.h"
 #include "storm3d_material.h"
 #include "storm3d_scene.h"
-#include "clipper.h"
+#include "Clipper.h"
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 
 //------------------------------------------------------------------
@@ -49,7 +51,7 @@ void Storm3D_Scene_PicList_Picture::Render()
 		Storm3D2->GetD3DDevice()->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
 	}
 
-	IStorm3D_Material::ATYPE alphaType;
+	IStorm3D_Material::ATYPE alphaType = IStorm3D_Material::ATYPE_NONE;
 	if(material)
 	{
 		alphaType = material->GetAlphaType();

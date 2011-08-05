@@ -33,7 +33,7 @@ namespace game
 			{
 				while (!anis->isEmpty())
 				{
-					delete anis->popLast();
+					delete (Ani *) anis->popLast();
 				}
 				delete anis;
 			}
@@ -51,19 +51,19 @@ namespace game
 
 	namespace {
 		
-		struct Tracker
+		struct AniTracker
 		{
-			Tracker()
+			AniTracker()
 			{
 			}
 
-			~Tracker()
+			~AniTracker()
 			{
 				AniManager::getInstance()->cleanInstance();
 			}
 		};
 
-		Tracker tracker;
+		AniTracker aniTracker;
 	}
 
 	AniManager::AniManager(GameScripting *gameScripting)

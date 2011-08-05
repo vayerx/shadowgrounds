@@ -40,8 +40,6 @@ namespace game
 		fb_assert(progressBar != NULL);
 		fb_assert(game != NULL);
 
-		bool deleteProgBarAfterThis = false;
-
 		bool changeLabel = false;
 		bool useInterruptedLabel = false;
 

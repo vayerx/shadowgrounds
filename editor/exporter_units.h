@@ -36,7 +36,7 @@ public:
 	ExporterUnits();
 	~ExporterUnits();
 
-	void addUnit(const std::string &name, const std::vector<std::string> &spawnText, const VC2 &position, float yRotation, float height, const std::string &scriptName, int side, const UnitProperties &properties, const StringProperties &stringProperties);
+	void addUnit(const std::vector<std::string> &spawnText, const VC2 &position, float yRotation, float height, const std::string &scriptName, int side, const UnitProperties &properties, const StringProperties &stringProperties);
 	void setSpawn(const VC2I &position);
 	
 	void save(const ExportOptions &options) const;

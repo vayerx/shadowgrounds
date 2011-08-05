@@ -33,6 +33,9 @@ REGISTER_COMBATSUBWINDOW( AmmoWindow );
 		clientNum( 0 ),
 		win( NULL ),
 
+		fontClip( NULL ),
+		fontTotal( NULL ),
+
 		fillupImage( NULL ),
 		fillupButton( NULL ),
 
@@ -47,10 +50,7 @@ REGISTER_COMBATSUBWINDOW( AmmoWindow );
 
 		lastUpdateValue( 0 ),
 		lastUpdateWeapon( 0 ),
-		lastUpdateTotalValue( 0 ),
-		
-		fontClip( NULL ),
-		fontTotal( NULL )
+		lastUpdateTotalValue( 0 )
 	{
 	}
 
@@ -70,7 +70,7 @@ REGISTER_COMBATSUBWINDOW( AmmoWindow );
 
 		int xPosition = getLocaleGuiInt( ( prefix + "position_x" ).c_str(), 0);
 		int yPosition = getLocaleGuiInt( ( prefix + "position_y" ).c_str(), 0);
-		
+
 		this->win = ogui->CreateSimpleWindow(xPosition, yPosition, getLocaleGuiInt( ( prefix + "size_x" ).c_str(), 0), getLocaleGuiInt( ( prefix + "size_y" ).c_str(), 0), NULL);
 		this->win->SetUnmovable();
 

@@ -124,9 +124,9 @@ namespace ui
 
 
 	public:
-		static bool LoadingWindow::showCharacterSelection;
-		static bool LoadingWindow::showUpgradeWindowOnClose;
-		static bool LoadingWindow::autoCloseEnabled;
+		static bool showCharacterSelection;
+		static bool showUpgradeWindowOnClose;
+		static bool autoCloseEnabled;
 	};
 
 }

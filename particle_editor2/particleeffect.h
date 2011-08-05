@@ -15,7 +15,7 @@ namespace physics {
 	class PhysicsLib;
 } // physics
 namespace editor {
-	class Parser;
+	class EditorParser;
 }
 
 namespace particle {
@@ -82,7 +82,7 @@ public:
 	static ParticleEffectManager& getSingleton();
 	ParticleEffectManager(IStorm3D* s3d, IStorm3D_Scene* scene);
 	~ParticleEffectManager();
-	int loadParticleEffect(const editor::Parser& parser);
+	int loadParticleEffect(const editor::EditorParser& parser);
 	int getEffectPrototypeAmount();
 	boost::shared_ptr<IParticleEffect> getEffectPrototype(int id);
 	boost::shared_ptr<IParticleEffect> addEffectToScene(int id);

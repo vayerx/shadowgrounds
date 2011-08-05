@@ -1,6 +1,10 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
+
+#include <vector>
 
 #include "storm3d_terrain_lod.h"
 #include "storm3d_terrain_utils.h"
@@ -12,71 +16,9 @@
 #include <boost/static_assert.hpp>
 #include <boost/scoped_array.hpp>
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 //#include "../exporters/shared/nvtristrip.h"
 
-namespace {
-/*
-	int generateIndexBuffer(short int *buffer, int resolution, int lodFactor)
-	{
-		// Vertexcache optimized strips. 
-		// No idea what this does, copy paste from old system ;-)
-		// Which cache size(?)
-		// -- psd
-
-		int x = 0;
-		int y = 0;
-		int direction = 0;
-		int curbsize = resolution / lodFactor;
-
-		int faceAmount = 0;
-
-		for(y = 0; y < curbsize; ++y)
-		{	
-			for(x = 0; x < curbsize + 2; ++x)
-			{
-				if(direction == 0)
-				{
-					if(x == curbsize + 1)
-					{
-						if(y < curbsize - 1)
-						{
-							buffer[faceAmount++] = (y + 1) * (resolution + 1) * lodFactor + (x - 1) * lodFactor;
-						}
-					}
-					else
-					{
-						buffer[faceAmount++] = y * (resolution + 1) * lodFactor + x * lodFactor;
-						buffer[faceAmount++] = (y + 1) * (resolution + 1) * lodFactor + x * lodFactor;
-					}
-				}
-				else
-				{
-					if(x == curbsize + 1)
-					{
-						if(y < curbsize - 1)
-						{
-							buffer[faceAmount++] = (y + 1) * (resolution + 1) * lodFactor;
-						}
-					}
-					else
-					{
-						buffer[faceAmount++] = y * (resolution + 1) * lodFactor + (curbsize - x) * lodFactor;
-						buffer[faceAmount++] = (y + 1) * (resolution + 1) * lodFactor + (curbsize - x) * lodFactor;
-					}
-				}
-			}
-
-			// Change the direction (in each row)
-			if (direction == 0) 
-				direction = 1; 
-			else 
-				direction = 0;
-		}
-
-		return faceAmount - 2;
-	}
-*/
 	static const int LOD_AMOUNT = 3;
 
 	static const int CENTER_BLOCK_SIZE = IStorm3D_Terrain::CENTER_BLOCK_SIZE;
@@ -450,7 +392,6 @@ namespace {
 			}
 		}
 	};
-} // unnamed
 
 struct Storm3D_TerrainLodData
 {
@@ -476,6 +417,7 @@ struct Storm3D_TerrainLodData
 			if(range < i * 1.5 * blockSize + start)
 				return i;
 
+        */
 		/*
 		float start = 2.f * blockSize;
 		for(int i = 1; i < LOD_AMOUNT; ++i)

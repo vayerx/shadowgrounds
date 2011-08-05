@@ -7,7 +7,7 @@
 // Includes
 //------------------------------------------------------------------
 #include "storm3d_common_imp.h"
-#include "istorm3d_texture.h"
+#include "IStorm3D_Texture.h"
 #include <string>
 
 class IStorm3D_Logger;

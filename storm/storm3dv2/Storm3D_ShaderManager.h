@@ -1,7 +1,10 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
 #pragma once
+
+#ifdef _MSC_VER
 #pragma warning(disable: 4786)
+#endif
 
 //------------------------------------------------------------------
 // Includes
@@ -158,7 +161,7 @@ class Storm3D_ShaderManager: public Singleton<Storm3D_ShaderManager>
 	frozenbyte::storm::VertexShader fake_depth_bone_shader;
 	frozenbyte::storm::VertexShader fake_shadow_bone_shader;	
 
-	DWORD current_shader;
+	int current_shader;
 
 	bool software_shaders;
 	bool lighting_shaders;
@@ -197,7 +200,7 @@ public:
 	void SetViewPosition(const D3DXVECTOR4 &p);
 	void SetAmbient(const Color &color);
 	void SetForceAmbient(const Color &color);
-	void SetLight(int index, Vector &position, const Color &color, float range);
+	void SetLight(int index, const Vector &position, const Color &color, float range);
 	void SetSun(const VC3 &direction, float strength);
 	void SetFog(float start, float range);
 	void SetTextureOffset(const VC2 &offset);

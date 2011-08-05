@@ -8,7 +8,9 @@
 // ALSO DUE TO NEW MACRO MATCHING FOR AUTOCOMPLETE...
 #include "ScriptManager.h"
 
+#ifdef _MSC_VER
 #pragma warning( disable : 4786 )
+#endif
 
 #include <assert.h>
 #include <string>
@@ -61,7 +63,7 @@ namespace util
 	VariableHashType *Script::globalVariableHash = NULL;
 	*/
 
-	char **keywords = NULL;
+	const char **keywords = NULL;
 	int keywordsAmount = SCRIPT_KEYWORDS_AMOUNT;
 	VariableHashType *globalVariableHash = NULL;
 
@@ -148,7 +150,8 @@ namespace util
 	}
 	*/
 
-	Script::Script()
+	Script::Script() :
+		noForcedPause(false)
 	{
 		if (globalVariableHash == NULL)
 		{
@@ -156,7 +159,7 @@ namespace util
 		}
 		if (keywords == NULL)
 		{
-			keywords = new char *[keywordsAmount];
+			keywords = new const char *[keywordsAmount];
 			for (int i = 0; i < keywordsAmount; i++)
 			{
 				keywords[i] = NULL;
@@ -216,7 +219,6 @@ namespace util
 			keywords[SCRIPT_CMD_POPCALLSTACK_MARKER] = "_popCallStack_marker";
 			keywords[SCRIPT_CMD_PARAMGETVARIABLE] = "_paramGetVariable";
 			keywords[SCRIPT_CMD_VARIABLEEQUALSVALUE] = "variableEqualsValue";
-			keywords[SCRIPT_CMD_INTERFACE] = "interface";
 		}
 		name = NULL;
 
@@ -228,13 +230,13 @@ namespace util
 
 		allocedSize = SCRIPT_ALLOC_ARRAY_SIZE;
 		commandArray = new int[SCRIPT_ALLOC_ARRAY_SIZE];
-		intDataArray = new int[SCRIPT_ALLOC_ARRAY_SIZE];
+		intDataArray = new floatint[SCRIPT_ALLOC_ARRAY_SIZE];
 		stringDataArray = new char *[SCRIPT_ALLOC_ARRAY_SIZE];
 		varOptimizeDataArray = new VarOptimizeData *[SCRIPT_ALLOC_ARRAY_SIZE];
 		for (int i = 0; i < SCRIPT_ALLOC_ARRAY_SIZE; i++)
 		{ 
 			commandArray[i] = SCRIPT_CMD_NOP;
-			intDataArray[i] = 0;
+			intDataArray[i].i = 0;
 			stringDataArray[i] = NULL;
 			varOptimizeDataArray[i] = NULL;
 		}
@@ -333,7 +335,7 @@ namespace util
 					//if (stringDataArray[localSeek] != NULL
 					//	&& strcmp(stringDataArray[localSeek], data) == 0)
 					// so using hashcode in intData instead...
-					if (arrvarhc == intDataArray[localSeek])
+					if (arrvarhc == intDataArray[localSeek].i)
 					{
 						arrvarip = (stackNegator | SCRIPT_LOCAL_VAR_BITMASK); 
 						break;
@@ -546,13 +548,13 @@ namespace util
 					int depth = 1;
 					if (multi)
 					{
-						depth = (intDataArray[ip] >> (32-4));
+						depth = (intDataArray[ip].i >> (32-4));
 						if (depth == 0)
 						{
 							if (stringDataArray[ip] != NULL)
 							{
 								depth = str2int(stringDataArray[ip])>>(32-4);
-								intDataArray[ip] |= (depth<<(32-4));
+								intDataArray[ip].i |= (depth<<(32-4));
 							} else {
 								sp->error("Script::run - Internal error, _externalCallReturnMultiple parameter missing.");
 								sp->finished = true;
@@ -574,14 +576,14 @@ namespace util
 								sp->finished = true;
 							} else {
 								// WARNING: void * -> int casts
-								if ((int)sp->ipStack->popLast())
+								if ((intptr_t)sp->ipStack->popLast())
 									sp->thenBranch = true;
 								else
 									sp->thenBranch = false;
 								assert(!sp->ipStack->isEmpty());
-								sp->ifDepth = (int)sp->ipStack->popLast();
+								sp->ifDepth = (intptr_t)sp->ipStack->popLast();
 								assert(!sp->ipStack->isEmpty());
-								int valueCheck = (int)sp->ipStack->popLast();
+								intptr_t valueCheck = (intptr_t)sp->ipStack->popLast();
 								if (valueCheck != -1)
 								{
 									sp->error("Script::run - Wrong type of stack data, internal error while executing _externCallReturnMultiple.");
@@ -591,9 +593,9 @@ namespace util
 						}
 					}
 
-					if ((intDataArray[retIp] & (0x8fffffff>>4)) != 0)
+					if ((intDataArray[retIp].i & (0x8fffffff>>4)) != 0)
 					{
-						ip = intDataArray[retIp] & (0x8fffffff>>4);
+						ip = intDataArray[retIp].i & (0x8fffffff>>4);
 						assert(ip < commandAmount);
 						assert(commandArray[ip] == SCRIPT_CMD_EXTERNCALLPOP);
 						sp->ifDepth = 0;
@@ -606,11 +608,13 @@ namespace util
 							{
 								if (depth == 1)
 								{
+#ifndef NDEBUG
 									int fooip = ip;
-									if ((intDataArray[retIp] & (0x8fffffff>>4)) == 0)
-										intDataArray[retIp] |= ip;
+#endif
+									if ((intDataArray[retIp].i & (0x8fffffff>>4)) == 0)
+										intDataArray[retIp].i |= ip;
 
-									ip = intDataArray[retIp] & (0x8fffffff>>4);
+									ip = intDataArray[retIp].i & (0x8fffffff>>4);
 									assert(ip == fooip);
 									assert(commandArray[ip] == SCRIPT_CMD_EXTERNCALLPOP);
 
@@ -676,7 +680,7 @@ namespace util
 					if (!sp->userStack->isEmpty())
 					{
 						// WARNING: void * -> int casts
-						sp->lastValue = (int)sp->userStack->popLast();
+						sp->lastValue = (intptr_t)sp->userStack->popLast();
 						sp->userStackSize--;
 #ifdef DEBUG_CHECK_FOR_UNINITIALIZED_SCRIPT_VALUE_USE
 						// HACK: check some magic value instead of 0 as indication of uninitialized...
@@ -711,13 +715,13 @@ namespace util
 							{
 								// copy&pasted and modified from EXTERNCALLRETURNMULTIPLE stuff...
 								int depth = 1;
-								depth = (intDataArray[ip] >> (32-4));
+								depth = (intDataArray[ip].i >> (32-4));
 								if (depth == 0)
 								{
 									if (stringDataArray[ip] != NULL)
 									{
 										depth = str2int(stringDataArray[ip])>>(32-4);
-										intDataArray[ip] |= (depth<<(32-4));
+										intDataArray[ip].i |= (depth<<(32-4));
 									} else {
 										sp->error("Script::run - Internal error, returnMultiple parameter missing.");
 										sp->finished = true;
@@ -725,8 +729,6 @@ namespace util
 								}
 								assert(depth >= 2 && depth <= 15);
 								int multipop = depth;
-
-								int retIp = ip;
 
 								for (int i = 1; i < multipop; i++)
 								{
@@ -736,14 +738,14 @@ namespace util
 										sp->finished = true;
 									} else {
 										// WARNING: void * -> int casts
-										if ((int)sp->ipStack->popLast())
+										if ((intptr_t)sp->ipStack->popLast())
 											sp->thenBranch = true;
 										else
 											sp->thenBranch = false;
 										assert(!sp->ipStack->isEmpty());
-										sp->ifDepth = (int)sp->ipStack->popLast();
+										sp->ifDepth = (intptr_t)sp->ipStack->popLast();
 										assert(!sp->ipStack->isEmpty());
-										int valueCheck = (int)sp->ipStack->popLast();
+										intptr_t valueCheck = (intptr_t)sp->ipStack->popLast();
 										if (valueCheck != -1)
 										{
 											sp->error("Script::run - Wrong type of stack data, internal error while executing returnMultiple.");
@@ -763,12 +765,12 @@ namespace util
 								sp->finished = true;
 							} else {
 								// WARNING: void * -> int casts
-								if ((int)sp->ipStack->popLast())
+								if ((intptr_t)sp->ipStack->popLast())
 									sp->thenBranch = true;
 								else
 									sp->thenBranch = false;
-								sp->ifDepth = (int)sp->ipStack->popLast();
-								ip = (int)sp->ipStack->popLast();
+								sp->ifDepth = (intptr_t)sp->ipStack->popLast();
+								ip = (intptr_t)sp->ipStack->popLast();
 								if (ip == -1)
 								{
 									sp->error("Script::run - Wrong type of stack data, internal error while executing return from sub.");
@@ -810,9 +812,9 @@ namespace util
 							// new: some optimizations, save the endif ip, if one saved, go there directly
 							assert(commandArray[ip] == SCRIPT_CMD_THEN);
 							int saveToIp = ip;
-							if (intDataArray[ip] != 0)
+							if (intDataArray[ip].i != 0)
 							{
-								ip = intDataArray[ip];
+								ip = intDataArray[ip].i;
 								assert(ip < commandAmount);
 								assert(commandArray[ip+1] == SCRIPT_CMD_ENDIF
 									|| commandArray[ip+1] == SCRIPT_CMD_ELSE);
@@ -830,7 +832,7 @@ namespace util
 										ip--;
 										if (saveToIp != 0)
 										{
-											intDataArray[saveToIp] = ip;
+											intDataArray[saveToIp].i = ip;
 										}
 										break;
 									}
@@ -842,7 +844,7 @@ namespace util
 										ip--;
 										if (saveToIp != 0)
 										{
-											intDataArray[saveToIp] = ip;
+											intDataArray[saveToIp].i = ip;
 										}
 										break;
 									}
@@ -872,9 +874,9 @@ namespace util
 						{
 							assert(commandArray[ip] == SCRIPT_CMD_ELSE);
 							int saveToIp = ip;
-							if (intDataArray[ip] != 0)
+							if (intDataArray[ip].i != 0)
 							{
-								ip = intDataArray[ip];
+								ip = intDataArray[ip].i;
 								assert(ip < commandAmount);
 								assert(commandArray[ip+1] == SCRIPT_CMD_ENDIF);
 								saveToIp = 0;
@@ -891,7 +893,7 @@ namespace util
 										ip--;
 										if (saveToIp != 0)
 										{
-											intDataArray[saveToIp] = ip;
+											intDataArray[saveToIp].i = ip;
 										}
 										break;
 									}
@@ -975,7 +977,7 @@ namespace util
 										// FIXME: this error message was here earlier,
 										// i don't know if it works corretly though???
 										/*
-										if (intDataArray[ip] == sp->lastValue)
+										if (intDataArray[ip].i == sp->lastValue)
 										{
 											sp->error("Script::run - Multiple matching select cases.");
 											//ip++;
@@ -1039,7 +1041,7 @@ namespace util
 									if (commandArray[ip] == SCRIPT_CMD_CASE)
 									{
 										assert(selectDepth == 1);
-										if (intDataArray[ip] == sp->lastValue
+										if (intDataArray[ip].i == sp->lastValue
 											&& (ip < commandAmount - 1 && commandArray[ip + 1] != SCRIPT_CMD_UPTOCASE))
 										{
 											//ip++;
@@ -1050,9 +1052,9 @@ namespace util
 									else if (commandArray[ip] == SCRIPT_CMD_UPTOCASE)
 									{
 										assert(selectDepth == 1);
-										if (intDataArray[ip] >= sp->lastValue
+										if (intDataArray[ip].i >= sp->lastValue
 											&& ip > 0 && commandArray[ip - 1] == SCRIPT_CMD_CASE
-											&& intDataArray[ip - 1] <= sp->lastValue)
+											&& intDataArray[ip - 1].i <= sp->lastValue)
 										{
 											//ip++;
 											// must not increment here, done at the end of the loop
@@ -1075,9 +1077,9 @@ namespace util
 
 				case SCRIPT_CMD_GOTO:
 					sp->ifDepth = 0;
-					if (intDataArray[ip] != 0)
+					if (intDataArray[ip].i != 0)
 					{
-						ip = intDataArray[ip];
+						ip = intDataArray[ip].i;
 					} else {
 						if (stringDataArray[ip] != NULL)
 						{
@@ -1121,12 +1123,12 @@ namespace util
 							sp->finished = true;
 						} else {
 							// WARNING: void * -> int casts
-							if ((int)sp->ipStack->popLast())
+							if ((intptr_t)sp->ipStack->popLast())
 								sp->thenBranch = true;
 							else
 								sp->thenBranch = false;
-							sp->ifDepth = (int)sp->ipStack->popLast();
-							int valueCheck = (int)sp->ipStack->popLast();
+							sp->ifDepth = (intptr_t)sp->ipStack->popLast();
+							int valueCheck = (intptr_t)sp->ipStack->popLast();
               if (valueCheck != -1)
               {
 							  sp->error("Script::run - Wrong type of stack data, internal error while executing _externCallPop.");
@@ -1175,9 +1177,9 @@ namespace util
 
 							sp->enterLocalScope();
 
-							if (intDataArray[ip] != 0)
+							if (intDataArray[ip].i != 0)
 							{
-								ip = intDataArray[ip];
+								ip = intDataArray[ip].i;
 							} else {
 								if (stringDataArray[ip] != NULL)
 								{
@@ -1209,11 +1211,11 @@ namespace util
 				case SCRIPT_CMD_ADDVALUETOVARIABLE:
 				case SCRIPT_CMD_DECREASEVALUEFROMVARIABLE:
 				case SCRIPT_CMD_VARIABLEEQUALSVALUE:
-					if (intDataArray[ip] != 0)
+					if (intDataArray[ip].i != 0)
 					{
-						if (intDataArray[ip] & SCRIPT_LOCAL_VAR_BITMASK)
+						if (intDataArray[ip].i & SCRIPT_LOCAL_VAR_BITMASK)
 						{
-							int negator = (intDataArray[ip] ^ SCRIPT_LOCAL_VAR_BITMASK);
+							int negator = (intDataArray[ip].i ^ SCRIPT_LOCAL_VAR_BITMASK);
 							int localVarPos = sp->getLocalVarStackSize() - negator;
 							if (localVarPos >= 0 && localVarPos < sp->getLocalVarStackSize())
 							{
@@ -1236,19 +1238,19 @@ namespace util
 							}
 						} else {
 							if (commandArray[ip] == SCRIPT_CMD_SETVARIABLE)
-								intDataArray[intDataArray[ip]] = sp->lastValue;
+								intDataArray[intDataArray[ip].i].i = sp->lastValue;
 							else if (commandArray[ip] == SCRIPT_CMD_ADDVALUETOVARIABLE)
-								intDataArray[intDataArray[ip]] += sp->lastValue;
+								intDataArray[intDataArray[ip].i].i += sp->lastValue;
 							else if (commandArray[ip] == SCRIPT_CMD_DECREASEVALUEFROMVARIABLE)
-								intDataArray[intDataArray[ip]] -= sp->lastValue;
+								intDataArray[intDataArray[ip].i].i -= sp->lastValue;
 							else if (commandArray[ip] == SCRIPT_CMD_ADDVARIABLETOVALUE)
-								sp->lastValue += intDataArray[intDataArray[ip]];
+								sp->lastValue += intDataArray[intDataArray[ip].i].i;
 							else if (commandArray[ip] == SCRIPT_CMD_DECREASEVARIABLEFROMVALUE)
-								sp->lastValue -= intDataArray[intDataArray[ip]];
+								sp->lastValue -= intDataArray[intDataArray[ip].i].i;
 							else if (commandArray[ip] == SCRIPT_CMD_VARIABLEEQUALSVALUE)
-								sp->lastValue = ((sp->lastValue == intDataArray[intDataArray[ip]]) ? 1 : 0);
+								sp->lastValue = ((sp->lastValue == intDataArray[intDataArray[ip].i].i) ? 1 : 0);
 							else
-								sp->lastValue = intDataArray[intDataArray[ip]];
+								sp->lastValue = intDataArray[intDataArray[ip].i].i;
 						}
 					} else {
 						if (stringDataArray[ip] != NULL)
@@ -1377,7 +1379,7 @@ namespace util
 															sp->ip = tmp;
 														}
 													} else {
-														arrayIndexValue = intDataArray[varOptimizeDataArray[ip]->arrayIndexVariableLocalIP];
+														arrayIndexValue = intDataArray[varOptimizeDataArray[ip]->arrayIndexVariableLocalIP].i;
 													}
 												} else {
 													VariableHashType::iterator iter2 = globalVariableHash->find(arrayIndexVariableHC);
@@ -1486,7 +1488,7 @@ namespace util
 					break;
 
 				case SCRIPT_CMD_SETARRAYVARIABLEVALUES:
-					if (intDataArray[ip] != 0)
+					if (intDataArray[ip].i != 0)
 					{
 						//sp->lastValue = 0;
 						sp->error("Script::run - setArrayVariableValues, shared local variables not supported by command.");
@@ -1589,7 +1591,7 @@ namespace util
 											{
 												if (varOptimizeDataArray[ip]->arrayIndexVariableLocalIP != 0)
 												{
-													arrayIndexValue = intDataArray[varOptimizeDataArray[ip]->arrayIndexVariableLocalIP];
+													arrayIndexValue = intDataArray[varOptimizeDataArray[ip]->arrayIndexVariableLocalIP].i;
 												} else {
 													VariableHashType::iterator iter2 = globalVariableHash->find(arrayIndexVariableHC);
 													if (iter2 != globalVariableHash->end())
@@ -1628,7 +1630,6 @@ namespace util
 										char *tmp = new char[slen + 1];
 										strcpy(tmp, stringDataArray[ip]);
 										bool ltrimming = true;
-										bool rtrimming = false;
 										int lastValPos = 0;
 
 										for (int si = 0; si < slen + 1; si++)
@@ -1752,7 +1753,7 @@ namespace util
 				case SCRIPT_CMD_POPCALLSTACK_MARKER:
 					if (!sp->isCallParamStackEmpty())
 					{
-						int tmp = sp->popCallParamStack();
+						unsigned int tmp = sp->popCallParamStack();
 						if (tmp != 0xF00BABE1)
 						{
 							sp->error("Script::process - popCallStack_marker, bad magic number in call parameter stack (internal error).");
@@ -1810,19 +1811,12 @@ namespace util
 			}
 
 			failCount++;
-
 			if ((failCount > SCRIPT_FORCED_PAUSE_LIMIT
 				&& !noForcedPause)
 				|| failCount > SCRIPT_FORCED_PAUSE_LIMIT * 50)
 			{
 				doPause = true;
 				pausable = true;
-				//failCount = 0; // oops, this was previously missing... :)
-				failCount = -99; // HACKY SPECIAL MARKER
-				// oh, it does not matter, we're pausing right now anyway...
-				// what matters though, is misbehaveCounter never been zeroed...
-				// TODO: increase this only for subsequent forced pauses?
-				// or possibly if last misbehaviour was within say, last 1 second (else, zero it)
 				sp->misbehaveCounter++;
 				if (sp->misbehaveCounter > 100 || noForcedPause)
 				{
@@ -1836,12 +1830,6 @@ namespace util
 			}
 		}
 		sp->ip = ip;
-
-		if (failCount != -99)
-		{
-			sp->misbehaveCounter = 0;
-		}
-
 #ifdef SCRIPT_TIMING_DEBUG
     Timer::update();
     int timeDiff = Timer::getTime() - currentTime;
@@ -1907,12 +1895,12 @@ namespace util
 			assert(allocedSize > 0);
 			int oldSize = allocedSize;
 			int *oldCommandArray = commandArray;
-			int *oldIntDataArray = intDataArray;
+			floatint *oldIntDataArray = intDataArray;
 			char **oldStringDataArray = stringDataArray;
 			VarOptimizeData **oldVarOptimizeDataArray = varOptimizeDataArray;
 			allocedSize *= 2;
 			commandArray = new int[allocedSize];
-			intDataArray = new int[allocedSize];
+			intDataArray = new floatint[allocedSize];
 			stringDataArray = new char *[allocedSize];
 			varOptimizeDataArray = new VarOptimizeData *[allocedSize];
 
@@ -1921,12 +1909,12 @@ namespace util
 				if (i < oldSize)
 				{
 					commandArray[i] = oldCommandArray[i];
-					intDataArray[i] = oldIntDataArray[i];
+					intDataArray[i].i = oldIntDataArray[i].i;
 					stringDataArray[i] = oldStringDataArray[i];
 					varOptimizeDataArray[i] = oldVarOptimizeDataArray[i];
 				} else {
 					commandArray[i] = SCRIPT_CMD_NOP;
-					intDataArray[i] = 0;
+					intDataArray[i].i = 0;
 					stringDataArray[i] = NULL;
 					varOptimizeDataArray[i] = NULL;
 				}
@@ -1943,7 +1931,7 @@ namespace util
 			if (strcmp(cmd, keywords[keyw]) == 0)
 			{
 				commandArray[commandAmount] = keyw;
-				intDataArray[commandAmount] = 0;
+				intDataArray[commandAmount].i = 0;
 				if(stringDataArray[commandAmount] != NULL)
 				{
 					delete [] stringDataArray[commandAmount];
@@ -2033,7 +2021,7 @@ namespace util
 				{
 					if (data == NULL)
 					{
-						intDataArray[commandAmount] = 0;
+						intDataArray[commandAmount].i = 0;
 						if (keyw == SCRIPT_CMD_SETVARIABLE)
 							ScriptManager::getInstance()->scriptCompileError("Script::addCommand - setVariable parameter missing.", true);
 						else if (keyw == SCRIPT_CMD_GETVARIABLE)
@@ -2077,7 +2065,7 @@ namespace util
 									//if (stringDataArray[localSeek] != NULL
 									//	&& strcmp(stringDataArray[localSeek], data) == 0)
 									// so using hashcode in intData instead...
-									if (hc == intDataArray[localSeek])
+									if (hc == intDataArray[localSeek].i)
 									{
 										ip = (stackNegator | SCRIPT_LOCAL_VAR_BITMASK); 
 										break;
@@ -2103,9 +2091,9 @@ namespace util
 
 						if (ip != -1)
 						{
-							intDataArray[commandAmount] = ip;
+							intDataArray[commandAmount].i = ip;
 						} else {
-							intDataArray[commandAmount] = 0;
+							intDataArray[commandAmount].i = 0;
 
 							// global variable...?
 							VariableHashType::iterator iter = globalVariableHash->find(hc);
@@ -2130,7 +2118,7 @@ namespace util
 				{
 					if (data == NULL)
 					{
-						intDataArray[commandAmount] = 0;
+						intDataArray[commandAmount].i = 0;
 						ScriptManager::getInstance()->scriptCompileError("Script::addCommand - setArrayVariableValues parameter missing.", true);
 						Logger::getInstance()->debug(cmd);
 						Logger::getInstance()->debug(data);
@@ -2170,13 +2158,13 @@ namespace util
 
 						if (ip != -1)
 						{
-							intDataArray[commandAmount] = ip;
+							intDataArray[commandAmount].i = ip;
 
 							ScriptManager::getInstance()->scriptCompileError("Script::addCommand - setArrayVariableValues not supported for shared local variables.", true);
 							Logger::getInstance()->debug(cmd);
 							Logger::getInstance()->debug(data);
 						} else {
-							intDataArray[commandAmount] = 0;
+							intDataArray[commandAmount].i = 0;
 
 							// global variable...?
 							VariableHashType::iterator iter = globalVariableHash->find(hc);
@@ -2227,7 +2215,7 @@ namespace util
 						Logger::getInstance()->debug(cmd);
 						Logger::getInstance()->debug(data);
 					} else {
-						int num = (int)loopNumBuf->popLast();
+						intptr_t num = (intptr_t)loopNumBuf->popLast();
 
 						// don't overwrite this one.
 						commandAmount++;
@@ -2256,7 +2244,7 @@ namespace util
 						Logger::getInstance()->debug(cmd);
 						Logger::getInstance()->debug(data);
 					} else {
-						int num = (int)loopNumBuf->peekLast();
+						intptr_t num = (intptr_t)loopNumBuf->peekLast();
 
 						// don't overwrite this one.
 						commandAmount++;
@@ -2280,7 +2268,7 @@ namespace util
 						Logger::getInstance()->debug(cmd);
 						Logger::getInstance()->debug(data);
 					} else {
-						int num = (int)loopNumBuf->peekLast();
+						intptr_t num = (intptr_t)loopNumBuf->peekLast();
 
 						// don't overwrite this one.
 						commandAmount++;
@@ -2303,7 +2291,7 @@ namespace util
 						Logger::getInstance()->debug(cmd);
 						Logger::getInstance()->debug(data);
 					} else {
-						intDataArray[commandAmount] = str2int(data);
+						intDataArray[commandAmount].i = str2int(data);
 						if (str2int_errno() != 0)
 						{
 							ScriptManager::getInstance()->scriptCompileError("Script::addCommand - Number expected.", true);
@@ -2320,7 +2308,7 @@ namespace util
 						Logger::getInstance()->debug(cmd);
 						Logger::getInstance()->debug(data);
 					} else {
-						intDataArray[commandAmount] = str2int(data);
+						intDataArray[commandAmount].i = str2int(data);
 						if (str2int_errno() != 0)
 						{
 							ScriptManager::getInstance()->scriptCompileError("Script::addCommand - Number expected.", true);
@@ -2612,11 +2600,11 @@ namespace util
 						Logger::getInstance()->debug(cmd);
 						Logger::getInstance()->debug(data);
 					} else {
-						intDataArray[commandAmount] = str2int(data);
+						intDataArray[commandAmount].i = str2int(data);
 						// TODO: check str2int_errno.
 					}
 				}
-				else if (keyw == SCRIPT_CMD_SUB || keyw == SCRIPT_CMD_INTERFACE)
+				else if (keyw == SCRIPT_CMD_SUB)
 				{
 					if (data == NULL)
 					{
@@ -2777,7 +2765,7 @@ namespace util
 							{
 								std::string tmp = subname;
 								std::string tmp2 = StringRemoveWhitespace(tmp);
-								assert((int)tmp2.size() <= strlen(data));
+								assert(tmp2.size() <= strlen(data));
 								strcpy(subname, tmp2.c_str());
 							}
 
@@ -2794,7 +2782,7 @@ namespace util
 								
 								std::string tmp = rettypename;
 								std::string tmp2 = StringRemoveWhitespace(tmp);
-								assert((int)tmp2.size() <= strlen(data));
+								assert(tmp2.size() <= strlen(data));
 								strcpy(rettypename, tmp2.c_str());
 							} else {
 								strcpy(rettypename, "int");
@@ -2813,8 +2801,8 @@ namespace util
 
 						if (createEnterAndLeaveSubs)
 						{
-							char *pushTypeCmd = "_pushCallStack_int";
-							char *popTypeCmd = "_popCallStack_int";
+							const char *pushTypeCmd = "_pushCallStack_int";
+							const char *popTypeCmd = "_popCallStack_int";
 
 							if (strcmp(rettypename, "int") == 0)
 							{
@@ -2859,9 +2847,8 @@ namespace util
 
 						script_currently_parsing_sub = subname;
 
-						//commandArray[commandAmount] = keyw;
-						commandArray[commandAmount] = SCRIPT_CMD_SUB; // get rid of interface_sub commands
-						intDataArray[commandAmount] = 0;
+						commandArray[commandAmount] = keyw;
+						intDataArray[commandAmount].i = 0;
 						if(stringDataArray[commandAmount] != NULL)
 						{
 							delete [] stringDataArray[commandAmount];
@@ -2883,11 +2870,6 @@ namespace util
 						// don't override the current sub command...
 						commandAmount++;
 
-						if (keyw == SCRIPT_CMD_INTERFACE)
-						{
-							addCommand("noOperation", NULL);
-						}
-
 						for (int i = (int)params.size() - 1; i >= 0; i--)
 						{
 							assert(params[i].first == "int");
@@ -2895,11 +2877,6 @@ namespace util
 								addCommand("local", tmp.c_str());
 							addCommand("_popCallStack_int", NULL);
 							addCommand("setVariable", params[i].second.c_str());
-						}
-
-						if (keyw == SCRIPT_CMD_INTERFACE)
-						{
-							addCommand("endSub", NULL);
 						}
 
 						commandAmount--;
@@ -2960,7 +2937,7 @@ namespace util
 									//if (stringDataArray[localSeek] != NULL
 									//	&& strcmp(stringDataArray[localSeek], data) == 0)
 									// so using hashcode in intData instead...
-									if (hc == intDataArray[localSeek])
+									if (hc == intDataArray[localSeek].i)
 									{
 										ScriptManager::getInstance()->scriptCompileError("Script::addCommand - duplicate local variable name.", true);
 										Logger::getInstance()->debug(cmd);
@@ -2975,7 +2952,7 @@ namespace util
 								localSeek--;
 							}
 
-							intDataArray[commandAmount] = hc;
+							intDataArray[commandAmount].i = hc;
 						} else {
 							ScriptManager::getInstance()->scriptCompileError("Script::addCommand - local variable type bad (only int type supported).", true);
 							Logger::getInstance()->debug(cmd);
@@ -3028,7 +3005,7 @@ namespace util
 									//if (stringDataArray[localSeek] != NULL
 									//	&& strcmp(stringDataArray[localSeek], data) == 0)
 									// so using hashcode in intData instead...
-									if (hc == intDataArray[localSeek])
+									if (hc == intDataArray[localSeek].i)
 									{
 										ScriptManager::getInstance()->scriptCompileError("Script::addCommand - local variable shadows sharedLocal variable with same name.", false);
 										Logger::getInstance()->debug(cmd);
@@ -3269,26 +3246,11 @@ namespace util
 											int subip = s->getSubIP(p2) + 1;
 
 											bool includedSubIsEmpty = false;
-											bool includedSubIsInterface = false;
 											if (subip < s->commandAmount 
 												&& (s->commandArray[subip] == SCRIPT_CMD_ENDSUB
 												|| s->commandArray[subip] == SCRIPT_CMD_RETURN))
 											{
 												includedSubIsEmpty = true;
-											}
-											// HACK: sub with noOperation only interpreted as interface...
-											if (subip < s->commandAmount + 1
-												&& s->commandArray[subip] == SCRIPT_CMD_NOP
-												&& s->commandArray[subip + 1] == SCRIPT_CMD_ENDSUB)
-											{
-												includedSubIsInterface = true;
-											}
-
-											if (includedSubIsInterface)
-											{
-												ScriptManager::getInstance()->scriptCompileError("Script::addCommand - externInclude, given sub is an interface and should not be included.", false);
-												Logger::getInstance()->debug(cmd);
-												Logger::getInstance()->debug(data);
 											}
 
 											if (includedSubIsEmpty)
@@ -3314,7 +3276,7 @@ namespace util
 														else if (s->commandArray[subip] == SCRIPT_CMD_RETURNMULTIPLE)
 														{
 															//char numbuf[16];
-															//strcpy(numbuf, int2str(s->intDataArray[subip]))
+															//strcpy(numbuf, int2str(s->intDataArray[subip].i))
 															//addCommand("_externCallReturnMultiple", numbuf);
 															assert(!dont_add_externcallpushpop);
 															addCommand("_externCallReturnMultiple", s->stringDataArray[subip]);
@@ -3326,13 +3288,13 @@ namespace util
 														if (s->processorDatatypes[pkey] == SCRIPT_DATATYPE_INT)
 														{
 															// WARNING: passing pointer to static variable here...
-															char *numstr = int2str(s->intDataArray[subip]);
+															char *numstr = int2str(s->intDataArray[subip].i);
 															addCommand(s->processorKeywords[pkey], numstr);
 														}
 														else if (s->processorDatatypes[pkey] == SCRIPT_DATATYPE_FLOAT)
 														{
 															char numstr[16];
-															sprintf(numstr, "%f", *((float *)&s->intDataArray[subip]));
+															sprintf(numstr, "%f", s->intDataArray[subip].f);
 															addCommand(s->processorKeywords[pkey], numstr);
 														} 
 														else 
@@ -3398,7 +3360,7 @@ namespace util
 						Logger::getInstance()->debug(cmd);
 						Logger::getInstance()->debug(data);
 					}
-					intDataArray[commandAmount] = 0;
+					intDataArray[commandAmount].i = 0;
 					if (stringDataArray[commandAmount] != NULL)
 					{
 						delete [] stringDataArray[commandAmount];
@@ -3416,11 +3378,11 @@ namespace util
 					bool numexp = false;
 					if (data != NULL)
 					{
-						intDataArray[commandAmount] = str2int(data);
+						intDataArray[commandAmount].i = str2int(data);
 						if (str2int_errno() != 0)	
 							numexp = true;
 					} else {
-						intDataArray[commandAmount] = 0;
+						intDataArray[commandAmount].i = 0;
 						numexp = true;
 					}
 					if (numexp)
@@ -3457,7 +3419,7 @@ namespace util
 							Logger::getInstance()->debug(data);							
 						}
 					}
-					intDataArray[commandAmount] = *((int *)&val);
+					intDataArray[commandAmount].f = val;
 					if (stringDataArray[commandAmount] != NULL)
 					{
 						delete [] stringDataArray[commandAmount];
@@ -3474,7 +3436,7 @@ namespace util
 				}
 				if (processorDatatypes[i] == SCRIPT_DATATYPE_STRING)
 				{
-					intDataArray[commandAmount] = 0;
+					intDataArray[commandAmount].i = 0;
 					if (stringDataArray[commandAmount] != NULL)
 					{
 						delete [] stringDataArray[commandAmount];
@@ -3566,7 +3528,7 @@ namespace util
 						ScriptManager::getInstance()->scriptCompileError(stringDataArray[i], false);
 						//Logger::getInstance()->debug(stringDataArray[i]);
 					}
-					intDataArray[i] = ip;
+					intDataArray[i].i = ip;
 				}
 			}
 
@@ -3601,7 +3563,7 @@ namespace util
 						}
 						Logger::getInstance()->debug(stringDataArray[i]);
 					}
-					intDataArray[i] = ip;
+					intDataArray[i].i = ip;
 				}
 				conditionalCall = false;
 			}
@@ -3669,8 +3631,8 @@ namespace util
 				sprintf(&buf[strlen(buf)], "Process IP stack: empty\r\n");
 			sprintf(&buf[strlen(buf)], "Process if-depth: %d\r\n", sp->ifDepth);
 		}
-		sprintf(&buf[strlen(buf)], "Process last value: %d\r\n", sp->lastValue);
-		sprintf(&buf[strlen(buf)], "Process secondary value: %d\r\n", sp->secondaryValue);
+		sprintf(&buf[strlen(buf)], "Process last value: %d\r\n", int(sp->lastValue));
+		sprintf(&buf[strlen(buf)], "Process secondary value: %d\r\n", int(sp->secondaryValue));
 
 		int start = 0; // inclusive
 		int stop = commandAmount; // exclusive
@@ -3685,8 +3647,8 @@ namespace util
 		char ind[40+2+1];
 		char intv[40+1];
 		char atChar;
-		char *cmd;
-		char *data;
+		const char *cmd;
+		const char *data;
 		int indent = 0;
 		bool addIndent;
 		bool ignoreLastIndent;
@@ -3739,7 +3701,7 @@ namespace util
 				if (commandArray[i] >= keywordsAmount)
 				{
 					if (processorDatatypes[commandArray[i] - keywordsAmount] == SCRIPT_DATATYPE_INT)
-						strcpy(intv, int2str(intDataArray[i]));
+						strcpy(intv, int2str(intDataArray[i].i));
 					if (processorDatatypes[commandArray[i] - keywordsAmount] == SCRIPT_DATATYPE_FLOAT)
 					{
 						char floatbuf[16];
@@ -3754,21 +3716,21 @@ namespace util
 					if (commandArray[i] == SCRIPT_CMD_THEN
 						|| commandArray[i] == SCRIPT_CMD_ELSE)
 					{
-						if (intDataArray[i] == 0)
+						if (intDataArray[i].i == 0)
 						{
 							strcpy(intv, " (never skipped)");
 						} else {
 							strcpy(intv, " (skip addr ");
-							strcat(intv, int2str(intDataArray[i]));
+							strcat(intv, int2str(intDataArray[i].i));
 							strcat(intv, ")");
 						}
 					}
 				}
 			} else {
-				if (intDataArray[i] != 0)
+				if (intDataArray[i].i != 0)
 				{
 					strcpy(intv, " (");
-					strcat(intv, int2str(intDataArray[i]));
+					strcat(intv, int2str(intDataArray[i].i));
 					strcat(intv, ")");
 				}
 			}

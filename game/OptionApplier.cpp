@@ -21,7 +21,7 @@
 #endif
 
 #include <Storm3D_UI.h>
-#include <istorm3d_terrain_renderer.h>
+#include <istorm3D_terrain_renderer.h>
 
 #include "../system/Logger.h"
 

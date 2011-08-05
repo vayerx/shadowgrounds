@@ -12,8 +12,8 @@
 #include "WaveReader.h"
 #include "AmplitudeArray.h"
 #include "../util/assert.h"
-#include <istorm3d.h>
-#include <istorm3d_bone.h>
+#include <IStorm3D.h>
+#include <IStorm3D_Bone.h>
 #include <boost/shared_ptr.hpp>
 #include <string>
 #include <map>
@@ -24,7 +24,6 @@ using namespace boost;
 using namespace std;
 typedef map<string, shared_ptr<IStorm3D_BoneAnimation> > AnimationMap;
 
-namespace {
 
 	struct Releaser
 	{
@@ -218,7 +217,6 @@ namespace {
 	typedef vector<shared_ptr<PlayData> > PlayDatas;
 	typedef vector<Amplitude> Amplitudes;
 
-} // unnamed
 
 struct LipsyncManager::Data
 {
@@ -239,8 +237,8 @@ struct LipsyncManager::Data
 
 	Data(IStorm3D *storm_)
 	:	storm(storm_),
-		expressionFadeTime(0),
 		idleFadeTime(0),
+		expressionFadeTime(0),
 		sampleRate(0)
 	{
 	}

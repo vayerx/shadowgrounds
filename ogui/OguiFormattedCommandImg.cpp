@@ -45,7 +45,7 @@ void OguiFormattedCommandImg::execute( OguiFormattedText* text, const std::strin
 	}
 
 	{
-		int x;
+		int x = 0;
 		int y = data->my;
 		int w = width;
 		int h = height;

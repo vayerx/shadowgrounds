@@ -8,7 +8,7 @@
  *
  */
 
-#include <Storm3D_datatypes.h>
+#include <Storm3D_Datatypes.h>
 
 class IStorm3D;
 class IStorm3D_Scene;
@@ -23,8 +23,6 @@ public:
 
   void setCameraVector(VC3 camera);
 
-  void getRayVector(int x, int y, VC3 &dir, VC3 &origin, bool sideways);
-  
   void rayTrace(int x, int y, Storm3D_CollisionInfo &cinfo, bool sideways, bool terrainOnly, bool accurate = false);
 
 private:

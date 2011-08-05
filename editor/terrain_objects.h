@@ -17,7 +17,6 @@
 #endif
 
 #include "group_list.h"
-#include "UniqueEditorObjectHandle.h"
 
 namespace frozenbyte {
 namespace filesystem {
@@ -111,8 +110,6 @@ public:
 	TerrainObject traceActiveCollision(const VC3 &rayOrigin, const VC3 &rayDirection, float rayLength);
 	void moveObject(TerrainObject &terrainObject, const VC2 &delta);
 	void moveObject(TerrainObject &terrainObject, float height);
-	UniqueEditorObjectHandle getObjectHandle(TerrainObject &terrainObject);
-	VC3 getObjectPosition(TerrainObject &terrainObject);
 	void rotateObject(TerrainObject &terrainObject, const VC3 &rotation);
 	void setColor(TerrainObject &terrainObject, int color);
 	void setLightMultiplier(TerrainObject &terrainObject, float delta);

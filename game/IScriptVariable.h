@@ -50,6 +50,8 @@ namespace game
 			virtual char *getStringValue() = 0;
 
 			virtual bool isReadOnly() = 0;
+
+			virtual ~IScriptVariable() {};
 	};
 }
 

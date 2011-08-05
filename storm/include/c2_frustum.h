@@ -3,11 +3,11 @@
 #ifndef INCLUDED_C2_FRUSTUM_H
 #define INCLUDED_C2_FRUSTUM_H
 
-#pragma once
 #include "c2_vectors.h"
 #include "c2_sphere.h"
 #include "c2_aabb.h"
 #include "c2_oobb.h"
+#include "c2_plane.h"
 
 template<class T>
 struct TFrustum

@@ -1,6 +1,10 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
+
+#include <string>
 
 #include "storm3d_terrain_lightmanager.h"
 #include "istorm3d_terrain_rendererbase.h"
@@ -9,12 +13,12 @@
 #include "storm3d_spotlight.h"
 #include "storm3d_fakespotlight.h"
 #include "storm3d_scene.h"
-#include "storm3d_shadermanager.h"
-#include "vertexformats.h"
+#include "Storm3D_ShaderManager.h"
+#include "VertexFormats.h"
 #include <atlbase.h>
 #include <d3d9.h>
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 using namespace std;
 using namespace boost;
@@ -80,7 +84,7 @@ struct Storm3D_TerrainLightManager::Data
 	{
 		bool atiShaders = false;
 		int spotType = Storm3D_Spotlight::getSpotType();
-		if(spotType == Storm3D_Spotlight::AtiBuffer || spotType == Storm3D_Spotlight::AtiFloatBuffer)
+		if(spotType == Storm3D_Spotlight::AtiBuffer)
 			atiShaders = true;
 
 		if(atiShaders)
@@ -112,6 +116,14 @@ struct Storm3D_TerrainLightManager::Data
 				if(!spot->setAsRenderTarget(cameraView))
 					continue;
 
+                /* debug
+				static unsigned int count = 0;
+				count++;
+				device.Clear(0, NULL, D3DCLEAR_ZBUFFER, 0, float(count % 21) / 20.0f, 0);
+                */
+				//glClearDepth(float(count % 11) / 10.0f);
+				//glClear(GL_DEPTH_BUFFER_BIT);
+
 				renderer.render(IStorm3D_TerrainRendererBase::SpotBuffer, scene, spot);
 			}
 		}
@@ -128,6 +140,7 @@ struct Storm3D_TerrainLightManager::Data
 
 	void renderFakeSpotBuffers(Storm3D_Scene &scene, bool renderShadows)
 	{
+		// Renders fake shadows to texture?
 		Storm3D_ShaderManager::GetSingleton()->setFakeDepthShaders();
 		Storm3D_Camera &camera = *static_cast<Storm3D_Camera *> (scene.GetCamera());
 
@@ -174,9 +187,11 @@ struct Storm3D_TerrainLightManager::Data
 
 	void renderSpotLights(Storm3D_Scene &scene, bool renderShadows, LightType type)
 	{
+		// this renders spotlight light & shadows
+		//setTracing(true);
 		bool atiShaders = false;
 		int spotType = Storm3D_Spotlight::getSpotType();
-		if(spotType == Storm3D_Spotlight::AtiBuffer || spotType == Storm3D_Spotlight::AtiFloatBuffer)
+		if(spotType == Storm3D_Spotlight::AtiBuffer)
 			atiShaders = true;
 
 		if(atiShaders)
@@ -240,6 +255,7 @@ struct Storm3D_TerrainLightManager::Data
 			device.SetSamplerState(i, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
 			device.SetSamplerState(i, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
 		}
+		//setTracing(false);
 
 		device.SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
 		device.SetTextureStageState(1, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
@@ -259,6 +275,7 @@ struct Storm3D_TerrainLightManager::Data
 
 	void renderFakeSpotLights(Storm3D_Scene &scene, bool renderShadows)
 	{
+		// Renders fake shadows to screen?
 		Storm3D_Camera &camera = *static_cast<Storm3D_Camera *> (scene.GetCamera());
 		Storm3D_ShaderManager::GetSingleton()->setFakeShadowShaders();
 
@@ -334,6 +351,7 @@ struct Storm3D_TerrainLightManager::Data
 
 	void renderFakeLights(const VC2I &renderSize)
 	{
+		// Renders fake light (not shadows)?
 		device.SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
 		device.SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
 
@@ -386,9 +404,10 @@ struct Storm3D_TerrainLightManager::Data
 
 	void renderCones(Storm3D_Scene &scene, bool renderShadows, float timeFactor, bool renderGlows)
 	{
+		// this draws spotlight cone
 		bool atiShaders = false;
 		int spotType = Storm3D_Spotlight::getSpotType();
-		if(spotType == Storm3D_Spotlight::AtiBuffer || spotType == Storm3D_Spotlight::AtiFloatBuffer)
+		if(spotType == Storm3D_Spotlight::AtiBuffer)
 			atiShaders = true;
 
 		if(atiShaders)

@@ -12,7 +12,7 @@
 #include "uidefaults.h"
 #include "../game/DHLocaleManager.h"
 #include "../util/fb_assert.h"
-#include "../system/logger.h"
+#include "../system/Logger.h"
 #include "../convert/str2int.h"
 
 using namespace game;
@@ -90,6 +90,16 @@ namespace ui
 			this->iconBoxYPosition = getLocaleGuiInt(iconbox_ypos_conf.c_str(), 0);
 			this->iconBoxXSize = getLocaleGuiInt(iconbox_xsize_conf.c_str(), 0);
 			this->iconBoxYSize = getLocaleGuiInt(iconbox_ysize_conf.c_str(), 0);
+		} else {
+			this->iconXPosition = 0;
+			this->iconYPosition = 0;
+			this->iconXSize = 0;
+			this->iconYSize = 0;
+
+			this->iconBoxXPosition = 0;
+			this->iconBoxYPosition = 0;
+			this->iconBoxXSize = 0;
+			this->iconBoxYSize = 0;
 		}
 
 		this->win = ogui->CreateSimpleWindow(0, 0, 1024, 768, NULL);
@@ -97,7 +107,6 @@ namespace ui
 		this->win->SetEffectListener( this );
 		this->textFont = ui::defaultIngameFont;
 		this->textCentered = false;
-		this->textRightAligned = false;
 		this->textBoxed = false;
 
 		this->boxImage = NULL;
@@ -106,7 +115,6 @@ namespace ui
 		this->iconBGImage = ogui->LoadOguiImage("Data/GUI/Buttons/face1_bg.tga");
 #else
 		this->iconBGImage = ogui->LoadOguiImage("data/gui/hud/message/face1_bg.tga");
-		this->iconFGImage = ogui->LoadOguiImage("data/gui/hud/message/face1_fg.tga");
 #endif
 
 		messageText = NULL;
@@ -114,10 +122,6 @@ namespace ui
 		messageImageButton = NULL;
 		messageBoxButton = NULL;
 		messageImageBGButton = NULL;
-#ifdef LEGACY_FILES
-#else
-		messageImageFGButton = NULL;
-#endif
 
 		const char *l1Image = getLocaleGuiString("gui_message_window_effect_layer1_image");
 		//const char *l2Image = getLocaleGuiString("gui_message_window_effect_layer2_image");
@@ -169,20 +173,12 @@ namespace ui
 		{
 			delete [] textConfName;
 		}
-#ifdef LEGACY_FILES
-			// no fg
-#else
-		if (iconFGImage != NULL)
-		{
-			delete iconFGImage;
-		}
-#endif
 		if (iconBGImage != NULL)
 		{
 			delete iconBGImage;
 		}
 		setBoxed(false);
-		clearMessage(); // FIXME: umm, shouldn't this be done _before_ deleting the images above!
+		clearMessage();
 	}
 
 
@@ -219,11 +215,10 @@ namespace ui
 	}
 
 
-	void CombatMessageWindow::setFont(IOguiFont *font, bool centered, bool rightAligned)
+	void CombatMessageWindow::setFont(IOguiFont *font, bool centered)
 	{
 		textFont = font;
 		textCentered = centered;
-		textRightAligned = rightAligned;
 	}
 
 
@@ -319,15 +314,6 @@ namespace ui
 			messageImageButton->SetDisabled(true);
 			messageImageButton->SetDisabledImage(messageImage);
 
-#ifdef LEGACY_FILES
-			// no fg
-#else
-			messageImageFGButton = ogui->CreateSimpleImageButton(win, 
-				iconBoxXPosition, iconBoxYPosition, iconBoxXSize, iconBoxYSize, NULL, NULL, NULL);
-			messageImageFGButton->SetDisabled(true);
-			messageImageFGButton->SetDisabledImage(iconFGImage);
-#endif
-
 			if(effectWindow)
 			{
 				effectWindow->raise();
@@ -350,18 +336,13 @@ namespace ui
 		{
 			messageText->SetLinebreaks(true); 
 		}
-		if (textRightAligned)
-		{
-			messageText->SetTextHAlign(OguiButton::TEXT_H_ALIGN_RIGHT);
-		} else {
-			if (textCentered)
-				messageText->SetTextHAlign(OguiButton::TEXT_H_ALIGN_CENTER);
-			else
-				messageText->SetTextHAlign(OguiButton::TEXT_H_ALIGN_LEFT);
-		}
+		if (textCentered)
+			messageText->SetTextHAlign(OguiButton::TEXT_H_ALIGN_CENTER);
+		else
+			messageText->SetTextHAlign(OguiButton::TEXT_H_ALIGN_LEFT);
 		messageText->SetTextVAlign(OguiButton::TEXT_V_ALIGN_TOP);
-		messageText->SetFont(textFont);
 		messageText->SetText(brMessage);
+		messageText->SetFont(textFont);
 
 		delete [] brMessage;
 	}
@@ -398,15 +379,6 @@ namespace ui
 			delete messageImageBGButton;
 			messageImageBGButton = NULL;
 		}
-#ifdef LEGACY_FILES
-			// no fg
-#else
-		if (messageImageFGButton != NULL)
-		{
-			delete messageImageFGButton;
-			messageImageFGButton = NULL;
-		}
-#endif
 		if (messageImageButton != NULL)
 		{
 			delete messageImageButton;

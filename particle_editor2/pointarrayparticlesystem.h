@@ -12,7 +12,6 @@ class PointArrayParticleSystemEditables : public GenParticleSystemEditables {
 public:
 	std::string modelFile;
 	bool useNormalsAsDirection;
-	bool useBinormalsAsDirection;
 	int firstVertex;
 	int lastVertex;
 	bool randomizeBetweenVertices;

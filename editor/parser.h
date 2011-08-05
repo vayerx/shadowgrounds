@@ -76,14 +76,14 @@ inline filesystem::InputStream &operator >> (filesystem::InputStream &stream, Pa
 	return parserGroup.readStream(stream);
 }
 
-class Parser
+class EditorParser
 {
 	boost::scoped_ptr<ParserData> data;
 
 public:
 	// the new error whine to get rid of the f*ed up "silently ignore errors" feature. --jpk
-	Parser(bool logUnreferenced = true, bool logNonExisting = true);
-	~Parser();
+	EditorParser(bool logUnreferenced = true, bool logNonExisting = true);
+	~EditorParser();
 
 	const ParserGroup &getGlobals() const;
 	ParserGroup &getGlobals();
@@ -92,12 +92,12 @@ public:
 	filesystem::InputStream &readStream(filesystem::InputStream &stream);
 };
 
-inline std::ostream &operator << (std::ostream &stream, const Parser &parser) 
+inline std::ostream &operator << (std::ostream &stream, const EditorParser &parser) 
 { 
 	return parser.writeStream(stream);
 }
 
-inline filesystem::InputStream &operator >> (filesystem::InputStream &stream, Parser &parser) 
+inline filesystem::InputStream &operator >> (filesystem::InputStream &stream, EditorParser &parser) 
 { 
 	return parser.readStream(stream);
 }

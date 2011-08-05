@@ -1,6 +1,8 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 //------------------------------------------------------------------
 // Includes
@@ -8,16 +10,15 @@
 #include "storm3d.h"
 #include "storm3d_adapter.h"
 #include "storm3d_texture.h"
-#include <istorm3d_logger.h>
+#include <IStorm3D_Logger.h>
 
 #include <stdio.h>
-#include <io.h>
 #include <map>
 #include <string>
-#include "..\..\filesystem\ifile_list.h"
-#include "..\..\filesystem\file_package_manager.h"
-#include "..\..\filesystem\input_stream_wrapper.h"
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../filesystem/ifile_list.h"
+#include "../../filesystem/file_package_manager.h"
+#include "../../filesystem/input_stream_wrapper.h"
+#include "../../util/Debug_MemoryManager.h"
 
 #include <boost/lexical_cast.hpp>
 
@@ -257,7 +258,7 @@ namespace {
 			assert(file_);
 			std::string file = file_;
 
-			int index = file.find_last_of("/\\");
+			std::string::size_type index = file.find_last_of("/\\");
 			if(index == file.npos)
 				index = 0;
 			else
@@ -382,18 +383,18 @@ std::string findTexture(const char *name)
 //------------------------------------------------------------------
 Storm3D_Texture::Storm3D_Texture(Storm3D *s2,const char *_filename,DWORD _texloadflags,
 								 DWORD _tex_identity, const void *data, size_t data_size) :
+	decentAlpha(false),
 	Storm3D2(s2),
+	dx_tempbuf_sm(NULL),
 	dx_handle(NULL),
 	dx_handle_cube(NULL),
-	refcount(1),
+	textype(TEXTYPE_BASIC),
 	filename(NULL),
 	tex_identity(_tex_identity),
 	texloadflags(_texloadflags),
-	textype(TEXTYPE_BASIC),
-	dx_tempbuf_sm(NULL),
+	refcount(1),
 	width(0),
 	height(0),
-	decentAlpha(false),
 	prioritycount(0),
 	auto_release(true)
 {
@@ -441,16 +442,11 @@ Storm3D_Texture::Storm3D_Texture(Storm3D *s2,const char *_filename,DWORD _texloa
 		if(file)
 		{
 			fileData.resize(filesystem::fb_fsize(file));
-			if(!fileData.empty())
-				filesystem::fb_fread(&fileData[0], 1, fileData.size(), file);
+			filesystem::fb_fread(&fileData[0], 1, fileData.size(), file);
 
 			filesystem::fb_fclose(file);
 
-			static int lol = 0;
-			if(!fileData.empty())
-				data = &fileData[0];
-			else
-				data = &lol;
+			data = &fileData[0];
 			data_size = fileData.size();
 		}
 	}
@@ -727,18 +723,18 @@ Storm3D_Texture::Storm3D_Texture(Storm3D *s2,const char *_filename,DWORD _texloa
 // Storm3D_Texture::Storm3D_Texture
 //------------------------------------------------------------------
 Storm3D_Texture::Storm3D_Texture(Storm3D *s2,int _width,int _height,TEXTYPE ttype) :
+	decentAlpha(true),
 	Storm3D2(s2),
+	dx_tempbuf_sm(NULL),
 	dx_handle(NULL),
 	dx_handle_cube(NULL),
-	refcount(1),
+	textype(ttype),
 	filename(NULL),
 	tex_identity(0),
 	texloadflags(0),
-	textype(ttype),
-	dx_tempbuf_sm(NULL),
+	refcount(1),
 	width(_width),
 	height(_height),
-	decentAlpha(true),
 	prioritycount(0),
 	auto_release(true)
 {
@@ -813,7 +809,7 @@ Storm3D_Texture::Storm3D_Texture(Storm3D *s2,int _width,int _height,TEXTYPE ttyp
 		case TEXTYPE_BASIC_RPOOL:
 			{
 				// Create (empty) texture to default pool (without mipmaps)
-				HRESULT hr=D3DXCreateTexture(Storm3D2->D3DDevice,width,height,1,
+				/*HRESULT hr=*/D3DXCreateTexture(Storm3D2->D3DDevice,width,height,1,
 					0,Storm3D2->present_params.BackBufferFormat,D3DPOOL_DEFAULT,&dx_handle);
 	
 				//if (FAILED(hr)) MessageBox(NULL,"Failed to create dynamic texture","Storm3D Error",0);
@@ -833,7 +829,7 @@ Storm3D_Texture::Storm3D_Texture(Storm3D *s2,int _width,int _height,TEXTYPE ttyp
 
 				if(FAILED(hr))
 				{
-					HRESULT hr=D3DXCreateTexture(Storm3D2->D3DDevice,width,height,1,
+					/*HRESULT hr=*/D3DXCreateTexture(Storm3D2->D3DDevice,width,height,1,
 						D3DUSAGE_RENDERTARGET,D3DFMT_X8R8G8B8,D3DPOOL_DEFAULT,&dx_handle);
 				}
 
@@ -858,7 +854,7 @@ Storm3D_Texture::Storm3D_Texture(Storm3D *s2,int _width,int _height,TEXTYPE ttyp
 		case TEXTYPE_CUBE_RENDER:
 			{
 				// Create (empty) rendertarget cubetexture (without mipmaps)
-				HRESULT hr=D3DXCreateCubeTexture(Storm3D2->D3DDevice,width,1,
+				/*HRESULT hr=*/D3DXCreateCubeTexture(Storm3D2->D3DDevice,width,1,
 					D3DUSAGE_RENDERTARGET,Storm3D2->present_params.BackBufferFormat,D3DPOOL_DEFAULT,&dx_handle_cube);
 
 				//if (FAILED(hr)) MessageBox(NULL,"Failed to create dynamic cube texture","Storm3D Error",0);
@@ -868,7 +864,7 @@ Storm3D_Texture::Storm3D_Texture(Storm3D *s2,int _width,int _height,TEXTYPE ttyp
 		case TEXTYPE_BASIC:
 			{
 				// Create (empty) texture (without mipmaps)
-				HRESULT hr=D3DXCreateTexture(Storm3D2->D3DDevice,width,height,1,
+				/*HRESULT hr=*/D3DXCreateTexture(Storm3D2->D3DDevice,width,height,1,
 					0,D3DFMT_A8R8G8B8,D3DPOOL_MANAGED,&dx_handle);
 					//0,Storm3D2->present_params.BackBufferFormat,D3DPOOL_MANAGED,&dx_handle);
 				
@@ -883,7 +879,7 @@ Storm3D_Texture::Storm3D_Texture(Storm3D *s2,int _width,int _height,TEXTYPE ttyp
 
 				if(FAILED(hr))
 				{
-					HRESULT hr=D3DXCreateTexture(Storm3D2->D3DDevice,width,height,1,
+					/*HRESULT hr=*/D3DXCreateTexture(Storm3D2->D3DDevice,width,height,1,
 						0,Storm3D2->present_params.BackBufferFormat,D3DPOOL_SYSTEMMEM,&dx_handle);
 				}
 			}
@@ -896,7 +892,7 @@ Storm3D_Texture::Storm3D_Texture(Storm3D *s2,int _width,int _height,TEXTYPE ttyp
 
 				if(FAILED(hr))
 				{
-					HRESULT hr=D3DXCreateTexture(Storm3D2->D3DDevice,width,height,1,
+					/*HRESULT hr=*/D3DXCreateTexture(Storm3D2->D3DDevice,width,height,1,
 						0,Storm3D2->present_params.BackBufferFormat,D3DPOOL_DEFAULT,&dx_handle);
 				}
 			}
@@ -913,7 +909,7 @@ Storm3D_Texture::Storm3D_Texture(Storm3D *s2,int _width,int _height,TEXTYPE ttyp
 				{
 					//HRESULT hr=D3DXCreateTexture(Storm3D2->D3DDevice,width,height,1,
 					//	D3DUSAGE_DYNAMIC,D3DFMT_A8R8G8B8,D3DPOOL_DEFAULT,&dx_handle);
-					HRESULT hr=D3DXCreateTexture(Storm3D2->D3DDevice,width,height,1,
+					/*HRESULT hr=*/D3DXCreateTexture(Storm3D2->D3DDevice,width,height,1,
 						D3DUSAGE_DYNAMIC,D3DFMT_R5G6B5,D3DPOOL_DEFAULT,&dx_handle);
 				}
 			}
@@ -926,7 +922,7 @@ Storm3D_Texture::Storm3D_Texture(Storm3D *s2,int _width,int _height,TEXTYPE ttyp
 
 				if(FAILED(hr))
 				{
-					HRESULT hr=D3DXCreateTexture(Storm3D2->D3DDevice,width,height,1,
+					/*HRESULT hr=*/D3DXCreateTexture(Storm3D2->D3DDevice,width,height,1,
 						D3DUSAGE_DYNAMIC,D3DFMT_A8R8G8B8,D3DPOOL_DEFAULT,&dx_handle);
 				}
 			}
@@ -935,7 +931,7 @@ Storm3D_Texture::Storm3D_Texture(Storm3D *s2,int _width,int _height,TEXTYPE ttyp
 		case TEXTYPE_CUBE:
 			{
 				// Create (empty) cubetexture (without mipmaps)
-				HRESULT hr=D3DXCreateCubeTexture(Storm3D2->D3DDevice,width,1,
+				/*HRESULT hr=*/D3DXCreateCubeTexture(Storm3D2->D3DDevice,width,1,
 					0,Storm3D2->present_params.BackBufferFormat,D3DPOOL_MANAGED,&dx_handle_cube);
 
 				//if (FAILED(hr)) MessageBox(NULL,"Failed to create dynamic cube texture","Storm3D Error",0);
@@ -977,18 +973,18 @@ Storm3D_Texture::Storm3D_Texture(Storm3D *s2,int _width,int _height,TEXTYPE ttyp
 // Storm3D_Texture::Storm3D_Texture
 //------------------------------------------------------------------
 Storm3D_Texture::Storm3D_Texture(Storm3D *s2) :
+	decentAlpha(false),
 	Storm3D2(s2),
+	dx_tempbuf_sm(NULL),
 	dx_handle(NULL),
 	dx_handle_cube(NULL),
-	refcount(1),
+	textype(TEXTYPE_BASIC),
 	filename(NULL),
 	tex_identity(0),
 	texloadflags(0),
-	textype(TEXTYPE_BASIC),
-	dx_tempbuf_sm(NULL),
+	refcount(1),
 	width(0),
 	height(0),
-	decentAlpha(false),
 	auto_release(true)
 	//zbuffer(NULL)
 {
@@ -1202,11 +1198,11 @@ void Storm3D_Texture::CopyTextureToAnother(IStorm3D_Texture *other)
 		if(textype == TEXTYPE_RAM && other_i->textype == TEXTYPE_DYNAMIC)
 		{
 			other_i->dx_handle->AddDirtyRect(0);
-			HRESULT hr = Storm3D2->D3DDevice->UpdateTexture(dx_handle, other_i->dx_handle);
-			if(FAILED(hr))
+			/*HRESULT hr = */Storm3D2->D3DDevice->UpdateTexture(dx_handle, other_i->dx_handle);
+			/*if(FAILED(hr))
 			{
 				int a = 0;
-			}
+			}*/
 		}
 		else
 		{
@@ -1593,7 +1589,7 @@ void Storm3D_Texture::ReCreateDynamicDXBuffers()
 	if (textype==TEXTYPE_BASIC_RPOOL)
 	{
 		// Create (empty) texture (without mipmaps)
-		HRESULT hr=D3DXCreateTexture(Storm3D2->D3DDevice,width,height,1,
+		/*HRESULT hr=*/D3DXCreateTexture(Storm3D2->D3DDevice,width,height,1,
 			0,Storm3D2->present_params.BackBufferFormat,D3DPOOL_DEFAULT,&dx_handle);
 	
 		//if (FAILED(hr)) MessageBox(NULL,"Failed to create dynamic texture","Storm3D Error",0);
@@ -1610,7 +1606,7 @@ void Storm3D_Texture::ReCreateDynamicDXBuffers()
 
 		if(FAILED(hr))
 		{
-			HRESULT hr=D3DXCreateTexture(Storm3D2->D3DDevice,width,height,1,
+			/*HRESULT hr=*/D3DXCreateTexture(Storm3D2->D3DDevice,width,height,1,
 				D3DUSAGE_RENDERTARGET,D3DFMT_X8R8G8B8,D3DPOOL_DEFAULT,&dx_handle);
 		}
 
@@ -1642,7 +1638,7 @@ void Storm3D_Texture::ReCreateDynamicDXBuffers()
 	if (textype==TEXTYPE_CUBE_RENDER)
 	{
 		// Create (empty) cubetexture (without mipmaps)
-		HRESULT hr=D3DXCreateCubeTexture(Storm3D2->D3DDevice,width,1,
+		/*HRESULT hr=*/D3DXCreateCubeTexture(Storm3D2->D3DDevice,width,1,
 			D3DUSAGE_RENDERTARGET,Storm3D2->present_params.BackBufferFormat,D3DPOOL_DEFAULT,&dx_handle_cube);
 
 		//if (FAILED(hr)) MessageBox(NULL,"Failed to create dynamic cube texture","Storm3D Error",0);
@@ -1650,7 +1646,7 @@ void Storm3D_Texture::ReCreateDynamicDXBuffers()
 	else
 	if(textype == TEXTYPE_DYNAMIC)
 	{
-		HRESULT hr=Storm3D2->D3DDevice->CreateTexture(width,height,1,
+		/*HRESULT hr=*/Storm3D2->D3DDevice->CreateTexture(width,height,1,
 			0,Storm3D2->present_params.BackBufferFormat,D3DPOOL_DEFAULT,&dx_handle, 0);
 	}
 	else
@@ -1658,13 +1654,13 @@ void Storm3D_Texture::ReCreateDynamicDXBuffers()
 	{
 		//HRESULT hr=Storm3D2->D3DDevice->CreateTexture(width,height,1,
 		//	D3DUSAGE_DYNAMIC,D3DFMT_A8R8G8B8,D3DPOOL_DEFAULT,&dx_handle, 0);
-		HRESULT hr=Storm3D2->D3DDevice->CreateTexture(width,height,1,
+		/*HRESULT hr=*/Storm3D2->D3DDevice->CreateTexture(width,height,1,
 			D3DUSAGE_DYNAMIC,D3DFMT_R5G6B5,D3DPOOL_DEFAULT,&dx_handle, 0);
 	}
 	else
 	if(textype == TEXTYPE_DYNAMIC_LOCKABLE_32)
 	{
-		HRESULT hr=Storm3D2->D3DDevice->CreateTexture(width,height,1,
+		/*HRESULT hr=*/Storm3D2->D3DDevice->CreateTexture(width,height,1,
 			D3DUSAGE_DYNAMIC,D3DFMT_A8R8G8B8,D3DPOOL_DEFAULT,&dx_handle, 0);
 	}
 }

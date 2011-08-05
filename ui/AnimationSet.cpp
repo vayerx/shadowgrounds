@@ -22,7 +22,7 @@
 
 namespace ui
 {
-  char *anim_names[ANIM_AMOUNT+1] =
+  const char *anim_names[ANIM_AMOUNT+1] =
   {
     "none",
     "stand",
@@ -381,16 +381,8 @@ namespace ui
 				}
 			}
 
-			// HACK: preprocess all ast files after even one changed has been found.
-			// (this is because they may have preprocessing time dependencies)
-			// NOTE: assuming that they are loaded in dependency order (or else, this hack won't help anything)
-			// TODO: would actually need a dependency graph of some kind instead of this brute force tactic
-			static bool someAstWasNotUpToDate = false;
-
-			if (!upToDate || someAstWasNotUpToDate)
+			if (!upToDate)
 			{
-				someAstWasNotUpToDate = true;
-
 				const char *preproscheck = game::SimpleOptions::getString(DH_OPT_S_AST_PREPROCESSOR_CHECK);
 				const char *prepros = game::SimpleOptions::getString(DH_OPT_S_AST_PREPROCESSOR);
 				util::Preprocessor::preprocess(preproscheck, prepros, filename, pp_filename.c_str());

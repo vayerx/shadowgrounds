@@ -14,7 +14,6 @@ using namespace boost;
 using namespace std;
 
 namespace util {
-namespace {
 
 	struct Trackable
 	{
@@ -96,7 +95,6 @@ namespace {
 		}
 	};
 
-} // unnamed
 
 struct CircleAreaTracker::Data
 {

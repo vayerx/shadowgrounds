@@ -17,24 +17,6 @@
 
 namespace {
 
-void rotateToward(const VC3 &a, const VC3 &b, QUAT &result)
-{
-	VC3 axis = a.GetCrossWith(b);
-	float dot = a.GetDotWith(b);
-
-	if(dot < -0.99f)
-	{
-		result = QUAT();
-		return;
-	}
-
-	result.x = axis.x;
-	result.y = axis.y;
-	result.z = axis.z;
-	result.w = (dot + 1.0f);
-	result.Normalize();
-}
-
 void getFaceNormal(const VC3 &a, const VC3 &b, const VC3 &c, VC3 &result)
 {
 	VC3 e1 = a;
@@ -79,7 +61,7 @@ namespace ui
 
 		QUAT rotation;
 		rotation.MakeFromAngles(-PI*.5f, yAngle, 0);
-		rotateToward(normal, VC3(0,1.f,0), resultRotation);
+		QUAT::rotateToward(normal, VC3(0,1.f,0), resultRotation);
 
 		resultRotation = rotation * resultRotation;
 

@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include "OguiButtonStyle.h"
 #include "OguiSelectListStyle.h"
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 OguiSelectListStyle::OguiSelectListStyle(
   OguiButtonStyle *unselectedItem,

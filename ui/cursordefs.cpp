@@ -1,12 +1,13 @@
 
 #include "precompiled.h"
 
+#include <boost/lexical_cast.hpp>
+
 #include "cursordefs.h"
 #include "cursordefs_files.h"
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
-#include "..\game\DHLocaleManager.h"
-#include <boost/lexical_cast.hpp>
+#include "../game/DHLocaleManager.h"
 
 #define LOAD_CURSOR_CORNER(p_file, p_id) \
   ogui->LoadCursorImage(controller, p_file, p_id);

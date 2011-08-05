@@ -23,7 +23,6 @@
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
-#include <windows.h>
 #include <math.h>
 #include "DatatypeDef.h"		// Common library include file
 #include "Storm3D_Common.h"

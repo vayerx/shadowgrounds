@@ -3,8 +3,10 @@
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifndef __GNUC__
 #pragma warning(disable:4103)
 #pragma warning(disable:4786)
+#endif
 
 #include "parser.h"
 #include "../filesystem/input_stream.h"
@@ -19,7 +21,7 @@
 #define VALUEMAP_MASK_REFERENCED 1
 #define VALUEMAP_MASK_LOG_NONEXISTING 2
 
-typedef std::map<std::string, std::pair<std::string, int>> ValueMap;
+typedef std::map<std::string, std::pair<std::string, int> > ValueMap;
 typedef std::vector<std::string> LineList;
 
 namespace frozenbyte {
@@ -53,7 +55,7 @@ namespace {
 				textStart = i;
 			
 			// Remove comment
-			if(int(i) < string.size() - 2)
+			if(i < string.size() - 2)
 			if(string[i] == '/')
 			if(string[i+1] == '/')
 			{
@@ -128,7 +130,7 @@ namespace {
 
 	void splitString(const std::string &string, std::string &first, std::string &second, char splitter)
 	{
-		int position = string.find_first_of(splitter);
+		std::string::size_type position = string.find_first_of(splitter);
 		if(position == std::string::npos)
 			return;
 
@@ -204,9 +206,6 @@ struct ParserGroupData
 	{
 		std::string groupName = string;
 		std::string superName;
-
-		if(groupName == "Ids")
-			int a = 0;
 
 		splitString(string, groupName, superName, ':');
 		boost::shared_ptr<ParserGroup> group(parserGroupFactory());
@@ -328,7 +327,7 @@ struct ParserGroupData
 		{
 			writeTabs(stream, tabCount);
 
-			std::string &f = (*li);
+			//std::string &f = (*li);
 			stream << (*li) << std::endl;
 		}
 	}
@@ -405,7 +404,7 @@ ParserGroup &ParserGroup::getSubGroup(const std::string &name)
 		data->groups[name] = g;
 	}
 
-	ParserGroup &p = *data->groups[name];
+	//ParserGroup &p = *data->groups[name];
 	return *data->groups[name];
 }
 
@@ -567,7 +566,7 @@ static void parser_unreferenced_check_walk(const ParserGroup &pg)
 }
 
 
-Parser::Parser(bool logUnreferenced, bool logNonExisting)
+EditorParser::EditorParser(bool logUnreferenced, bool logNonExisting)
 {
 	boost::scoped_ptr<ParserData> tempData(new ParserData());
 	data.swap(tempData);
@@ -575,7 +574,7 @@ Parser::Parser(bool logUnreferenced, bool logNonExisting)
 	data->logNonExisting = logNonExisting;
 }
 
-Parser::~Parser()
+EditorParser::~EditorParser()
 {
 	if (data->logUnreferenced)
 	{
@@ -583,23 +582,23 @@ Parser::~Parser()
 	}
 }
 
-const ParserGroup &Parser::getGlobals() const
+const ParserGroup &EditorParser::getGlobals() const
 {
 	return data->globals;
 }
 
-ParserGroup &Parser::getGlobals()
+ParserGroup &EditorParser::getGlobals()
 {
 	return data->globals;
 }
 
-std::ostream &Parser::writeStream(std::ostream &stream) const
+std::ostream &EditorParser::writeStream(std::ostream &stream) const
 {
 	data->globals.writeStream(stream, 0);
 	return stream << std::endl;
 }
 
-filesystem::InputStream &Parser::readStream(filesystem::InputStream &stream)
+filesystem::InputStream &EditorParser::readStream(filesystem::InputStream &stream)
 {
 	int flags = 0;
 	if (data->logNonExisting)

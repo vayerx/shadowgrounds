@@ -10,15 +10,13 @@ using namespace std;
 namespace frozenbyte {
 
 	
-namespace {
-
 	static const int DECAL_COLLECTION_AMOUNT = 2;
 
-	int MAX_DECAL_AMOUNT = 500;
-	int SPAWN_WAIT_TIME = 0;
-	int FADE_IN_TIME = 200;
-	int FADE_OUT_TIME = 10000;
-	DecalManager::FadeType FADE_TYPE = DecalManager::Blend;
+	static int MAX_DECAL_AMOUNT = 500;
+	static int SPAWN_WAIT_TIME = 0;
+	static int FADE_IN_TIME = 200;
+	static int FADE_OUT_TIME = 10000;
+	static DecalManager::FadeType FADE_TYPE = DecalManager::Blend;
 
 	struct Decal
 	{
@@ -244,7 +242,6 @@ namespace {
 		}
 	};
 
-} // unnamed
 
 struct DecalManager::Data
 {

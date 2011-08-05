@@ -1,6 +1,15 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
+
+#include <map>
+#include <vector>
+#include <string>
+#include <queue>
+#include <atlbase.h>
+#include <d3d9.h>
 
 #include "storm3d_terrain_groups.h"
 #include "storm3d_terrain_utils.h"
@@ -13,22 +22,16 @@
 #include "storm3d_material.h"
 #include "storm3d_scene.h"
 #include "storm3d_spotlight.h"
-#include "vertexformats.h"
-#include "storm3d_shadermanager.h"
-#include "storm3d_bone.h"
+#include "VertexFormats.h"
+#include "Storm3D_ShaderManager.h"
+#include "Storm3D_Bone.h"
 #include <c2_qtree.h>
 
-#include <map>
-#include <vector>
-#include <atlbase.h>
-#include <d3d9.h>
-
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 using namespace std;
 using namespace boost;
 
-namespace {
 
 	struct SharedModel;
 	struct Instance;
@@ -211,7 +214,6 @@ namespace {
 	typedef Quadtree<Instance> Tree;
 	typedef map<IStorm3D_Model *, InstanceInfo> InstanceMap;
 
-} // unnamed
 
 struct Storm3D_TerrainGroupData
 {
@@ -666,7 +668,7 @@ void Storm3D_TerrainGroup::removeInstances()
 		SharedModel &model = *it;
 		
 		InstanceList::iterator i = model.instances.begin();
-		for(i; i != model.instances.end(); ++i)
+		for(; i != model.instances.end(); ++i)
 		{
 			Instance &instance = *(*i);
 			instance.erase(data->tree.get(), data->terrainModels);
@@ -718,7 +720,7 @@ void Storm3D_TerrainGroup::enableCollision(bool enable)
 		SharedModel &model = *it;
 		
 		InstanceList::iterator i = model.instances.begin();
-		for(i; i != model.instances.end(); ++i)
+		for(; i != model.instances.end(); ++i)
 		{
 			Instance &instance = *(*i);
 			if(instance.model)
@@ -741,7 +743,7 @@ void Storm3D_TerrainGroup::enableBigCollision(bool enable)
 			continue;
 		
 		InstanceList::iterator i = model.instances.begin();
-		for(i; i != model.instances.end(); ++i)
+		for(; i != model.instances.end(); ++i)
 		{
 			Instance &instance = *(*i);
 
@@ -763,7 +765,7 @@ void Storm3D_TerrainGroup::enableLightmapCollision(bool enable)
 		SharedModel &model = *it;
 		
 		InstanceList::iterator i = model.instances.begin();
-		for(i; i != model.instances.end(); ++i)
+		for(; i != model.instances.end(); ++i)
 		{
 			Instance &instance = *(*i);
 			//if(instance.lightmapped && instance.model)

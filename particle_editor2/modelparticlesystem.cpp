@@ -1,3 +1,4 @@
+#include <boost/lexical_cast.hpp>
 
 #include "precompiled.h"
 
@@ -10,9 +11,9 @@
 #include <map>
 #include <list>
 #include <fstream>
-#include <storm3d_ui.h>
-#include "..\editor\string_conversions.h"
-#include "..\editor\parser.h"
+#include <Storm3D_UI.h>
+#include "../editor/string_conversions.h"
+#include "../editor/parser.h"
 #include "track.h"
 #include "parseutil.h"
 #include "particlesystem.h"
@@ -28,13 +29,15 @@
 #include "../physics/convex_actor.h"
 #include "../physics/cooker.h"
 
+#ifdef _MSC_VER
 #pragma warning(disable: 4800)
+#endif
 using namespace frozenbyte::editor;
 
 namespace frozenbyte {
 namespace particle {
 namespace {
-	int id = 0;
+	int MPSid = 0;
 
 	void randomAxis(QUAT &q, float start)
 	{
@@ -63,24 +66,6 @@ namespace {
 
 		r.MakeFromAxisRotation(axis, q.w);
 		return r;
-	}
-
-	void rotateToward(const VC3 &a, const VC3 &b, QUAT &result)
-	{
-		VC3 axis = a.GetCrossWith(b);
-		float dot = a.GetDotWith(b);
-
-		if(dot < -0.99f)
-		{
-			result = QUAT();
-			return;
-		}
-
-		result.x = axis.x;
-		result.y = axis.y;
-		result.z = axis.z;
-		result.w = (dot + 1.0f);
-		result.Normalize();
 	}
 }
 
@@ -396,27 +381,6 @@ void ModelParticleSystem::update()
 					}
 				}
 			}
-			else if(forceType == GravityPointParticleForce::getType())
-			{
-				GravityPointParticleForce *force = static_cast<GravityPointParticleForce *> (iforce.get());
-				force->preCalc(m_time);
-
-				for(int j = 0; j < particleAmount; ++j)
-				{
-					Particle &p = particles[j];
-
-					if(p.alive) 
-					{
-						force->calcForce(f, p.position, p.velocity);
-						p.velocity += f;
-
-#ifdef PHYSICS_PHYSX
-						if(p.actor)
-							p.actor->applyForce(f / PARTICLE_TIME_SCALE);
-#endif
-					}
-				}
-			}
 			else if(forceType == WindParticleForce::getType())
 			{
 				WindParticleForce *force = static_cast<WindParticleForce *> (iforce.get());
@@ -469,7 +433,11 @@ void ModelParticleSystem::update()
 			p.position += p.velocity;
 
 			//if(collision)
+#ifdef PHYSICS_PHYSX
 			if(collision && (!p.actor || !p.actor->isEnabled()))
+#else
+			if(collision)
+#endif
 			{
 				oldPosition += position;
 				p.position += position;
@@ -555,14 +523,6 @@ boost::shared_ptr<IParticleSystem> ModelParticleSystem::clone()
 		*ms->m_parray = *m_parray;
 	} else {
 		ms->m_parray.reset();
-#ifdef PROJECT_PARTICLE_EDITOR
-		static bool pointarraywarninggiven = false;
-		if (!pointarraywarninggiven)
-		{
-			pointarraywarninggiven = true;
-			MessageBox(0, "Null point array encountered (model load failed or no filename given)\r\nThis warning will only be shown once.\r\nRestart particle editor to see this message again.", "Warning", MB_ICONEXCLAMATION|MB_OK);
-		}
-#endif
 		assert(!"ModelParticleSystem::clone - null pointarray.");
 	}
 
@@ -615,12 +575,12 @@ void ModelParticleSystem::setEmitterRotation(const QUAT &rotation)
 
 void *ModelParticleSystem::getId() const
 {
-	return &id;
+	return &MPSid;
 }
 
 void *ModelParticleSystem::getType()
 {
-	return &id;
+	return &MPSid;
 }
 
 void ModelParticleSystem::init(IStorm3D *s3d, IStorm3D_Scene *scene)
@@ -815,7 +775,6 @@ void ModelParticleSystem::parseFrom(const editor::ParserGroup& pg, const util::S
 	m_eds->scale = convertVectorFromString(pg.getValue("scale", "1,1,1"));
 	m_eds->rotation = convertVectorFromString(pg.getValue("rotation", "0,0,0"));
 	m_eds->useNormalsAsDirection = static_cast<bool>(convertFromString<int>(pg.getValue("direction_from_normals", ""), 0));
-	//m_eds->useBinormalsAsDirection = static_cast<bool>(convertFromString<int>(pg.getValue("direction_from_binormals", ""), 0));
 	m_eds->particleFile = pg.getValue("particle_model", "");
 
 	m_eds->rotateStart[0] = convertFromString<float>(pg.getValue("particle1_angle_start", ""), 0);
@@ -832,49 +791,6 @@ void ModelParticleSystem::parseFrom(const editor::ParserGroup& pg, const util::S
 
 	std::string soundMaterial = pg.getValue("sound_material", "NoSound");
 	m_eds->soundMaterialIndex = materialParser.getMaterialIndexByName(soundMaterial);
-
-#ifdef PROJECT_CLAW_PROTO
-		// Hack
-	float lifeLimit = 10.f;
-	if(m_eds->particleLife > lifeLimit)
-	{
-		//void setValue(void* v, float t);
-		//void getValue(void* v, float t) const;
-		//int getNumKeys();
-		//void setKey(int i, Key* k);
-		//void getKey(int i, Key* k);
-
-		/*
-		for(int i = 0; i < m_eds->particleAlpha.getNumKeys(); ++i)
-		{
-			FloatKey key;
-			m_eds->particleAlpha.getKey(i, &key);
-
-			if(key.time > lifeLimit)
-			{
-				key.time = m_eds->particleLife - key.time;
-				key.time = lifeLimit - key.time;
-				m_eds->particleAlpha.setKey(i, &key);
-			}
-		}
-		*/
-		if(m_eds->particleAlpha.getNumKeys() == 1)
-		{
-			FloatKey key;
-
-			key.time = 0.9f;
-			key.value = 1.f;
-			m_eds->particleAlpha.addKey(&key);
-
-			key.time = 1.0f;
-			key.value = 0.f;
-			m_eds->particleAlpha.addKey(&key);
-		}
-
-		m_eds->particleAlpha.sortKeys();
-		m_eds->particleLife = lifeLimit;
-	}
-#endif
 }
 
 void ModelParticleSystem::setPosition(const Vector &position_)

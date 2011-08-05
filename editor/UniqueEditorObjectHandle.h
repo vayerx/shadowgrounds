@@ -2,7 +2,16 @@
 #ifndef UNIQUEEDITOROBJECTHANDLE_H
 #define UNIQUEEDITOROBJECTHANDLE_H
 
+#ifdef __WIN32__
+
 typedef __int64 UniqueEditorObjectHandle;
+
+#else
+
+#include <SDL.h>
+typedef Sint64 UniqueEditorObjectHandle;
+
+#endif
 
 // (constructed as follows - but do NOT rely on this, may change at any time!)
 // bits 0-31 ... (unsigned int32) the internal handle given as parameter when created

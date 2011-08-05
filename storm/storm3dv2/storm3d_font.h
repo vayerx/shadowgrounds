@@ -7,7 +7,7 @@
 // Includes
 //------------------------------------------------------------------
 #include "storm3d_common_imp.h"
-#include "istorm3d_font.h"
+#include "IStorm3D_Font.h"
 
 struct ID3DXFont;
 

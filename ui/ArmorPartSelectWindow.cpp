@@ -15,7 +15,7 @@
 #include "../game/GameUI.h"
 #include "uidefaults.h"
 
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 
 using namespace game;
@@ -450,7 +450,7 @@ namespace ui
 
         storageAmountList->addItem(PARTTYPE_ID_INT_TO_STRING(pt->getPartTypeId()), 
           int2str(storageAmount));
-        char *tmp = "";
+        const char *tmp = "";
         if (storageAmount > 0) tmp = int2str(lowestRepairPrice);
         repairPriceList->addItem(PARTTYPE_ID_INT_TO_STRING(pt->getPartTypeId()), 
           tmp);

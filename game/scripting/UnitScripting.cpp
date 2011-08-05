@@ -1,5 +1,11 @@
-
 #include "precompiled.h"
+
+#include <string>
+#include <vector>
+#ifdef _WIN32
+#include <malloc.h>
+#endif
+#include <boost/lexical_cast.hpp>
 
 #include "UnitScripting.h"
 
@@ -8,13 +14,6 @@
 #include "scripting_macros_end.h"
 
 #include <DatatypeDef.h>
-
-
-#ifdef PROJECT_CLAW_PROTO
-#ifndef USE_CLAW_CONTROLLER
-#define USE_CLAW_CONTROLLER
-#endif
-#endif
 
 #include "../scaledefs.h"
 #include "GameScriptData.h"
@@ -51,8 +50,8 @@
 #include "../UnitPhysicsUpdater.h"
 #include "../VisualObjectModelStorage.h"
 
-#include <istorm3d_mesh.h>
-#include <istorm3d_scene.h>
+#include <IStorm3D_Mesh.h>
+#include <IStorm3D_Scene.h>
 
 #include "../../convert/str2int.h"
 #include "../../util/ScriptProcess.h"
@@ -71,18 +70,7 @@
 
 #include "../PlayerWeaponry.h"
 #include "../../util/StringUtil.h"
-#include <string>
-#include <vector>
-#include <boost/lexical_cast.hpp>
 #include "../options/options_physics.h"
-
-// debug:
-//#include <Storm3D_UI.h>
-//extern IStorm3D_Scene *disposable_scene;
-
-#ifdef USE_CLAW_CONTROLLER
-#include "../ClawController.h"
-#endif
 
 #define GROUP_FIND_DIST 50
 
@@ -98,14 +86,15 @@ using namespace ui;
 
 namespace game
 {
-	static VC3 predictedClawHitPosition;
+
 	extern Bullet *gs_hitscript_hit_bullet_type;
 
 	void UnitScripting::process(util::ScriptProcess *sp, 
-		int command, int intData, char *stringData, ScriptLastValueType *lastValue, 
+		int command, floatint intFloat, const char *stringData, ScriptLastValueType *lastValue,
 		GameScriptData *gsd, Game *game, bool *pause)
 	{
 		Unit *unit = gsd->unit;
+		int intData = intFloat.i;
 		switch(command)
 		{
 		case GS_CMD_SETMODE:
@@ -429,7 +418,6 @@ namespace game
 				UnitActor *ua = getUnitActorForUnit(unit);
 				if (ua != NULL)
 				{
-					UnitType *unitType = unit->getUnitType();
 					VC3 upos = unit->getPosition();
 					VC3 startpos = unit->scriptPaths.getStoredPathStartPosition(unit->scriptPaths.getStoredPathNumber());
 					
@@ -483,11 +471,7 @@ namespace game
 					unit->setLastPathfindSuccess(success);
 				} 			 
 				gsd->waitDestination = true;
-#ifdef PROJECT_CLAW_PROTO
-				gsd->waitCounter = 0;
-#else
 				gsd->waitCounter = 100; // 1 sec? or 0.1 sec? or 100/67 sec?
-#endif
 			} else {
 				sp->warning("UnitScripting::process - Attempt to moveToPosition for null unit.");
 			}
@@ -894,7 +878,7 @@ namespace game
 				UnitLevelAI *ai = (UnitLevelAI *)unit->getAI();
 				assert(ai != NULL);
 				ai->requestReScriptMain();
-				sp->debug("UnitScripting::process - reScriptMain, main script will restart once the current main script process finishes.");
+				sp->warning("UnitScripting::process - reScriptMain, main script will restart once the current main script process finishes.");
 			} else {
 				sp->warning("UnitScripting::process - Attempt to reScriptMain for null unit.");
 			}
@@ -2505,7 +2489,7 @@ namespace game
 					{
 						unit->setIdString(NULL);
 					} else {
-						char *s = stringData;
+						const char *s = stringData;
 						if (stringData[0] == '$'
 							&& stringData[1] == '\0')
 						{
@@ -2809,8 +2793,6 @@ namespace game
 				}
 				int upathPosX = game->gameMap->scaledToPathfindX(upos.x);
 				int upathPosY = game->gameMap->scaledToPathfindY(upos.z);
-				int epathPosX = game->gameMap->scaledToPathfindX(epos.x);
-				int epathPosY = game->gameMap->scaledToPathfindY(epos.z);
 				int dist = game->gameMap->getCoverMap()->getDistanceToNearestCover(upathPosX, upathPosY);
 				if (dist > 120) // not meters, pathfind blocks
 					dist = 120;
@@ -2956,7 +2938,7 @@ namespace game
 		case GS_CMD_WARPUNITTOFLOATHEIGHT:
 			if (unit != NULL)
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				VC3 groundPos = unit->getPosition();
 				if (game->gameMap->isWellInScaledBoundaries(groundPos.x, groundPos.z))
 					groundPos.y = game->gameMap->getScaledHeightAt(groundPos.x, groundPos.z) + floatData;
@@ -3346,7 +3328,7 @@ namespace game
 		case GS_CMD_MOVEUNITLEFTFLOAT:
 			if (unit != NULL)
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				moveUnitToDirection(unit, MOVE_DIR_LEFT, floatData);
 			} else {
 				sp->warning("GameScripting::process - Attempt to moveUnitLeft for null unit.");
@@ -3356,7 +3338,7 @@ namespace game
 		case GS_CMD_MOVEUNITRIGHTFLOAT:
 			if (unit != NULL)
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				moveUnitToDirection(unit, MOVE_DIR_RIGHT, floatData);
 			} else {
 				sp->warning("GameScripting::process - Attempt to moveUnitRight for null unit.");
@@ -3366,7 +3348,7 @@ namespace game
 		case GS_CMD_MOVEUNITFORWARDFLOAT:
 			if (unit != NULL)
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				moveUnitToDirection(unit, MOVE_DIR_FORWARD, floatData);
 			} else {
 				sp->warning("GameScripting::process - Attempt to moveUnitForward for null unit.");
@@ -3376,7 +3358,7 @@ namespace game
 		case GS_CMD_MOVEUNITBACKWARDFLOAT:
 			if (unit != NULL)
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				moveUnitToDirection(unit, MOVE_DIR_BACKWARD, floatData);
 			} else {
 				sp->warning("GameScripting::process - Attempt to moveUnitBackward for null unit.");
@@ -3582,7 +3564,7 @@ namespace game
 					gsd->unit = game->units->getUnitById(str2int(stringData));
 					Logger::getInstance()->warning("GameScripting::process - setUnitByIdString, integer parameter given, treating it as id number (deprecated).");
 				} else {
-					char *s = stringData;
+					const char *s = stringData;
 					if (stringData[0] == '$'
 						&& stringData[1] == '\0')
 					{
@@ -4061,36 +4043,6 @@ namespace game
 						} else {
 							backward = true;
 						}
-
-#ifdef PROJECT_CLAW_PROTO
-						// hack: police only jumps left or right
-						if(unit->getUnitType()->getUnitTypeId() == 455611187)
-						{
-							float angle_left = UNIT_ANGLE_TO_RAD(unit->getRotation().y + 90);
-							float angle_right = UNIT_ANGLE_TO_RAD(unit->getRotation().y - 90);
-
-							VC2 dirLeft(-sinf(angle_left), -cosf(angle_left));
-							VC2 dirRight(-sinf(angle_right), -cosf(angle_right));
-							VC2 dirToPos(unit->getPosition().x - gsd->position.x, unit->getPosition().z - gsd->position.z);
-							dirToPos.Normalize();
-
-							float dotLeft = dirLeft.GetDotWith(dirToPos);
-							float dotRight = dirRight.GetDotWith(dirToPos);
-
-							// compare angles
-							if(1.0f - dotLeft < 1.0f - dotRight)
-							{
-								left = true;
-							}
-							else
-							{
-								right = true;
-							}
-
-							forward = false;
-							backward = false;
-						}
-#endif
 					} else {
 						forward = true;
 					}
@@ -4453,7 +4405,7 @@ namespace game
 		case GS_CMD_isSelectedUnitWeaponOfType:
 			if (stringData != NULL)
 			{
-				char *s = stringData;
+				const char *s = stringData;
 				if (s[0] == '$' && s[1] == '\0')
 				{
 					s = gsd->stringValue;
@@ -4654,12 +4606,6 @@ namespace game
 						UnitLevelAI *ai = (UnitLevelAI *)unit->getAI();
 						ai->addEventListener(UNITLEVELAI_EVENT_MASK_JUMP_START);
 					}
-					else if (strcmp(stringData, "event_jump_continue") == 0)
-					{
-						// WARNING: unsafe cast
-						UnitLevelAI *ai = (UnitLevelAI *)unit->getAI();
-						ai->addEventListener(UNITLEVELAI_EVENT_MASK_JUMP_CONTINUE);
-					}
 					else if (strcmp(stringData, "event_jump_end") == 0)
 					{
 						// WARNING: unsafe cast
@@ -4758,7 +4704,7 @@ namespace game
 				int timeValue = *lastValue;
 				if (timeValue < GAME_TICK_MSEC)
 					sp->warning("UnitScripting::process - fadeUnitVisibilityUsingTimeValue, value given for time invalid (less than game tick).");
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				unit->fadeVisibility(floatData, timeValue / GAME_TICK_MSEC);
 			} else {
 				sp->warning("UnitScripting::process - Attempt to fadeUnitVisibilityUsingTimeValue for null unit.");
@@ -4768,7 +4714,7 @@ namespace game
 		case GS_CMD_SETUNITVISIBILITY:
 			if (unit != NULL)
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				unit->setFadeVisibilityImmediately(floatData);
 			} else {
 				sp->warning("UnitScripting::process - Attempt to fadeUnitVisibilityUsingTimeValue for null unit.");
@@ -4782,7 +4728,7 @@ namespace game
 				int timeValue = *lastValue;
 				if (timeValue < GAME_TICK_MSEC)
 					sp->warning("UnitScripting::process - fadeUnitLightingUsingTimeValue, value given for time invalid (less than game tick).");
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				unit->fadeLighting(floatData, timeValue / GAME_TICK_MSEC);
 			} else {
 				sp->warning("UnitScripting::process - Attempt to fadeUnitLightingUsingTimeValue for null unit.");
@@ -5646,7 +5592,7 @@ namespace game
 				assert(unit->isActive());
 				if (unit->isActive())
 				{
-					float floatData = *((float *)&intData);
+					float floatData = intFloat.f;
 
 					unit->setLightVisibilityFactor(floatData, true);
 
@@ -5834,7 +5780,7 @@ namespace game
 						if(!material)
 							continue;
 
-						float f = *((float *)&intData);
+						float f = intFloat.f;
 						material->SetSelfIllumination(COL(f,f,f));
 						material->SetGlowFactor(f);
 					}
@@ -5929,7 +5875,7 @@ namespace game
 						if(!material)
 							continue;
 
-						float f = *((float *)&intData);
+						float f = intFloat.f;
 						material->SetGlowFactor(f);
 					}
 				}
@@ -6248,7 +6194,7 @@ namespace game
 		case GS_CMD_isUnitPhysicsObjectDifference:
 			if (unit != NULL)
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				if (unit->getPhysicsObjectDifference() >= floatData)
 				{
 					*lastValue = 1;
@@ -6294,7 +6240,7 @@ namespace game
 
 		case GS_CMD_setUnitVisualizationOffset:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				Unit::setVisualizationOffset( floatData );
 			}
 			break;
@@ -6763,7 +6709,7 @@ namespace game
 		case GS_CMD_setUnitPoisonResistance:
 			if( unit != NULL )
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				unit->setPoisonResistance(floatData);
 			}
 			else
@@ -6790,35 +6736,36 @@ namespace game
 
 					char *pos;
 
-					pos = strstr(stringData, "limit");
+					// VS doesn't handle this as const
+					pos = strstr((char*)stringData, "limit");
 					if(pos == NULL || sscanf(pos, "limit=%f", &limit) != 1)
 					{
 						sp->error("UnitScripting::process - setUnitHPGainMode expects float parameter 'limit'.");
 						break;
 					}
 
-					pos = strstr(stringData, "amount");
+					pos = strstr((char*)stringData, "amount");
 					if(pos == NULL || sscanf(pos, "amount=%i", &amount) != 1)
 					{
 						sp->error("UnitScripting::process - setUnitHPGainMode expects integer parameter 'amount'.");
 						break;
 					}
 
-					pos = strstr(stringData, "delay");
+					pos = strstr((char*)stringData, "delay");
 					if(pos == NULL || sscanf(pos, "delay=%i", &delay) != 1)
 					{
 						sp->error("UnitScripting::process - setUnitHPGainMode expects integer parameter 'delay'.");
 						break;
 					}
 
-					pos = strstr(stringData, "startdelay");
+					pos = strstr((char*)stringData, "startdelay");
 					if(pos == NULL || sscanf(pos, "startdelay=%i", &startdelay) != 1)
 					{
 						sp->error("UnitScripting::process - setUnitHPGainMode expects integer parameter 'startdelay'.");
 						break;
 					}
 
-					pos = strstr(stringData, "damagefactor");
+					pos = strstr((char*)stringData, "damagefactor");
 					if(pos == NULL || sscanf(pos, "damagefactor=%f", &damagefactor) != 1)
 					{
 						sp->error("UnitScripting::process - setUnitHPGainMode expects float parameter 'damagefactor'.");
@@ -6837,7 +6784,7 @@ namespace game
 		case GS_CMD_setUnitCriticalHitPercent:
 			if( unit != NULL )
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				unit->setCriticalHitPercent(floatData);
 			}
 			else
@@ -6939,7 +6886,7 @@ namespace game
 				if (unit->getRootPart())
 				{
 					Part *part = unit->getRootPart();
-					char *partName = "Torso";
+					const char *partName = "Torso";
 
 					if (unit->getVisualObject() == NULL)
 					{
@@ -6985,7 +6932,7 @@ namespace game
 			{
 				if(unit != NULL)
 				{
-					float floatData = *((float *)&intData);
+					float floatData = intFloat.f;
 					unit->setCustomTimeFactor(floatData);
 				}
 				else
@@ -7105,7 +7052,7 @@ namespace game
 			{
 				// HACK: this needs to be done using the setSpeed script command to handle all the jump, etc.
 				// stuff correctly (or these two commands would actually need to be properly refactored)
-				char *defSpeedStr = NULL;
+				const char *defSpeedStr = NULL;
 				if (unit->getUnitType()->getDefaultSpeed() == UnitType::DEFAULT_SPEED_FAST)
 					defSpeedStr = "fast";
 				else if (unit->getUnitType()->getDefaultSpeed() == UnitType::DEFAULT_SPEED_SLOW)
@@ -7116,30 +7063,11 @@ namespace game
 					defSpeedStr = "sprint";
 
 				if (defSpeedStr != NULL)
-					UnitScripting::process(sp, GS_CMD_SETSPEED, intData, defSpeedStr, lastValue, gsd, game, pause);
+					UnitScripting::process(sp, GS_CMD_SETSPEED, intFloat, defSpeedStr, lastValue, gsd, game, pause);
 				else
 					sp->warning("UnitScripting::process - restoreDefaultSpeed, invalid default speed type (internal error).");
 			} else {
 				sp->warning("UnitScripting::process - Attempt to restoreDefaultSpeed for null unit.");
-			}
-			break;
-
-		case GS_CMD_updateUnitVisualObjectInterpolation:
-			// NOTE: static treshold values here! (COPIED FROM Game::createVisualForUnit)
-			if (unit != NULL)
-			{
-				VisualObject *vo = unit->getVisualObject();
-				if (vo != NULL)
-				{
-					vo->setPositionInterpolationAmount(unit->getUnitType()->getPositionInterpolation());
-					vo->setPositionInterpolationTreshold(0.2f);
-					vo->setRotationInterpolationAmount(unit->getUnitType()->getRotationInterpolation());
-					vo->setRotationInterpolationTreshold(95.0f);
-				} else {
-					sp->error("UnitScripting::process - updateUnitVisualObjectInterpolation, unit has no visual object.");
-				}
-			} else {
-				sp->error("UnitScripting::process - Attempt to updateUnitVisualObjectInterpolation for null unit.");
 			}
 			break;
 
@@ -7213,20 +7141,6 @@ namespace game
 			{
 				float posangle = unit->getAngleTo(gsd->position);
 				*lastValue = (int)(posangle);
-			}
-			break;
-
-		case GS_CMD_interpolatedUnitPosition:
-			if (unit != NULL)
-			{
-				if (unit->getVisualObject() != NULL)
-				{
-					gsd->position = unit->getVisualObject()->getRenderPosition();
-				} else {
-					gsd->position = unit->getPosition();
-				}
-			} else {
-				sp->warning("UnitScripting::process - Attempt to interpolatedUnitPosition for null unit.");
 			}
 			break;
 
@@ -7312,546 +7226,15 @@ namespace game
 			} 								
 			break;
 
-#ifdef PROJECT_CLAW_PROTO
-		case GS_CMD_predictClawDodge:
+		case GS_CMD_reloadUnitWeapons:
 			if (unit != NULL)
 			{
-				VC3 unitPos = unit->getPosition();
-
-				float score = 0;
-				float mass = 0.0f;
-				unsigned int numPos = game->getClawController()->getNumClawPositions();
-				for(unsigned int i = 1; i < numPos; i++)
+				for (int w = 0; w < UNIT_MAX_WEAPONS; w++)
 				{
-					VC3 posNow = game->getClawController()->getLastClawPosition(i);
-					VC3 posBefore = game->getClawController()->getLastClawPosition(i - 1);
-
-					VC3 velocity = posNow - posBefore;
-					float vel = velocity.GetLength();
-					velocity *= 1.0f / vel;
-
-					VC3 dir = unitPos - posNow;
-					float dist = dir.GetLength();
-					dir *= 1.0f / dist;
-
-					// moving approximately towards unit
-					float dot = velocity.GetDotWith(dir);
-					if(dot > 0.90f)
-					{
-						// add score
-						score += vel * dot * (1.0f/dist);
-
-						// get largest mass
-						float grab_mass = game->getClawController()->getLastClawGrabMass(i);
-						if(grab_mass > mass)
-						{
-							mass = grab_mass;
-						}
-					}
-				}
-
-				if(mass > 0.0f)
-				{
-					// 750kg mass adds 2.5 multiplier to score
-					score *= 1.0f + mass * 0.002f;
-				}
-
-				// aiming towards enemy
-				if(game->getClawController()->getPrepareAction() != ClawController::ActionNone
-					&& game->getClawController()->hasActor())
-				{
-					Unit *player_unit = game->gameUI->getFirstPerson(0);
-					VC3 playerPos = player_unit->getPosition();
-					VC3 dirToClaw = unitPos - game->getClawController()->getClawPosition();
-					dirToClaw.y = 0;
-					float length = dirToClaw.GetLength();
-					if(length > 0.001f)
-						dirToClaw *= 1.0f / length;
-
-					VC3 clawPosNow = game->getClawController()->getClawPosition();
-					VC3 aimDir = game->getClawController()->getDirection();
-					aimDir.y = 0;
-					aimDir.Normalize();
-
-					// calculate dodge position
-					float time = ((unitPos.x - clawPosNow.x) * aimDir.x + (unitPos.y - clawPosNow.y) * aimDir.y + (unitPos.z - clawPosNow.z) * aimDir.z);
-					predictedClawHitPosition = clawPosNow + aimDir * time;
-					predictedClawHitPosition.y = unitPos.y;
-
-
-					srand(unit->getIdNumber());
-					int aimTimeMax = (3 * GAME_TICKS_PER_SECOND) / 2;
-					int aimTimeMin = GAME_TICKS_PER_SECOND / 3 + rand() % (GAME_TICKS_PER_SECOND / 4);
-
-					int autoAimedAt = unit->variables.getCustomVariable("autoaimed");
-					int aimedAt = unit->variables.getCustomVariable("aimed");
-
-
-					// last aimed long ago
-					if(aimedAt == 0 || game->gameTimer - aimedAt > aimTimeMax)
-					{
-						float distFactor = 15.0f / length;
-						if(distFactor > 1.0f)
-							distFactor = 1.0f;
-						else if(distFactor < 0.5f)
-							distFactor = 0.5f;
-
-						// 750kg mass adds 1.75 multiplier to distance
-						distFactor *= mass > 0.0f ? 1.0f + mass / 1000.0f : 1.0f;
-
-						// aiming near player
-						if((unitPos - predictedClawHitPosition).GetLength() < 2.0f * distFactor
-							&& length < 50.0f)
-						{
-							// raytest visibility to player
-							if(unit->getVisualObject()) unit->getVisualObject()->setCollidable(false);
-							VC3 rayDir = VC3(unitPos.x - playerPos.x, unitPos.y - playerPos.y, unitPos.z - playerPos.z);
-							float rayLength = rayDir.GetLength();
-							rayDir *= 1.0f / rayLength;
-							VC3 rayPos = playerPos + VC3(0,1,0);
-							bool hitObject = false;
-							while(rayLength > 0.0f)
-							{
-								GameCollisionInfo cinfo;
-								game->getGameScene()->rayTrace(rayPos, rayDir, rayLength, cinfo, true, false);
-								if(cinfo.hit)
-								{
-									// hit a real terrain object
-									if(cinfo.hitTerrainObject && cinfo.terrainInstanceId != -1 && cinfo.terrainModelId != -1)
-									{
-										hitObject = true;
-										break;
-									}
-									else
-									{
-										// continue cast, at least 1m forward
-										if(cinfo.range > 1.0f)
-										{
-											rayPos += rayDir * cinfo.range;
-											rayLength -= cinfo.range;
-											continue;
-										}
-										else
-										{
-											rayPos += rayDir;
-											rayLength -= 1.0f;
-											continue;
-										}		
-									}
-								}
-								break;
-							}
-							if(unit->getVisualObject()) unit->getVisualObject()->setCollidable(true);
-
-							if(!hitObject)
-							{
-								aimedAt = game->gameTimer;
-								unit->variables.setCustomVariable("aimed", aimedAt);
-							}
-						}
-					}
-
-
-					// was aimed at recently, but not too recently
-					if( (aimedAt != 0
-							&& game->gameTimer - aimedAt > aimTimeMin
-							&& game->gameTimer - aimedAt < aimTimeMax)
-						||
-							(autoAimedAt != 0
-							&& game->gameTimer - autoAimedAt > aimTimeMin
-							&& game->gameTimer - autoAimedAt < aimTimeMax))
-					{
-						*lastValue = 2;
-						break;
-					}
-				}
-				else
-				{
-					unit->variables.setCustomVariable("autoaimed", 0);
-					unit->variables.setCustomVariable("aimed", 0);
-				}
-
-				//char str[1024];
-				//sprintf(str, "score: %g", score);
-				//game->gameScripting->runSingleSimpleStringCommand( "message", str );
-
-				// got at least this much
-				if(score > (intData*numPos) / 1000.0f )
-				{
-					VC3 clawPosNow = game->getClawController()->getClawPosition();
-					VC3 clawVelocity = game->getClawController()->getClawVelocity();
-					clawVelocity.Normalize();
-					float time = ((unitPos.x - clawPosNow.x) * clawVelocity.x + (unitPos.y - clawPosNow.y) * clawVelocity.y + (unitPos.z - clawPosNow.z) * clawVelocity.z);
-
-					predictedClawHitPosition = clawPosNow + clawVelocity * time;
-
-					*lastValue = 1;
-				}
-				else
-				{
-					*lastValue = 0;
+					unit->reloadWeaponAmmoClip(w, true);
 				}
 			} else {
-				*lastValue = 0;
-				sp->error("UnitScripting::process - Attempt to predictClawDodge for null unit.");
-			}
-			break;
-
-		case GS_CMD_getPredictedClawDodgePosition:
-		case GS_CMD_findSafePosition:
-			if (unit != NULL && game->gameUI->getFirstPerson(0) != NULL)
-			{
-				float dodgeDistance = *((float *)&intData);
-				VC3 unitPos = unit->getPosition() + VC3(0, unit->getUnitType()->getAimHeightStanding(), 0);
-				VC3 clawPos = gsd->position;
-
-				if(command == GS_CMD_getPredictedClawDodgePosition)
-				{
-					clawPos = predictedClawHitPosition;
-				}
-
-				VC3 optimal_dir(unitPos.x - clawPos.x, 0, unitPos.z - clawPos.z);
-				float distToClaw = optimal_dir.GetLength();
-				optimal_dir *= 1.0f / distToClaw;
-
-				Unit *player_unit = game->gameUI->getFirstPerson(0);
-				VC3 playerPos = player_unit->getPosition() + VC3(0, player_unit->getUnitType()->getAimHeightStanding(), 0);
-				VC3 dirToPlayer(playerPos.x - unitPos.x, 0, playerPos.z - unitPos.z);
-				dirToPlayer.Normalize();
-
-				// convert optimal dir to angle
-				float optimal_angle = optimal_dir.x > 0 ? -acosf(optimal_dir.z) : acosf(optimal_dir.z);
-
-				// disable collision
-				if(unit->getVisualObject())
-				{
-					unit->getVisualObject()->setCollidable(false);
-				}
-
-
-				VC3 bestDir(optimal_dir.x, 0, optimal_dir.z);
-				float bestScore = -FLT_MAX;
-
-				static const float angles[7] =
-				{
-					0,             //    0 deg
-					-PI * 0.125f,  // - 22 deg
-					 PI * 0.125f,  // + 22 deg
-					-PI * 0.25f,   // - 45 deg
-					 PI * 0.25f,   // + 45 deg
-					 PI * 0.5f,    // + 90 deg
-					-PI * 0.5f,    // - 90 deg
-				};
-				static const float dir_score[7] =
-				{
-					1.0f,
-					0.75f,
-					0.75f,
-					0.5f,
-					0.5f,
-					0.125f,
-					0.125f
-				};
-
-				for(int i = 0; i < 7; i++)
-				{
-					// raycast
-					VC3 dir;
-					dir.x = -sinf(optimal_angle + angles[i]);
-					dir.y = 0;
-					dir.z = cosf(optimal_angle + angles[i]);
-
-					GameCollisionInfo cinfo;
-					game->getGameScene()->rayTrace(unitPos, dir, dodgeDistance, cinfo, true, false);
-					float length = cinfo.hit ? cinfo.range : dodgeDistance;
-
-					// compute score
-					float score = dir_score[i] * (length / dodgeDistance);
-
-					// penalty: moving towards player
-					float dot = dirToPlayer.GetDotWith(dir);
-					if(dot > 0.0f)
-					{
-						score -= dot * dot;
-					}
-
-					if(score > bestScore)
-					{
-						bestScore = score;
-						bestDir = dir * length;
-					}
-				}
-
-				// test possibility of dodge
-				if(command == GS_CMD_getPredictedClawDodgePosition)
-				{
-					*lastValue = 0;
-
-					for(int i = 0; i < 2; i++)
-					{
-						VC3 dir;
-						dir.x = -sinf(UNIT_ANGLE_TO_RAD(unit->getRotation().y - 90 + 180 * i));
-						dir.y = 0;
-						dir.z = -cosf(UNIT_ANGLE_TO_RAD(unit->getRotation().y - 90 + 180 * i));
-
-						GameCollisionInfo cinfo;
-						game->getGameScene()->rayTrace(unitPos, dir, dodgeDistance, cinfo, true, false);
-						float length = cinfo.hit ? cinfo.range : dodgeDistance;
-
-						// not close enough for a dodge
-						if(length < (dodgeDistance - 1.0f))
-						{
-							continue;
-						}
-
-						// has no line of jump
-						VC3 pos = unitPos + dir * dodgeDistance;
-						if(!LineOfJumpChecker::hasLineOfJump(unit, pos, game, pos, 0))
-						{
-							continue;
-						}
-
-						// compute score
-						float score = 0.75f + 0.75f * dir.GetDotWith(optimal_dir);
-
-						// penalty: moving towards player
-						float dot = dirToPlayer.GetDotWith(dir);
-						if(dot > 0.0f)
-						{
-							score -= dot * dot;
-						}
-
-						if(score > bestScore)
-						{
-							bestScore = score;
-							bestDir = dir * length;
-							*lastValue = 1;
-						}
-					}
-				}
-
-				// restore collision
-				if(unit->getVisualObject())
-				{
-					unit->getVisualObject()->setCollidable(true);
-				}
-
-				if(command == GS_CMD_findSafePosition)
-				{
-					// claw is really close
-					if(distToClaw < 2.0f)
-					{
-						// just go somewhere randomly
-						bestDir.x = - 0.5f * dodgeDistance + dodgeDistance * game->gameRandom->nextFloat();
-						bestDir.z = - 0.5f * dodgeDistance + dodgeDistance * game->gameRandom->nextFloat();
-					}
-				}
-
-				gsd->position.x = unitPos.x + bestDir.x;
-				gsd->position.y = unitPos.y;
-				gsd->position.z = unitPos.z + bestDir.z;
-
-			} else {
-				sp->error("UnitScripting::process - Attempt to getPredictedClawDodgePosition/findSafePosition for null unit.");
-			}
-			break;
-
-		case GS_CMD_findLineOfFireToPlayer:
-			if (unit != NULL && game->gameUI->getFirstPerson(0) != NULL)
-			{
-				VC3 unitPos = unit->getPosition() + VC3(0, unit->getUnitType()->getAimHeightStanding(), 0);
-
-				// use cached result in the same tick
-				static VC3 cachedResult = VC3(0,0,0);
-				static int cachedResultTime = -9999;
-				if(game->gameTimer == cachedResultTime)
-				{
-					gsd->position.x = cachedResult.x - 2.0f + 4.0f * game->gameRandom->nextFloat();
-					gsd->position.y = unitPos.y;
-					gsd->position.z = cachedResult.z - 2.0f + 4.0f * game->gameRandom->nextFloat();
-					break;
-				}
-
-				Unit *player_unit = game->gameUI->getFirstPerson(0);
-				VC3 playerPos = player_unit->getPosition() + VC3(0, player_unit->getUnitType()->getAimHeightStanding(), 0);
-				VC3 clawPos = game->getClawController()->getClawPosition();
-
-				VC3 playerDir(clawPos.x - playerPos.x, 0, clawPos.z - playerPos.z);
-				playerDir.Normalize();
-				
-				// disable player collision
-				if(player_unit->getVisualObject())
-				{
-					player_unit->getVisualObject()->setCollidable(false);
-				}
-
-
-				VC3 bestPosition(unitPos);
-				float bestScore = -FLT_MAX;
-
-				float max_range = 15.0f;
-				int num_positions = 15;
-				for(int i = 0; i < num_positions; i++)
-				{
-					// direction
-					int angle = i * 360 / num_positions;
-					VC3 dir(-sinf((float)angle), 0, -cosf((float)angle));
-
-					// raycast
-					GameCollisionInfo cinfo;
-					game->getGameScene()->rayTrace(playerPos, dir, max_range, cinfo, true, false);
-
-					// get length
-					float length = max_range;
-					if(cinfo.hit)
-					{
-						length = cinfo.range;
-					}
-					
-					// different positions along the line
-					float d[3] = { 0, length * 0.5f, length };
-
-					// get nearest position
-					d[0] = (unitPos.x - playerPos.x) * dir.x + (unitPos.z - playerPos.z) * dir.z;
-					if(d[0] > length)
-						d[0] = length;
-					else if(d[0] < 0)
-						d[0] = 0;
-
-					VC3 pos(playerPos + dir * length);
-					float score = -FLT_MAX;
-					for(int j = 0; j < 3; j++)
-					{
-						// give some room for unit
-						float dist = d[j] - 1.0f;
-
-						VC3 temp_pos = (playerPos + dir * dist);
-
-						// test if path crosses claw line
-						//
-						float crosses_claw_line = 0.0f;
-						{
-							// clawline vs. path intersection points
-							VC3 line_pos1 = playerPos + playerDir * ((unitPos.x - playerPos.x) * playerDir.x + (unitPos.z - playerPos.z) * playerDir.z);
-							VC3 line_pos2 = playerPos + playerDir * ((temp_pos.x - playerPos.x) * playerDir.x + (temp_pos.z - playerPos.z) * playerDir.z);
-
-							// signed distances from intersections to path start/end
-							//
-							// line_pos1 + normal * t1 == unitPos
-							VC3 normal(-playerDir.z, 0, playerDir.x);
-							float t1 = (unitPos.x - line_pos1.x) / normal.x;
-							float t2 = (temp_pos.x - line_pos2.x) / normal.x;
-
-							// on opposite sides of clawline
-							if((t1 < 0 && t2 > 0) || (t1 > 0 && t2 < 0))
-							{
-								crosses_claw_line = 1.0f;
-							}
-						}
-
-
-						float dist_to_current_pos = (temp_pos - unitPos).GetLength();
-						if(dist_to_current_pos < 1.0f) dist_to_current_pos = 1.0f;
-
-						float dist_to_claw = (temp_pos - clawPos).GetLength();
-						if(dist_to_claw < 1.0f) dist_to_claw = 1.0f;
-						// balance: after claw further than 8m, don't decrease penalty
-						else if(dist_to_claw > 8.0f) dist_to_claw = 8.0f;
-
-						float dist_to_player = dist;
-						if(dist_to_player < 1.0f) dist_to_player = 1.0f;
-						// balance: after player further than 8m, don't decrease penalty
-						else if(dist_to_player > 8.0f) dist_to_player = 8.0f;
-
-						float angle_to_clawline = playerDir.GetDotWith(dir); 
-						if(angle_to_clawline < 0.0f) angle_to_clawline = -angle_to_clawline;
-						
-
-						// calculate score
-						//
-						float temp_score = 0;
-						// award: short distance to current pos
-						temp_score += 1.0f * (1.0f / dist_to_current_pos);
-						// award: 90 degree angle from clawline
-						temp_score += 0.5f * (1.0f - angle_to_clawline);
-						// penalty: short distance to claw pos
-						temp_score -= 1.0f * (1.0f / dist_to_claw);
-						// penalty: short distance to player
-						temp_score -= 1.0f * (1.0f / dist_to_player);
-						// penalty: crosses claw line
-						temp_score -= 1.5f * crosses_claw_line;
-
-						// get highest
-						if(temp_score > score)
-						{
-							score = temp_score;
-							pos = temp_pos;
-						}
-					}
-
-					// get highest
-					if(score > bestScore)
-					{
-						bestScore = score;
-						bestPosition = pos;
-					}
-				}
-
-				// restore collision
-				if(player_unit->getVisualObject())
-				{
-					player_unit->getVisualObject()->setCollidable(true);
-				}
-
-
-				// cache result
-				cachedResultTime = game->gameTimer;
-				cachedResult = bestPosition;
-
-
-				gsd->position.x = bestPosition.x;
-				gsd->position.y = unitPos.y;
-				gsd->position.z = bestPosition.z;
-
-			} else {
-				sp->error("UnitScripting::process - Attempt to findLineOfFireToPlayer for null unit.");
-			}
-			break;
-#endif
-
-		case GS_CMD_hasFallenOnBack:
-			if(unit)
-			{
-				*lastValue = unit->hasFallenOnBack() ? 1 : 0;
-			} else {
-				sp->error("UnitScripting::process - Attempt to hasFallenOnBack for null unit.");
-			}
-			break;
-
-		case GS_CMD_hasLineOfFire:
-			if(unit)
-			{
-				*lastValue = unit->targeting.getTargetUnit() && unit->targeting.hasLineOfFireToTarget() ? 1 : 0;
-			} else {
-				sp->error("UnitScripting::process - Attempt to hasLineOfFire for null unit.");
-			}
-			break;
-
-		case GS_CMD_setCustomUnitVariable:
-			if(unit)
-			{
-				unit->variables.setCustomVariable(stringData, *lastValue);
-			} else {
-				sp->error("UnitScripting::process - Attempt to setCustomUnitVariable for null unit.");
-			}
-			break;
-
-		case GS_CMD_getCustomUnitVariable:
-			if(unit)
-			{
-				*lastValue = unit->variables.getCustomVariable(stringData);
-			} else {
-				sp->error("UnitScripting::process - Attempt to setCustomUnitVariable for null unit.");
+				sp->error("UnitScripting::process - Attempt to reloadUnitWeapons for null unit.");
 			}
 			break;
 
@@ -7926,7 +7309,7 @@ namespace game
 	}
 
 
-	Unit *UnitScripting::nextOwnedUnit(Game *game, VC3 &position, int player, Unit *fromUnit, bool only_active )
+	Unit *UnitScripting::nextOwnedUnit(Game *game, const VC3 &position, int player, Unit *fromUnit, bool only_active )
 	{
 		bool passedFrom = false;
 		Unit *first = NULL;

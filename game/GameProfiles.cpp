@@ -1,5 +1,72 @@
-
 #include "precompiled.h"
+
+#include <stdio.h>
+#include <string>
+#include <fstream>
+#include <vector>
+
+#if defined WIN32 && !defined __WINE__
+#include <windows.h>
+#include <direct.h>
+#else
+#include <sys/stat.h>
+#include <errno.h>
+#define _mkdir(x) mkdir(x, S_IRWXU | S_IRWXG)
+#define Sleep usleep
+
+static inline const char *errmsg()
+{
+  switch(errno) {
+  case 0:
+    return "";
+  case EACCES:
+    return "Access denied";
+  case EBUSY:
+    return "File busy";
+  case EFAULT:
+    return "Segmentation fault";
+  case EIO:
+    return "IO error";
+  case EISDIR:
+    return "Directory";
+  case ELOOP:
+    return "Too many symlinks";
+  case ENAMETOOLONG:
+    return "Path name is too long";
+  case ENOENT:
+    return "At least one of the components of path name does not exist";
+  case ENOMEM:
+    return "Insufficient memory";
+  case ENOTDIR:
+    return "Not a directory";
+  case EPERM:
+    return "Insufficient permissions";
+  case EROFS:
+    return "Read only file system";
+  default:
+    return "Unknown error";
+  };
+}
+
+static inline bool DeleteFile(const char *filename) {
+  if (unlink(filename) == 0)
+    return true;
+  else {
+    // printf("WARNING: Deleting file %s failed (%s)\n",filename,errmsg());
+    return false;
+  }
+}
+
+static inline bool RemoveDirectory(const char *filename) {
+  if (rmdir(filename) == 0)
+    return true;
+  else {
+    // printf("WARNING: Removing directory %s failed (%s)\n",filename,errmsg());
+    return false;
+  }
+
+}
+#endif
 
 #include "GameProfiles.h"
 #include "GameProfilesEnumeration.h"
@@ -8,14 +75,11 @@
 #include "../system/Logger.h"
 #include "GameStats.h"
 
+#include "userdata.h"
+
 #include "../util/FBCopyFile.h"
 #include "../filesystem/input_stream.h"
 #include "../filesystem/file_package_manager.h"
-#include <stdio.h>
-#include <string>
-#include <direct.h>
-#include <fstream>
-#include <vector>
 
 namespace game
 {
@@ -85,7 +149,12 @@ namespace game
 				if( player >= 0 && player < (int) currentProfiles.size() )
 				{
 					currentProfiles[ player ] = profile;
-					currentProfileDirectories[ player ] = "Profiles/" + profile;
+					currentProfileDirectories[ player ] = igios_mapUserDataPrefix("Profiles/" + profile);
+          if (profile != "") {
+            // Ensure that save game directories already exist. Otherwise saving games would silently fail.
+            _mkdir(igios_mapUserDataPrefix("Profiles/"+profile +"/Save" ).c_str());
+            _mkdir(igios_mapUserDataPrefix("Profiles/"+profile +"/Config" ).c_str());
+          }
 				}
 			}
 
@@ -95,9 +164,10 @@ namespace game
 				util::SimpleParser sp;
 				setCurrentProfile("Default");
 #ifdef LEGACY_FILES
-				if (sp.loadFile("Profiles/current_profile.txt"))
+				if (sp.loadFile(igios_mapUserDataPrefix("Profiles/current_profile.txt").c_str()))
 #else
-				if (sp.loadFile("profiles/current_profile.txt"))
+
+        if (sp.loadFile(igios_mapUserDataPrefix("profiles/current_profile.txt").c_str()))
 #endif
 				{
 					while(sp.next())
@@ -162,9 +232,9 @@ namespace game
 			void saveCurrentProfile()
 			{
 #ifdef LEGACY_FILES
-				FILE *f = fopen("Profiles/current_profile.txt", "wb");
+				FILE *f = fopen(igios_mapUserDataPrefix("Profiles/current_profile.txt").c_str(), "wb");
 #else
-				FILE *f = fopen("profiles/current_profile.txt", "wb");
+				FILE *f = fopen(igios_mapUserDataPrefix("profiles/current_profile.txt").c_str(), "wb");
 #endif
 				if (f != NULL)
 				{/*
@@ -201,16 +271,16 @@ namespace game
 
 			void newProfile( const std::string& profile )
 			{
-				_mkdir( ( "Profiles/"+profile ).c_str() );
-				_mkdir( ( "Profiles/"+profile + "/Save" ).c_str() );
-				_mkdir( ( "Profiles/"+profile + "/Config" ).c_str() );
+				_mkdir( igios_mapUserDataPrefix("Profiles/"+profile ).c_str() );
+				_mkdir( igios_mapUserDataPrefix("Profiles/"+profile + "/Save" ).c_str() );
+				_mkdir( igios_mapUserDataPrefix("Profiles/"+profile + "/Config" ).c_str() );
 				
 				// should copy the default keybinds to the 
 				// Profiles/"profile"/Config/
 #ifdef LEGACY_FILES
-				copyFile( "Data/Misc/keybinds.txt", "Profiles/"+profile+"/Config/keybinds.txt" );
+				copyFile( "Data/Misc/keybinds.txt", igios_mapUserDataPrefix("Profiles/"+profile+"/Config/keybinds.txt") );
 #else
-				copyFile( "data/misc/default_keybinds.txt", "profiles/"+profile+"/config/keybinds.txt" );
+				copyFile( "data/misc/default_keybinds.txt", igios_mapUserDataPrefix("profiles/"+profile+"/config/keybinds.txt") );
 #endif
 
 			}
@@ -220,40 +290,45 @@ namespace game
 				if( doesProfileExist( profile.c_str() ) )
 				{
 #ifdef LEGACY_FILES
-					removeDirectory( "Profiles/" + profile + "/Save" );
-					removeDirectory( "Profiles/" + profile + "/Config" );
-					removeDirectory( "Profiles/" + profile );
+					removeDirectory(igios_mapUserDataPrefix("Profiles/" + profile + "/Save" ));
+          removeDirectory(igios_mapUserDataPrefix("Profiles/" + profile + "/Config" ));
+					removeDirectory(igios_mapUserDataPrefix("Profiles/" + profile ));
 
+          /*
 					//HAXHAXHAX
 					Sleep(100);
-					removeDirectory( "Profiles/" + profile + "/Save" );
-					removeDirectory( "Profiles/" + profile + "/Config" );
-					removeDirectory( "Profiles/" + profile );
+					removeDirectory(igios_mapUserDataPrefix("Profiles/" + profile + "/Save" ));
+          removeDirectory(igios_mapUserDataPrefix("Profiles/" + profile + "/Config" ));
+					removeDirectory(igios_mapUserDataPrefix("Profiles/" + profile ));
+          */
 #else
-					removeDirectory( "profiles/" + profile + "/save" );
-					removeDirectory( "profiles/" + profile + "/config" );
-					removeDirectory( "profiles/" + profile );
+					removeDirectory(igios_mapUserDataPrefix("profiles/" + profile + "/save" ));
+					removeDirectory(igios_mapUserDataPrefix("profiles/" + profile + "/config" ));
+					removeDirectory(igios_mapUserDataPrefix("profiles/" + profile ));
 
+          /*
 					//HAXHAXHAX
 					Sleep(100);
-					removeDirectory( "profiles/" + profile + "/save" );
-					removeDirectory( "profiles/" + profile + "/config" );
-					removeDirectory( "profiles/" + profile );
+					removeDirectory(igios_mapUserDataPrefix("profiles/" + profile + "/save" ));
+					removeDirectory(igios_mapUserDataPrefix("profiles/" + profile + "/config" ));
+					removeDirectory(igios_mapUserDataPrefix("profiles/" + profile ));
+          */
 #endif
 				}
 			}
 
 			bool doesProfileExist(const char *temp) const
 			{
-				if( temp == NULL ) 
+				if( temp == NULL || strcmp(temp,"") == 0) 
 					return false;
+
 				std::string profile( temp );
 
 				frozenbyte::editor::FileWrapper fwbase(
 #ifdef LEGACY_FILES
-				std::string("Profiles"), std::string("*"), true);
+        igios_mapUserDataPrefix(std::string("Profiles")), std::string("*"), true);
 #else
-				std::string("profiles"), std::string("*"), true);
+				igios_mapUserDataPrefix(std::string("profiles")), std::string("*"), true);
 #endif
 				std::vector<std::string> tmplist = fwbase.getAllDirs();
 				for (int j = 0; j < (int)tmplist.size(); j++)
@@ -267,9 +342,9 @@ namespace game
 
 			bool isProfileValid( const char* temp ) const
 			{
-				if( temp == NULL ) return false;
+				if( temp == NULL || strcmp(temp,"") == 0) return false;
 
-				std::string profile( temp );
+				std::string profile( igios_unmapUserDataPrefix(temp) );
 				
 				// if( doesProfileExist( temp ) ) 
 				//	return false;
@@ -291,7 +366,7 @@ namespace game
 				// Removes a directory and its files 
 				// ( currently does not delete its subfolders )
 				{
-					frozenbyte::editor::FileWrapper fwbase( directory , "*.*" );
+					frozenbyte::editor::FileWrapper fwbase( directory , "*.*", true );
 					std::vector<std::string> tmplist = fwbase.getAllDirs();
 					int i;
 					/*
@@ -304,15 +379,14 @@ namespace game
 					for( i = 0; i < (int)tmplist.size(); i++ )
 					{
 						//if( _unlink( ( tmplist[i] ).c_str() ) != 0 )
-						if(DeleteFile(tmplist[i].c_str()) == FALSE)
+						if(DeleteFile(tmplist[i].c_str()) == false)
 						{
 							Logger::getInstance()->error( ( "GameProfilesImpl::removeDirectory() Could not remove file: " + tmplist[i] ).c_str()  );
 						}
 					}
 				}
-
 				//if( _rmdir( directory.c_str() ) != 0 ) 
-				if(RemoveDirectory(directory.c_str()) == FALSE)
+				if(RemoveDirectory(directory.c_str()) == false)
 				{
 					Logger::getInstance()->error( "GameProfilesImpl::removeDirectory() Could not remove directory" );
 				};
@@ -435,7 +509,7 @@ namespace game
 		ret->currentPos = 0;
 
 		frozenbyte::editor::FileWrapper fwbase(
-			std::string("Profiles"), std::string("*"), true);
+      std::string(igios_mapUserDataPrefix("Profiles")), std::string("*"), true);
 		std::vector<std::string> tmplist = fwbase.getAllDirs();
 		for (int j = 0; j < (int)tmplist.size(); j++)
 		{

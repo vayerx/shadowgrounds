@@ -19,6 +19,7 @@ public:
 
 	virtual void findFiles(const std::string &dir, const std::string &extension, IFileList &result) = 0;
 	virtual InputStream getFile(const std::string &fileName) = 0;
+	virtual unsigned int getCrc(const std::string &fileName) { return 0; }
 };
 
 } // end of namespace filesystem

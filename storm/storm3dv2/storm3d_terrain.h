@@ -3,7 +3,7 @@
 #ifndef INCLUDED_STORM3D_TERRAIN_H
 #define INCLUDED_STORM3D_TERRAIN_H
 
-#include <istorm3d_terrain.h>
+#include <IStorm3D_Terrain.h>
 #include <boost/scoped_ptr.hpp>
 
 class Storm3D;

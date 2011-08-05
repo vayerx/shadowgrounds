@@ -569,14 +569,17 @@ namespace {
 		{
 			d.getCommandList().addCommand(IDC_TERRAIN_MODE_SPLAT, this);
 			d.getCommandList().addCommand(IDC_TERRAIN_MODE_HEIGHTS, this);
+			d.getCommandList().addCommand(IDC_TERRAIN_MODE_LIGHTMAP, this);
 		}
 
 		void execute(int id)
 		{
 			if(IsDlgButtonChecked(d.getWindowHandle(), IDC_TERRAIN_MODE_SPLAT) == BST_CHECKED)
 				data.mode = 0;
-			else
+			else if(IsDlgButtonChecked(d.getWindowHandle(), IDC_TERRAIN_MODE_HEIGHTS) == BST_CHECKED)
 				data.mode = 1;
+			else if(IsDlgButtonChecked(d.getWindowHandle(), IDC_TERRAIN_MODE_LIGHTMAP) == BST_CHECKED)
+				data.mode = 2;
 		}
 	};
 
@@ -724,7 +727,7 @@ namespace {
 					splatGenerator.generate(texture, ci.position, int(radius + .5f), strength);
 				}
 			}
-			else // Height edit
+			else if(sharedData.mode == 1)// Height edit
 			{
 				SharedData &data = sharedData;
 
@@ -766,6 +769,31 @@ namespace {
 
 					data.hmapData.update(&data.heightMap[0]);
 					data.storm.terrain->updateHeightMap(&data.heightMap[0], VC2I(), data.mapSize);
+				}
+			}
+			else if(sharedData.mode == 2)// Lightmap edit
+			{
+				SharedData &data = sharedData;
+
+				if(mouse.isLeftButtonDown())
+				{
+					HeightModifier modifier(&data.heightMap[0], data.mapSize, data.realSize);
+					HeightModifier::Shape shape = HeightModifier::Circle;
+					if(data.heightShape == 1)
+						shape = HeightModifier::Rectangle;
+
+					float strength = 0.1f * float(SendDlgItemMessage(sharedData.dialog.getWindowHandle(), IDC_EDIT_STRENGTH, TBM_GETPOS, 0, 0));
+
+					TerrainLightMap &map = sharedData.editorState.getLightMap();
+					std::vector<TerrainLightMap::PointLight> lights;
+					sharedData.editorState.getLights(lights);
+
+					if(GetKeyState(VK_CONTROL) & 0x80)
+						strength = -strength;
+
+					VC2 rect(2000 * radius, 2000 * radius);
+					map.setShadow(VC2(ci.position.x, ci.position.z), strength, rect, lights, sharedData.editorState.getSunDirection());
+					map.apply();
 				}
 			}
 		}

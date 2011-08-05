@@ -6,7 +6,6 @@
 #include <string>
 #include <boost/scoped_ptr.hpp>
 
-namespace frozenbyte {
 namespace util {
 
 class ModSelector
@@ -31,6 +30,5 @@ public:
 };
 
 } // util
-} // frozenbyte
 
 #endif

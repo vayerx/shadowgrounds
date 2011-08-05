@@ -36,7 +36,7 @@ namespace {
 
 namespace game
 {
-  char *charSkillNames[CHAR_SKILLS_AMOUNT] = 
+  const char *charSkillNames[CHAR_SKILLS_AMOUNT] =
   { 
     "aiming",
     "stealth",
@@ -49,7 +49,7 @@ namespace game
     "leadership"
   };
 
-  char *Character::getSkillName(int skill)
+  const char *Character::getSkillName(int skill)
   {
     assert(skill >= 0 && skill < CHAR_SKILLS_AMOUNT);
     return charSkillNames[skill];
@@ -71,7 +71,7 @@ namespace game
 		return "Character";
 	}
 
-  Character::Character(char *filename)
+  Character::Character(const char *filename)
   {
     name = NULL;
     fullname = NULL;

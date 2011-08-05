@@ -19,10 +19,6 @@
 #define IDD_WIND                        116
 #define IDD_MODEL_PARTICLE_SYSTEM       117
 #define IDD_SIDEGRAVITY                 118
-#define IDD_GRAVITYPOINT                119
-#define IDD_EMITTERGRAVITY              120
-#define IDD_OBSTACLEAVOID               121
-#define IDD_WINDMAP                     122
 #define IDC_GEOMETRY                    1001
 #define IDC_NEW_EFFECT                  1001
 #define IDC_BONES                       1002
@@ -143,8 +139,6 @@
 #define IDC_GRAVITY                     1083
 #define IDC_POSITIONS_BETWEEN_VERTICES  1083
 #define IDC_PLANE_POSITIONS             1084
-#define IDC_DIRECTION_NORMALS2          1085
-#define IDC_DIRECTION_BINORMALS         1085
 #define IDC_DRAG                        1086
 #define IDC_RENAME                      1087
 #define IDC_SPIRAL                      1087
@@ -196,19 +190,12 @@
 #define IDC_SIDEGRAVITY                 1131
 #define IDC_CHECK1                      1132
 #define IDC_PHYSICS                     1132
-#define IDC_GRAVITYPOINT                1133
-#define IDC_GRAVITYPOINT_POS_X          1134
-#define IDC_GRAVITYPOINT_POS_Y          1135
-#define IDC_GRAVITYPOINT_POS_Z          1136
-#define IDC_EMITTERGRAVITY              1137
-#define IDC_OBSTACLEAVOID               1138
-#define IDC_WINDMAP                     1139
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        120
+#define _APS_NEXT_RESOURCE_VALUE        119
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1133
 #define _APS_NEXT_SYMED_VALUE           101

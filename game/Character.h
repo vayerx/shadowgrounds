@@ -45,7 +45,7 @@ namespace game
 
 		virtual const char *getStatusInfo() const;
 
-    Character(char *filename);
+    Character(const char *filename);
     ~Character();
 
     /**
@@ -80,7 +80,7 @@ namespace game
 
 		int getGender();
 
-    static char *getSkillName(int skill);
+    static const char *getSkillName(int skill);
 
 		static ui::Visual2D *conversationFace1;
 		static ui::Visual2D *conversationFace2;

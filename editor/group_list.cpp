@@ -8,6 +8,7 @@
 #include "parser.h"
 #include "string_conversions.h"
 #include "../filesystem/input_file_stream.h"
+#include "../filesystem/file_package_manager.h"
 #include <fstream>
 #include <algorithm>
 
@@ -62,7 +63,7 @@ struct GroupList::Data
 	{
 		Parser parser(true, false);
 		//ifstream(name.c_str()) >> parser;
-		filesystem::createInputFileStream(name) >> parser;
+		filesystem::FilePackageManager::getInstance().getFile(name) >> parser;
 
 		const ParserGroup &root = parser.getGlobals();
 

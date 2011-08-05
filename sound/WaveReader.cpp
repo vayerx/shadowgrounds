@@ -22,8 +22,9 @@ namespace {
 
 	void logParseError(const std::string &file, const std::string &info)
 	{
-		
+#ifdef _MSC_VER
 #pragma message(" ** Wave reader errors disabled as they seem to be always triggered ** ")
+#endif
 
 		/*
 		string errorString = "Error parsing wave file: ";

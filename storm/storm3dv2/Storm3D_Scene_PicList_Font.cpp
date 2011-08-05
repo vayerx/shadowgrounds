@@ -1,6 +1,8 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 //------------------------------------------------------------------
 // Includes
@@ -9,9 +11,9 @@
 #include "storm3d_scene_piclist.h"
 #include "storm3d_texture.h"
 #include "storm3d_font.h"
-#include "clipper.h"
+#include "Clipper.h"
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 
 //------------------------------------------------------------------
@@ -21,22 +23,34 @@ Storm3D_Scene_PicList_Font::Storm3D_Scene_PicList_Font(Storm3D *s2,
 		Storm3D_Scene *scene,Storm3D_Font *_font,VC2 _position,VC2 _size,const char *_text,float alpha_,const COL &colorFactor_) :
 	Storm3D_Scene_PicList(s2,scene,_position,_size),
 	font(_font),
+	text(0),
+	uniText(0),
 	alpha(alpha_),
-	colorFactor(colorFactor_),
-	uniText(0)
+	colorFactor(colorFactor_)
 {
-	// Copy text
-	text=new char[strlen(_text)+1];
-	strcpy(text,_text);
+	if (!font->isUnicode())
+	{
+		// Copy text
+		text=new char[strlen(_text)+1];
+		strcpy(text,_text);
+	}
+	else
+	{
+		// Hack: convert to unicode for non-english languages
+		int length = MultiByteToWideChar(CP_ACP | CP_UTF8, 0, _text, strlen(_text) + 1, 0, 0);
+		uniText = new wchar_t[length];
+		MultiByteToWideChar(CP_ACP | CP_UTF8, 0, _text, strlen(_text) + 1, uniText, length);
+	}
 }
 
 Storm3D_Scene_PicList_Font::Storm3D_Scene_PicList_Font(Storm3D *s2,
 		Storm3D_Scene *scene,Storm3D_Font *_font,VC2 _position,VC2 _size,const wchar_t *_text,float alpha_,const COL &colorFactor_) :
 	Storm3D_Scene_PicList(s2,scene,_position,_size),
 	font(_font),
+	text(0),
+	uniText(0),
 	alpha(alpha_),
-	colorFactor(colorFactor_),
-	text(0)
+	colorFactor(colorFactor_)
 {
 	// Copy text
 	uniText = new wchar_t[wcslen(_text)+1];
@@ -79,9 +93,11 @@ void Storm3D_Scene_PicList_Font::Render()
 
 	if(font->font && font->sprite)
 	{
+		#ifdef _MSC_VER
 		#pragma message("**                                             **")
 		#pragma message("** Size to screen boundary and enable clipping **")
 		#pragma message("**                                             **")
+		#endif
 
 		//VC2 _position,VC2 _size
 		RECT rc = { int(position.x), int(position.y), int(position.x + size.x + 100), int(position.y + size.y + 1000) };

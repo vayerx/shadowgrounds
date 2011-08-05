@@ -1,13 +1,24 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 #include <math.h>
+#include <algorithm>
 #include "storm3d_spotlight_shared.h"
 #include "storm3d_camera.h"
 #include "storm3d_scene.h"
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 #include <c2_frustum.h>
+
+#ifdef _MSC_VER
+#define MIN(a,b) ( min( (a), (b) ) )
+#define MAX(a,b) ( max( (a), (b) ) )
+#else
+#define MIN(a,b) (std::max( (a), (b) ) )
+#define MAX(a,b) (std::min( (a), (b) ) )
+#endif
 
 Storm3D_SpotlightShared::Storm3D_SpotlightShared(IDirect3DDevice9 &device_)
 :	device(device_),
@@ -27,7 +38,7 @@ Storm3D_SpotlightShared::~Storm3D_SpotlightShared()
 {
 }
 
-void Storm3D_SpotlightShared::updateMatrices(const float *cameraView, float bias)
+void Storm3D_SpotlightShared::updateMatrices(const D3DXMATRIX &cameraView, float bias)
 {
 	D3DXVECTOR3 lightPosition(position.x, position.y, position.z);
 	D3DXVECTOR3 up(0, 1.f, 0);
@@ -38,8 +49,6 @@ void Storm3D_SpotlightShared::updateMatrices(const float *cameraView, float bias
 	D3DXMATRIX cameraMatrix(cameraView);
 	float det = D3DXMatrixDeterminant(&cameraMatrix);
 	D3DXMatrixInverse(&cameraMatrix, &det, &cameraMatrix);
-
-	unsigned int tweakRange = 1;
 
 	float currentBias = bias;
 	for(int i = 0; i < 2; ++i)
@@ -97,16 +106,23 @@ void Storm3D_SpotlightShared::updateMatrices(const float *cameraView, float bias
 	}
 }
 
-void Storm3D_SpotlightShared::updateMatricesOffCenter(const float *cameraView, const VC2 &min, const VC2 &max, float height, Storm3D_Camera &camera)
+void Storm3D_SpotlightShared::updateMatricesOffCenter(const D3DXMATRIX &cameraView, const VC2 &min, const VC2 &max, float height, Storm3D_Camera &camera)
 {
+	// Position of the light in global coordinates
+	// Y-axis is height
 	D3DXVECTOR3 lightPosition(position.x, position.y, position.z);
+	// Up vector (z-axis)
 	D3DXVECTOR3 up(0.f, 0.f, 1.f);
+	// Look direction
 	D3DXVECTOR3 lookAt = lightPosition;
 	lookAt.y -= 1.f;
 
 	{
+		// max and min define the extents of light area in local coordinates
+		// Z-axis is height
 		float zmin = 0.2f;
 		//float zmax = std::max(range, height) * 1.4f;
+		// height is light height from light properties
 		float zmax = height;
 		float factor = 1.5f * zmin / height;
 		float xmin = min.x * factor;
@@ -115,6 +131,7 @@ void Storm3D_SpotlightShared::updateMatricesOffCenter(const float *cameraView, c
 		float ymax = max.y * factor;
 		D3DXMatrixPerspectiveOffCenterLH(&lightProjection, xmin, xmax, ymin, ymax, zmin, zmax);
 
+		// Calculate the extents of light area in global coordinates
 		VC2 worldMin = min;
 		worldMin.x += position.x;
 		worldMin.y += position.z;
@@ -125,7 +142,9 @@ void Storm3D_SpotlightShared::updateMatricesOffCenter(const float *cameraView, c
 		// Generate approximate camera for culling.
 
 		// Calculate range of the camera.
+		// Y-axis is height
 		float planeY = position.y - height;
+		// Calculate distances from light position to light plane edges
 		VC3 p1 = VC3( worldMin.x, planeY, worldMin.y ) - position;
 		VC3 p2 = VC3( worldMax.x, planeY, worldMin.y ) - position;
 		VC3 p3 = VC3( worldMax.x, planeY, worldMax.y ) - position;
@@ -135,10 +154,10 @@ void Storm3D_SpotlightShared::updateMatricesOffCenter(const float *cameraView, c
 		float d3 = p3.GetLength();
 		float d4 = p4.GetLength();
 		float maxRange = 0.0f;
-		maxRange = max( maxRange, d1 );
-		maxRange = max( maxRange, d2 );
-		maxRange = max( maxRange, d3 );
-		maxRange = max( maxRange, d4 );
+		maxRange = MAX( maxRange, d1 );
+		maxRange = MAX( maxRange, d2 );
+		maxRange = MAX( maxRange, d3 );
+		maxRange = MAX( maxRange, d4 );
 		//maxRange = sqrtf(maxRange);
 
 		// Calculate FOV of the camera.
@@ -150,14 +169,16 @@ void Storm3D_SpotlightShared::updateMatricesOffCenter(const float *cameraView, c
 		float t2 = camVec.GetDotWith( p2 ) / d2;
 		float t3 = camVec.GetDotWith( p3 ) / d3;
 		float t4 = camVec.GetDotWith( p4 ) / d4;
-		minDot = min( minDot, t1 );
-		minDot = min( minDot, t2 );
-		minDot = min( minDot, t3 );
-		minDot = min( minDot, t4 );
+		minDot = MIN( minDot, t1 );
+		minDot = MIN( minDot, t2 );
+		minDot = MIN( minDot, t3 );
+		minDot = MIN( minDot, t4 );
 		float maxAngle = acosf( minDot );
 
+		// Place camera to light position
 		camera.SetPosition(position);
 		camera.SetUpVec(VC3(0.f, 0.f, 1.f));
+		// Point camera at light plane center
 		camera.SetTarget(planeCenter);
 		camera.SetFieldOfView( maxAngle );
 		camera.SetVisibilityRange( maxRange );
@@ -312,10 +333,9 @@ namespace {
 		for(i = 0; i < 2; ++i)
 		{
 			VC3 result;
-			float rhw = 0, realZ = 0;
-			bool inFront = camera.GetTransformedToScreen(v[i], result, rhw, realZ);
-
 			/*
+			float rhw = 0, realZ = 0;
+
 			result.x = std::max(0.f, result.x);
 			result.y = std::max(0.f, result.y);
 			result.x = std::min(1.f, result.x);
@@ -346,158 +366,6 @@ namespace {
 	}
 
 }
-
-#if 0
-
-bool Storm3D_SpotlightShared::setScissorRect(Storm3D_Camera &camera, const VC2I &screenSize)
-{
-	D3DXMATRIX light;
-	D3DXVECTOR3 lightPosition(position.x, position.y, position.z);
-	D3DXVECTOR3 up(0, 1.f, 0);
-	D3DXVECTOR3 lookAt = lightPosition;
-	lookAt += D3DXVECTOR3(direction.x, direction.y, direction.z);
-	D3DXMatrixLookAtLH(&light, &lightPosition, &lookAt, &up);
-
-	D3DXVECTOR3 v[5];
-	v[0] = D3DXVECTOR3(0, 0, 0);
-	v[1] = D3DXVECTOR3(0, 0, 1.f);
-	v[2] = D3DXVECTOR3(0, 0, 1.f);
-	v[3] = D3DXVECTOR3(0, 0, 1.f);
-	v[4] = D3DXVECTOR3(0, 0, 1.f);
-
-	int minX = screenSize.x;
-	int minY = screenSize.y;
-	int maxX = 0;
-	int maxY = 0;
-
-	float det = D3DXMatrixDeterminant(&light);
-	D3DXMatrixInverse(&light, &det, &light);
-
-	float angle = D3DXToRadian(fov) * .5f;
-	for(int i = 0; i <= 4; ++i)
-	{
-		if(i > 0)
-		{
-			float z = v[i].z;
-			if(i == 1 || i == 2)
-			{
-				v[i].x = z * sinf(angle);
-				v[i].z = z * cosf(angle);
-			}
-			else
-			{
-				v[i].x = z * sinf(-angle);
-				v[i].z = z * cosf(-angle);
-			}
-
-			if(i == 1 || i == 3)
-				v[i].y = z * sinf(angle);
-			else
-				v[i].y = z * sinf(-angle);
-
-			float scale = range / cosf(angle);
-			v[i] *= scale;
-		}
-
-		D3DXVec3TransformCoord(&v[i], &v[i], &light);
-	}
-
-	const Frustum &frustum = camera.getFrustum();
-	calculateLineToScissor(toVC3(v[0]), toVC3(v[1]), frustum, camera, screenSize, minX, minY, maxX, maxY);
-	calculateLineToScissor(toVC3(v[0]), toVC3(v[2]), frustum, camera, screenSize, minX, minY, maxX, maxY);
-	calculateLineToScissor(toVC3(v[0]), toVC3(v[3]), frustum, camera, screenSize, minX, minY, maxX, maxY);
-	calculateLineToScissor(toVC3(v[0]), toVC3(v[4]), frustum, camera, screenSize, minX, minY, maxX, maxY);
-	calculateLineToScissor(toVC3(v[1]), toVC3(v[2]), frustum, camera, screenSize, minX, minY, maxX, maxY);
-	calculateLineToScissor(toVC3(v[2]), toVC3(v[3]), frustum, camera, screenSize, minX, minY, maxX, maxY);
-	calculateLineToScissor(toVC3(v[3]), toVC3(v[4]), frustum, camera, screenSize, minX, minY, maxX, maxY);
-	calculateLineToScissor(toVC3(v[4]), toVC3(v[1]), frustum, camera, screenSize, minX, minY, maxX, maxY);
-
-	/*
-	VC3 cameraPos = camera.GetPosition();
-	VC3 cameraPosResult;
-	float cameraRhw = 0, cameraRealZ = 0;
-	bool cameraVisible = camera.GetTransformedToScreen(cameraPos, cameraPosResult, cameraRhw, cameraRealZ);
-
-	for(i = 0; i <= 4; ++i)
-	{
-		VC3 source(v[i].x, v[i].y, v[i].z);
-		VC3 result;
-		float rhw = 0, realZ = 0;
-		bool inFront = camera.GetTransformedToScreen(source, result, rhw, realZ);
-
-		// HAX HAX!
-
-		result.x = std::max(0.f, result.x);
-		result.y = std::max(0.f, result.y);
-		result.x = std::min(1.f, result.x);
-		result.y = std::min(1.f, result.y);
-
-		//if(fabsf(rhw) < 0.0001f)
-		//	continue;
-
-		bool flip = false;
-		if(realZ < cameraRealZ)
-			flip = true;
-
-		if(flip)
-		{
-			result.x = 1.f - result.x;
-			result.y = 1.f - result.y;
-
-			//minX = 0;
-			//minY = 0;
-			//maxX = screenSize.x;
-			//maxY = screenSize.y;
-		}
-
-		int x = int(result.x * screenSize.x);
-		int y = int(result.y * screenSize.y);
-
-		maxX = std::max(x, maxX);
-		maxY = std::max(y, maxY);
-		minX = std::min(x, minX);
-		minY = std::min(y, minY);
-	}
-	*/
-
-	if(maxX > screenSize.x)
-		maxX = screenSize.x;
-	if(maxY > screenSize.y)
-		maxY = screenSize.y;
-	if(minX < 0)
-		minX = 0;
-	if(minY < 0)
-		minY = 0;
-
-	RECT rc;
-	rc.left = minX;
-	rc.top = minY;
-	rc.right = maxX;
-	rc.bottom = maxY;
-
-	if(rc.left < rc.right && rc.top < rc.bottom)
-	{
-		device.SetScissorRect(&rc);
-		device.SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
-	}
-	else
-	{
-		RECT rc;
-		rc.left = 0;
-		rc.top = 0;
-		rc.right = 1;
-		rc.bottom = 1;
-
-		device.SetScissorRect(&rc);
-		device.SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
-
-		return false;
-	}
-
-	return true;
-}
-
-#endif
 
 namespace {
 
@@ -668,7 +536,6 @@ bool Storm3D_SpotlightShared::setScissorRect(Storm3D_Camera &camera, const VC2I 
 	// Create area
 
 	const Frustum &frustum = camera.getFrustum();
-	int foundVertexAmount = 0;
 	int minX = screenSize.x;
 	int minY = screenSize.y;
 	int maxX = 0;

@@ -37,7 +37,7 @@ public:
 	}
 };
 
-ItemWindowUpdatorRegisterer* temp_static_haxoring_constructing_thing = new ItemWindowUpdatorRegisterer( "ItemWindow" );
+ItemWindowUpdatorRegisterer* __attribute__((used)) IWURtemp_static_haxoring_constructing_thing = new ItemWindowUpdatorRegisterer( "ItemWindow" );
 
 
 }
@@ -50,9 +50,10 @@ ItemWindowUpdator::ItemWindowUpdator( Game* game, ItemWindow* item ) :
 	itemWindow( item )
 { 
 
-	Parser parser;
+	EditorParser parser;
 
-	filesystem::createInputFileStream( fileName ) >> parser;
+	filesystem::InputStream fileStream = filesystem::createInputFileStream( fileName );
+	fileStream >> parser;
 
 	int i;
 	for ( i = 0; i < parser.getGlobals().getSubGroupAmount(); i++ )

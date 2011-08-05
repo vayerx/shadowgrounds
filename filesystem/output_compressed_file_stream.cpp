@@ -1,6 +1,6 @@
 #include "precompiled.h"
 #include <vector>
-#include <zlib.h>
+#include "detail/zlib.h"
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
