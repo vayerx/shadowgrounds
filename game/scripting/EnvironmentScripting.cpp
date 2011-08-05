@@ -26,9 +26,10 @@ using namespace ui;
 namespace game
 {
 	void EnvironmentScripting::process(util::ScriptProcess *sp, 
-		int command, int intData, char *stringData, ScriptLastValueType *lastValue, 
+		int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue,
 		GameScriptData *gsd, Game *game)
 	{
+		int intData = intFloat.i;
 		switch(command)
 		{
 			case GS_CMD_ADDENVIRONMENTALEFFECT:

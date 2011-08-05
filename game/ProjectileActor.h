@@ -42,6 +42,7 @@ public:
   Projectile *createChainedProjectile(Projectile *projectile, const VC3 &position, 
     int hitchain, const VC3 &direction, Unit *indirectHitUnit = 0);
 
+	// targetUnit can't be const
 	void doProjectileRaytrace(Unit *shooter, Unit *noCollisionUnit, Projectile *projectile,
 		Bullet *bulletType, const VC3 &weaponPosition, const VC3 &weaponRayPosition, 
 		const VC3 &targetPosition, const VC3 &direction, float maxRange, Unit *targetUnit, float velocityFactor = 1.0f);
@@ -51,10 +52,11 @@ public:
 private:
   Game *game;
 
-  void doUnitHit(Projectile *projectile, Unit *hitUnit, Part *hitPart, 
+  // hitUnit can't be const
+  void doUnitHit(Projectile *projectile, Unit *hitUnit, Part *hitPart,
     VC3 &pushVector, float damageFactor, bool directHit);
 
-  void doHitMisses(Projectile *projectile, Unit *hitUnit);
+  void doHitMisses(Projectile *projectile, const Unit *hitUnit);
 
   bool doGore(Projectile *projectile, Unit *hitUnit, bool onlyPartial, float probabilityFactor, int additionalProbability);
 	

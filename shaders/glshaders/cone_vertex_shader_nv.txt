@@ -1,0 +1,75 @@
+!!ARBvp1.0
+PARAM lightProjSpace[4] = { state.matrix.program[2] };
+PARAM proj[4] = { state.matrix.program[1] };
+PARAM mvp[4] = { state.matrix.mvp };
+PARAM tex1[4] = { state.matrix.texture[1] };
+PARAM tex3[4] = { state.matrix.texture[3] };
+#fromList ["c"]
+TEMP r0, r1, r2, r4;
+PARAM c[100] = { program.env[0..99] };
+OUTPUT oD0 = result.color.primary;
+OUTPUT oPos = result.position;
+OUTPUT oT0 = result.texcoord[0];
+OUTPUT oT1 = result.texcoord[1];
+OUTPUT oT2 = result.texcoord[2];
+OUTPUT oT3 = result.texcoord[3];
+# Depth shader for ATi shadowing:
+#   -> Transform vertex
+#   -> Pass TC0
+#   -> Output depth to TC1
+# Constant declarations:
+#   -> c[0..3] -> World x View x Projection matrix
+#   -> c[8] -> noise offset
+#   -> c[9] -> spot color
+#   -> c[10] -> camera direction in cone space
+#   -> c[11] -> spot direction, range
+# Vertex data:
+#   -> v0 -> position
+#   -> v5 -> color
+ATTRIB v0 = vertex.position;
+ATTRIB v2 = vertex.normal;
+ATTRIB v5 = vertex.color.primary;
+ATTRIB v1 = vertex.texcoord[0];
+# ** POSITION **
+# Transform position to clip space
+DP4 r0.x, v0, mvp[0];
+DP4 r0.y, v0, mvp[1];
+DP4 r0.z, v0, mvp[2];
+DP4 r0.w, v0, mvp[3];
+
+MOV oPos, r0;
+# To spots space
+DP4 r1.x, v0, lightProjSpace[0];
+DP4 r1.y, v0, lightProjSpace[1];
+DP4 r1.z, v0, lightProjSpace[2];
+DP4 r1.w, v0, lightProjSpace[3];
+
+ADD r1.z, r1.zzzz, c[10].w;
+
+DP4 r2.x, v0, proj[0];
+DP4 r2.y, v0, proj[1];
+DP4 r2.z, v0, proj[2];
+DP4 r2.w, v0, proj[3];
+#ADD r2.z, r2.zzzz, c[10].w;
+
+MOV oT0, r2;
+MUL r1.z, r1.zzzz, c[11].w;
+MOV oT2.xy, r1.zzzz;
+
+DP4 r4.x, v1, tex3[0];
+DP4 r4.y, v1, tex3[1];
+DP4 r4.z, v1, tex3[2];
+MOV oT3.xyz, r4;
+
+DP4 r4.x, v1, tex1[0];
+DP4 r4.y, v1, tex1[1];
+DP4 r4.z, v1, tex1[2];
+MOV oT1.xyz, r4;
+
+#dp3 r0, v2.xyz, c[10].xyz
+#max r0.x, r0.x, c[10].w
+# Spot color
+#mul r0, r0.x, c[9]
+MOV r0, c[9];
+MOV oD0, r0;
+END

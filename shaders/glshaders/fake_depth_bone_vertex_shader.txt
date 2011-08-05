@@ -1,0 +1,67 @@
+!!ARBvp1.0
+PARAM mvp[4] = { state.matrix.mvp };
+#fromList ["c"]
+TEMP r0, r1, r2, r4;
+ADDRESS a0;
+PARAM c[100] = { program.env[0..99] };
+OUTPUT oD0 = result.color.primary;
+OUTPUT oPos = result.position;
+OUTPUT oT0 = result.texcoord[0];
+OUTPUT oT1 = result.texcoord[1];
+# Default shader:
+#   -> Transform vertex
+# Constant declarations:
+#   -> c[0..3]   -> World x View x Projection matrix
+#   -> c[4..7]  -> World
+#   -> c[10] -> light color
+#   -> c[11] -> light position, range
+# Vertex data:
+#   -> v0 -> position
+#   -> v1,2 -> texture coordinates
+#   -> v3 -> normal
+#   -> v6 -> index 1 / weight 1 (x,y) & index 2 / weight 2 (z,w)
+ATTRIB v0 = vertex.position;
+ATTRIB v3 = vertex.normal;
+ATTRIB v1 = vertex.texcoord[0];
+ATTRIB v2 = vertex.texcoord[1];
+ATTRIB v6 = vertex.texcoord[2];
+ATTRIB v7 = vertex.texcoord[3];
+# ** POSITION **
+# Transform position to clip space
+#m4x4 r0, v0, mvp[0]
+#mov oPos, r0
+ARL a0.x, v6.x;
+DP4 r0.x, v0, c[a0.x + 0];
+DP4 r0.y, v0, c[a0.x + 1];
+DP4 r0.z, v0, c[a0.x + 2];
+# Bone 2
+MUL r0.xyz, r0.xyzz, v6.y;
+ARL a0.x, v7.x;
+DP4 r1.x, v0, c[a0.x + 0];
+DP4 r1.y, v0, c[a0.x + 1];
+DP4 r1.z, v0, c[a0.x + 2];
+MAD r0.xyz, r1.xyzz, v7.y, r0.xyzz;
+MOV r0.w, v0.w;
+# For random (!= 1) weights
+SUB r4.x, r0.w, v6.y;
+SUB r4.x, r4.xxxx, v7.y;
+MAD r0.xyz, v0.xyzz, r4.xxxx, r0.xyzz;
+DP4 r1.x, r0, mvp[0];
+DP4 r1.y, r0, mvp[1];
+DP4 r1.z, r0, mvp[2];
+DP4 r1.w, r0, mvp[3];
+
+MOV oPos, r1;
+ADD oT0, v1, c[16];
+# 2D fade
+#m4x4 r1, r0, c[4]
+#mov oT1, r1
+# Clip (alpha test) geometry under projection plane
+MOV r1, c[10];
+DP4 r0.y, r0, c[14];
+SUB r2, r0.y, c[12].x;
+MOV oT1, r2;
+#mul r2, r2, c[12].y
+#add r1.w, r2, c[12].z
+MOV oD0, r1;
+END

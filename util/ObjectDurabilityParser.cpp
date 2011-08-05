@@ -1,13 +1,13 @@
 
 #include "precompiled.h"
 
+#include <assert.h>
+
 #include "ObjectDurabilityParser.h"
 #include "../editor/parser.h"
 #include "../editor/string_conversions.h"
 #include "../filesystem/input_file_stream.h"
 #include "../filesystem/file_package_manager.h"
-#include "../system/logger.h"
-#include <assert.h>
 #include "../system/Logger.h"
 
 using namespace frozenbyte;
@@ -40,8 +40,9 @@ ObjectDurabilityParser::ObjectDurabilityParser()
 		objectDurabilities.push_back(dur);
 	}
 
-	Parser parser;
-	filesystem::FilePackageManager::getInstance().getFile("data/misc/object_durabilities.txt") >> parser;
+	EditorParser parser;
+	filesystem::InputStream durabilitiesfile = filesystem::createInputFileStream("data/misc/object_durabilities.txt");
+	durabilitiesfile >> parser;
 
 	// TODO: parser sorts these alphabetically... I don't like that - would rather want them unsorted.
 	// if parser cannot be fixed, should add some index value to each durability type...
@@ -107,7 +108,7 @@ float ObjectDurabilityParser::getMinimumDurabilityRequiredForce() const
 	return minimumRequiredForce;
 }
 
-const int ObjectDurabilityParser::getDurabilityTypeIndexByName(const std::string &name) const
+int ObjectDurabilityParser::getDurabilityTypeIndexByName(const std::string &name) const
 {
 	for (int i = 0; i < (int)objectDurabilities.size(); i++)
 	{

@@ -4,22 +4,13 @@
 #include <vector>
 #include <string>
 //#include "../util/Parser.h"
-#include <istorm3D_model.h>
+#include <IStorm3D_Model.h>
 #include <boost/scoped_ptr.hpp>
 
 #include "../game/tracking/ITrackableUnifiedHandleObjectImplementationManager.h"
 #include "../util/GridOcclusionCuller.h"
 #include "../game/unified_handle.h"
-#include "../editor/UniqueEditorObjectHandle.h"
-#include <boost/shared_ptr.hpp>
-#include <c2_oobb.h>
-
-namespace frozenbyte {
-namespace physics {
-	class ActorBase;
-} // physics
-} // frozenbyte
-
+#include "../util/Parser.h"
 
 // Forward declarations
 struct TerrainGroup;
@@ -33,12 +24,6 @@ namespace game
 {
 	class GamePhysics;
 	class GameMap;
-	class AbstractPhysicsObject;
-	class GameScripting;
-}
-
-namespace Parser {
-	class ParserGroup;
 }
 
 namespace util
@@ -110,11 +95,6 @@ public:
 	Terrain(IStorm3D *storm, IStorm3D_Scene *scene, const char *dirName, const char *forceMapName, const util::AreaMap *areaMap, game::GameMap *gameMap, ui::LightManager *lightManager, ui::AmbientSoundManager *ambientSoundManager);
 	~Terrain();
 
-	void runAddedScriptsPhase1(game::GameScripting *gameScripting);
-	void runAddedScriptsPhaseJoint(game::GameScripting *gameScripting);
-	void runAddedScriptsPhase2(game::GameScripting *gameScripting);
-	void doneAddedScripts();
-
 	IStorm3D_Terrain *GetTerrain();
 	bool ValidatePosition(const Vector2D &position, float radius = 1.f) const;
 
@@ -173,17 +153,10 @@ public:
 
 	UnifiedHandle findClosestContainer(const VC3 &position, float maxRadius);
 	UnifiedHandle findClosestTerrainObjectOfMaterial(const VC3 &position, const char *material, float maxRadius);
-	UnifiedHandle findClosestTerrainObjectWithFilenamePart(const VC3 &position, const char *filenamePart, float maxRadius);
 	UnifiedHandle findTerrainObjectByIdString(const char *idString);
-	UnifiedHandle findTerrainObjectByHex(__int64 hex) const;
-	boost::shared_ptr<game::AbstractPhysicsObject> getPhysicsActor(UnifiedHandle handle);
 
 	void ForcemapHeight(const Vector2D &position, float radius, bool above, bool below);
 	void AddPaint(const Parser::ParserGroup &parser_group);
-
-	// get unified handle for terrain object with given unique editor object handle
-	// or return UNIFIED_HANDLE_NONE if no such terrainobject found.
-	UnifiedHandle findUnifiedHandleByUniqueEditorObjectHandle(UniqueEditorObjectHandle ueoh) const;
 
 	// individual terrain object manipulation...
 	UnifiedHandle getUnifiedHandle(int terrainModelId, int terrainObstacleId) const;
@@ -194,10 +167,6 @@ public:
 	QUAT getTerrainObjectRotation(int terrainModelId, int terrainObstacleId) const;
 	VC3 getTerrainObjectVelocity(int terrainModelId, int terrainObstacleId) const;
 
-	void updateTerrainObject(int terrainModelId, int terrainObstacleId, VC3 position, QUAT rotation);
-	void setTerrainObjectPosition(int terrainModelId, int terrainObstacleId, const VC3 &position);
-	void setTerrainObjectRotation(int terrainModelId, int terrainObstacleId, const QUAT &rotation);
-
 	// trackable unified handle interface (ITrackableUnifiedHandleObjectImplementationManager)
 	virtual bool doesTrackableUnifiedHandleObjectExist(UnifiedHandle unifiedHandle) const;
 	virtual VC3 getTrackableUnifiedHandlePosition(UnifiedHandle unifiedHandle) const;
@@ -207,9 +176,6 @@ public:
 	// ---
 
 	void setAmbientSoundManager(ui::AmbientSoundManager *ambientSoundManager);
-
-	std::string getTypeFilename(int terrainModelId);
-	std::string getTypeFilenameByUnifiedHandle(UnifiedHandle unifiedHandle);
 
 	// returns the id string of a terrain object instance, or NULL if the object has no id string.
 	// (the returned pointer points to internal data, should make a copy of it, if intended to be
@@ -238,10 +204,6 @@ public:
 
 	void updateLighting(const VC3 &position, float radius);
 
-	// iterating terrain objects
-	UnifiedHandle getFirstTerrainObject();
-	UnifiedHandle getNextTerrainObject(UnifiedHandle uh);
-
 	// Update animations
 	void setFogId(const std::string &id);
 	void setFogInterpolate(int type);
@@ -251,8 +213,6 @@ public:
 	bool doesUseDynamicObstacles();
 
 	void setInstanceDamageTexture(UnifiedHandle uh, float damageTextureFadeFactor);
-
-	OOBB getOOBB(UnifiedHandle uh);
 
 };
 

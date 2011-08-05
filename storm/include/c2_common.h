@@ -2,6 +2,7 @@
 
 
 #pragma once
+#include <math.h>
 
 
 //------------------------------------------------------------------
@@ -29,7 +30,10 @@
 #define DEG2RAD(x)	((x*(PI/180.0f)))
 #define RAD2DEG(x)	((x*(180.0f/PI)))
 
-//#define HUGE			1.0e+38f
+#ifndef HUGE
+#define HUGE			1.0e+38f
+#endif
+
 // Blows math.h
 //  -- psd
 
@@ -44,7 +48,18 @@
 #ifndef C2_DO_NOT_DEFINE_DATATYPES
 typedef unsigned char	BYTE;
 typedef unsigned short	WORD;
+
+// turol: FIXME: ugly hack
+#ifdef __GNUC__
+ #ifdef __WINE__
+  typedef unsigned int	DWORD;
+ #else
+  typedef long unsigned int DWORD;
+ #endif // __WINE__
+#else
 typedef unsigned long	DWORD;
+#endif
+
 #endif
 
 

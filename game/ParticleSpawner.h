@@ -2,8 +2,11 @@
 #ifndef PARTICLESPAWNER_H
 #define PARTICLESPAWNER_H
 
-#include "unified_handle_type.h"
-#include "unified_handle.h"
+//namespace ui
+//{
+//  class ParticleSystem;
+//  class ParticleManager;
+//}
 
 #include <DatatypeDef.h>
 
@@ -42,7 +45,7 @@ namespace game
 			const char *getName() const;
 
 			static Projectile *spawnProjectileWithWeapon(Game *game, const Weapon *weapon,
-				const VC3 &position, const VC3 &direction, float distanceToListener = 0.0f, UnifiedHandle originUH = UNIFIED_HANDLE_NONE);
+				const VC3 &position, const VC3 &direction, float distanceToListener = 0.0f);
 
     private:
       Game *game;
@@ -65,9 +68,6 @@ namespace game
 			float distanceToListenerSq;
 
 			int projectileHandle;
-
-			bool attached;
-			UnifiedHandle attachedTo;
    
       friend class ParticleSpawnerManager;
   };

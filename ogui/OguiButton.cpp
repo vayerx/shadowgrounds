@@ -14,8 +14,7 @@
 #include "../util/Debug_MemoryManager.h"
 
 
-
-OguiButton::OguiButton(Ogui *ogui, int id, void *argument) :
+OguiButton::OguiButton(Ogui *ogui, int id, const void *argument) :
 	selected( false ),
 	imageSelected( NULL ),
 	imageSelectedHigh( NULL )
@@ -273,23 +272,6 @@ bool OguiButton::SetText(const char *text)
 	int fontheight = 0;
 	if (temp_font != NULL && text != NULL)
 	{
-		OguiStormFont *implFont = (OguiStormFont *) (temp_font);
-		IStorm3D_Font *stormFont = implFont->fnt;
-
-		/*
-		if(stormFont && stormFont->isUnicode())
-		{
-			std::wstring unicode;
-			frozenbyte::util::convertToWide(text, unicode);
-
-			pixwidth = stormFont->GetCharacterWidth(&unicode[0], unicode.size());
-		}
-		else
-		{
-			pixwidth = font->getStringWidth(text);
-		}
-		*/
-
 		pixwidth = temp_font->getStringWidth(text);
 		pixheight = temp_font->getStringHeight(text);
 		fontwidth = temp_font->getWidth();
@@ -354,7 +336,7 @@ void OguiButton::SetId(int id_)
 	id = id_;
 }
 
-void *OguiButton::GetArgument()
+const void *OguiButton::GetArgument()
 {
 	return argument;
 }

@@ -1,13 +1,18 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
+
+#include <stack>
+#include <vector>
 
 #include "storm3d_resourcemanager.h"
 #include "storm3d_material.h"
 #include "storm3d_mesh.h"
 #include <cassert>
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 Storm3D_ResourceManager::Storm3D_ResourceManager()
 {
@@ -16,19 +21,6 @@ Storm3D_ResourceManager::Storm3D_ResourceManager()
 // (look for comment in the header) -jpk
 void Storm3D_ResourceManager::uninitialize()
 {
-	/*
-	std::map<IStorm3D_Mesh *, int>::iterator it = meshes.begin();
-	for(; it != meshes.end(); ++it)
-		delete (*it).first;
-
-	std::map<IStorm3D_Material *, int>::iterator im = materials.begin();
-	for(; im != materials.end(); ++im)
-	{
-		++foo;
-		Storm3D_Material *const m = static_cast<Storm3D_Material *const> (im->first);
-		delete (*im).first;
-	}
-	*/
 	while(meshes.begin() != meshes.end())
 		delete meshes.begin()->first;
 

@@ -2,7 +2,7 @@
 #include "precompiled.h"
 
 #include "OguiSelectListEvent.h"
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 OguiSelectListEvent::OguiSelectListEvent(EVENT_TYPE evt, int curnum, 
   int scrx, int scry, 

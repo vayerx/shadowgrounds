@@ -1,0 +1,32 @@
+!!ARBfp1.0
+PARAM c2 = program.env[2];
+PARAM c3 = program.env[3];
+PARAM c4 = program.env[4];
+OUTPUT outColor = result.color;
+TEMP r0, r1, t0;
+PARAM c1 = {0.5, 0.5, 0.5, 0.5};
+# c1 - 0.5f values
+# c2 - Contrast
+# c3 - Brightness
+# c4 - Color factor
+TEX t0, fragment.texcoord[0], texture[0], 2D;
+# base
+SUB_SAT r0, c1, t0;
+MAD_SAT r0, r0, c2, r0;
+SUB_SAT r1, t0, c1;
+MAD_SAT r1, r1, c2, r1;
+ADD_SAT r1, c1, r1;
+ADD_SAT r1, r1, c3;
+SUB_SAT r0, r1, r0;
+MAD_SAT outColor, r0, c4, r0;
+# Sadly, a lot of cards dont have enough precision for this
+# Contrast
+#sub r0, t0, c1
+#mad r0, r0, c2, r0
+#add_sat r0, r0, c1
+# Color factor
+#mad r0, r0, c4, r0
+# Brightness
+#add r0, r0, c3
+#MOV outColor, r0;
+END

@@ -104,7 +104,7 @@ extern IStorm3D_Scene *disposable_scene;
 // this should be handled by a game request
 #include "../util/AI_PathFind.h"
 
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 
 // button id's
@@ -235,10 +235,10 @@ int getNumberOfPlayers()
 
 
 	CombatWindow::CombatWindow(Ogui *ogui, game::Game *game, int player) :
-		targetDisplayWindow( NULL ),
+		subWindowMap(),
 		healthWindow( NULL ),
-		windowFactory( CombatSubWindowFactory::GetSingleton() ),
-		subWindowMap()
+		targetDisplayWindow( NULL ),
+		windowFactory( CombatSubWindowFactory::GetSingleton() )
 	{
 		this->impl = new CombatWindowImpl();
 
@@ -258,8 +258,10 @@ int getNumberOfPlayers()
 		radarTemporarilyDisabled = false;
 #ifdef PROJECT_SURVIVOR
 		radarDisabled = true;
+		radarWasDisabled = true;
 #else
 		radarDisabled = false;
+		radarWasDisabled = false;
 #endif
 		
 		int i;
@@ -460,28 +462,14 @@ int getNumberOfPlayers()
 		}
 #endif
 		
-#ifdef LEGACY_FILES
 		messageWindow = new CombatMessageWindow(ogui, game, player, "converse", "face1");
-#else
-		messageWindow = new CombatMessageWindow(ogui, game, player, "converse1", "face1");
-#endif
 		messageWindow->setBoxed(true);
 
 		timerWindow = new CombatMessageWindow(ogui, game, player, "timer", "");
 		timerWindow->setBoxed(true);
 
-#ifdef LEGACY_FILES
 		messageWindowRight = new CombatMessageWindow(ogui, game, player, "converse", "face2");
-#else
-		messageWindowRight = new CombatMessageWindow(ogui, game, player, "converse2", "face2");
-#endif
 		//messageWindowRight->setBoxed(true);
-
-#ifdef PROJECT_AOV
-		//messageWindow->setFont(ui::defaultIngameFont, false, false);
-		messageWindowRight->setFont(ui::defaultIngameFont, false, true);
-#endif
-
 
 		centerMessageWindow = new CombatMessageWindow(ogui, game, player, "center", "");
 		//centerMessageWindow->moveTo(1024/2-8, 768/2-8);
@@ -1207,6 +1195,9 @@ int getNumberOfPlayers()
 				else
 				{
 					int cursor;
+#ifdef PROJECT_SURVIVOR
+					cursor = DH_CURSOR_AIM_SPREAD1;
+#else
 					if (game->gameUI->getFirstPerson(0)->getFiringSpreadFactor() < 1.5f)
 						cursor = DH_CURSOR_AIM_SPREAD1;
 					else if (game->gameUI->getFirstPerson(0)->getFiringSpreadFactor() < 2.5f)
@@ -1217,6 +1208,7 @@ int getNumberOfPlayers()
 						cursor = DH_CURSOR_AIM_SPREAD4;
 					else
 						cursor = DH_CURSOR_AIM_SPREAD5;
+#endif
 
 #ifdef PROJECT_SURVIVOR
 					// get custom cursor from weapon
@@ -3011,7 +3003,7 @@ int getNumberOfPlayers()
 		unitHighlight->run();
 	}
 			
-	void CombatWindow::setUnitHighlight(game::Unit *unit)
+	void CombatWindow::setUnitHighlight(const game::Unit *unit)
 	{
 		if (!highlightLocked)
 		{

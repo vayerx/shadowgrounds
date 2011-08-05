@@ -22,9 +22,9 @@
 #include "storm3d_light.h"
 #include "storm3d_scene_lighthandler.h"
 #include "storm3d_scene.h"
-#include "clipper.h"
+#include "Clipper.h"
 #include "VertexFormats.h"
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 
 

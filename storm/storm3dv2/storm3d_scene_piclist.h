@@ -75,8 +75,6 @@ public:
 	void createCustomShape(struct VXFORMAT_2D *vertices, int numVertices);
 };
 
-
-
 //------------------------------------------------------------------
 // Storm3D_Scene_PicList_Picture3D
 //------------------------------------------------------------------
@@ -92,8 +90,6 @@ public:
 	Storm3D_Scene_PicList_Picture3D(Storm3D *Storm3D2,Storm3D_Scene *scene,Storm3D_Material *mat,VC3 position,VC2 size);
 };
 
-
-
 //------------------------------------------------------------------
 // Storm3D_Scene_PicList_Font
 //------------------------------------------------------------------
@@ -104,6 +100,10 @@ class Storm3D_Scene_PicList_Font : public Storm3D_Scene_PicList
 	wchar_t *uniText;
 	float alpha;
 	COL colorFactor;
+	unsigned int width, height;
+	float wd, hd;
+
+	boost::shared_ptr<glTexWrapper> tex;
 
 public:
 
@@ -114,6 +114,3 @@ public:
 	Storm3D_Scene_PicList_Font(Storm3D *Storm3D2,Storm3D_Scene *scene,Storm3D_Font *font,VC2 position,VC2 size,const wchar_t *text,float alpha,const COL &colorFactor);
 	~Storm3D_Scene_PicList_Font();
 };
-
-
-

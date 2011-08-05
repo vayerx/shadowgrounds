@@ -1,6 +1,8 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 //------------------------------------------------------------------
 // Includes
@@ -9,12 +11,8 @@
 #include "storm3d_scene.h"
 #include "storm3d_model_object.h"
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object_Animation
-//------------------------------------------------------------------
 Storm3D_Model_Object_Animation::Storm3D_Model_Object_Animation(Storm3D_Model_Object *_owner) :
 	owner(_owner),
 	first_poskey(NULL),
@@ -166,12 +164,6 @@ void Storm3D_Model_Object_Animation::SetCurrentTime(int time)
 
 void Storm3D_Model_Object_Animation::Apply(Storm3D_Scene *scene)
 {
-	// Calculate time difference
-	/*static DWORD dlast_time=timeGetTime();
-	DWORD dtime_now=timeGetTime();
-	DWORD dtime_dif=dtime_now-dlast_time;
-	dlast_time=dtime_now;*/
-
 	// Add time
 	time_now+=scene->time_dif;
 	if (end_time>0) while (time_now>end_time) time_now-=end_time;
@@ -202,15 +194,6 @@ void Storm3D_Model_Object_Animation::Apply(Storm3D_Scene *scene)
 			// Interpolate position
 			owner->SetPosition((kfp->position*ipol)+(old_kfp->position*(1.0f-ipol)));
 		}
-		/*else if ((old_kfp)&&(old_kfp!=first_poskey)) // Interpolate between last and first
-		{
-			//Calculate time delta (and interpolation)
-			int td=end_time-old_kfp->keytime;
-			float ipol=(float)(time_now-old_kfp->keytime)/(float)td;
-
-			// Interpolate position
-			owner->SetPosition((first_poskey->position*ipol)+(old_kfp->position*(1.0f-ipol)));
-		}*/
 	}
 
 	// Is the object rotation animated?
@@ -239,15 +222,6 @@ void Storm3D_Model_Object_Animation::Apply(Storm3D_Scene *scene)
 			// Interpolate rotation
 			owner->SetRotation(old_kfp->rotation.GetSLInterpolationWith(kfp->rotation,ipol));
 		}
-		/*else if ((old_kfp)&&(old_kfp!=first_rotkey)) // Interpolate between last and first
-		{
-			//Calculate time delta (and interpolation)
-			int td=end_time-old_kfp->keytime;
-			float ipol=(float)(time_now-old_kfp->keytime)/(float)td;
-
-			// Interpolate rotation
-			owner->SetRotation(old_kfp->rotation.GetSLInterpolationWith(first_rotkey->rotation,ipol));
-		}*/
 	}
 
 	// Is the object scale animated?
@@ -276,16 +250,5 @@ void Storm3D_Model_Object_Animation::Apply(Storm3D_Scene *scene)
 			// Interpolate scale
 			owner->SetScale((kfp->scale*ipol)+(old_kfp->scale*(1.0f-ipol)));
 		}
-		/*else if ((old_kfp)&&(old_kfp!=first_scalekey)) // Interpolate between last and first
-		{
-			//Calculate time delta (and interpolation)
-			int td=end_time-old_kfp->keytime;
-			float ipol=(float)(time_now-old_kfp->keytime)/(float)td;
-
-			// Interpolate position
-			owner->SetScale((first_scalekey->scale*ipol)+(old_kfp->scale*(1.0f-ipol)));
-		}*/
 	}
 }
-
-

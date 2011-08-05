@@ -1,0 +1,10 @@
+!!ARBfp1.0
+OPTION ARB_precision_hint_fastest;
+OUTPUT outColor = result.color;
+TEMP r0, r1;
+PARAM c1 = {0.5, 0.5, 0.5, 0.5};
+TEX r0, fragment.texcoord[1], texture[1], 2D;
+TEX r1, fragment.texcoord[3], texture[3], 2D;
+LRP outColor, c1, r0, r1;
+#MOV outColor, r0;
+END

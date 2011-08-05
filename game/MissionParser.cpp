@@ -23,7 +23,7 @@
 #include "scripting/GameScripting.h"
 
 #include "../filesystem/input_stream_wrapper.h"
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 
 #define DEFAULT_UNIT_TYPE_NAME "Armor"
@@ -31,7 +31,7 @@ using namespace frozenbyte;
 
 namespace game
 {
-  char *mp_currentfile = "";
+  const char *mp_currentfile = "";
 
   MissionParser::MissionParser()
   {
@@ -43,7 +43,7 @@ namespace game
     // nop
   }
 
-  void MissionParser::error(char *err, int linenum, bool isError)
+  void MissionParser::error(const char *err, int linenum, bool isError)
   {
     char *buf = new char[strlen(err) + 1 + 60 + strlen(mp_currentfile)];
     strcpy(buf, err);
@@ -88,15 +88,6 @@ namespace game
 
     int datalen = filesystem::fb_fread(buf, sizeof(char), flen, f);
     buf[datalen] = '\0';
-    
-    int player = 0;
-    Unit *unit = NULL;
-    Part *part = NULL;
-    bool partInUnit = false;
-    char *script = NULL;
-
-    int coordX = 0;
-    int coordY = 0;
 
     int lineNumber = 1;
     int lastpos = 0;

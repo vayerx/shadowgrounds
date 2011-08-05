@@ -3,7 +3,7 @@
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
-#include <storm3d_ui.h>
+#include <Storm3D_UI.h>
 #include <vector>
 #include "track.h"
 

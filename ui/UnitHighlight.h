@@ -29,14 +29,14 @@ namespace ui
 
 			void clearHighlightedTerrain();
 
-			void setHighlightedUnit(game::Unit *unit);
+			void setHighlightedUnit(const game::Unit *unit);
 
 			void run();
 			
 		private:
 			IStorm3D *storm3D;
 			IStorm3D_Scene *stormScene;
-			game::Unit *highlightUnit;
+			const game::Unit *highlightUnit;
 			bool highlightTerrain;
 			VC3 highlightTerrainPosition;
 

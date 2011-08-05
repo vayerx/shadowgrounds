@@ -1,3 +1,8 @@
+#include <boost/shared_ptr.hpp>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <stdlib.h>
 
 #include "precompiled.h"
 
@@ -9,14 +14,9 @@
 #include "../filesystem/file_package_manager.h"
 #include "../filesystem/input_stream.h"
 #include "../system/Logger.h"
-#include <istorm3d.h>
-#include <istorm3d_texture.h>
-#include <istorm3d_material.h>
-#include <boost/shared_ptr.hpp>
-#include <fstream>
-#include <vector>
-#include <string>
-#include <stdlib.h>
+#include <IStorm3D.h>
+#include <IStorm3D_Texture.h>
+#include <IStorm3D_Material.h>
 
 using namespace std;
 using namespace boost;
@@ -24,12 +24,11 @@ using namespace frozenbyte;
 using namespace frozenbyte::editor;
 
 namespace frozenbyte {
-namespace {
 	struct Effect;
 #ifdef LEGACY_FILES
-	const char *fileName = "Data/Effects/decals.txt";
+	static const char *fileName = "Data/Effects/decals.txt";
 #else
-	const char *fileName = "data/effect/decals.txt";
+	static const char *fileName = "data/effect/decals.txt";
 #endif
 
 	typedef vector<Effect> EffectList;
@@ -66,7 +65,7 @@ namespace {
 		}
 	};
 
-	Effect parseEffectProperties(const string &name, const ParserGroup &properties)
+	static Effect parseEffectProperties(const string &name, const ParserGroup &properties)
 	{
 		Effect result;
 		result.name = name;
@@ -94,7 +93,7 @@ namespace {
 		return result;
 	}
 
-	void addSpawner(Effect &effect, DecalManager &manager, const std::string &textureName, IStorm3D &storm)
+	static void addSpawner(Effect &effect, DecalManager &manager, const std::string &textureName, IStorm3D &storm)
 	{
 		IStorm3D_Texture *texture = storm.CreateNewTexture(textureName.c_str());
 
@@ -126,7 +125,6 @@ namespace {
 		effect.spawners.push_back(spawner);
 	}
 
-} // unnamed
 
 struct DecalSystem::Data
 {
@@ -145,8 +143,9 @@ struct DecalSystem::Data
 
 	void parseEffects()
 	{
-		Parser parser(false, true);
-		parser.readStream(filesystem::FilePackageManager::getInstance().getFile(fileName));
+		EditorParser parser(false, true);
+		filesystem::InputStream file = filesystem::FilePackageManager::getInstance().getFile(fileName);
+		parser.readStream(file);
 
 		ParserGroup &global = parser.getGlobals();
 		int groupAmount = global.getSubGroupAmount();

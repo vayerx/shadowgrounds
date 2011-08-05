@@ -20,7 +20,7 @@
 #include "storm3d_model.h"
 #include "storm3d_model_object.h"
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 
 //------------------------------------------------------------------

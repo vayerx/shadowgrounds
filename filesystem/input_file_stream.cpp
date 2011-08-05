@@ -3,7 +3,9 @@
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 #ifdef __INTEL_COMPILER
 #pragma warning(disable: 373) // inaccessible constructor (remark)
@@ -20,36 +22,18 @@ namespace filesystem {
 
 struct InputFileStreamBufferData
 {
-	FILE *fp;
-	size_t size;
+	std::ifstream stream;
+	std::streamsize size;
 
 	InputFileStreamBufferData(const std::string fileName)
-	:	fp(0),
+	:	stream(fileName.c_str(), std::ios::binary),
 		size(0)
 	{
-		fp = fopen(fileName.c_str(), "rb");
-		if(fp)
+		if(stream)
 		{
-			fseek(fp, 0, SEEK_END);
-			size = ftell(fp);
-			fseek(fp, 0, SEEK_SET);
-		}
-
-		if(!size)
-			close();
-	}
-
-	~InputFileStreamBufferData()
-	{
-		close();
-	}
-
-	void close()
-	{
-		if(fp)
-		{
-			fclose(fp);
-			fp = 0;
+			std::filebuf *buffer = stream.rdbuf();
+			if(buffer)
+				size = buffer->in_avail();
 		}
 	}
 };
@@ -67,50 +51,43 @@ InputFileStreamBuffer::~InputFileStreamBuffer()
 unsigned char InputFileStreamBuffer::popByte()
 {
 	char byte = 0;
-	if(data->fp)
-	{
-		int input = fgetc(data->fp);
-		if(input == EOF)
-			data->close();
-		else
-			byte = (char) input;
-	}
+	if(!isEof())
+		data->stream.read(&byte, 1);
 
 	return byte;
 }
 
-
 bool InputFileStreamBuffer::isEof() const
 {
-	if(!data->fp)
+	if(!data->stream)
 		return true;
 
-	return false;
+	return data->stream.eof();
 }
 
 int InputFileStreamBuffer::getSize() const
 {
-	if(!data->fp)
+	if(!data->stream)
 		return 0;
 
 	// FIXME: causing a possible 2Gb limitation to file size here when casting to int!
 	// --jpk
-	return int(data->size);
+	std::ifstream::pos_type currPos = data->stream.tellg();
+	data->stream.seekg(0, std::ios::end);
+	std::ifstream::pos_type res = data->stream.tellg();
+	data->stream.seekg(currPos, std::ios::beg);
+	return int(res);
 }
 
 void InputFileStreamBuffer::popBytes(char *buffer, int bytes)
 {
-	if(!data->fp)
+	if(isEof())
 	{
 		for(int i = 0; i < bytes; ++i)
 			buffer[i] = 0;
 	}
-	else
-	{
-		//data->stream.read(buffer, bytes);
-		if(fread(buffer, 1, bytes, data->fp) != (unsigned)bytes)
-			data->close();
-	}
+
+	data->stream.read(buffer, bytes);
 }
 
 // HACK: ffs. this is needed to actually get some sense into the input stream error reportings...

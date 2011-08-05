@@ -1,0 +1,18 @@
+!!ARBfp1.0
+OPTION ARB_precision_hint_fastest;
+OPTION ARB_fragment_program_shadow;
+ATTRIB v0 = fragment.color.primary;
+OUTPUT outColor = result.color;
+TEMP r0, t0, t1, t2, t3;
+# Shadow depth
+TXP t0, fragment.texcoord[0], texture[0], SHADOW2D;
+# Cone texture
+TEX t1, fragment.texcoord[1], texture[1], 2D;
+# Fade texture
+TEX t2, fragment.texcoord[2], texture[2], 2D;
+# Cone texture
+TEX t3, fragment.texcoord[3], texture[3], 2D;
+MUL r0, v0, t0;
+MUL outColor, r0, t2;
+#MOV outColor, r0;
+END

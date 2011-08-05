@@ -4,7 +4,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 #include <vector>
 
 class IStorm3D_Model_Object;
@@ -19,16 +19,22 @@ namespace physics {
 
 namespace particle {
 
+void rotateToward(const VC3 &a, const VC3 &b, QUAT &result);
+
 class PhysicsMesh;
 class PhysicsActor;
+#ifndef NX_DISABLE_FLUIDS
 class PhysicsFluid;
+#endif
 
 class ParticlePhysics
 {
 	struct Data;
 	boost::shared_ptr<Data> data;
 	friend class PhysicsActor;
+#ifndef NX_DISABLE_FLUIDS
 	friend class PhysicsFluid;
+#endif
 
 public:
 	ParticlePhysics();
@@ -40,10 +46,14 @@ public:
 
 	boost::shared_ptr<PhysicsMesh> createConvexMesh(const char *filename, IStorm3D_Model_Object *object);
 	boost::shared_ptr<PhysicsActor> createActor(boost::shared_ptr<PhysicsMesh> &mesh, const VC3 &position, const QUAT &rotation, const VC3 &velocity, const VC3 &angularVelocity, float mass, int collisionGroup, int soundGroup);
+#ifndef NX_DISABLE_FLUIDS
 	boost::shared_ptr<PhysicsFluid> createFluid(int type, int maxParticles, float fluidStaticRestitution, float fluidStaticAdhesion, float fluidDynamicRestitution, float fluidDynamicAdhesion, float fluidDamping, float fluidStiffness, float fluidViscosity, float fluidKernelRadiusMultiplier, float fluidRestParticlesPerMeter, float fluidRestDensity, float fluidMotionLimit, int fluidPacketSizeMultiplier, int collGroup);
+#endif
 
 	void setPhysics(boost::shared_ptr<physics::PhysicsLib> &physics);
+#ifndef NX_DISABLE_FLUIDS
 	void resetFluidRendering();
+#endif
 	void update();
 };
 
@@ -93,6 +103,7 @@ public:
 	void applyForce(const VC3 &force);
 };
 
+#ifndef NX_DISABLE_FLUIDS
 class PhysicsFluid
 {
 	boost::shared_ptr<physics::Fluid> fluid;
@@ -133,6 +144,7 @@ public:
 	void addParticles(const void *buffer, int amount);
 	void setAcceleration(const VC3 &force);
 };
+#endif
 
 } // particle
 } // frozenbyte

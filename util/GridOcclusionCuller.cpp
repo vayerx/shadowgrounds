@@ -1,8 +1,9 @@
 
 #include "precompiled.h"
 
-#include "GridOcclusionCuller.h"
 #include <stdio.h>
+#include "GridOcclusionCuller.h"
+#include "../system/Logger.h"
 
 namespace util
 {
@@ -110,6 +111,7 @@ void GridOcclusionCuller::setAllVisibilitiesForArea(int x, int y, GRIDOCCLUSIONC
 
 void GridOcclusionCuller::save(const char *filename) const
 {
+#ifndef __APPLE__
 	FILE *f = fopen(filename, "wb");
 	if (f != NULL)
 	{
@@ -125,6 +127,7 @@ void GridOcclusionCuller::save(const char *filename) const
 		Logger::getInstance()->error("GridOcclusionCuller::save - Could not open file for writing.");
 		Logger::getInstance()->debug(filename);
 	}
+#endif
 }
 
 void GridOcclusionCuller::load(const char *filename)

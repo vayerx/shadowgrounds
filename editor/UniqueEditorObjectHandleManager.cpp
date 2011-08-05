@@ -77,7 +77,7 @@ void UniqueEditorObjectHandleManager::init()
 
 			char buf[16];
 			sprintf(buf, "%d", ueoh_base);
-
+#ifndef __APPLE__
 			FILE *f = fopen("config/editor_unique_handle_base.txt", "wb");
 			if (f != NULL)
 			{
@@ -96,6 +96,7 @@ void UniqueEditorObjectHandleManager::init()
 
 				ueoh_error = true;
 			}
+#endif
 		}
 	}
 
@@ -139,6 +140,7 @@ void UniqueEditorObjectHandleManager::init()
 	}
 
 	{
+#ifndef __APPLE__
 		// already locked???
 		FILE *f = fopen("config/editor_lock.tmp", "rb");
 		if (f != NULL)
@@ -153,6 +155,7 @@ void UniqueEditorObjectHandleManager::init()
 				fclose(f);
 			}
 		}
+#endif
 	}
 
 }
@@ -186,6 +189,7 @@ void UniqueEditorObjectHandleManager::uninit()
 	char buf[16];
 	sprintf(buf, "%d", ueoh_current_iterator_value);
 
+#ifndef __APPLE__
 	{
 		FILE *f = fopen("config/editor_unique_handle_iterator.txt", "wb");
 		if (f != NULL)
@@ -209,6 +213,7 @@ void UniqueEditorObjectHandleManager::uninit()
 
 	// remove lock
 	remove("config/editor_lock.tmp");
+#endif
 }
 
 

@@ -46,8 +46,6 @@ namespace game
 
 		static void setPlayerAIEnabled(int player, bool enabled);
 
-		static bool isPlayerAIEnabled(int player);
-
 		bool isThisAndAllEnabled();
 
 		void skipMainScriptWait();

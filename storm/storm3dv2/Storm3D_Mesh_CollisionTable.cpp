@@ -1,34 +1,22 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
 #include "storm3d_mesh_collisiontable.h"
 #include "storm3d_mesh.h"
-#include "..\..\util\Debug_MemoryManager.h"
+#include "igios3D.h"
+#include "../../util/Debug_MemoryManager.h"
 
 #include <algorithm>
 #include <string>
 #include <boost/lexical_cast.hpp>
 
 namespace {
-
-	bool contains2D(const AABB &area, const VC3 &position)
-	{
-		if(position.x < area.mmin.x)
-			return false;
-		if(position.x > area.mmax.x)
-			return false;
-
-		if(position.z < area.mmin.z)
-			return false;
-		if(position.z > area.mmax.z)
-			return false;
-
-		return true;
-	}
 
 	void getClosestPoint(const VC3 &p, const VC3 &a, const VC3 &b, const VC3 &c, VC3 &result)
 	{
@@ -222,8 +210,6 @@ void Storm3D_Mesh_CollisionTable::ReBuild(Storm3D_Mesh *mesh)
 	// TEMP!!!
 	//return;
 
-	int memory_before = 0; //frozenbyte::debug::Debug_MemoryManager::amountMemoryInUse();
-
 	// Set owner
 	owner=mesh;
 
@@ -235,10 +221,6 @@ void Storm3D_Mesh_CollisionTable::ReBuild(Storm3D_Mesh *mesh)
 		return;
 
 	face_amount=owner->face_amount[0];
-
-	if (owner->collision_faces != -1)
-		face_amount = owner->collision_faces;
-
 	SAFE_DELETE_ARRAY(faces);
 	faces = new CollisionFace[face_amount];
 
@@ -256,7 +238,7 @@ void Storm3D_Mesh_CollisionTable::ReBuild(Storm3D_Mesh *mesh)
 		// Create edges
 		faces[fi].e01=owner->vertexes[owner->faces[0][fi].vertex_index[1]].position-owner->vertexes[owner->faces[0][fi].vertex_index[0]].position;
 		faces[fi].e02=owner->vertexes[owner->faces[0][fi].vertex_index[2]].position-owner->vertexes[owner->faces[0][fi].vertex_index[0]].position;
-		VC3 e12=owner->vertexes[owner->faces[0][fi].vertex_index[2]].position-owner->vertexes[owner->faces[0][fi].vertex_index[1]].position;
+		// VC3 e12=owner->vertexes[owner->faces[0][fi].vertex_index[2]].position-owner->vertexes[owner->faces[0][fi].vertex_index[1]].position;
 
 		VC3 cross_e01_e02 = faces[fi].e01.GetCrossWith(faces[fi].e02);
 		if(cross_e01_e02.GetSquareLength() < 0.0001f)

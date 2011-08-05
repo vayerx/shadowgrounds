@@ -19,10 +19,6 @@ public:
 	struct ParseData
 	{
 		ParseData( int x, int y, int w, int h ) : 
-			x( x ), 
-			y( y ), 
-			w( w ), 
-			h( h ), 
 			next_tag( 0 ),
 			next_linebrk( 0 ),
 			next_hardbreak( 0 ),
@@ -32,13 +28,17 @@ public:
 			my( 0 ),
 			cur_w( 0 ),
 			add_x( 0 ),
+			x( x ), 
+			y( y ), 
+			w( w ), 
+			h( h ),
 			after_y( h ),
 			after_y_x_value( 0 ),
 			after_y_w_value( 0 ) { }
 
-		int next_tag;
-		int next_linebrk;
-		int next_hardbreak;
+		std::string::size_type next_tag;
+		std::string::size_type next_linebrk;
+		std::string::size_type next_hardbreak;
 		int cur_pos;
 		IOguiFont* currentFont;
 
@@ -129,7 +129,14 @@ public:
 	int getH() const;
 
 	// valid after setting text
-	inline int getLinePositionY( unsigned int line ) { if(line >= 0 && line < linePositionYs.size()) return linePositionYs[line]; return 0; }
+	inline int getLinePositionY(unsigned int line) const
+	{
+		if(line < linePositionYs.size())
+		{
+			return linePositionYs[line];
+		}
+		return 0;
+	}
 
 private:
 
@@ -147,7 +154,7 @@ private:
 	// finds a place where the text goes over the width with the given cursor. 
 	// Returns the string position in pair.first and the length of it in pixels 
 	// in pair.second. The Length in pixels isn't that useful anymore.
-	std::pair< int, int >	findLineWidthBreak( int pos, int width, IOguiFont* cur_font );
+	std::pair< int, int >	findLineWidthBreak( std::string::size_type pos, int width, IOguiFont* cur_font );
 
 	// releases all the allocated buttons and reserved images
 	void					releaseAllButtons();

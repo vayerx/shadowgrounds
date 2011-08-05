@@ -1,19 +1,27 @@
 
 #include "precompiled.h"
+#include <SDL.h>
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
 #pragma warning(disable:4786)
+#endif
 
+
+#if defined(_WIN32)
 #include <windows.h>
+#endif  // _WIN32 && __GNUC__
+
+
 #include "Timer.h"
 
 // TEMP!!
 #include <string.h>
 #include "Logger.h"
 
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 #define TIMER_FACTOR_MULTIPLIER 256
 #define TIMER_FACTOR_MULTIPLIER_SHIFT 8
@@ -27,20 +35,36 @@ int Timer::timeFactor = TIMER_FACTOR_MULTIPLIER;
 
 void Timer::init()
 {
-	timeBeginPeriod(1);
+	SDL_Init(SDL_INIT_TIMER);
 	update();
 }
 
 
 void Timer::uninit()
 {
-	timeEndPeriod(1);
+	SDL_QuitSubSystem(SDL_INIT_TIMER);
 }
 
 
 int Timer::getTime()
 {
   return currentTime;
+}
+
+
+int Timer::getCurrentTime()
+{
+	// TODO: apple
+
+#ifdef _WIN32
+	return timeGetTime();
+
+#else
+	// assume linux
+	return SDL_GetTicks();
+
+#endif
+
 }
 
 
@@ -59,7 +83,7 @@ void Timer::setTimeFactor(float factor)
 	// factor as that is not really used (would cause a cumulative error)
 	float newFactor = float(int(factor * TIMER_FACTOR_MULTIPLIER)) / TIMER_FACTOR_MULTIPLIER;
 
-	__int64 curActualTime = timeGetTime();
+	Sint64 curActualTime = SDL_GetTicks();
 	int newFactorTimeAdd = 
 		oldFactorTimeAdd + (int)((float)curActualTime * (oldFactor - newFactor));
 
@@ -92,9 +116,9 @@ void Timer::update()
   // May well need a more accurate timer!
   //currentTime = GetTickCount();
 	// fixed like this...
-	currentUnfactoredTime = timeGetTime();
+	currentUnfactoredTime = SDL_GetTicks();
 	currentTime = currentUnfactoredTime;
-	currentTime = (int)(((__int64)currentTime * (__int64)timeFactor) >> TIMER_FACTOR_MULTIPLIER_SHIFT);
+	currentTime = (int)(((Sint64)currentTime * (Sint64)timeFactor) >> TIMER_FACTOR_MULTIPLIER_SHIFT);
 	currentTime += factorTimeAdd;
 	currentTime -= timeHaxSub;
 }

@@ -3,8 +3,8 @@
 
 #include "HelperPositionCalculator.h"
 #include "../system/Logger.h"
-#include <istorm3d_model.h>
-#include <istorm3d_bone.h>
+#include <IStorm3D_Model.h>
+#include <IStorm3D_Bone.h>
 #include <boost/scoped_ptr.hpp>
 #include <cstdio>
 

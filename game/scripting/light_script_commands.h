@@ -226,10 +226,6 @@ GS_CMD_SIMPLE(181, setLightLightingModelFade, INT)
 
 GS_CMD_SIMPLE(182, setLightRotateRange, FLOAT)
 
-GS_CMD_SIMPLE(183, findClosestLight, NONE)
-GS_CMD_SIMPLE(184, findClosestDetachedLight, NONE)
-GS_CMD_SIMPLE(185, attachLightToValueHandle, NONE)
-
 #undef GS_CMD_BASE
 
 // up to 1299

@@ -3,8 +3,10 @@
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
 #pragma warning(disable:4786)
+#endif
 
 #include "procedural_properties.h"
 #include "../editor/parser.h"
@@ -73,6 +75,7 @@ struct ProceduralProperties::Data
 
 		source.radius.x = convertFromString<float> (offsetGroup.getValue("radius_x"), 1.f);
 		source.radius.y = convertFromString<float> (offsetGroup.getValue("radius_y"), 1.f);
+		//igiosWarning("linear speed %s\n", offsetGroup.getValue("linear_speed_x"));
 		source.linearSpeed.x = convertFromString<float> (offsetGroup.getValue("linear_speed_x"), 0.f);
 		source.linearSpeed.y = convertFromString<float> (offsetGroup.getValue("linear_speed_y"), 0.f);
 
@@ -81,7 +84,6 @@ struct ProceduralProperties::Data
 
 	void parseDistortion(Source &source, const ParserGroup &group)
 	{
-		const ParserGroup &textureGroup = group.getSubGroup("Texture");
 		const ParserGroup &distortionGroup = group.getSubGroup("Distortion");
 
 		source.texture.scale.x = convertFromString<float> (group.getValue("scale_x"), 1.f);
@@ -101,12 +103,13 @@ struct ProceduralProperties::Data
 
 	void parse()
 	{
-		Parser parser;
+		EditorParser parser;
 #ifdef LEGACY_FILES
-		filesystem::FilePackageManager::getInstance().getFile("Data/Effects/procedurals.txt") >> parser;
+		filesystem::InputStream proc_file = filesystem::FilePackageManager::getInstance().getFile("Data/Effects/procedurals.txt");
 #else
-		filesystem::FilePackageManager::getInstance().getFile("data/effect/procedurals.txt") >> parser;
+		filesystem::InputStream proc_file = filesystem::FilePackageManager::getInstance().getFile("data/effect/procedurals.txt");
 #endif
+		proc_file >> parser;
 
 		const ParserGroup &root = parser.getGlobals();
 		textureSize.x = convertFromString<int> (root.getValue("size_x"), 128);

@@ -42,8 +42,6 @@ namespace ui
 		assert(caz_indoorZoom != 0.0f);
 		assert(caz_outdoorZoom != 0.0f);
 
-		bool zoomChanged = false;
-
 		if (caz_currentArea == CAMERA_AUTOZOOMER_AREA_INDOOR)
 		{
 			if (caz_indoorZoom != camera->getZoom())

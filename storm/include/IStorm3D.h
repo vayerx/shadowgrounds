@@ -6,7 +6,6 @@
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
-#include <windows.h>
 #include <vector>
 #include <string>
 
@@ -74,7 +73,7 @@ public:
 	// ScreenModes
 	virtual bool SetFullScreenMode(int width=640,int height=480,int bpp=16)=0;
 	virtual bool SetWindowedMode(int width=640,int height=480,bool titlebar=false)=0;
-	virtual bool SetWindowedMode(HWND hwnd, bool disableBuffers = false)=0;
+	virtual bool SetWindowedMode(bool disableBuffers = false)=0;
 	virtual std::string GetErrorString() = 0;
 
 	// 0 - 100
@@ -182,10 +181,6 @@ public:
 	ICreate<IStorm3D_Font*> *ITFont;
 	ICreate<IStorm3D_Mesh*> *ITMesh;
 	ICreate<IStorm3D_Terrain*> *ITTerrain;
-
-	// Renderwindow stuff
-	virtual HWND GetRenderWindow()=0;
-	virtual void SetUserWindowMessageProc(LRESULT (WINAPI *User_MsgProc)(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam))=0;
 
 	// Use this function to create Storm3D interface
 	static IStorm3D *Create_Storm3D_Interface(bool no_info = false, frozenbyte::filesystem::FilePackageManager *fileManager = 0, IStorm3D_Logger *logger = 0);

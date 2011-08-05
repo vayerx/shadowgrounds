@@ -1,0 +1,69 @@
+!!ARBvp1.0
+PARAM object[4] = { state.matrix.program[0] };
+PARAM mvp[4] = { state.matrix.mvp };
+#fromList ["c"]
+TEMP r0, r1, r2;
+PARAM c[100] = { program.env[0..99] };
+OUTPUT oD0 = result.color.primary;
+OUTPUT oPos = result.position;
+OUTPUT oT0 = result.texcoord[0];
+OUTPUT oT1 = result.texcoord[1];
+OUTPUT oT2 = result.texcoord[2];
+OUTPUT oT3 = result.texcoord[3];
+# Default shader:
+#   -> Transform vertex
+#   -> Apply ambient color
+#   -> Apply surface color
+#   -> Apply directional light
+#   -> Apply base texturing 
+# Light direction could be transformed to 
+# model space and avoid rotating normal.
+# Constant declarations:
+#   -> c[0..3]   -> World x View x Projection matrix
+#   -> c[4..7]  -> Texture matrix
+#   -> c[8..10] -> World
+#   -> c[11] -> spot direction, range
+# Vertex data:
+#   -> v0 -> position
+#   -> v1,2 -> texture coordinates
+#   -> v3 -> normal
+ATTRIB v0 = vertex.position;
+ATTRIB v3 = vertex.normal;
+ATTRIB v1 = vertex.texcoord[0];
+ATTRIB v2 = vertex.texcoord[1];
+# ** POSITION **
+# Transform position to clip space
+#dp4 oPos.x, v0, mvp[0]
+#dp4 oPos.y, v0, mvp[1]
+#dp4 oPos.z, v0, mvp[2]
+#dp4 oPos.w, v0, mvp[3]
+DP4 r0.x, v0, mvp[0];
+DP4 r0.y, v0, mvp[1];
+DP4 r0.z, v0, mvp[2];
+DP4 r0.w, v0, mvp[3];
+
+MOV oPos, r0;
+# ** TEXTURING **
+DP4 r1.x, v0, object[0];
+DP4 r1.y, v0, object[1];
+DP4 r1.z, v0, object[2];
+DP4 r1.w, v0, c[7];
+DP4 r2.x, v0, c[12];
+DP4 r2.y, v0, c[13];
+DP4 r2.z, v0, c[14];
+DP4 r2.w, v0, c[15];
+MOV oT0, r1;
+MOV oT1, r2;
+ADD oT2, v1, c[16];
+# Spot depth
+MUL r1.z, r1.zzzz, c[11].w;
+MOV oT3.xy, r1.zzzz;
+# Dot product
+DP3 r0.x, v3, c[8];
+DP3 r0.y, v3, c[9];
+DP3 r0.z, v3, c[10];
+DP3 r1.x, r0.xyzz, c[11].xyzz;
+MAX r1.x, r1.xxxx, c[11].w;
+MUL oD0, r1.xxxx, c[17];
+# -- psd
+END

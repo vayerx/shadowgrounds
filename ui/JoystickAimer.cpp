@@ -60,7 +60,6 @@ namespace ui
 		//VC3 curdir = VC3((float)(ogui->getCursorScreenX(0) - scrmidx), 0, (float)(ogui->getCursorScreenY(0) - scrmidy));
 		//curdir.Normalize();
 		//float curangle = util::PositionDirectionCalculator::calculateDirection(VC3(0,0,0), curdir);
-		float curangle = currentAimingAngle;
 
 		int scheme = 0;
 		if (clientNumber == 0)
@@ -74,26 +73,24 @@ namespace ui
 		/*if (scheme < 0) scheme = 0;
 		if (scheme >= 4 * 3) scheme = 4 * 3 - 1;*/
 	
-		int forcedRotation = 0;
-		int x, y; // , rx, ry, throttle, rudder;
+		// int forcedRotation = 0;
+		int x = 0, y = 0; // , rx, ry, throttle, rudder;
 
 		// what is this?
 		bool legacy_support = scheme == 4 * 3 || scheme == (4 * 3) + 1;
 
 		if (legacy_support || scheme == GameController::CONTROLLER_TYPE_KEYBOARD_ONLY)
 		{
-			x = 0;
-			y = 0;
 			if (scheme == (4 * 3) + 1)
 			{
 				if (gameController->isKeyDown(DH_CTRL_CAMERA_MOVE_ORBIT_RIGHT))
 				{
-					forcedRotation = -1;
+					// forcedRotation = -1;
 					x = -1000;
 				}
 				if (gameController->isKeyDown(DH_CTRL_CAMERA_MOVE_ORBIT_LEFT))
 				{
-					forcedRotation = 1;
+					// forcedRotation = 1;
 					x = 1000;
 				}
 			} else {
@@ -110,7 +107,9 @@ namespace ui
 				}
 			}
 		} else {
-			gameController->getJoystickValues( scheme - GameController::CONTROLLER_TYPE_JOYSTICK1, &x, &y );
+			// TODO: use direction axes for something!
+
+			gameController->getJoystickValues( scheme - GameController::CONTROLLER_TYPE_JOYSTICK1, NULL, NULL, &x, &y);
 		}
 		VC2 vec = VC2( (float)x, (float)y );
 
@@ -129,35 +128,24 @@ namespace ui
 
 			vec.Normalize();
 			float joyangle = util::PositionDirectionCalculator::calculateDirection(VC3(0,0,0), VC3(vec.x, 0, vec.y));
-			float rotspeed = util::AngleRotationCalculator::getRotationForAngles(curangle, joyangle, 1.0f * timeFactor * 0.55f);
-			rotspeed += 
-				3.0f * util::AngleRotationCalculator::getFactoredRotationForAngles(curangle, joyangle, 20.0f)
-				/ 60.0f;
 			float newangle = joyangle;
-			if (forcedRotation != 0)
-				rotspeed = (float)forcedRotation * 5.0f;
-			if (rotspeed != 0)
-			{
-				newangle = curangle + rotspeed * timeFactor * 1.0f;
-				while (newangle >= 360.0f) newangle -= 360.0f;
-				while (newangle < 0.0f) newangle += 360.0f;
-				float newanglerad = UNIT_ANGLE_TO_RAD(newangle);
-				vec = VC2(-(float)sinf(newanglerad), -(float)cosf(newanglerad));
-			} 
 
-			int scrx = scrmidx + (int)(vec.x * (1024/4));
-			int scry = scrmidy + (int)(vec.y * (768/4));
-			ogui->setCursorScreenX(clientNumber, scrx);
-			ogui->setCursorScreenY(clientNumber, scry);
+			while (newangle >= 360.0f) newangle -= 360.0f;
+			while (newangle < 0.0f) newangle += 360.0f;
+
+			float newanglerad = UNIT_ANGLE_TO_RAD(newangle);
+			vec = VC2(-(float)sinf(newanglerad), -(float)cosf(newanglerad));
+
 			currentAimingAngle = newangle;
 		} else {
 			float newanglerad = UNIT_ANGLE_TO_RAD(currentAimingAngle);
 			vec = VC2(-(float)sinf(newanglerad), -(float)cosf(newanglerad));
-			int scrx = scrmidx + (int)(vec.x * (1024/4));
-			int scry = scrmidy + (int)(vec.y * (768/4));
-			ogui->setCursorScreenX(clientNumber, scrx);
-			ogui->setCursorScreenY(clientNumber, scry);
 		}
+
+		int scrx = scrmidx + (int)(vec.x * (1024/4));
+		int scry = scrmidy + (int)(vec.y * (768/4));
+		ogui->setCursorScreenX(clientNumber, scrx);
+		ogui->setCursorScreenY(clientNumber, scry);
 	}
 
 }

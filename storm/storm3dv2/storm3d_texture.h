@@ -6,11 +6,18 @@
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
-#include "storm3d_common_imp.h"
-#include "istorm3d_texture.h"
+#ifdef _MSC_VER
+#include <windows.h>
+#endif
+
 #include <string>
+#include <GL/glew.h>
+#include "IStorm3D_Texture.h"
+#include "IStorm3D_Logger.h"
+#include "storm3d_common_imp.h"
 
 class IStorm3D_Logger;
+class TReader;
 
 void initTextureBank(IStorm3D_Logger *logger);
 void freeTextureBank();
@@ -23,23 +30,21 @@ class Storm3D_Texture : public IStorm3D_Texture
 {
 	bool decentAlpha;
 
+	bool loadDDS(const char *filename, const char *fileData);
+
 protected:
 
 	// Pointer to Storm3D interface
 	Storm3D *Storm3D2;
 
-	// Temp system buffers for dynamic textures
-	// Videomemory buffers are copied to system memory, before reading,
-	// because DX8 can only lock sysmem surfaces
-	LPDIRECT3DSURFACE9 dx_tempbuf_sm;
-
-	LPDIRECT3DTEXTURE9 dx_handle;			// DX8-texture
-	LPDIRECT3DCUBETEXTURE9 dx_handle_cube;	// DX8-texture (for cubemaps)
+	GLuint texhandle;
+	GLenum glTextype;
+	GLenum texfmt;
 	TEXTYPE textype;						// Cube/Basic/Rendersurface
 
 	char *filename;					// Filename
-	DWORD tex_identity;				// Used if no sharing wanted
-	DWORD texloadflags;				// Onfy for loaded textures (NoCompress etc.)
+	Uint32 tex_identity;				// Used if no sharing wanted
+	Uint32 texloadflags;				// Onfy for loaded textures (NoCompress etc.)
 	
 	int refcount;					// Reference count (for delete)
 	int width,height;				// Texture size
@@ -49,31 +54,24 @@ protected:
 
 public:
 
-	static void *classId();
-	virtual void *getId() const;
-
 	int getWidth() const { return width; }
 	int getHeight() const { return height; }
 	bool hasDecentAlpha() const { return decentAlpha; }
 	void setAutoRelease(bool auto_release_) { auto_release = auto_release_; }
 
 	// Compare (used when new texture is created -> saves memory)
-	bool IsIdenticalWith(const char *_filename,DWORD texloadflags,DWORD tex_identity) const;
+	bool IsIdenticalWith(const char *_filename,Uint32 texloadflags,Uint32 tex_identity) const;
 
 	// Get parameters
 	const char *GetFilename();		// Returns NULL, if dynamic texture
-	DWORD GetTexIdentity();
+	Uint32 GetTexIdentity();
 
 	// Texture edit etc
 	Storm3D_SurfaceInfo GetSurfaceInfo();
 	void CopyTextureToAnother(IStorm3D_Texture *other);
-	void Copy32BitSysMembufferToTexture(DWORD *sysbuffer);
-	void CopyTextureTo32BitSysMembuffer(DWORD *sysbuffer);
-	void CopyTextureTo8BitSysMembuffer(BYTE *sysbuffer);	// Creates grayscale color from green color component
-
-	// DX buffer handling (for lost devices)
-	void ReleaseDynamicDXBuffers();
-	void ReCreateDynamicDXBuffers();
+	void Copy32BitSysMembufferToTexture(Uint32 *sysbuffer);
+	void CopyTextureTo32BitSysMembuffer(Uint32 *sysbuffer);
+	void CopyTextureTo8BitSysMembuffer(Uint8 *sysbuffer);	// Creates grayscale color from green color component
 
 	void AddHighPriority();
 	void RemoveHighPriority();
@@ -106,17 +104,13 @@ public:
 
 	void swapTexture(IStorm3D_Texture *other);
 
-	bool lock(D3DLOCKED_RECT &rect);
-	void unlock();
-
 	void saveToFile( const char * filename );
 	void loadFromFile( const char * filename );
 
 	// Creation/delete
-
 	// Loaded textures
 	Storm3D_Texture(Storm3D *Storm3D2,const char *_filename,
-		DWORD texloadflags,DWORD tex_identity=0,
+		Uint32 texloadflags,Uint32 tex_identity=0,
 		const void *data=NULL, size_t data_size=0); // use data pointer if file is already loaded to memory
 	// Dynamic textures
 	Storm3D_Texture(Storm3D *Storm3D2,int width,int height,TEXTYPE ttype);
@@ -129,14 +123,12 @@ public:
 };
 
 
-
 //------------------------------------------------------------------
 // Storm3D_Texture_Video
 //------------------------------------------------------------------
 class Storm3D_Texture_Video : public Storm3D_Texture
 {
-	LPDIRECT3DTEXTURE9 *frames;	// DX8 textures for frames
-	D3DFORMAT dx_texformat;		// Bitformat for DX8 textures
+	std::vector<GLuint> frames;	// textures for frames
 
 	int frame_amount;		// Number of frames
 	int frame;				// Current frame
@@ -148,7 +140,12 @@ class Storm3D_Texture_Video : public Storm3D_Texture
 
 	// AVI file info
 	int width,height,bpp;
-	DWORD last_time;
+	Uint32 last_time;
+
+	char *buf;
+	GLuint handle;
+
+	boost::shared_ptr<TReader> reader;
 
 	// AVI load
 	void ReadAVIVideoInfo();
@@ -170,8 +167,6 @@ public:
 	void swapTexture(IStorm3D_Texture *other);
 
 	// Creation/delete
-	Storm3D_Texture_Video(Storm3D *Storm3D2,const char *_filename,DWORD tex_identity=0);
+	Storm3D_Texture_Video(Storm3D *Storm3D2,const char *_filename,Uint32 tex_identity=0);
 	~Storm3D_Texture_Video();
-
-	//friend Storm3D;
 };

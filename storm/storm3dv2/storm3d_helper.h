@@ -7,7 +7,7 @@
 // Includes
 //------------------------------------------------------------------
 #include "storm3d_common_imp.h"
-#include "istorm3d_helper.h"
+#include "IStorm3D_Helper.h"
 #include "storm3d_animation.h"
 
 class Storm3D_Bone;
@@ -66,7 +66,7 @@ public:
 	Storm3D_Helper_Point(const char *name,Storm3D_Model *_parent_model,VC3 _position);
 
 	// Change params
-	void SetPosition(VC3 &_position);
+	void SetPosition(const VC3 &_position);
 
 	// Get params
 	VC3 &GetPosition();
@@ -116,8 +116,8 @@ public:
 	Storm3D_Helper_Vector(const char *name,Storm3D_Model *_parent_model,VC3 _position,VC3 _direction);
 
 	// Change params
-	void SetPosition(VC3 &_position);
-	void SetDirection(VC3 &_direction);
+	void SetPosition(const VC3 &_position);
+	void SetDirection(const VC3 &_direction);
 
 	// Get params
 	VC3 &GetPosition();
@@ -172,9 +172,9 @@ public:
 	Storm3D_Helper_Camera(const char *name,Storm3D_Model *_parent_model,VC3 _position,VC3 _direction,VC3 _upvec);
 
 	// Change params
-	void SetPosition(VC3 &_position);
-	void SetDirection(VC3 &_direction);
-	void SetUpVector(VC3 &upvec);
+	void SetPosition(const VC3 &_position);
+	void SetDirection(const VC3 &_direction);
+	void SetUpVector(const VC3 &upvec);
 
 	// Get params
 	VC3 &GetPosition();
@@ -229,7 +229,7 @@ public:
 	Storm3D_Helper_Box(const char *name,Storm3D_Model *_parent_model,VC3 _position,VC3 _size);
 
 	// Change params
-	void SetPosition(VC3 &_position);
+	void SetPosition(const VC3 &_position);
 	void SetSize(VC3 &_size);
 
 	// Get params
@@ -281,7 +281,7 @@ public:
 	Storm3D_Helper_Sphere(const char *name,Storm3D_Model *_parent_model,VC3 _position,float _radius);
 
 	// Change params
-	void SetPosition(VC3 &_position);
+	void SetPosition(const VC3 &_position);
 	void SetRadius(float _radius);
 
 	// Get params

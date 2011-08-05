@@ -61,7 +61,6 @@ public:
 	virtual void setBlendMap(int blockIndex, IStorm3D_Texture &blend, int textureA, int textureB) = 0;
 	virtual void resetBlends(int blockIndex) = 0;
 	virtual void setLightMap(int blockIndex, IStorm3D_Texture &map) = 0;
-	virtual bool legacyTexturing() const = 0; // Only one texture
 
 	// Terrain objects
 	virtual int addModel(boost::shared_ptr<IStorm3D_Model> model, boost::shared_ptr<IStorm3D_Model> fadeModel, const std::string &bones, const std::string &idleAnimation) = 0;

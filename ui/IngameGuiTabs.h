@@ -1,7 +1,7 @@
 #ifndef INC_INGAMEGUITABS_H
 #define INC_INGAMEGUITABS_H
 
-#include "../game/gameUI.h"
+#include "../game/GameUI.h"
 
 class Ogui;
 

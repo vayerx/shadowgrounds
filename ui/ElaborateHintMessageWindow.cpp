@@ -50,7 +50,6 @@ public:
 	};
 
 	CFadingTextMessage( game::Game *game, Ogui* ogui, OguiWindow* window, const std::string& style_name ) :
-		game(game),
 		dead( false ),
 
 		ogui( ogui ),
@@ -67,7 +66,8 @@ public:
 		fadeInStartTime( getTime() ),
 		fadeTime( 1000 ),
 		lifeTime( 20000 ),
-		queueTime( 0 )
+		queueTime( 0 ),
+		game(game)
 
 	{
 		// oguiLoader.SetLogging( elaborateLoggingEnabled, "missing_locales.txt" );

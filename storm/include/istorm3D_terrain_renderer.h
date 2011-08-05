@@ -4,7 +4,7 @@
 #define INCLUDED_ISTORM3D_TERRAIN_RENDERER_H
 
 #include <boost/shared_ptr.hpp>
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 
 class IStorm3D_Spotlight;
 class IStorm3D_FakeSpotlight;

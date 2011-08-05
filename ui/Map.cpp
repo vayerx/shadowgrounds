@@ -1,30 +1,27 @@
 
 #include "precompiled.h"
 
+#include <map>
+#include <string>
+#include <fstream>
+#include <stdio.h>
+
+#include <istorm3D_terrain_renderer.h>
 #include "Map.h"
 #include "../game/Game.h"
 #include "../game/GameMap.h"
-#include "../game/AreaMasks.h"
-#include <map>
-#include <string>
 #include "../util/assert.h"
-#include "../system/logger.h"
-#include <istorm3d_texture.h>
-#include <fstream>
-#include <stdio.h>
-#include <windows.h>
 #include "../filesystem/input_stream_wrapper.h"
 #include "../filesystem/file_package_manager.h"
 #include "../filesystem/input_stream.h"
 
-#include "..\game\GameUI.h"
-#include "..\storm\storm3dv2\storm3d.h"
-#include <istorm3d_terrain_renderer.h>
-#include "..\game\GameScene.h"
-#include "..\game\SimpleOptions.h"
-#include "..\game\options\options_graphics.h"
+#include "../game/GameUI.h"
+#include "../storm/storm3dv2/storm3d.h"
+#include "../game/GameScene.h"
+#include "../game/SimpleOptions.h"
+#include "../game/options/options_graphics.h"
 
-#include "..\game\scripting\GameScripting.h"
+#include "../game/scripting/GameScripting.h"
 
 
 
@@ -38,7 +35,7 @@ namespace ui {
 namespace {
 
 	static const int UPDATE_INTERVAL = 100;
-	static const int MAP_RESOLUTION = 1024;
+	static const unsigned int MAP_RESOLUTION = 1024;
 	static const int RAW_SIZE = MAP_RESOLUTION * MAP_RESOLUTION * 3;
 	static const int MAX_READ_CHUNK = 1024 * 30;
 	static const float MAP_SMALLEST_BLOCK = 3.f;
@@ -123,11 +120,10 @@ namespace {
 			}
 		}
 	}
+} // unnamed
 
 	struct FileReader
 	{
-		HANDLE fileHandle;
-		OVERLAPPED overlapped;
 		bool dataDone;
 		bool asyncDone;
 
@@ -137,8 +133,7 @@ namespace {
 		int offset;
 
 		FileReader(const string &fileName_, ColorList &result_)
-		:	fileHandle(0),
-			dataDone(false),
+		:	dataDone(false),
 			asyncDone(false),
 			buffer(RAW_SIZE),
 			result(result_),
@@ -307,7 +302,7 @@ namespace {
 	}
 	*/
 
-	VC2I getVisibilityPosition(const VC2 &size, const VC2I &visibilitySize, const VC2 &position)
+	static VC2I getVisibilityPosition(const VC2 &size, const VC2I &visibilitySize, const VC2 &position)
 	{
 		VC2I pos;
 		pos.x = int(position.x * visibilitySize.x / size.x);
@@ -469,7 +464,7 @@ namespace {
 				fileReader2->forceDataReady();
 
 			Storm3D_SurfaceInfo info = t.GetSurfaceInfo();
-			vector<DWORD> colorBuffer(info.height * info.width);
+			vector<Uint32> colorBuffer(info.height * info.width);
 
 			if(!visibility.empty())
 			{
@@ -487,7 +482,7 @@ namespace {
 						VC2I visPos;
 						visPos.x = x * visibilitySize.x / info.width;
 						visPos.y = y * visibilitySize.y / info.height;
-						if(visPos.x < 0 || visPos.y < 0 || visPos.x >= visibilitySize.x && visPos.y >= visibilitySize.y)
+						if(visPos.x < 0 || visPos.y < 0 || (visPos.x >= visibilitySize.x && visPos.y >= visibilitySize.y))
 							continue;
 
 						if(visibility[visPos.y * visibilitySize.x + visPos.x])
@@ -559,7 +554,7 @@ namespace {
 						VC2I colPos;
 						colPos.x = x * MAP_RESOLUTION / info.width;
 						colPos.y = y * MAP_RESOLUTION / info.height;
-						FB_ASSERT(colPos.x >= 0 && colPos.y >= 0 && colPos.x < MAP_RESOLUTION && colPos.y < MAP_RESOLUTION);
+						FB_ASSERT(colPos.x >= 0 && colPos.y >= 0 && colPos.x < int(MAP_RESOLUTION) && colPos.y < int(MAP_RESOLUTION));
 
 						int layerIndex = colPos.y * MAP_RESOLUTION + colPos.x;
 						FB_ASSERT(layerIndex >= 0 && layerIndex < int(layer1.size()) && layerIndex < int(layer2.size()));
@@ -611,7 +606,6 @@ namespace {
 		}
 	};
 
-} // unnamed
 
 typedef map<string, shared_ptr<Layer> > Layers;
 

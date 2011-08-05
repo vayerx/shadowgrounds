@@ -6,7 +6,6 @@
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
-#include <windows.h>
 
 // Common datatypes
 #include "DatatypeDef.h"
@@ -81,21 +80,20 @@ public:
 
 	// Helpers
 	virtual void Helper_Delete(IStorm3D_Helper *help)=0;
-	virtual IStorm3D_Helper_Point *Helper_Point_New(const char *name,VC3 &position)=0;
-	virtual IStorm3D_Helper_Vector *Helper_Vector_New(const char *name,VC3 &position,VC3 &direction)=0;
-	virtual IStorm3D_Helper_Camera *Helper_Camera_New(const char *name,VC3 &position,VC3 &direction,VC3 &up)=0;
-	virtual IStorm3D_Helper_Box *Helper_Box_New(const char *name,VC3 &position,VC3 &size)=0;
-	virtual IStorm3D_Helper_Sphere *Helper_Sphere_New(const char *name,VC3 &_position,float radius)=0;
+	virtual IStorm3D_Helper_Point *Helper_Point_New(const char *name, const VC3 &position)=0;
+	virtual IStorm3D_Helper_Vector *Helper_Vector_New(const char *name, const VC3 &position, const VC3 &direction)=0;
+	virtual IStorm3D_Helper_Camera *Helper_Camera_New(const char *name, const VC3 &position, const VC3 &direction, const VC3 &up)=0;
+	virtual IStorm3D_Helper_Box *Helper_Box_New(const char *name, const VC3 &position, const VC3 &size)=0;
+	virtual IStorm3D_Helper_Sphere *Helper_Sphere_New(const char *name, const VC3 &_position, float radius)=0;
 	virtual IStorm3D_Helper *SearchHelper(const char *name)=0;
 
 	// Bones
 	virtual IStorm3D_Bone *SearchBone(const char *name) = 0;
-	virtual IStorm3D_Bone *GetBone(int i) = 0;
 
 	// Set position/rotation/scale
-	virtual void SetPosition(VC3 &position)=0;
-	virtual void SetRotation(QUAT &rotation)=0;
-	virtual void SetScale(VC3 &scale)=0;
+	virtual void SetPosition(const VC3 &position)=0;
+	virtual void SetRotation(const QUAT &rotation)=0;
+	virtual void SetScale(const VC3 &scale)=0;
 	
 	// Lights
 	virtual void SetSelfIllumination(const COL &color) = 0;
@@ -149,10 +147,6 @@ public:
 	virtual void SphereCollision(const VC3 &position,float radius,Storm3D_CollisionInfo &cinf, bool accurate = true)=0;
 	virtual float GetRadius() const = 0;
 	virtual const AABB &GetBoundingBox() const = 0;
-	// NEW: added different bounding boxes for physics/collision (since visualization bounding box really 
-	// is no good for other than rendering purposes) --jpk
-	virtual const AABB &GetPhysicsBoundingBox() const = 0; 
-	virtual const AABB &GetCollisionBoundingBox() const = 0; 
 
 	virtual bool hasBones() = 0;
 
@@ -191,9 +185,9 @@ public:
 	virtual const Sphere &GetBoundingSphere() = 0;
 
 	// Set position/rotation/scale
-	virtual void SetPosition(VC3 &position)=0;
-	virtual void SetRotation(QUAT &rotation)=0;
-	virtual void SetScale(VC3 &scale)=0;
+	virtual void SetPosition(const VC3 &position)=0;
+	virtual void SetRotation(const QUAT &rotation)=0;
+	virtual void SetScale(const VC3 &scale)=0;
 
 	// Get position/rotation/scale
 	virtual VC3 &GetPosition()=0;

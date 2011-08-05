@@ -38,13 +38,13 @@ public:
 ///////////////////////////////////////////////////////////////////////////////
 
 UnitHealthBarWindow::UnitHealthBarWindow( Ogui* ogui, game::Game* game, int p ) :
-  flashingWindow( new GenericBarWindow(ogui, game, p) ),
+	game(game),
 	barWindow( new GenericBarWindow( ogui, game, p ) ),
-	flashing(false),
+	flashingWindow( new GenericBarWindow(ogui, game, p) ),
 	flashingAmount(0.0f),
+	flashing(false),
 	lastFlash(0),
-	unit(NULL),
-	game(game)
+	unit(NULL)
 {
 	barWindow->loadDataFromLocales( "unit_health_bar" );
 	flashingWindow->loadDataFromLocales( "unit_health_bar_flash" );
@@ -101,9 +101,9 @@ void UnitHealthBarWindow::update()
 		float flashingStart = (float)((float)unit->getHP() / (float)unit->getMaxHP());
 
 		// move
-		int x,y,w,h;
+		int x = 0, y = 0, w, h = 0;
 		flashingWindow->getWindowRect(x, y, w, h);
-		int x2,y2,w2,h2;
+		int x2 = 0, y2, w2 = 0, h2;
 		barWindow->getWindowRect(x2, y2, w2, h2);
 		flashingWindow->move(x2 + (int)(flashingStart * w2 + 0.5f), y);
 		flashingWindow->resize((int)((flashingAmount - flashingStart) * w2 + 0.5f), h);

@@ -2,23 +2,25 @@
 
 #include "precompiled.h"
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 #include "Logger.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include <windows.h>
 #include <assert.h>
+#include <SDL.h>
 
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 Logger *Logger::instance = NULL;
 
 // NOTE: this should possibly be declared volatile? or maybe the crit.section handles that by itself.
 
-CRITICAL_SECTION logger_critical_section;
+SDL_mutex *logger_critical_section;
 bool logger_critical_section_inited = false;
 
 
@@ -34,7 +36,7 @@ Logger *Logger::getInstance()
 
 
 // not thread safe, need synchronization in case of multiple threads
-void Logger::createInstanceForLogfile(char *logfile)
+void Logger::createInstanceForLogfile(const char *logfile)
 {
 	cleanInstance();
 	if (instance == NULL)
@@ -68,7 +70,7 @@ Logger::Logger(const char *logfile)
 	if (!logger_critical_section_inited)
 	{
 		logger_critical_section_inited = true;
-		InitializeCriticalSection(&logger_critical_section);
+		logger_critical_section = SDL_CreateMutex();
 	} else {
 		assert(!"Logger - logger_critical_section_inited already set.");
 	}
@@ -79,7 +81,7 @@ Logger::~Logger()
 	if (logger_critical_section_inited)
 	{
 		logger_critical_section_inited = false;
-		DeleteCriticalSection(&logger_critical_section);
+		SDL_DestroyMutex(logger_critical_section);
 	} else {
 		assert(!"Logger::~Logger - logger_critical_section_inited was not set.");
 	}
@@ -162,7 +164,7 @@ void Logger::setListener(ILoggerListener *listener)
 
 void Logger::syncListener()
 {
-	EnterCriticalSection(&logger_critical_section);
+	SDL_LockMutex(logger_critical_section);
 
 	for(unsigned int i = 0; i < messagesToListener.size(); ++i)
 	{
@@ -172,14 +174,14 @@ void Logger::syncListener()
 
 	messagesToListener.clear();
 
-	LeaveCriticalSection(&logger_critical_section);
+	SDL_UnlockMutex(logger_critical_section);
 }
 
 void Logger::debug(const char *msg)
 {
 	if (logLevel >= LOGGER_LEVEL_DEBUG)
 	{
-		EnterCriticalSection(&logger_critical_section);
+		SDL_LockMutex(logger_critical_section);
 
 		if (msg == NULL) msg = "(null)";
 		writeToLog("DEBUG: ", false);
@@ -200,7 +202,7 @@ void Logger::debug(const char *msg)
 			}
 		}
 
-		LeaveCriticalSection(&logger_critical_section);
+		SDL_UnlockMutex(logger_critical_section);
 	}
 }
 
@@ -208,7 +210,7 @@ void Logger::info(const char *msg)
 {
 	if (logLevel >= LOGGER_LEVEL_INFO)
 	{
-		EnterCriticalSection(&logger_critical_section);
+		SDL_LockMutex(logger_critical_section);
 
 		if (msg == NULL) msg = "(null)";
 		writeToLog("INFO: ", false);
@@ -229,7 +231,7 @@ void Logger::info(const char *msg)
 			}
 		}
 
-		LeaveCriticalSection(&logger_critical_section);
+		SDL_UnlockMutex(logger_critical_section);
 	}
 }
 
@@ -237,7 +239,7 @@ void Logger::warning(const char *msg)
 {
 	if (logLevel >= LOGGER_LEVEL_WARNING)
 	{
-		EnterCriticalSection(&logger_critical_section);
+		SDL_LockMutex(logger_critical_section);
 
 		if (msg == NULL) msg = "(null)";
 		writeToLog("WARNING: ", false);
@@ -258,7 +260,7 @@ void Logger::warning(const char *msg)
 			}
 		}
 
-		LeaveCriticalSection(&logger_critical_section);
+		SDL_UnlockMutex(logger_critical_section);
 	}
 }
 
@@ -266,7 +268,7 @@ void Logger::error(const char *msg)
 {
 	if (logLevel >= LOGGER_LEVEL_ERROR)
 	{
-		EnterCriticalSection(&logger_critical_section);
+		SDL_LockMutex(logger_critical_section);
 
 		if (msg == NULL) msg = "(null)";
 		writeToLog("ERROR: ", false);
@@ -287,7 +289,7 @@ void Logger::error(const char *msg)
 			}
 		}
 
-		LeaveCriticalSection(&logger_critical_section);
+		SDL_UnlockMutex(logger_critical_section);
 	}
 }
 

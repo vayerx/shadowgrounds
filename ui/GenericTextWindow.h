@@ -6,9 +6,9 @@ class OguiWindow;
 class OguiLocaleWrapper;
 class OguiFormattedText;
 
-#include "../ogui/ogui.h"
-#include "ICombatSubWindow.h"
 #include <string>
+#include "../ogui/Ogui.h"
+#include "ICombatSubWindow.h"
 
 
 namespace game
@@ -41,6 +41,7 @@ namespace ui
 		inline OguiFormattedText *getText() { return text; }
 		inline OguiWindow *getWindow() { return win; }
 
+		inline bool isHidden() const { return reallyHidden; }
 		void hide( int time = 0 );
 		void show( int time = 0 );
 		void update();
@@ -60,6 +61,7 @@ namespace ui
 		OguiFormattedText *text;
 		OguiLocaleWrapper *oguiLoader;
 
+		bool reallyHidden;
 		IGenericTextWindowUpdator *updator;
 	};
 

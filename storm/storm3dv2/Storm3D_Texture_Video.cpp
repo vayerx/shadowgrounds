@@ -1,15 +1,15 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
 #include "storm3d.h"
 #include "storm3d_texture.h"
-#include <vfw.h>		// Video for Windows header (to load AVIs)
-
-#include "..\..\util\Debug_MemoryManager.h"
+#include "treader.h"
 
 
 namespace {
@@ -17,99 +17,76 @@ namespace {
 }
 
 
-//------------------------------------------------------------------
-// Storm3D_Texture_Video::Storm3D_Texture_Video
-//------------------------------------------------------------------
-Storm3D_Texture_Video::Storm3D_Texture_Video(Storm3D *s2,const char *_filename,DWORD texloadcaps) :
+//! Constructor
+Storm3D_Texture_Video::Storm3D_Texture_Video(Storm3D *s2,const char *_filename,Uint32 texloadcaps) :
 	Storm3D_Texture(s2),
-	frames(NULL),
 	frame_amount(1),
 	frame(0),
 	framechangetime(0),
 	framechangecounter(0),
 	loop_params(VIDEOLOOP_DEFAULT),
-	last_time(timeGetTime())
+	last_time(SDL_GetTicks())
 {
 	// Create filename
-	filename=new char[strlen(_filename)+1];
+	int len = strlen(_filename);
+	filename=new char[len+1];
 	strcpy(filename,_filename);
+	filename[len - 3] = 'o';
+	filename[len - 2] = 'g';
+	filename[len - 1] = 'g';
 
-	// Get frame_amount etc. from AVI file
-	ReadAVIVideoInfo();
+	reader = boost::shared_ptr<TReader>(new TReader());
 
 	// Allocate memory for frame array
-	frames=new LPDIRECT3DTEXTURE9[frame_amount];
+	buf = NULL;
+	width = 0;
+	height = 0;
+
+	// Get frame_amount etc. from file
+	ReadAVIVideoInfo();
 
 	// Create textures for videoframes
-	for (int i=0;i<frame_amount;i++)
-	{
-		// Create (empty) texture (without mipmaps)
-		// Prefer 16bit textures in (565 format) if possible
-		D3DXCreateTexture(Storm3D2->GetD3DDevice(),width,height,D3DX_DEFAULT,//D3DX_DEFAULT,
-			0,D3DFMT_R5G6B5,D3DPOOL_MANAGED,&frames[i]);
-	}
 
 	// Get first frame's textureformat:
 	// 3d-card may not support 565, and DX can change format if that happens.
-    D3DSURFACE_DESC ddsd;
-    frames[0]->GetLevelDesc(0,&ddsd);
-    dx_texformat=ddsd.Format;
 
 	// Fill textures
 	LoadAVIVideoFrames();
-
-	for(int i=0;i<frame_amount;i++)
-	{
-		//D3DXCreateTexture(Storm3D2->GetD3DDevice(),width,height,1,//D3DX_DEFAULT,
-		//	0,D3DFMT_R5G6B5,D3DPOOL_MANAGED,&frames[i]);
-
-		IDirect3DBaseTexture9 *base = frames[i];
-		D3DXFilterTexture(base, 0, D3DX_DEFAULT, D3DX_DEFAULT);
-		frames[i]->AddDirtyRect(0);
-	}
-	
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Texture_Video::~Storm3D_Texture_Video
-//------------------------------------------------------------------
+//! Destructor
 Storm3D_Texture_Video::~Storm3D_Texture_Video()
 {
-	// Release frames
-	for (int i=0;i<frame_amount;i++) SAFE_RELEASE(frames[i]);
-
 	// Release frame array
-	delete[] frames;
+	vector<GLuint>::const_iterator it = frames.begin();
+	for(; it != frames.end(); ++it){
+		const GLuint temp = *it;
+		glDeleteTextures(1, &temp);
+	}
 
-	// Set DX8-handle to NULL (otherwise texture tries to delete it, and programs crashes)
-	dx_handle=NULL;
+	delete[] buf;
+	buf = NULL;
+
+	//delete reader;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Texture_Video::AnimateVideo
-//------------------------------------------------------------------
+//! Animate video
 void Storm3D_Texture_Video::AnimateVideo()
 {
 	// Calculate time difference
-	//static DWORD last_time=timeGetTime();
-	DWORD time_now=timeGetTime();
+	DWORD time_now=SDL_GetTicks();
 	DWORD time_dif=time_now-last_time;
-  // added use of timing factor
-  // --jpk
-	//last_time=time_now;
-  if (this->Storm3D2->timeFactor != 1.0f)
-  {
-    // FIXME: may have a small error on some values
-    // should work just fine for factor values like 0.5 though.
-    time_dif = (int)(float(time_dif) * this->Storm3D2->timeFactor);
-    last_time+=(int)(float(time_dif) / this->Storm3D2->timeFactor);
-  } else {
-    last_time+=time_dif;
-  }
+	// added use of timing factor
+	// --jpk
+	if (this->Storm3D2->timeFactor != 1.0f)
+	{
+		// FIXME: may have a small error on some values
+		// should work just fine for factor values like 0.5 though.
+		time_dif = (int)(float(time_dif) * this->Storm3D2->timeFactor);
+		last_time+=(int)(float(time_dif) / this->Storm3D2->timeFactor);
+	} else {
+		last_time+=time_dif;
+	}
 
 	// Increase counter
 	framechangecounter+=time_dif;
@@ -130,7 +107,7 @@ void Storm3D_Texture_Video::AnimateVideo()
 				{
 					case VIDEOLOOP_DEFAULT: 
 						frame=0;
-						dx_handle=frames[frame];
+						texhandle=frames[frame];
 						break;
 
 					case VIDEOLOOP_PINGPONG:
@@ -138,18 +115,18 @@ void Storm3D_Texture_Video::AnimateVideo()
 						frame=frame_amount-1;
 						framechangetime=-framechangetime;
 						framechangecounter=0;
-						dx_handle=frames[frame];
+						texhandle=frames[frame];
 						return;
 
 					case VIDEOLOOP_STOP_AT_END:
 						frame=frame_amount-1;
 						framechangetime=0;
 						framechangecounter=0;
-						dx_handle=frames[frame];
+						texhandle=frames[frame];
 						return;
 				}
 			}
-			dx_handle=frames[frame];
+			texhandle=frames[frame];
 		}
 	}
 	else
@@ -168,14 +145,14 @@ void Storm3D_Texture_Video::AnimateVideo()
 				{
 					case VIDEOLOOP_DEFAULT: 
 						frame=frame_amount-1;
-						dx_handle=frames[frame];
+						texhandle=frames[frame];
 						break;
 
 					case VIDEOLOOP_PINGPONG:
 						frame=0;
 						framechangetime=-framechangetime;
 						framechangecounter=0;
-						dx_handle=frames[frame];
+						texhandle=frames[frame];
 						return;
 
 					case VIDEOLOOP_STOP_AT_END:
@@ -183,20 +160,19 @@ void Storm3D_Texture_Video::AnimateVideo()
 						frame=0;
 						framechangetime=0;
 						framechangecounter=0;
-						dx_handle=frames[frame];
+						texhandle=frames[frame];
 						return;
 				}
 			}
-			dx_handle=frames[frame];
+			texhandle=frames[frame];
 		}
 	}
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Texture_Video::VideoSetFrame
-//------------------------------------------------------------------
+//! Set frame
+/*!
+	\param num frame number
+*/
 void Storm3D_Texture_Video::VideoSetFrame(int num)
 {
 	// Test param
@@ -205,272 +181,115 @@ void Storm3D_Texture_Video::VideoSetFrame(int num)
 
 	// Set frame
 	frame=num;
-	dx_handle=frames[frame];
+	texhandle=frames[frame];
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Texture_Video::VideoSetFrameChangeSpeed
-//------------------------------------------------------------------
+//! Set frame change speed
+/*
+	\param millisecs change speed
+*/
 void Storm3D_Texture_Video::VideoSetFrameChangeSpeed(int millisecs)
 {
 	framechangetime=millisecs;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Texture_Video::VideoSetLoopingParameters
-//------------------------------------------------------------------
+//! Set video looping parameters
+/*
+	\param params parameters
+*/
 void Storm3D_Texture_Video::VideoSetLoopingParameters(VIDEOLOOP params)
 {
 	loop_params=params;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Texture_Video::VideoGetFrameAmount
-//------------------------------------------------------------------
+//! Get frame amount
+/*
+	\return number of frames
+*/
 int Storm3D_Texture_Video::VideoGetFrameAmount()
 {
 	return frame_amount;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Texture_Video::VideoGetCurrentFrame
-//------------------------------------------------------------------
+//! Get current frame
+/*
+	\return frame number
+*/
 int Storm3D_Texture_Video::VideoGetCurrentFrame()
 {
 	return frame;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Texture_Video::ReadAVIVideoInfo
-//------------------------------------------------------------------
+//! Read video information
 void Storm3D_Texture_Video::ReadAVIVideoInfo()
 {
-	PAVISTREAM    AVIStream;
-	PGETFRAME     AVIFrame;
-	AVISTREAMINFO AVIInfo;
-
-	// Init AVI lib
-    AVIFileInit();
-
-	// Open file
-	if(AVIStreamOpenFromFile(&AVIStream,filename,streamtypeVIDEO,0,OF_READ,NULL) != 0)
+	if(reader->read_info(filename, 0))
 		return;
 
-	// Get info
-    AVIFrame=AVIStreamGetFrameOpen(AVIStream,NULL);
-    AVIStreamInfo(AVIStream,&AVIInfo,sizeof(AVISTREAMINFO));
-
-	// Get first frame
-    BITMAPINFO* pbmi;
-    pbmi=(BITMAPINFO*)AVIStreamGetFrame(AVIFrame,0);
+	reader->init();
 
 	// Get format/size from first frame
-	bpp=pbmi->bmiHeader.biBitCount;
-	width=pbmi->bmiHeader.biWidth;
-	height=pbmi->bmiHeader.biHeight;
+	//bpp=reader->ti.pixelformat;
+	width = reader->frame_width;
+	height = reader->frame_height;
 
 	// Get video lenght
-	frame_amount=AVIInfo.dwLength;
+	igios_unimplemented();
 
-    // AVI lib exit
-    AVIFileExit();
+	buf = new char[width * height * 4];
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Texture_Video::LoadAVIVideoFrames
-//------------------------------------------------------------------
+//! Load video frames
 void Storm3D_Texture_Video::LoadAVIVideoFrames()
 {
-	PAVISTREAM    AVIStream;
-	PGETFRAME     AVIFrame;
-	AVISTREAMINFO AVIInfo;
-
-	// Init AVI lib
-    AVIFileInit();
-
-	// Open file
-	if(AVIStreamOpenFromFile(&AVIStream,filename,streamtypeVIDEO,0,OF_READ,NULL) != 0)
+	if(width == 0 || height == 0)
 		return;
 
-	// Get info
-    AVIFrame=AVIStreamGetFrameOpen(AVIStream,NULL);
-    AVIStreamInfo(AVIStream,&AVIInfo,sizeof(AVISTREAMINFO));
-
-	// Get first frame
-    BITMAPINFO* pbmi;
-    pbmi=(BITMAPINFO*)AVIStreamGetFrame(AVIFrame,0);
-
 	// Animation parameters
+	float dwRate = (float)reader->fps_numerator;
+	float dwScale = (float)reader->fps_denominator;
 	frame=0;
-	dx_handle=frames[frame];
 	framechangecounter=0;
-	framechangetime=(int)(1000.0f/(((float)AVIInfo.dwRate)/(float)AVIInfo.dwScale));
+	framechangetime=(int)(1000.0f*(dwRate/dwScale));
 
-	// Loop through AVI's frames and convert them into textures
-	for (UINT fra=0;fra<AVIInfo.dwLength;fra++)
-	{
-		// Get the AVI frame
-		BITMAPINFO* pbmi;
-		pbmi=(BITMAPINFO*)AVIStreamGetFrame(AVIFrame,fra);
+	// Loop through frames and convert them into textures
+	while(!reader->nextframe()){
+		glGenTextures(1, &handle);
+		frames.push_back(handle);
+		glBindTexture(GL_TEXTURE_2D, handle);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		GLenum fmt = GL_RGBA;
+		GLenum internalfmt = GL_RGBA;
 
-		// Lock the DX8 texture
-		D3DLOCKED_RECT lrect;
-		frames[fra]->LockRect(0,&lrect,NULL,0);
-		BYTE *datapointer=(BYTE*)lrect.pBits;
+		reader->read_pixels(buf, width, height);
 
-		// Fill depending on DX8 texture format
-		if (dx_texformat==D3DFMT_R5G6B5)	// 565 format (most common)
-		{
-			// 16 bit AVI
-			if (pbmi->bmiHeader.biBitCount==16)
-			{
-				//WORD* pSrc=(WORD*)(sizeof(BITMAPINFO)+(BYTE*)pbmi);
-				WORD* pSrc=(WORD*)(pbmi->bmiColors);
-				WORD* pDest=(WORD*)datapointer;
-
-				// Fill upside-down, because AVI is saved so (microsoft rulez;)
-				pDest+=pbmi->bmiHeader.biWidth*(pbmi->bmiHeader.biHeight-1);
-				int dualrow=pbmi->bmiHeader.biWidth*2;
-
-				for(int yy=0;yy<pbmi->bmiHeader.biHeight;yy++)
-				{
-					for(int xx=0;xx<pbmi->bmiHeader.biWidth;xx++)
-					{
-						WORD color=*pSrc++;
-						*pDest++=((color&0x1F)|((color&0xFFE0)<<1));
-						//*pDest++ = *pSrc++;
-					}
-					pDest-=dualrow;
-				}
-			}
-
-			// 24 bit AVI
-			if (pbmi->bmiHeader.biBitCount==24)
-			{
-				//BYTE* pSrc=(BYTE*)(sizeof(BITMAPINFO)+(BYTE*)pbmi);
-				BYTE* pSrc=(BYTE*)(pbmi->bmiColors);
-				WORD* pDest=(WORD*)datapointer;
-				
-				// Fill upside-down, because AVI is saved so (microsoft rulez;)
-				pDest+=pbmi->bmiHeader.biWidth*(pbmi->bmiHeader.biHeight-1);
-				int dualrow=pbmi->bmiHeader.biWidth*2;
-
-				for(int yy=0;yy<pbmi->bmiHeader.biHeight;yy++)
-				{
-					for(int xx=0;xx<pbmi->bmiHeader.biWidth;xx++)
-					{
-						//BYTE g=(*pSrc++)>>2;
-						//BYTE r=(*pSrc++)>>3;
-						//BYTE b=(*pSrc++)>>3;
-						BYTE b=(*pSrc++)>>3;
-						BYTE g=(*pSrc++)>>2;
-						BYTE r=(*pSrc++)>>3;
-						*pDest++=((r<<11)|(g<<5)|(b));
-					}
-					pDest-=dualrow;
-				}
-			}
-		}
-		else
-		if ((dx_texformat==D3DFMT_X1R5G5B5)||	// 555 or 1555 format (some cards do not support 565)
-			(dx_texformat==D3DFMT_A1R5G5B5))
-		{
-			// 16 bit AVI
-			if (pbmi->bmiHeader.biBitCount==16)
-			{
-				//WORD* pSrc=(WORD*)(sizeof(BITMAPINFO)+(BYTE*)pbmi);
-				WORD* pSrc=(WORD*)(pbmi->bmiColors);
-				WORD* pDest=(WORD*)datapointer;
-
-				// Fill upside-down, because AVI is saved so (microsoft rulez;)
-				pDest+=pbmi->bmiHeader.biWidth*(pbmi->bmiHeader.biHeight-1);
-				int dualrow=pbmi->bmiHeader.biWidth*2;
-
-				for(int yy=0;yy<pbmi->bmiHeader.biHeight;yy++)
-				{
-					for(int xx=0;xx<pbmi->bmiHeader.biWidth;xx++)
-					{
-						*pDest++=*pSrc++;
-					}
-					pDest-=dualrow;
-				}				
-			}
-
-			// 24 bit AVI
-			if (pbmi->bmiHeader.biBitCount==24)
-			{
-				//BYTE* pSrc=(BYTE*)(sizeof(BITMAPINFO)+(BYTE*)pbmi);
-				BYTE* pSrc=(BYTE*)(pbmi->bmiColors);
-				WORD* pDest=(WORD*)datapointer;
-				
-				// Fill upside-down, because AVI is saved so (microsoft rulez;)
-				pDest+=pbmi->bmiHeader.biWidth*(pbmi->bmiHeader.biHeight-1);
-				int dualrow=pbmi->bmiHeader.biWidth*2;
-
-				for(int yy=0;yy<pbmi->bmiHeader.biHeight;yy++)
-				{
-					for(int xx=0;xx<pbmi->bmiHeader.biWidth;xx++)
-					{
-						BYTE g=(*pSrc++)>>3;
-						BYTE r=(*pSrc++)>>3;
-						BYTE b=(*pSrc++)>>3;
-						*pDest++=((r<<10)|(g<<5)|(b));
-					}
-					pDest-=dualrow;
-				}			
-			}
-		}
-		/*else
-		if ((dx_texformat==D3DFMT_A8R8G8B8)||	// 888 or 8888 format (some cards do not support 565)
-			(dx_texformat==D3DFMT_X8R8G8B8))
-		{
-			// 24 bit AVI
-			if (pbmi->bmiHeader.biBitCount==24)
-			{
-				BYTE* pSrc=(BYTE*)(sizeof(BITMAPINFO)+(BYTE*)pbmi);
-				DWORD* pDest=(DWORD*)datapointer;
-
-				for(int i=0;i<pbmi->bmiHeader.biWidth*pbmi->bmiHeader.biHeight;i++)
-				{
-					BYTE *col=(unsigned char*)pDest;
-					col[1]=*pSrc++;
-					col[2]=*pSrc++;
-					col[0]=*pSrc++;
-					pDest++;
-				}
-			}
-		}*/
-
-		// Unlock the DX8 texture
-		frames[fra]->UnlockRect(0);
+		gluBuild2DMipmaps(GL_TEXTURE_2D, internalfmt, width, height, fmt, GL_UNSIGNED_BYTE, buf);
+		frame_amount++;
 	}
 
-    // AVI lib exit
-    AVIFileExit();
+	if(frames.size() >= (unsigned int)frame)
+		texhandle=frames[frame];
+
+	reader->finish();
 }
 
+//! Class ID
 void *Storm3D_Texture_Video::classId()
 {
 	return &id;
 }
 
+//! Get class ID
 void *Storm3D_Texture_Video::getId() const
 {
 	return &id;
 }
 
+//! Swap textures
+/*!
+	\param otherI other texture
+*/
 void Storm3D_Texture_Video::swapTexture(IStorm3D_Texture *otherI)
 {
 	Storm3D_Texture *otherC = static_cast<Storm3D_Texture *> (otherI);
@@ -480,17 +299,10 @@ void Storm3D_Texture_Video::swapTexture(IStorm3D_Texture *otherI)
 		return;
 	}
 
-	if(otherC->getId() != classId())
-	{
-		assert(!"Whoops");
-		return;
-	}
-
 	Storm3D_Texture::swapTexture(otherC);
 	Storm3D_Texture_Video *other = static_cast<Storm3D_Texture_Video *> (otherC);
 
 	std::swap(frames, other->frames);
-	std::swap(dx_texformat, other->dx_texformat);
 	std::swap(frame_amount, other->frame_amount);
 	std::swap(frame, other->frame);
 	std::swap(framechangetime, other->framechangetime);

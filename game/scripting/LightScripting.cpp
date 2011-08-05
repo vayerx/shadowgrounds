@@ -10,7 +10,7 @@
 #include "../../util/LightAmountManager.h"
 
 #include <IStorm3D_Terrain.h>
-#include <IStorm3D_Terrain_Renderer.h>
+#include <istorm3D_terrain_renderer.h>
 #include <math.h>
 #include "../Game.h"
 #include "../GameUI.h"
@@ -54,10 +54,11 @@ namespace game
 
 
 	void LightScripting::process(util::ScriptProcess *sp, 
-		int command, int intData, char *stringData, ScriptLastValueType *lastValue, 
+		int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue,
 		GameScriptData *gsd, Game *game)
 	{
-		float floatData = *((float *)&intData);
+		int intData = intFloat.i;
+		float floatData = intFloat.f;
 
 		switch(command)
 		{
@@ -1288,7 +1289,7 @@ namespace game
 		case GS_CMD_setGlowFadeFactor:
 			if(game->inCombat)
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				game->gameUI->getTerrain()->GetTerrain()->getRenderer().setFloatValue(IStorm3D_TerrainRenderer::GlowFactor, floatData);
 			}
 			break;
@@ -1296,7 +1297,7 @@ namespace game
 		case GS_CMD_setGlowTransparencyFactor:
 			if(game->inCombat)
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				game->gameUI->getTerrain()->GetTerrain()->getRenderer().setFloatValue(IStorm3D_TerrainRenderer::GlowTransparencyFactor, floatData);
 			}
 			break;
@@ -1304,7 +1305,7 @@ namespace game
 		case GS_CMD_setGlowAdditiveFactor:
 			if(game->inCombat)
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				game->gameUI->getTerrain()->GetTerrain()->getRenderer().setFloatValue(IStorm3D_TerrainRenderer::GlowAdditiveFactor, floatData);
 			}
 			break;
@@ -1498,55 +1499,6 @@ namespace game
 				gsd->unifiedHandle = UNIFIED_HANDLE_NONE;
 				*lastValue = 0;
 			}
-			break;
-
-		case GS_CMD_findClosestLight:
-			{
-				gsd->unifiedHandle = game->gameUI->getLightManager()->findClosestLight(gsd->position);
-				if (gsd->unifiedHandle != UNIFIED_HANDLE_NONE)
-					*lastValue = 1;
-				else
-					*lastValue = 0;
-			} 
-			break;
-
-		case GS_CMD_findClosestDetachedLight:
-			{
-				gsd->unifiedHandle = game->gameUI->getLightManager()->findClosestDetachedLight(gsd->position);
-				if (gsd->unifiedHandle != UNIFIED_HANDLE_NONE)
-					*lastValue = 1;
-				else
-					*lastValue = 0;
-			} 
-			break;
-
-		case GS_CMD_attachLightToValueHandle:
-			if (VALIDATE_UNIFIED_HANDLE_BITS(gsd->unifiedHandle))
-			{
-				if (IS_UNIFIED_HANDLE_LIGHT(gsd->unifiedHandle))
-				{
-					if (game->unifiedHandleManager->doesObjectExist(gsd->unifiedHandle))
-					{
-						if (VALIDATE_UNIFIED_HANDLE_BITS(*lastValue))
-						{
-							if (game->unifiedHandleManager->doesObjectExist(gsd->unifiedHandle))
-							{
-								game->gameUI->getLightManager()->attachLight(gsd->unifiedHandle, *lastValue);
-							} else {
-								sp->error("LightScripting::process - attachLightToValueHandle, value register specifies object that does not exist.");
-							}
-						} else {
-							sp->error("LightScripting::process - attachLightToValueHandle, value register specifies invalid unified handle.");
-						}
-					} else {
-						sp->error("LightScripting::process - attachLightToValueHandle, given unified handle light does not exist.");
-					}
-				} else {
-					sp->error("LightScripting::process - attachLightToValueHandle, given unified handle is not of light type.");
-				}
-			} else {
-				sp->error("LightScripting::process - attachLightToValueHandle, invalid unified handle.");
-			} 
 			break;
 
 		case GS_CMD_spotTypeAdd:

@@ -35,8 +35,6 @@
 #include "tracking_script_commands.h"
 #include "sync_script_commands.h"
 #include "directcontrol_script_commands.h"
-#include "physics_script_commands.h"
-#include "terrainobject_script_commands.h"
 
 #define GS_CMD_BASE 0
 GS_CMD(0, GS_CMD_INVALIDGSCOMMAND, "invalidGSCommand", NONE)

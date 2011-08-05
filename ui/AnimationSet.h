@@ -33,9 +33,9 @@ namespace ui
 			blend(0),
 			blendTime(200),
 			speedFactor(false),
+			noInterpolate(false),
 			staticFactor(false),
 			staticFactorValue(1.f),
-			noInterpolate(false),
 			from(-1)
 		{
 		}

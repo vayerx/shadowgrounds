@@ -2,9 +2,7 @@
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
-#ifdef _MSC_VER
 #pragma warning(disable:4103)
-#endif
 
 #ifdef __INTEL_COMPILER
 #pragma warning(disable: 373) // inaccessible constructor (remark)
@@ -13,12 +11,10 @@
 #include "input_compressed_file_stream.h"
 #include <fstream>
 #include <vector>
-//#include <zlib.h>
-#include "zlib.h"
+#include "detail/zlib.h"
 
 #include "../system/Logger.h"
 #include "../util/Debug_MemoryManager.h"
-#include "../system/FileTimestampChecker.h"
 
 namespace frozenbyte {
 namespace filesystem {
@@ -27,26 +23,18 @@ struct InputCompressedFileStreamBufferData
 {
 	std::vector<unsigned char> buffer;
 	int readPosition;
-	int timeValue;
 
 	InputCompressedFileStreamBufferData(const std::string fileName)
-	:	readPosition(0), timeValue(0)
+	:	readPosition(0)
 	{
 		std::ifstream stream(fileName.c_str(), std::ios::binary);
 		if(!stream)
 			return;
 
-		/*
 		std::filebuf *streamBuffer = stream.rdbuf();
 		if(!streamBuffer)
 			return;
 		std::streamsize compressedSize = streamBuffer->in_avail() - sizeof(int);
-		*/
-
-		stream.seekg(0, std::ios::end);
-		std::streamsize compressedSize = stream.tellg();
-		compressedSize -=  sizeof(int);
-		stream.seekg(0, std::ios::beg);
 
 		int bytes = 0;
 		stream.read((char *) &bytes, sizeof(int));
@@ -63,11 +51,8 @@ struct InputCompressedFileStreamBufferData
 		uLong destinationLength = buffer.size();
 
 		int code = ::uncompress(destination, &destinationLength, source, sourceLength);
-		(void)code;
-		//if(code != Z_OK)
-		//	int a = 0;
-
-		timeValue = FileTimestampChecker::getFileTimestamp(fileName.c_str());
+		if(code != Z_OK)
+			int a = 0;
 	}
 };
 

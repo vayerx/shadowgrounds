@@ -1,6 +1,14 @@
 
 #include "precompiled.h"
 
+#include <string>
+#include <vector>
+#include <list>
+#include <fstream>
+#include <map>
+#include <vector>
+#include <boost/lexical_cast.hpp>
+
 #include "EnvironmentalEffectManager.h"
 #include "EnvironmentalEffect.h"
 #include "../ui/VisualEffectManager.h"
@@ -8,7 +16,7 @@
 #include "../ui/Spotlight.h"
 #include "../container/LinkedList.h"
 #include "../system/Logger.h"
-#include "../editor/Parser.h"
+#include "../editor/parser.h"
 #include "../filesystem/file_package_manager.h"
 #include "../game/SimpleOptions.h"
 #include "../game/options/options_graphics.h"
@@ -17,29 +25,20 @@
 #include "scripting/GameScripting.h"
 #include "GameUI.h"
 #include "GameScene.h"
-#include <istorm3d_terrain_renderer.h>
+#include <istorm3D_terrain_renderer.h>
+#include <Storm3D_UI.h>
 
-// OH FFS... (just to get particleforces)
-#include <storm3d_ui.h>
-#include <string>
-#include <vector>
-#include <list>
-#include <fstream>
 #include "../editor/parser.h"
 #include "../particle_editor2/particleeffect.h"
 #include "../particle_editor2/track.h"
 #include "../particle_editor2/particlesystem.h"
 #include "../particle_editor2/particleforces.h"
 
-#include <boost/lexical_cast.hpp>
-#include <map>
-#include <vector>
 #include "../util/Debug_MemoryManager.h"
 
 using namespace frozenbyte;
 
 namespace game {
-namespace {
 
 struct Group
 {
@@ -64,7 +63,6 @@ struct GroupList
 
 typedef std::map<std::string, GroupList> EffectGroup;
 
-} // unnamed
 
 struct EnvironmentalEffectManagerImpl
 {
@@ -108,11 +106,13 @@ struct EnvironmentalEffectManagerImpl
 
 	void init()
 	{
-		editor::Parser parser(true, false);
+		editor::EditorParser parser(true, false);
 #ifdef LEGACY_FILES
-		filesystem::FilePackageManager::getInstance().getFile("Data/Effects/environmental_effect_groups.txt") >> parser;
+		filesystem::InputStream f = filesystem::FilePackageManager::getInstance().getFile("Data/Effects/environmental_effect_groups.txt");
+		f >> parser;
 #else
-		filesystem::FilePackageManager::getInstance().getFile("data/effect/environmental_effect_groups.txt") >> parser;
+		filesystem::InputStream f = filesystem::FilePackageManager::getInstance().getFile("data/effect/environmental_effect_groups.txt");
+		f >> parser;
 #endif
 
 		const editor::ParserGroup &global = parser.getGlobals();

@@ -3,24 +3,28 @@
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
-
+#ifdef _MSC_VER
 #pragma warning( disable : 4800 )
-#define NOMINMAX
+#endif
 
-#include <storm3d_ui.h>
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
+#include <Storm3D_UI.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <vector>
 #include <string>
 #include <map>
 #include <list>
-#include "..\editor\string_conversions.h"
-#include "..\editor\parser.h"
+#include "../editor/string_conversions.h"
+#include "../editor/parser.h"
 #include "track.h"
 //#include "paramblock.h"
 #include "parseutil.h"
 #include "particletiming.h"
-#include "..\ui\IPointableObject.h"
+#include "../ui/IPointableObject.h"
 #include "particlesystem.h"
 #include "particlesystemmanager.h"
 #include "particleforces.h"
@@ -31,7 +35,7 @@
 //#include "../physics/fluid.h"
 //#include "../physics/physics_lib.h"
 #include "ParticlePhysics.h"
-#include "..\game\GameRandom.h"
+#include "../game/GameRandom.h"
 
 //#include "particlerandom.h"
 
@@ -192,7 +196,6 @@ void LineParticleRenderer2::prepareForLaunch(int maxParts) {
 void LineParticleRenderer2::render(IStorm3D_Scene* scene, IStorm3D_Material* mtl,
 			GenParticleSystemEditables& eds, std::vector<Particle>& parts, const COL &factor, bool distortion, bool faceUpward) 
 {
-	float len = eds.lineLenght;
 	m_animInfo.textureUSubDivs = eds.particleTextureUSubDivs;
 	m_animInfo.textureVSubDivs = eds.particleTextureVSubDivs;
 	m_animInfo.numFrames = eds.particleAnimationFrameCount;
@@ -282,11 +285,6 @@ IParticleForce* GenParticleSystem::addForce(const std::string& className) {
 	}
 	if(className == "sidegravity") {
 		boost::shared_ptr<IParticleForce> f(new SideGravityParticleForce);
-		m_forces.push_back(f);
-		return f.get();
-	}
-	if(className == "gravitypoint") {
-		boost::shared_ptr<IParticleForce> f(new GravityPointParticleForce);
 		m_forces.push_back(f);
 		return f.get();
 	}
@@ -441,6 +439,7 @@ void GenParticleSystem::defaultRender(IStorm3D_Scene* scene, GenParticleSystemEd
 	factor -= darkness * eds.darkening;
 
 #ifdef PHYSICS_PHYSX
+#ifndef NX_DISABLE_FLUIDS
 	if(usingFluids)
 	{
 		/*
@@ -549,7 +548,6 @@ if (gameRand == 0)
 				float time = eds.particleLife - fd.life;
 				if(time < 0)
 					time = 0;
-				float relativeTime = time / eds.particleLife;
 				float previousRelativeTime = (time - PARTICLE_TIME_SCALE) / eds.particleLife;
 				if(previousRelativeTime < 0)
 					previousRelativeTime = 0.f;
@@ -610,6 +608,7 @@ if (gameRand == 0)
 	}
 	else
 #endif
+#endif
 
 	m_renderer->render(scene, m_mtl, eds, m_parts, factor, eds.distortion, eds.faceUpward);
 }
@@ -659,7 +658,6 @@ void GenParticleSystem::emitParticles(const GenParticleSystemEditables& eds)
 
 	float rnd1 = (float)rand() / (float)RAND_MAX;
 	float rnd2 = (float)rand() / (float)RAND_MAX;
-	float rnd3 = (float)rand() / (float)RAND_MAX;
 
 	Vector dir;
 	if(eds.launchDirectionType == GenParticleSystemEditables::DIRECTION_NEGATIVE_VELOCITY) {
@@ -699,6 +697,7 @@ void GenParticleSystem::emitParticles(const GenParticleSystemEditables& eds)
 		if(eds.physicsType == GenParticleSystemEditables::PHYSICS_TYPE_FLUID || eds.physicsType == GenParticleSystemEditables::PHYSICS_TYPE_FLUID_INTERACTION)
 		{
 #ifdef PHYSICS_PHYSX
+#ifndef NX_DISABLE_FLUIDS
 			if(fluid && fluid->canSpawn())
 			{
 				int create_amount = int(needed);
@@ -784,6 +783,7 @@ void GenParticleSystem::emitParticles(const GenParticleSystemEditables& eds)
 					}
 				}
 			}
+#endif
 #endif
 
 			break;
@@ -897,7 +897,6 @@ void GenParticleSystem::moveAndExpireParticles(const GenParticleSystemEditables&
 {
 	bool hasParticles = false;
 	assert(m_numParts >= 0);
-	int foofoo = m_numParts;
 
 	for(int i = 0; i < (int)m_parts.size(); ++i)
 	{
@@ -954,6 +953,7 @@ void GenParticleSystem::applyForces(const GenParticleSystemEditables &eds)
 	int particleAmount = m_parts.size();
 
 #ifdef PHYSICS_PHYSX
+#ifndef NX_DISABLE_FLUIDS
 	if(eds.physicsType == GenParticleSystemEditables::PHYSICS_TYPE_FLUID || eds.physicsType == GenParticleSystemEditables::PHYSICS_TYPE_FLUID_INTERACTION)
 	{
 		if(fluid)
@@ -976,6 +976,7 @@ void GenParticleSystem::applyForces(const GenParticleSystemEditables &eds)
 		}
 	}
 	else
+#endif
 #endif
 	{
 		for(int i = 0; i < forceAmount; ++i)
@@ -1018,22 +1019,6 @@ void GenParticleSystem::applyForces(const GenParticleSystemEditables &eds)
 			else if(forceType == SideGravityParticleForce::getType())
 			{
 				SideGravityParticleForce *force = static_cast<SideGravityParticleForce *> (iforce.get());
-				force->preCalc(m_time);
-
-				for(int j = 0; j < particleAmount; ++j)
-				{
-					Particle &p = m_parts[j];
-
-					if(p.alive) 
-					{
-						force->calcForce(f, p.position, p.velocity);
-						p.velocity += f;
-					}
-				}
-			}
-			else if(forceType == GravityPointParticleForce::getType())
-			{
-				GravityPointParticleForce *force = static_cast<GravityPointParticleForce *> (iforce.get());
 				force->preCalc(m_time);
 
 				for(int j = 0; j < particleAmount; ++j)
@@ -1165,9 +1150,11 @@ void GenParticleSystem::defaultParseFrom(const ParserGroup& pg, GenParticleSyste
 	eds.heightmapHeight = static_cast<bool>(convertFromString<int>(pg.getValue("heightmap_spawn", ""), false));
 	eds.outsideFade = static_cast<bool>(convertFromString<int>(pg.getValue("outside_fade", ""), false));
 
+#ifdef _MSC_VER
 #pragma message ("***************************************************")
 #pragma message ("Quick fix. This really needs logging with filename.")
 #pragma message ("***************************************************")
+#endif
 	if(eds.darkening < 0.f)
 		eds.darkening = 0.f;
 	if(eds.darkening > 1.f)
@@ -1300,14 +1287,7 @@ void GenParticleSystem::prepareForLaunch(IStorm3D* s3d, IStorm3D_Scene* scene,
 void GenParticleSystem::setSpawnModel(IStorm3D_Model *model)
 {
 	spawnHelpers.clear();
-	spawnHelperEnds.clear();
 	spawnModel = model;
-	if (model != NULL)
-	{
-		lastModelPosition = model->GetPosition();
-	}
-	lastModelVelocity = VC3(0,0,0);
-	modelPositionSamplingCounter = 0;
 
 	if(spawnModel)
 	{
@@ -1327,38 +1307,6 @@ else
 			if(helper)
 				spawnHelpers.push_back(helper);
 		}
-		for(int i = 0; i < (int)spawnHelpers.size(); ++i)
-		{
-			VC3 mypos = spawnHelpers[i]->GetGlobalPosition();
-			float closestDistSq = 0.5f*0.5f; // MAX 0.5 meters
-			int closestIndex = -1;
-			for(int j = 0; j < (int)spawnHelpers.size(); ++j)
-			{
-				if (j != i)
-				{
-					VC3 otherpos = spawnHelpers[j]->GetGlobalPosition();
-					VC3 diff = otherpos - mypos;
-
-					// prefer downward direction. :)
-#if defined(PROJECT_AOV) && !defined(PROJECT_PARTICLE_EDITOR)
-					if (diff.z > 0.0f)
-						diff.z /= 5.0f;
-#else
-					if (diff.y > 0.0f)
-						diff.y /= 5.0f;
-#endif
-
-					float diffLenSq = diff.GetSquareLength();
-					if (diffLenSq < closestDistSq)
-					{
-						closestDistSq = diffLenSq;
-						closestIndex = j;
-					}
-				}
-			}
-			spawnHelperEnds.push_back(closestIndex);
-		}
-		assert(spawnHelperEnds.size() == spawnHelpers.size());
 	}
 }
 

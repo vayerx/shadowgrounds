@@ -23,7 +23,7 @@ public:
 	int getDurabilityTypeAmount() const;
 	const std::string &getDurabilityTypeName(int index) const;
 
-	const int getDurabilityTypeIndexByName(const std::string &name) const;
+	int getDurabilityTypeIndexByName(const std::string &name) const;
 
 	float getMinimumDurabilityRequiredForce() const;
 

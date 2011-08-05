@@ -6,12 +6,14 @@
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
+#include <vector>
+#include <GL/glew.h>
 #include "storm3d_common_imp.h"
-#include "istorm3d_mesh.h"
+#include "IStorm3D_Mesh.h"
 #include "storm3d_mesh_collisiontable.h"
 #include "storm3d_resourcemanager.h"
+#include "igios.h"
 #include <c2_sphere.h>
-#include <vector>
 
 class Storm3D_Bone;
 
@@ -29,34 +31,36 @@ struct Storm3D_Weight
 	signed char weight2;
 };
 
-
 struct Storm3D_BoneChunk
 {
 	Storm3D_BoneChunk()
-	:	index_buffer(0),
+	:	bone_indices(),
+		index_buffer(0),
 		vertex_buffer(0),
 		index_count(0),
 		vertex_count(0)
 	{
 	}
-
+/*
 	Storm3D_BoneChunk(const Storm3D_BoneChunk &other)
-	:	index_buffer(0),
-		vertex_buffer(0),
-		index_count(0),
+	:	index_count(0),
 		vertex_count(0)
 	{
 		*this = other;
 	}
-
+*/
 	~Storm3D_BoneChunk() 
 	{ 
-		if(index_buffer)
-			index_buffer->Release();
-		if(vertex_buffer)
-			vertex_buffer->Release();
+		if(index_buffer != 0 && glIsBuffer(index_buffer)) {
+			glDeleteBuffers(1, &index_buffer);
+			index_buffer = 0;
+		}
+		if(index_buffer != 0 && glIsBuffer(vertex_buffer)) {
+			glDeleteBuffers(1, &vertex_buffer);
+			index_buffer = 0;
+		}
 	}
-
+/*
 	Storm3D_BoneChunk &operator = (const Storm3D_BoneChunk &other)
 	{
 		if(index_buffer)
@@ -78,12 +82,11 @@ struct Storm3D_BoneChunk
 
 		return *this;
 	}
-
+*/
 	// Bone index, shader index
-	//std::vector<std::pair<int, int> > bone_indices;
 	std::vector<int> bone_indices;
-	LPDIRECT3DINDEXBUFFER9 index_buffer;
-	LPDIRECT3DVERTEXBUFFER9 vertex_buffer;
+	GLuint index_buffer;
+	GLuint vertex_buffer;
 	int index_count;
 	int vertex_count;
 };
@@ -116,9 +119,9 @@ class Storm3D_Mesh : public IStorm3D_Mesh
 	// Split data
 	std::vector<Storm3D_BoneChunk> bone_chunks[LOD_AMOUNT];
 
-	// DirectX Buffers (temporary)
-	LPDIRECT3DVERTEXBUFFER9 dx_vbuf;	// Vertexbuffer (in videomemory)
-	LPDIRECT3DINDEXBUFFER9 dx_ibuf[LOD_AMOUNT]; // Indexbuffer (in videomemory)
+	// Buffers (temporary)
+	GLuint vbuf;				// Vertexbuffer (in videomemory)
+	GLuint ibuf[LOD_AMOUNT];	// Indexbuffer (in videomemory)
 	int vbuf_vsize;
 	DWORD vbuf_fvf;
 	
@@ -128,7 +131,6 @@ class Storm3D_Mesh : public IStorm3D_Mesh
 	float radius;			// Distance from object center (=position) to the most distant vertex (squared for optimization)
 	float sq_radius;		// Squared radius (for optimization)
 	float radius2d;
-	//Storm3D_Box box;		// Bounding box
 	bool rb_update_needed;	// Set if box/radius need to be rebuilt
 
 	// New update(and rebuild) system
@@ -136,13 +138,7 @@ class Storm3D_Mesh : public IStorm3D_Mesh
 	bool update_vx_amount;
 	bool update_fc;
 	bool update_fc_amount;
-
-	// Old... change these
-	//bool lod_rebuild_needed;
-	//bool lod_rebuild_needed_collision;
 	bool col_rebuild_needed;
-
-	int collision_faces;
 
 	// Precalculation (speed up)
 	void CalculateRadiusAndBox();
@@ -203,12 +199,7 @@ public:
 	void ChangeFaceCount(int new_face_count);
 	void ChangeVertexCount(int new_vertex_count);
 	void UpdateCollisionTable();	// Use this after editing, if you want collisions to this object
-
-	// set the amount of faces used for collision (used by blackedge to use only first half of faces for collision)
-	// (the default value of -1 means use actual face count)
-	void SetCollisionFaces(int collision_faces) { this->collision_faces = collision_faces; }
-	int GetCollisionFaces() { return collision_faces; }
-
+	
 	bool HasWeights() const;
 
 	// Test ray collision (these return true if collided)
@@ -222,6 +213,3 @@ public:
 	friend class Storm3D_Mesh_CollisionTable;
 	friend struct Storm3D_KeyFrame_Mesh;
 };
-
-
-

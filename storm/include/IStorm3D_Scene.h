@@ -6,7 +6,6 @@
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
-#include <windows.h>
 
 // Common datatypes
 #include "DatatypeDef.h"
@@ -42,7 +41,7 @@ class ST3D_EXP_DLLAPI IStorm3D_Scene
 
 public:
 
-	virtual inline IStorm3D * getStorm()=0;
+	virtual IStorm3D * getStorm()=0;
 
 	// Scene's camera
 	virtual IStorm3D_Camera *GetCamera()=0;
@@ -52,7 +51,7 @@ public:
 
 	// Rendering (returns polygon count)
 	virtual int RenderScene(bool present = true) = 0;
-	virtual void RenderSceneWithParams(bool flip,bool disable_hsr, bool update_time, bool render_mirrored) = 0;
+	virtual void RenderSceneWithParams(bool flip,bool disable_hsr, bool update_time, bool render_mirrored, IStorm3D_Texture *target) = 0;
 	virtual void RenderVideo(const char *fileName, IStorm3D_StreamBuilder *streamBuilder) = 0;
 
 	// Rendering (to dynamic textures)
@@ -129,9 +128,9 @@ class ST3D_EXP_DLLAPI IStorm3D_Camera
 public:
 
 	// Set parameters
-	virtual void SetPosition(VC3 &v)=0;
-	virtual void SetTarget(VC3 &v)=0;
-	virtual void SetUpVec(VC3 &v)=0;
+	virtual void SetPosition(const VC3 &v)=0;
+	virtual void SetTarget(const VC3 &v)=0;
+	virtual void SetUpVec(const VC3 &v)=0;
 	virtual void SetFieldOfView(float fov_ang)=0;
 	virtual void SetFieldOfViewFactor(float fov_factor)=0;
 	virtual void SetVisibilityRange(float range)=0;
@@ -139,9 +138,9 @@ public:
 	virtual void SetZNearDefault() = 0;
 
 	// Get parameters
-	virtual VC3 &GetPosition()=0;
-	virtual VC3 &GetTarget()=0;
-	virtual VC3 &GetUpVec()=0;
+	virtual const VC3 &GetPosition() const=0;
+	virtual const VC3 &GetTarget() const=0;
+	virtual const VC3 &GetUpVec() const=0;
 	virtual VC3 GetUpVecReal() const=0;	// Fixes upvector to 90 deg angle from direction
 	virtual VC3 GetDirection() const=0;
 	virtual float GetFieldOfView() const=0;
@@ -159,13 +158,12 @@ public:
 	virtual bool TestSphereVisibility(const VC3 &position,float radius)=0;
 	virtual bool TestPointVisibility(const VC3 &position)=0;
 
-	// Get camera matrix (for vector view transformation etc)
-	virtual float *GetViewProjection4x4Matrix()=0;
-
 	virtual void ForceOrthogonalProjection (bool force, float minx = 0.0f, float maxx = 0.0f, float miny = 0.0f, float maxy = 0.0f) = 0; // when force == false, disables forcing the matrix.
 
 	virtual bool GetTransformedToScreen(const VC3 &source,VC3 &result,float &rhw,float &real_z) = 0;
 	virtual void SetAspectRatio(float ratio) = 0;
+
+	virtual void getRayVector(int x, int y, VC3 &dir, VC3 &origin, float near_z) = 0;
 
 	virtual bool GetForcedOrthogonalProjectionEnabled() = 0;
 

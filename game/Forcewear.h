@@ -45,6 +45,6 @@ public:
 	static int SendEffect( unsigned int ef, unsigned int side );
 
 	// For scripting purproses: converts a string to a corresponding int, which is again converted to Forcewear API ID.
-	static unsigned int stringToType(char *string); 
+	static unsigned int stringToType(const char *string);
 
 };

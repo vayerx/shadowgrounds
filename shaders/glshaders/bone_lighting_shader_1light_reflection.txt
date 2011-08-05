@@ -1,0 +1,142 @@
+!!ARBvp1.0
+PARAM object[4] = { state.matrix.program[0] };
+PARAM mvp[4] = { state.matrix.mvp };
+PARAM tm2[4] = { state.matrix.texture[2] };
+#fromList ["c"]
+TEMP r0, r1, r2, r3, r4, r5, r6, r7, r8;
+ADDRESS a0;
+PARAM c[100] = { program.env[0..99] };
+OUTPUT oD0 = result.color.primary;
+OUTPUT oD1 = result.color.secondary;
+OUTPUT oFog = result.fogcoord;
+OUTPUT oPos = result.position;
+OUTPUT oT0 = result.texcoord[0];
+OUTPUT oT1 = result.texcoord[1];
+OUTPUT oT2 = result.texcoord[2];
+OUTPUT oT3 = result.texcoord[3];
+# Shader with bone deforming (1 weight):
+#   -> Transform vertex/normals
+#   -> Apply ambient color
+#   -> Apply surface color
+#   -> Apply directional light
+#   -> Apply base texturing 
+# Constant declarations:
+#   -> c[0..3] -> World x View x Projection matrix
+#   -> c[4..7] -> World matrix (first 3 rows)   
+#   -> c[7]    -> Ambient color (.w transparency)
+#   -> c[8]    -> Diffuse color
+#   -> c[9]    -> Light position1 (.w 0.f for clamping)
+#   -> c[10]   -> Light color1 (.w -> 1 / range)
+#   -> c[11]   -> Sun direction (.w offset.x)
+#   -> c[12]    -> Light position2 (.w offset.y)
+#   -> c[13]   -> Light color2 (.w -> 1 / range)
+#   -> c[18]   -> Camera position
+#   -> c[19]   -> Fog
+# Vertex data:
+#   -> v0 -> position
+#   -> v1,2 -> texture coordinates
+#   -> v3 -> normal
+#   -> v6 -> index 1 / weight 1 (x,y) & index 2 / weight 2 (z,w)
+ATTRIB v0 = vertex.position;
+ATTRIB v3 = vertex.normal;
+ATTRIB v1 = vertex.texcoord[0];
+ATTRIB v2 = vertex.texcoord[1];
+ATTRIB v6 = vertex.texcoord[2];
+ATTRIB v7 = vertex.texcoord[3];
+# ** Bone 1 **
+# Set index
+ARL a0.x, v6.x;
+# Transform position
+DP4 r0.x, v0, c[a0.x + 0];
+DP4 r0.y, v0, c[a0.x + 1];
+DP4 r0.z, v0, c[a0.x + 2];
+#mov r0.w, v0.w
+# Bone 2
+MUL r0.xyz, r0.xyzz, v6.y;
+ARL a0.x, v7.x;
+DP4 r1.x, v0, c[a0.x + 0];
+DP4 r1.y, v0, c[a0.x + 1];
+DP4 r1.z, v0, c[a0.x + 2];
+MAD r0.xyz, r1.xyzz, v7.y, r0.xyzz;
+MOV r0.w, v0.w;
+SUB r4.x, r0.w, v6.y;
+SUB r4.x, r4.xxxx, v7.y;
+MAD r0.xyz, v0.xyzz, r4.xxxx, r0.xyzz;
+DP4 r7.x, r0, object[0];
+DP4 r7.y, r0, object[1];
+DP4 r7.z, r0, object[2];
+# Transform to clip space
+DP4 r8.x, r0, mvp[0];
+DP4 r8.y, r0, mvp[1];
+DP4 r8.z, r0, mvp[2];
+DP4 r8.w, r0, mvp[3];
+
+MOV oPos, r8;
+ARL a0.x, v6.x;
+# r5 -> vertex normal
+DP3 r2.x, v3, c[a0.x + 0];
+DP3 r2.y, v3, c[a0.x + 1];
+DP3 r2.z, v3, c[a0.x + 2];
+DP3 r5.x, r2, object[0];
+DP3 r5.y, r2, object[1];
+DP3 r5.z, r2, object[2];
+# ** POINT LIGHT 1 **
+# r1 -> (light position - vertex position)
+SUB r1.xyz, c[9].xyzz, r7.xyzz;
+# r2.x -> squared r1 length
+DP3 r2.x, r1.xyzz, r1.xyzz;
+# r2.x -> 1/r1 length
+RSQ r2, r2.x;
+# r1 -> normalized (light position - vertex position)
+MUL r1, r1.xyzz, r2.xxxx;
+# normalize
+# r0 vertex normal dot r1
+DP3 r6.x, r5.xyzz, r1.xyzz;
+# Clamp
+MAX r6.x, r6.xxxx, c[9].w;
+# .. fade it ..
+RCP r3, r2.x;
+MUL r3, r3, c[10].w;
+SUB r3, v0.w, r3.xxxx;
+MAX r3, r3.xxxx, c[9].w;
+MUL r6.x, r6.xxxx, r3.xxxx;
+# Color
+MUL r0, r6.xxxx, c[10];
+# Directional (sun)
+DP3 r1.x, r5.xyzz, c[11].xyzz;
+MAX r1.x, r1.xxxx, c[9].w;
+ADD r0.xyz, r0.xyzz, r1.xxxx;
+# Add ambient color and multiply with material color
+#add oD0.xyz, c[7].xyz, r0.xyz
+ADD r0, c[7].xyzz, r0.xyzz;
+MIN oD0.xyz, r0.xyzz, v0.w;
+MOV oD0.w, c[7].w;
+MOV oD1, c[8];
+# Texturing
+ADD oT0.x, v1.xyyy, c[11].w;
+ADD oT0.y, v1.xyyy, c[12].w;
+# Lightmap filter coordinates
+MOV oT1.xy, v2;
+# Fake position
+DP4 r0.x, r8, tm2[0];
+DP4 r0.y, r8, tm2[1];
+DP4 r0.z, r8, tm2[2];
+DP4 r0.w, r8, tm2[3];
+
+MOV oT2, r0;
+# Reflection
+SUB r6.xyz, c[18].xyzz, r7.xyzz;
+#sub r1.xyz, c[18].xyz, r7.xyz
+#dp3 r2.x, r1.xyz, r1.xyz
+#rsq r2, r2.x
+#mul r6, r1.xyz, r2.x ; -> vector to camera
+# Mirror
+DP3 r8, r6, r5;
+ADD r8, r8, r8;
+MUL r8, r8, r5.xyzz;
+SUB oT3.xyz, r6.xyzz, r8;
+# -> reflected normal
+# Height fog
+SUB r0, r7.y, c[19].x;
+MUL oFog, r0.xxxx, c[19].y;
+END

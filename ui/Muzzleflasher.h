@@ -24,7 +24,7 @@ namespace ui
 
 			static void createMuzzleflash(IPointableObject *unit, VisualObject *muzzleflash, const std::string &name, const std::string &helper);
 			static bool getMuzzleflash(IPointableObject *unit, VisualObject *muzzleflash, const std::string &name, const std::string &helper, VC3 &pos, VC3 &scale, QUAT &rot);
-			static void updateMuzzleflash(IPointableObject *unit, VisualObject *muzzleflash, const std::string &name, const std::string &helper, VC3 &pos, VC3 &scale);
+			static void updateMuzzleflash(IPointableObject *unit, VisualObject *muzzleflash, const std::string &name, const std::string &helper, const VC3 &pos, const VC3 &scale);
 
 	};
 

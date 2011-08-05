@@ -49,16 +49,10 @@ DynamicLightManager::DynamicLightManager(LightManager *lightManager)
 :	data(new Data(lightManager))
 {
 	PointLight light;
-	//light.color = COL(0.7f,0.7f,0.2f);
-	light.color = COL(0.639f,0.427f,0.122f);
+	light.color = COL(0.7f,0.7f,0.2f);
 	light.position = VC3(0,0,0);
 	light.range = 5;
 	addLightType("dynamic_light_fire_medium", light);
-
-	light.color = COL(0.7f,0.5f,0.1f);
-	light.position = VC3(0,0,0);
-	light.range = 4;
-	addLightType("el_fire", light);
 }
 
 DynamicLightManager::~DynamicLightManager()
@@ -227,7 +221,7 @@ UnifiedHandle DynamicLightManager::getUnifiedHandle(int typeId, int instanceId) 
 	assert(instanceId >= 0 && instanceId <= UNIFIED_HANDLE_DYNAMIC_LIGHT_INSTANCE_ID_LAST_VALUE);
 
 	// note, this is always true, assuming the masks, etc. are not totally wrong..
-	assert(IS_UNIFIED_HANDLE_DYNAMIC_LIGHT(UNIFIED_HANDLE_BIT_DYNAMIC_LIGHT | typeId | (instanceId << UNIFIED_HANDLE_DYNAMIC_LIGHT_INSTANCE_ID_SHIFT)));
+	assert(IS_UNIFIED_HANDLE_DYNAMIC_LIGHT((UNIFIED_HANDLE_BIT_DYNAMIC_LIGHT | typeId | (instanceId << UNIFIED_HANDLE_DYNAMIC_LIGHT_INSTANCE_ID_SHIFT))));
 
 	return (UNIFIED_HANDLE_BIT_DYNAMIC_LIGHT | typeId | (instanceId << UNIFIED_HANDLE_DYNAMIC_LIGHT_INSTANCE_ID_SHIFT));
 }
@@ -258,56 +252,6 @@ bool DynamicLightManager::doesLightExist(UnifiedHandle handle) const
 		return false;
 
 	return type.instances[instanceId].enabled;
-}
-
-VC3 DynamicLightManager::getLightPosition(UnifiedHandle unifiedHandle) const
-{
-	assert(VALIDATE_UNIFIED_HANDLE_BITS(unifiedHandle));
-	assert(IS_UNIFIED_HANDLE_DYNAMIC_LIGHT(unifiedHandle));
-
-	int typeId = 0;
-	int instanceId = 0;
-	unifiedHandleToLightIds(unifiedHandle, typeId, instanceId);
-
-	if(typeId < 0 || typeId >= int(data->lights.size()))
-	{
-		assert(!"DynamicLightManager::getLightPosition - bad type id.");
-		return VC3(0,0,0);
-	}
-
-	LightType &type = data->lights[typeId];
-	if(instanceId < 0 || instanceId >= int(type.instances.size()))
-	{
-		assert(!"DynamicLightManager::getLightPosition - bad instance id.");
-		return VC3(0,0,0);
-	}
-
-	return type.instances[instanceId].position;
-}
-
-void DynamicLightManager::setLightPositionByUnifiedHandle(UnifiedHandle unifiedHandle, const VC3 &position)
-{
-	assert(VALIDATE_UNIFIED_HANDLE_BITS(unifiedHandle));
-	assert(IS_UNIFIED_HANDLE_DYNAMIC_LIGHT(unifiedHandle));
-
-	int typeId = 0;
-	int instanceId = 0;
-	unifiedHandleToLightIds(unifiedHandle, typeId, instanceId);
-
-	if(typeId < 0 || typeId >= int(data->lights.size()))
-	{
-		assert(!"DynamicLightManager::setLightPositionByUnifiedHandle - bad type id.");
-		return;
-	}
-
-	LightType &type = data->lights[typeId];
-	if(instanceId < 0 || instanceId >= int(type.instances.size()))
-	{
-		assert(!"DynamicLightManager::setLightPositionByUnifiedHandle - bad instance id.");
-		return;
-	}
-
-	setLightInstancePosition(typeId, instanceId, position);
 }
 
 } // ui

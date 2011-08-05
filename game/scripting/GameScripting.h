@@ -35,7 +35,7 @@ namespace game
 
 		~GameScripting();
 
-    virtual bool process(util::ScriptProcess *sp, int command, int intData, 
+    virtual bool process(util::ScriptProcess *sp, int command, floatint intFloat,
       char *stringData, ScriptLastValueType *lastValue);
 
     void loadScripts(const char *filename, const char *relativeToFilenamePath);
@@ -93,10 +93,10 @@ namespace game
 		virtual void *getGamePhysicsScriptRunnerImplementation();
 
 		// methods for transition to other scripting languages or for effective simple runtime script command running
-		void runSingleCommand(int command, int intData, const char *stringData, int *lastValue, int *secondaryValue, GameScriptData *gsd);
-		void runSingleSimpleCommand(int command, int intData, const char *stringData, int *lastValue = 0, int *secondaryValue = 0);
+		void runSingleCommand(int command, floatint intFloat, const char *stringData, int *lastValue, int *secondaryValue, GameScriptData *gsd);
+		void runSingleSimpleCommand(int command, floatint intFloat, const char *stringData, int *lastValue = 0, int *secondaryValue = 0);
 		bool runSingleSimpleStringCommand(const char *command, const char *param, int *lastValue = 0, int *secondaryValue = 0);
-		void runMultipleSimpleCommands(int commandAmount, int *command, int *intData, const char **stringData, int *lastValue = 0, int *secondaryValue = 0);
+		void runMultipleSimpleCommands(int commandAmount, int *command, floatint *intFloat, const char **stringData, int *lastValue = 0, int *secondaryValue = 0);
 		bool runMultipleSimpleStringCommands(int commandAmount, const char **command, const char **param, int *lastValue = 0, int *secondaryValue = 0);
 
 

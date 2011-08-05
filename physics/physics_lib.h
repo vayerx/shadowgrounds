@@ -3,11 +3,16 @@
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 #include <string>
 #include <vector>
 #include "IPhysicsLibScriptRunner.h"
 #include "../game/physics/physics_collisiongroups.h"
+#include "../system/Logger.h"
+
+#ifdef PHYSICS_PHYSX
+#include <NxPhysics.h>
+#endif
 
 
 #define PHYSICSLIB_GROUP_CONTACT_NONE 0
@@ -21,6 +26,32 @@ class NxMaterial;
 
 namespace frozenbyte {
 namespace physics {
+
+#ifdef PHYSICS_PHYSX
+struct PhysicsLogger: public NxUserOutputStream
+{
+	void reportError(NxErrorCode code, const char *message, const char *file, int line)
+	{
+		print(message);
+	}
+ 
+	NxAssertResponse reportAssertViolation(const char *message, const char *file, int line)
+	{
+		print(message);
+		return NX_AR_CONTINUE;
+	}
+ 
+	void print(const char *message)
+	{
+		//MessageBox(0, message, "Shit happens", MB_OK);
+		assert(!"Physics error");
+
+		std::string msgstr = std::string("physics_lib - ") + message;
+		::Logger::getInstance()->error(msgstr.c_str());
+	}
+};
+#endif
+
 
 // HACK: too lazy to make any proper methods for these..
 extern int physicslib_group_cont[PHYSICS_MAX_COLLISIONGROUPS][PHYSICS_MAX_COLLISIONGROUPS];
@@ -39,8 +70,6 @@ class RackActor;
 class Fluid;
 class ActorBase;
 class SphericalJoint;
-class D6Joint;
-
 #ifdef PROJECT_CLAW_PROTO
 class CarActor;
 #endif
@@ -93,72 +122,6 @@ public:
 	}
 };
 
-struct PhysicsJoint
-{
-	struct Limit
-	{
-		VC3 angle;
-		VC3 restitution;
-		VC3 spring;
-		VC3 damping;
-
-		bool hasX() const
-		{
-			return angle.x != 0.f || spring.x != 0.f;
-		}
-
-		bool hasY() const
-		{
-			return angle.y != 0.f || spring.y != 0.f;
-		}
-
-		bool hasZ() const
-		{
-			return angle.z != 0.f || spring.z != 0.f;
-		}
-	};
-
-	VC3 globalAnchor;
-	VC3 globalAxis;
-	VC3 globalNormal;
-
-	// Only x-angle supports low and high limits. Others use only high settings.
-	Limit low;
-	Limit high;
-
-	float breakForce;
-
-	PhysicsJoint()
-	:	breakForce(0.f)
-	{
-	}
-};
-
-class JointDeformingListener
-{
-public:
-	virtual void onJointBreak(D6Joint *jointBase, const VC3 &position) = 0;
-};
-
-class JointDeformingInfo
-{
-public:
-	JointDeformingInfo(float bendAngle, float breakAngle, float durability, int resetCollisionGroupOnBreak = -1, float resetAngularDampingOnBreak = -1.0f) :
-			bendAngle(bendAngle),
-			breakAngle(breakAngle),
-			durability(durability),
-			resetCollisionGroupOnBreak(resetCollisionGroupOnBreak),
-			resetAngularDampingOnBreak(resetAngularDampingOnBreak)
-	{}
-
-	JointDeformingInfo() : resetCollisionGroupOnBreak(-1), resetAngularDampingOnBreak(-1.0f) {}
-public:
-	float bendAngle;
-	float breakAngle;
-	float durability;
-	float resetAngularDampingOnBreak;
-	int resetCollisionGroupOnBreak;
-};
 
 class PhysicsLib
 {
@@ -179,7 +142,6 @@ public:
 	// Actors
 	boost::shared_ptr<SphereActor> createSphereActor(float radius, const VC3 &position);
 	boost::shared_ptr<BoxActor> createBoxActor(const VC3 &sizes, const VC3 &position, const VC3 &localPosition = VC3());
-	boost::shared_ptr<BoxActor> createBoxActor(const std::string &shapes, const VC3 &position);
 	boost::shared_ptr<CapsuleActor> createCapsuleActor(float height, float radius, const VC3 &position, float offset = 0.0f, int axisNumber = 1);
 	boost::shared_ptr<ConvexActor> createConvexActor(const boost::shared_ptr<ConvexMesh> &mesh, const VC3 &position);
 	boost::shared_ptr<StaticMeshActor> createStaticMeshActor(const boost::shared_ptr<StaticMesh> &mesh, const VC3 &position, const QUAT &rotation);
@@ -192,7 +154,6 @@ public:
 
 	// Joints
 	boost::shared_ptr<SphericalJoint> createSphericalJoint(boost::shared_ptr<ActorBase> &a, boost::shared_ptr<ActorBase> &b, const VC3 &globalAnchor);
-	boost::shared_ptr<D6Joint> createGeneralJoint(boost::shared_ptr<ActorBase> &a, boost::shared_ptr<ActorBase> &b, const PhysicsJoint &joint);
 
 	// Fluid
 	enum FluidType
@@ -201,7 +162,9 @@ public:
 		FLUID_TYPE_INTERACTION
 	};
 
+#ifndef NX_DISABLE_FLUIDS
 	boost::shared_ptr<Fluid> createFluid(FluidType fluidType, int maxParticles, float fluidStaticRestitution, float fluidStaticAdhesion, float fluidDynamicRestitution, float fluidDynamicAdhesion, float fluidDamping, float fluidStiffness, float fluidViscosity, float fluidKernelRadiusMultiplier, float fluidRestParticlesPerMeter, float fluidRestDensity, float fluidMotionLimit, int fluidPacketSizeMultiplier, int collGroup);
+#endif
 
 	// Misc
 	void addGroundPlane(float height);
@@ -253,7 +216,9 @@ public:
 	void enableFeature(PhysicsLib::Feature feature, bool enable);
 
 	bool isRunningInHardware() const;
+#ifndef NX_DISABLE_FLUIDS
 	int getActiveFluidParticleAmount() const;
+#endif
 	std::string getStatistics() const;
 	std::string getLoggableStatistics() const;
 };

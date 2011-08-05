@@ -21,8 +21,8 @@ namespace game
 			/** 
 			 * Just processes one command...
 			 */
-			static void UnitScripting::process(util::ScriptProcess *sp, 
-				int command, int intData, char *stringData, ScriptLastValueType *lastValue, 
+			static void process(util::ScriptProcess *sp, 
+				int command, floatint intFloat, const char *stringData, ScriptLastValueType *lastValue,
 				GameScriptData *gsd, Game *game, bool *pause);
 
 			static Unit *findClosestHostileUnit(Game *game, VC3 &position, int player, Unit *ignore);
@@ -32,7 +32,7 @@ namespace game
 			static Unit *findUnitByCharacterName(Game *game, const char *charname);
 			static Unit *findClosestUnitOfType(Game *game, const VC3 &position, const char *unittype);
 
-			static Unit *nextOwnedUnit(Game *game, VC3 &position, int player, Unit *ignore, bool only_active = true );
+			static Unit *nextOwnedUnit(Game *game, const VC3 &position, int player, Unit *ignore, bool only_active = true );
 			static Unit *randomOwnedUnit(Game *game, VC3 &position, int player);
 
 			static Unit *findClosestUnitWithVariableSet(Game *game, const VC3 &position, const char *unitvar, bool varIsNonZero);

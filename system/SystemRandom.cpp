@@ -1,15 +1,17 @@
 
 #include "precompiled.h"
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
 #pragma warning(disable:4786)
+#endif
 
 #include <stdlib.h>
 #include <time.h>
 
 
 #include "SystemRandom.h"
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 SystemRandom *SystemRandom::instance = NULL;
 
@@ -34,7 +36,7 @@ void SystemRandom::cleanInstance()
 
 SystemRandom::SystemRandom()
 {
-  srand(unsigned int(time(0)));
+  srand((unsigned int) time(0));
 }
 
 SystemRandom::~SystemRandom()

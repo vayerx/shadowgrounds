@@ -68,6 +68,9 @@ public:
 
 	//.........................................................................
 
+	static int convertToRunningNum( int i );
+	static CoopMenu::COMMANDS convertToPlayerNum( int i );
+
 	int getType() const;
 
 	// bool wasQuitPressed() const;

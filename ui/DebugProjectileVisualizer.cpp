@@ -92,7 +92,7 @@ namespace ui
 			if (game::SimpleOptions::getBool(DH_OPT_B_DEBUG_VISUALIZE_PROJECTILES_EXTENDED)
 				&& distToCamSq < (DEBUGPROJECTILEVISUALIZER_EXTENDED_MAX_DIST*DEBUGPROJECTILEVISUALIZER_EXTENDED_MAX_DIST))
 			{
-				sprintf(textbuf, "id: %d", projectile->getHandle());
+				sprintf(textbuf, "uh: %d", projectile->getHandle());
 				DebugVisualizerTextUtil::renderText(pos, 0, textoffy, textbuf);
 				textoffy += 16;
 

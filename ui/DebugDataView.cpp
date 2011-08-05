@@ -458,7 +458,6 @@ namespace ui
 						show_perf = true;
 
 					util::LightAmountManager *lightman = util::LightAmountManager::getInstance();
-					IStorm3D_Terrain *terrain = impl->game->gameUI->getTerrain()->GetTerrain();
 
 					for (int y = 0; y < DEBUG_DATA_VIEW_SIZE_Y; y++)
 					{
@@ -638,7 +637,7 @@ namespace ui
 										int occx = impl->game->gameUI->getGridOcclusionCuller()->scaledToOcclusionX(scaledX);
 										int occy = impl->game->gameUI->getGridOcclusionCuller()->scaledToOcclusionY(scaledY);
 										bool isVis = impl->game->gameUI->getGridOcclusionCuller()->isVisibleToArea(occx, occy, impl->game->gameUI->getGridOcclusionCuller()->getAreaForOrderNumber(impl->currentOcclusionArea));
-										int mapArea = impl->game->gameUI->getGridOcclusionCuller()->getCameraArea(occx, occy);
+										GRIDOCCLUSIONCULLER_DATATYPE mapArea = impl->game->gameUI->getGridOcclusionCuller()->getCameraArea(occx, occy);
 										bool isArea = false;
 										if (mapArea == impl->game->gameUI->getGridOcclusionCuller()->getAreaForOrderNumber(impl->currentOcclusionArea))
 											isArea = true;
@@ -657,7 +656,6 @@ namespace ui
 										}
 										// HACK: ...
 										// TODO: should _really_ optimize...
-										bool isBorder = false;
 										float scaledYUp = impl->game->gameMap->obstacleToScaledY(mapy-1);
 										int occyUp = impl->game->gameUI->getGridOcclusionCuller()->scaledToOcclusionY(scaledYUp);
 										float scaledXLeft = impl->game->gameMap->obstacleToScaledX(mapx-1);
@@ -678,7 +676,7 @@ namespace ui
 												impl->debugData[(x + y * DEBUG_DATA_VIEW_SIZE_X) * 4 + 2] = 255;
 											} else {
 												impl->debugData[(x + y * DEBUG_DATA_VIEW_SIZE_X) * 4 + 1] = 64;
-												int selarea = impl->game->gameUI->getGridOcclusionCuller()->getCameraArea(occx, occy);
+												GRIDOCCLUSIONCULLER_DATATYPE selarea = impl->game->gameUI->getGridOcclusionCuller()->getCameraArea(occx, occy);
 												bool borderArea = false;
 												if (impl->game->gameUI->getGridOcclusionCuller()->isInOcclusionBoundaries(occx, occyUp)
 													&& selarea != impl->game->gameUI->getGridOcclusionCuller()->getCameraArea(occx, occyUp))
@@ -698,6 +696,7 @@ namespace ui
 										}
 									}
 								}
+#ifdef LINKEDLIST_USE_NODE_POOL
 								if (show_nodepool)
 								{									
 									int nodeIndex = (x & 511) + (y * 512);
@@ -727,6 +726,7 @@ namespace ui
 										impl->debugData[(x + y * DEBUG_DATA_VIEW_SIZE_X) * 4 + 2] = 0;
 									}
 								}
+#endif  // LINKEDLIST_USE_NODE_POOL
 								impl->debugData[(x + y * DEBUG_DATA_VIEW_SIZE_X) * 4 + 3] = (unsigned char)((int)(255 * viewAlpha) / 100);	
 							}
 						}
@@ -970,7 +970,7 @@ namespace ui
 				impl->debugData[(DEBUG_DATA_VIEW_SIZE_X / 2 + (DEBUG_DATA_VIEW_SIZE_Y / 2) * DEBUG_DATA_VIEW_SIZE_X) * 4 + 3] = 255;
 				//}
 
-				impl->debugDataTexture->Copy32BitSysMembufferToTexture((DWORD *)impl->debugData);
+				impl->debugDataTexture->Copy32BitSysMembufferToTexture((Uint32 *)impl->debugData);
 			}
 			scene->Render2D_Picture(impl->debugDataMaterial, VC2(0,0), VC2(DEBUG_DATA_VIEW_SIZE_X*2, DEBUG_DATA_VIEW_SIZE_Y*2));
 		} else {

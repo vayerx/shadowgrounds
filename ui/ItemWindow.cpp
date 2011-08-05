@@ -116,10 +116,10 @@ void ItemWindow::removeItem( const std::string& target, const Item& item )
 ItemWindow::ItemList::ItemList( int x, int y, int addX, int addY ) : 
 	startX( x ),
 	startY( y ),
-	addX( addX ),
-	addY( addY ),
 	curX( x ),
-	curY( y )
+	curY( y ),
+	addX( addX ),
+	addY( addY )
 {
 }
 

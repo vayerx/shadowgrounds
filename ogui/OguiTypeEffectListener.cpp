@@ -2,16 +2,16 @@
 #include "precompiled.h"
 
 #include  "OguiTypeEffectListener.h"
-#include "../game/gameUI.h"
-#include "../game/game.h"
+#include "../game/GameUI.h"
+#include "../game/Game.h"
 
 using namespace game;
 
 ///////////////////////////////////////////////////////////////////////////////
 
 OguiTypeEffectListener::OguiTypeEffectListener( Game* game, const std::string& effectFile ) :
-  game( game ),
-  effectFile( effectFile )
+  effectFile( effectFile ),
+  game( game )
 {
 
 }

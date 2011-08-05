@@ -11,9 +11,11 @@
 
 using namespace game;
 
+/*
 #define FOOAI_WAYPOINTS 4
 float fooAIX[FOOAI_WAYPOINTS] = { 0, -200, 300, 100 };
 float fooAIY[FOOAI_WAYPOINTS] = { 0, 200, 200, -200 };
+*/
 
 ::FoobarAI::FoobarAI(game::Game *game, int player)
 {

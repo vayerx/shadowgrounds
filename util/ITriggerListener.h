@@ -1,7 +1,7 @@
 #ifndef INCLUDED_UTIL_ITRIGGERLISTENER_H
 #define INCLUDED_UTIL_ITRIGGERLISTENER_H
 
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 
 namespace util {
 

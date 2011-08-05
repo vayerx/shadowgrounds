@@ -5,7 +5,7 @@
 
 namespace game
 {
-  char *goreTypeName[GORETYPE_AMOUNT + 1] = 
+  const char *goreTypeName[GORETYPE_AMOUNT + 1] =
 	{
 		"reserved",
 		"slice",
@@ -16,10 +16,6 @@ namespace game
 		"burn",
 		"grind",
 		"electrified",
-		"fall",
-		"partial_fall",
-		"squish",
-		"punch",
 
 		"***"
 	};
@@ -35,10 +31,6 @@ namespace game
 		false,
 		true,
 		false,
-		true,
-		false,
-		true,
-		true,
 
 		(bool)0
 	};

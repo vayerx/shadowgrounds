@@ -114,8 +114,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
+			OutputDirectory="C:\Program Files\Shadowgrounds China"
+			IntermediateDirectory=".\debug"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
 			UseOfMFC="0"
@@ -149,7 +149,7 @@
 				AdditionalIncludeDirectories="../storm/include,../storm/keyb3,."
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;FROZENBYTE_DEBUG_MEMORY;LIGHT_MAX_AMOUNT=5"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="precompiled.h"
 				PrecompiledHeaderFile=".\Debug/shadowgrounds.pch"
@@ -176,12 +176,13 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="storm3dv2.lib dinput8.lib dxguid.lib winmm.lib"
-				OutputFile="Debug/shadowgrounds.exe"
+				AdditionalDependencies="winmm.lib sdl.lib SDLmain.lib sdl_sound.lib user32.lib Comdlg32.lib Gdi32.lib opengl32.lib glew32.lib glu32.lib"
+				OutputFile="$(OutDir)/disposable.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../storm/lib"
-				IgnoreDefaultLibraryNames="libci.lib, libc.lib,stlport_vc6_static.lib"
+				GenerateManifest="true"
+				IgnoreDefaultLibraryNames="libci.lib, libc.lib,stlport_vc6_static.lib,msvcrt.lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Debug/disposable.pdb"
 				SubSystem="2"
@@ -315,7 +316,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="."
+			OutputDirectory="C:\Program Files\Shadowgrounds China"
 			IntermediateDirectory=".\Release"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
@@ -381,12 +382,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dinput8.lib dxguid.lib winmm.lib keyb3.lib"
-				OutputFile="Release/shadowgrounds.exe"
+				AdditionalDependencies="winmm.lib sdl.lib SDLmain.lib sdl_sound.lib user32.lib Comdlg32.lib Gdi32.lib opengl32.lib glew32.lib glu32.lib"
+				OutputFile="$(OutDir)/disposable.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../storm/lib"
-				IgnoreDefaultLibraryNames="libci.lib, libc.lib,stlport_vc6_static.lib"
+				IgnoreDefaultLibraryNames="libci.lib, libc.lib,stlport_vc6_static.lib,msvcrtd.lib,msvcprt.lib,libcmt.lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="./disposable.pdb"
 				SubSystem="2"
@@ -544,6 +545,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\util\jpak.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\system\Miscellaneous.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\precompiled.cpp"
 				>
 				<FileConfiguration
@@ -572,6 +581,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\filesystem\rle_packed_file_wrapper.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\shadowgrounds.cpp"
 				>
 				<FileConfiguration
@@ -590,6 +603,10 @@
 						WholeProgramOptimization="false"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\game\scripting\SyncScripting.cpp"
+				>
 			</File>
 			<File
 				RelativePath="version.cpp"
@@ -1388,6 +1405,14 @@
 							ForcedIncludeFiles=""
 						/>
 					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\game\direct_controls.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\game\EngineMetaValues.cpp"
+					>
 				</File>
 				<File
 					RelativePath="..\game\Flashlight.cpp"
@@ -3412,6 +3437,10 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\game\ScriptableAIDirectControl.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\game\ScriptDebugger.cpp"
 					>
 					<FileConfiguration
@@ -3463,6 +3492,10 @@
 							ForcedIncludeFiles=""
 						/>
 					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\game\SlopeTypes.cpp"
+					>
 				</File>
 				<File
 					RelativePath="..\game\UnifiedHandleManager.cpp"
@@ -4374,6 +4407,10 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\game\userdata.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\game\VisualObjectModelStorage.cpp"
 					>
 					<FileConfiguration
@@ -4962,6 +4999,10 @@
 								ForcedIncludeFiles=""
 							/>
 						</FileConfiguration>
+					</File>
+					<File
+						RelativePath="..\game\scripting\DirectControlScripting.cpp"
+						>
 					</File>
 					<File
 						RelativePath="..\game\scripting\EnvironmentScripting.cpp"
@@ -7189,6 +7230,18 @@
 						>
 					</File>
 					<File
+						RelativePath="..\game\physics\physics_none.cpp"
+						>
+						<FileConfiguration
+							Name="Debug|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
 						RelativePath="..\game\physics\PhysicsContactDamageManager.cpp"
 						>
 					</File>
@@ -7580,6 +7633,22 @@
 					</File>
 					<File
 						RelativePath="..\game\tracking\TrackableUnifiedHandleObject.cpp"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="Forcewear"
+					>
+					<File
+						RelativePath="..\game\Forcewear.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\game\Forcewear.h"
+						>
+					</File>
+					<File
+						RelativePath="..\game\tngaming.h"
 						>
 					</File>
 				</Filter>
@@ -8925,6 +8994,10 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\ui\SelectionVisualizer.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\ui\uidefaults.cpp"
 					>
 					<FileConfiguration
@@ -9574,14 +9647,6 @@
 						<File
 							RelativePath="..\particle_editor2\ParticlePhysics.cpp"
 							>
-							<FileConfiguration
-								Name="shadowground no physics|Win32"
-								ExcludedFromBuild="true"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-								/>
-							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\particle_editor2\particlesystem.cpp"
@@ -12760,6 +12825,10 @@
 					Name="debug_visualizers"
 					>
 					<File
+						RelativePath="..\ui\DebugMapVisualizer.cpp"
+						>
+					</File>
+					<File
 						RelativePath="..\ui\DebugProjectileVisualizer.cpp"
 						>
 					</File>
@@ -12773,6 +12842,34 @@
 					</File>
 					<File
 						RelativePath="..\ui\DebugVisualizerTextUtil.cpp"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="camera"
+					>
+					<File
+						RelativePath="..\ui\camera_system\CameraAreaStreet.h"
+						>
+					</File>
+					<File
+						RelativePath="..\ui\camera_system\CameraSystem.h"
+						>
+					</File>
+					<File
+						RelativePath="..\ui\camera_system\CameraSystemAim.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\ui\camera_system\CameraSystemAreas.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\ui\camera_system\ICameraArea.h"
+						>
+					</File>
+					<File
+						RelativePath="..\ui\camera_system\ICameraSystem.h"
 						>
 					</File>
 				</Filter>
@@ -13152,6 +13249,10 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath="..\util\CheckedIntValue.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\util\Checksummer.cpp"
 					>
 					<FileConfiguration
@@ -13309,6 +13410,10 @@
 							ForcedIncludeFiles=""
 						/>
 					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\util\crc32.cpp"
+					>
 				</File>
 				<File
 					RelativePath="..\util\CursorRayTracer.cpp"
@@ -15378,1021 +15483,6 @@
 				</Filter>
 			</Filter>
 			<Filter
-				Name="ogui"
-				>
-				<File
-					RelativePath="..\ogui\Ogui.cpp"
-					>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Test|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\ogui\OguiButton.cpp"
-					>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Test|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\ogui\OguiButtonEvent.cpp"
-					>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Test|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\ogui\OguiButtonStyle.cpp"
-					>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Test|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\ogui\OguiCheckBox.cpp"
-					>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Test|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\ogui\OguiEffectEvent.cpp"
-					>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Test|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\ogui\OguiException.cpp"
-					>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Test|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\ogui\OguiFormattedCommandImg.cpp"
-					>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Test|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\ogui\OguiFormattedCommandImpl.cpp"
-					>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Test|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\ogui\OguiFormattedText.cpp"
-					>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Test|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\ogui\OguiLocaleWrapper.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\ogui\OguiSelectList.cpp"
-					>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Test|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\ogui\OguiSelectListEvent.cpp"
-					>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Test|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\ogui\OguiSelectListStyle.cpp"
-					>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Test|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\ogui\OguiSlider.cpp"
-					>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Test|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\ogui\OguiStormDriver.cpp"
-					>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Test|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\ogui\OguiTextLabel.cpp"
-					>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Test|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\ogui\OguiTypeEffectListener.cpp"
-					>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Test|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\ogui\OguiWindow.cpp"
-					>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Test|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\ogui\orvgui2.cpp"
-					>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Test|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-				</File>
-			</Filter>
-			<Filter
 				Name="system"
 				>
 				<File
@@ -17001,57 +16091,8 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath="..\sound\SoundLib.cpp"
+					RelativePath="..\sound\fmod\SoundLib.cpp"
 					>
-					<FileConfiguration
-						Name="Profile|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Test|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							AdditionalIncludeDirectories=""
-							PreprocessorDefinitions=""
-							ForcedIncludeFiles=""
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\sound\SoundLooper.cpp"
@@ -18060,14 +17101,6 @@
 				<File
 					RelativePath="..\physics\box_actor.cpp"
 					>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\physics\capsule_actor.cpp"
@@ -18096,14 +17129,6 @@
 				<File
 					RelativePath="..\physics\cooker.cpp"
 					>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\physics\file_stream.cpp"
@@ -18148,14 +17173,6 @@
 				<File
 					RelativePath="..\physics\physics_lib.cpp"
 					>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\physics\rack_actor.cpp"
@@ -18197,14 +17214,6 @@
 				<File
 					RelativePath="..\physics\visualizer.cpp"
 					>
-					<FileConfiguration
-						Name="shadowground no physics|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-						/>
-					</FileConfiguration>
 				</File>
 			</Filter>
 			<Filter
@@ -18257,6 +17266,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\util\jpak.h"
+				>
+			</File>
+			<File
 				RelativePath="..\game\LightBlinker.h"
 				>
 			</File>
@@ -18273,7 +17286,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\filesystem\rle_packed_file_wrapper.h"
+				>
+			</File>
+			<File
 				RelativePath="..\game\savegamevars.h"
+				>
+			</File>
+			<File
+				RelativePath="..\game\scripting\SyncScripting.h"
 				>
 			</File>
 			<File
@@ -18393,6 +17414,10 @@
 				</File>
 				<File
 					RelativePath="..\game\UnitInventory.h"
+					>
+				</File>
+				<File
+					RelativePath="..\game\userdata.h"
 					>
 				</File>
 				<File
@@ -19812,7 +18837,7 @@
 				Name="system h"
 				>
 				<File
-					RelativePath="..\system\configuration.h"
+					RelativePath=".\configuration.h"
 					>
 				</File>
 				<File
@@ -20148,6 +19173,1021 @@
 			<File
 				RelativePath="icon3.ico"
 				>
+			</File>
+		</Filter>
+		<Filter
+			Name="ogui"
+			>
+			<File
+				RelativePath="..\ogui\Ogui.cpp"
+				>
+				<FileConfiguration
+					Name="Profile|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Test|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="shadowground no physics|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\ogui\OguiButton.cpp"
+				>
+				<FileConfiguration
+					Name="Profile|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Test|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="shadowground no physics|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\ogui\OguiButtonEvent.cpp"
+				>
+				<FileConfiguration
+					Name="Profile|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Test|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="shadowground no physics|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\ogui\OguiButtonStyle.cpp"
+				>
+				<FileConfiguration
+					Name="Profile|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Test|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="shadowground no physics|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\ogui\OguiCheckBox.cpp"
+				>
+				<FileConfiguration
+					Name="Profile|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Test|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="shadowground no physics|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\ogui\OguiEffectEvent.cpp"
+				>
+				<FileConfiguration
+					Name="Profile|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Test|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="shadowground no physics|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\ogui\OguiException.cpp"
+				>
+				<FileConfiguration
+					Name="Profile|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Test|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="shadowground no physics|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\ogui\OguiFormattedCommandImg.cpp"
+				>
+				<FileConfiguration
+					Name="Profile|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Test|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="shadowground no physics|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\ogui\OguiFormattedCommandImpl.cpp"
+				>
+				<FileConfiguration
+					Name="Profile|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Test|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="shadowground no physics|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\ogui\OguiFormattedText.cpp"
+				>
+				<FileConfiguration
+					Name="Profile|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Test|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="shadowground no physics|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\ogui\OguiLocaleWrapper.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\ogui\OguiSelectList.cpp"
+				>
+				<FileConfiguration
+					Name="Profile|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Test|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="shadowground no physics|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\ogui\OguiSelectListEvent.cpp"
+				>
+				<FileConfiguration
+					Name="Profile|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Test|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="shadowground no physics|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\ogui\OguiSelectListStyle.cpp"
+				>
+				<FileConfiguration
+					Name="Profile|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Test|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="shadowground no physics|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\ogui\OguiSlider.cpp"
+				>
+				<FileConfiguration
+					Name="Profile|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Test|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="shadowground no physics|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\ogui\OguiStormDriver.cpp"
+				>
+				<FileConfiguration
+					Name="Profile|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Test|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="shadowground no physics|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\ogui\OguiTextLabel.cpp"
+				>
+				<FileConfiguration
+					Name="Profile|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Test|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="shadowground no physics|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\ogui\OguiTypeEffectListener.cpp"
+				>
+				<FileConfiguration
+					Name="Profile|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Test|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="shadowground no physics|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\ogui\OguiWindow.cpp"
+				>
+				<FileConfiguration
+					Name="Profile|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Test|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="shadowground no physics|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\ogui\orvgui2.cpp"
+				>
+				<FileConfiguration
+					Name="Profile|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Test|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="shadowground no physics|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						ForcedIncludeFiles=""
+					/>
+				</FileConfiguration>
 			</File>
 		</Filter>
 	</Files>

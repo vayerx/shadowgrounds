@@ -75,23 +75,23 @@ struct TacticalUnitWindowData
 		window(0),
 
 		isVisible(false),
-		closedAck(true),
 		gameWasRunning(false),
+		closedAck(true),
 
-		targetUnit(0),
-		fireMultipleUnits(false),
 		stealthBut(0),
 		stealthIconBut(0),
 		firePrimaryBut(0),
-		fireSecondaryBut(0),
-		fireAllBut(0),
 		firePrimaryIconBut(0),
+		fireSecondaryBut(0),
 		fireSecondaryIconBut(0),
+		fireAllBut(0),
 		fireAllIconBut(0),
+		fireMultipleUnits(false),
+
 		primaryDropWeap(false),
 		secondaryDropWeap(false),
-
-		clickPosition(0,0,0)
+		clickPosition(0,0,0),
+		targetUnit(0)
 		
 	{
 	}

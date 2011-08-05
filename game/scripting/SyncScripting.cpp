@@ -18,7 +18,6 @@
 #include "../UnitSelections.h"
 #include "../../util/assert.h"
 #include "GameScripting.h"
-#include "../UnifiedHandleManager.h"
 
 #include "../../convert/str2int.h"
 #include "../../util/ScriptProcess.h"
@@ -30,7 +29,7 @@
 namespace game
 {
 	void SyncScripting::process(util::ScriptProcess *sp, 
-		int command, int intData, char *stringData, ScriptLastValueType *lastValue, 
+		int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue,
 		GameScriptData *gsd, Game *game, bool *pause)
 	{
 		switch(command)
@@ -38,11 +37,7 @@ namespace game
 		case GS_CMD_editSendMoveUnifiedHandleObjectToPosition:
 			if (VALIDATE_UNIFIED_HANDLE_BITS(gsd->unifiedHandle))
 			{
-				if (game->unifiedHandleManager->doesObjectExist(gsd->unifiedHandle))
-				{
-					game->unifiedHandleManager->setObjectPosition(gsd->unifiedHandle, gsd->position);
-					// TODO: sync to editor syncer...
-				}
+
 			} else {
 				sp->error("SyncScripting::process - editSendMoveUnifiedHandleObjectToPosition, unified handle not valid.");
 			}
@@ -59,7 +54,6 @@ namespace game
 		case GS_CMD_editSendRotateUnifiedHandleObjectZ:
 			break;
 
-			/*
 		case GS_CMD_editRecvMoveUnifiedHandleObjectToPosition:
 			break;
 		case GS_CMD_editRecvDeleteUnifiedHandleObject:
@@ -72,7 +66,6 @@ namespace game
 			break;
 		case GS_CMD_editRecvRotateUnifiedHandleObjectZ:
 			break;
-			*/
 
 		default:
 			sp->error("SyncScripting::process - Unknown command.");

@@ -43,7 +43,7 @@ namespace game
 	class PartTypeParserImpl
 	{
 	public:
-		char *ptp_error;
+		const char *ptp_error;
 		int ptp_errorline;
 		const char *ptp_currentfile;
 
@@ -71,7 +71,7 @@ namespace game
 		delete this->impl;
 	}
 
-  void PartTypeParser::error(char *err, int linenum)
+  void PartTypeParser::error(const char *err, int linenum)
   {
     impl->ptp_error = err; 
     impl->ptp_errorline = linenum;

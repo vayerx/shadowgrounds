@@ -1,83 +1,32 @@
+#include <vector>
+#include <string>
+#include <boost/shared_ptr.hpp>
+
 #include <istorm3d_streambuffer.h>
 #include "storm3d_videostreamer.h"
-#ifndef VIDEO_ENABLED
-
-struct Storm3D_VideoStreamer::Data
-{};
-Storm3D_VideoStreamer::Storm3D_VideoStreamer(Storm3D &storm, const char *fileName, IStorm3D_StreamBuilder *streamBuilder, bool loop, bool downscale, bool higherColorRange)
-{
-}
-Storm3D_VideoStreamer::~Storm3D_VideoStreamer()
-{
-}
-
-bool Storm3D_VideoStreamer::hasVideo() const
-{
-	return true;
-}
-
-bool Storm3D_VideoStreamer::hasEnded() const
-{
-	return true;
-}
-
-int Storm3D_VideoStreamer::getTime() const
-{
-	return 0;
-}
-
-bool Storm3D_VideoStreamer::isPlaying() const
-{
-	return false;
-}
-
-IStorm3D_Material *Storm3D_VideoStreamer::getMaterial()
-{
-	return 0;
-}
-
-void Storm3D_VideoStreamer::setPosition(const VC2 &position, const VC2 &size)
-{
-}
-
-void Storm3D_VideoStreamer::setAlpha(float alpha)
-{
-}
-
-void Storm3D_VideoStreamer::update()
-{
-}
-
-void Storm3D_VideoStreamer::render(IStorm3D_Scene *scene)
-{
-}
-
-#else
-
 #include "storm3d.h"
 #include "storm3d_texture.h"
 #include "storm3d_material.h"
 #include "storm3d_scene.h"
 #include "storm3d_string_util.h"
+#include "treader.h"
 
-#include "..\..\util\Debug_MemoryManager.h"
-//#pragma pack(8)
+#include "../../system/Timer.h"
+
+#include "../../util/Debug_MemoryManager.h"
+
+#ifdef WIN32
 
 #include <windows.h>
-#include <atlbase.h>
-#include <vector>
-#include <boost/shared_ptr.hpp>
-#include <string>
 
-#include <wmsdkidl.h>
-#include "wmvsync\rostream.h"
-#include "wmvsync\reader.h"
-#pragma comment(lib, "wmvcore.lib")
+#endif
 
+#ifdef _MSC_VER
 #if defined(DEBUG) || defined(_DEBUG)
 	#pragma comment(lib, "storm_strmbasd.lib")
 #else
 	#pragma comment(lib, "storm_strmbase.lib")
+#endif
 #endif
 
 namespace {
@@ -99,76 +48,101 @@ struct Storm3D_VideoStreamer::Data
 	boost::shared_ptr<Storm3D_Texture> activeTexture;
 	boost::shared_ptr<Storm3D_Material> material;
 
+	Uint32 *buffer;
+
 	VC2 start;
 	VC2 end;
 	float alpha;
 	bool finished;
 	bool looping;
 
-	//CRITICAL_SECTION colorBufferLock;
 	bool useDynamicTextures;
 
 	bool downscaled;
-	int lastFrame;
-	int time;
+
+	int lastFrame;  // last frame we showed
+	uint32_t startTime;  // time video started
+
+	unsigned int width, height; // actual video w&h
 
 	bool higherColorRange;
 
 	Data(Storm3D &storm_, bool downscale_, bool higherColorRange_)
 	:	storm(storm_),
 		streamBuilder(0),
+		buffer(0),
+		alpha(1.f),
 		finished(false),
 		looping(false),
-		alpha(1.f),
 		useDynamicTextures(true),
 		downscaled(downscale_),
-		//useDynamicTextures(false),
 		lastFrame(-1),
-		time(0),
-		higherColorRange(higherColorRange_)
+		startTime(0),
+		width(0),
+		height(0),
+		higherColorRange(true)
 	{
-		CoInitialize(0);
+		// FIXME: do we need downscaled and higherColorRange ?
 	}
 
 	~Data()
 	{
-		if(test.playing)
-			test.Stop();
-		test.Close();
+    delete[] buffer;
 	}
 
-	CReader test;
+	boost::shared_ptr<TReader> test;
 
 	void initialize(const std::string &fileName)
 	{
-		//std::wstring wideFileName = Storm3D_MakeWideString(fileName);
+		// Create filename
+		std::string file = fileName;
+		std::string::size_type pos = file.find("wmv");
+		if(pos != std::string::npos)
+			file.replace(pos, 3, "ogg");
+		// change to lowercase
+		// change \ to /
 
-		test.higherColorRange = higherColorRange;
-		test.streamBuilder = streamBuilder;
-		HRESULT hr = test.Open(fileName.c_str());
-		if(SUCCEEDED(hr))
-			test.Start();
+		size_t l = file.length();
+		for (size_t i = 0; i < l; i++) {
+			if (isupper(file[i])) {
+				file[i] = tolower(file[i]);
+			} else if (file[i] == '\\') {
+				file[i] = '/';
+			}
+		}
+
+		test = boost::shared_ptr<TReader>(new TReader());
+
+		if(test->read_info(file.c_str(), streamBuilder))
+			return;
+
+		if (test->init()) {
+			igiosWarning("init failed\n");
+			return;
+		}
+
+		width = test->frame_width;
+		height = test->frame_height;
+
+		startTime = Timer::getCurrentTime();
 	}
 
 	bool initStormResources()
 	{
-		if(!test.width || !test.height)
+		if(width == 0 || height == 0)
 			return false;
 
 		if(useDynamicTextures)
 		{
-			int width = test.width;
-			int height = test.height;
-
+			/*
 			if(downscaled)
 			{
 				width /= 2;
 				height /= 2;
 			}
+			*/
 
 			IStorm3D_Texture::TEXTYPE textype = IStorm3D_Texture::TEXTYPE_DYNAMIC_LOCKABLE;
-			if(higherColorRange)
-				textype = IStorm3D_Texture::TEXTYPE_DYNAMIC_LOCKABLE_32;
 
 			texture1.reset(static_cast<Storm3D_Texture *> (storm.CreateNewTexture(width, height, textype)), std::mem_fun(&Storm3D_Texture::Release));
 			texture2.reset(static_cast<Storm3D_Texture *> (storm.CreateNewTexture(width, height, textype)), std::mem_fun(&Storm3D_Texture::Release));
@@ -179,9 +153,9 @@ struct Storm3D_VideoStreamer::Data
 		}
 		else
 		{
-			ramTexture.reset(new Storm3D_Texture(&storm, test.width, test.height, IStorm3D_Texture::TEXTYPE_RAM), std::mem_fun(&Storm3D_Texture::Release));
-			texture1.reset(static_cast<Storm3D_Texture *> (storm.CreateNewTexture(test.width, test.height, IStorm3D_Texture::TEXTYPE_DYNAMIC)), std::mem_fun(&Storm3D_Texture::Release));
-			texture2.reset(static_cast<Storm3D_Texture *> (storm.CreateNewTexture(test.width, test.height, IStorm3D_Texture::TEXTYPE_DYNAMIC)), std::mem_fun(&Storm3D_Texture::Release));
+			ramTexture.reset(new Storm3D_Texture(&storm, width, height, IStorm3D_Texture::TEXTYPE_RAM), std::mem_fun(&Storm3D_Texture::Release));
+			texture1.reset(static_cast<Storm3D_Texture *> (storm.CreateNewTexture(width, height, IStorm3D_Texture::TEXTYPE_DYNAMIC)), std::mem_fun(&Storm3D_Texture::Release));
+			texture2.reset(static_cast<Storm3D_Texture *> (storm.CreateNewTexture(width, height, IStorm3D_Texture::TEXTYPE_DYNAMIC)), std::mem_fun(&Storm3D_Texture::Release));
 
 			activeTexture = texture1;
 			if(!texture1 || !texture2 || !ramTexture)
@@ -198,14 +172,10 @@ struct Storm3D_VideoStreamer::Data
 
 		if(useDynamicTextures)
 		{
-			int textureWidth = texture1->getWidth();
-			int textureHeight = texture2->getHeight();
 			material->SetBaseTexture(activeTexture.get());
 		}
 		else
 		{
-			int textureWidth = ramTexture->getWidth();
-			int textureHeight = ramTexture->getHeight();
 			material->SetBaseTexture(activeTexture.get());
 		}
 
@@ -214,7 +184,7 @@ struct Storm3D_VideoStreamer::Data
 		int x2 = windowSizeX;
 		int y2 = windowSizeY;
 
-		float textureRatio = float(test.width) / float(test.height);
+		float textureRatio = float(width) / float(height);
 		y2 = int(windowSizeX / textureRatio);
 		y1 = (windowSizeY - y2) / 2;
 		y2 += y1;
@@ -272,13 +242,25 @@ int Storm3D_VideoStreamer::getTime() const
 	if(!data)
 		return 0;
 
-	return data->time;
+	double frame_duration = ((double)data->test->fps_numerator / data->test->fps_denominator) * 1000;
+
+	return data->lastFrame * frame_duration;
 }
 
 bool Storm3D_VideoStreamer::isPlaying() const
 {
 	return !hasEnded();
 }
+
+
+void Storm3D_VideoStreamer::stop()
+{
+	assert(data);
+
+	data->test->finish();
+	data->test.reset();
+}
+
 
 IStorm3D_Material *Storm3D_VideoStreamer::getMaterial()
 {
@@ -298,245 +280,55 @@ void Storm3D_VideoStreamer::setAlpha(float alpha)
 
 void Storm3D_VideoStreamer::update()
 {
-	if(!data || data->finished)
+	if(!data.get() || data->finished || data->width == 0 || data->height == 0)
 		return;
 
-	EnterCriticalSection(&data->test.lock);
+	double frame_duration = ((double)data->test->fps_numerator / data->test->fps_denominator) * 1000;
 
-	int frame = data->test.frameIndex;
-	if(data->test.streamBuffer)
-	{
-		QWORD soundTime = data->test.streamBuffer->getCurrentTime();
+	uint32_t currentTime = Timer::getCurrentTime();
 
-		{
-			// Find closest to current time
-			__int64 ref = 0;
-			for(int i = 0; i < FRAME_BUFFER_AMOUNT; ++i)
-			{
-				const CReader::Frame &f = data->test.frames[i];
-				if(i == 0)
-				{
-					frame = i;
-					ref = f.start - soundTime;
-					if(ref < 0)
-						ref = -ref;
-				}
+	// nextFrameTime is the calculated time stamp of the next frame to be shown
+	uint32_t nextFrameTime = data->startTime + ((data->lastFrame + 1) * frame_duration);
 
-				__int64 delta = f.start - soundTime;
-				if(delta < 0)
-					delta = -delta;
-				if(delta < ref)
-				{
-					frame = i;
-					ref = delta;
-				}
-			}
-		}
-	}
-
-	const CReader::Frame &f = data->test.frames[frame];
-	data->time = int(f.start / 10000);
+	// check if it's time to do something
+	if(currentTime < nextFrameTime)
+		return;
 
 	if(data->useDynamicTextures)
 	{
-		if(data->lastFrame != frame)
+		if(data->activeTexture == data->texture1)
+			data->activeTexture = data->texture2;
+		else
+			data->activeTexture = data->texture1;
+
+		data->material->SetBaseTexture(data->activeTexture.get());
+
+		int height = data->height;
+		int width = data->width;
+		if(!data->test->nextframe())
 		{
-			data->lastFrame = frame;
-			if(data->activeTexture == data->texture1)
-				data->activeTexture = data->texture2;
-			else
-				data->activeTexture = data->texture1;
-
-			data->material->SetBaseTexture(data->activeTexture.get());
-
-			D3DLOCKED_RECT rect;
-			if(data->activeTexture->lock(rect))
-			{
-				int height = data->test.height;
-				int width = data->test.width;
-
-				if(data->higherColorRange)
-				{
-					DWORD *src = &data->test.frames[frame].colorBuffer32[0];
-					DWORD *dst = reinterpret_cast<DWORD *> (rect.pBits);
-					int pitch = rect.Pitch / 4;
-
-
-					if(data->downscaled)
-					{
-						std::vector<DWORD> buff(width / 2);
-						for(int j = 0; j < height / 2; ++j)
-						{
-							int line = (j * 2 * width);
-
-							for(int i = 0; i < width / 2; ++i)
-							{
-								int index[4] = 
-								{
-									line + i * 2,
-									line + i * 2 + 1,
-									line + i * 2 + width,
-									line + i * 2 + width + 1
-								};
-
-								int r = 0;
-								int g = 0;
-								int b = 0;
-								for(int k = 0; k < 4; ++k)
-								{
-									DWORD value = src[index[k]];
-									r += (value >> 16) & 255;
-									g += (value >> 8) & 255;
-									b += value & 255;
-								}
-
-								r /= 4;
-								g /= 4;
-								b /= 4;
-
-								buff[i] = (255 << 24) | (r << 16) | (g << 8) | (b);
-							}
-
-							memcpy(dst, &buff[0], width * 2);
-							dst += pitch;
-						}
-					}
-					else
-					{
-						for(int j = 0; j < height; ++j)
-						{
-							memcpy(dst, src, width * 4);
-							src += width;
-							dst += pitch;
-						}
-					}
-				}
-				else
-				{
-					WORD *src = &data->test.frames[frame].colorBuffer[0];
-					WORD *dst = reinterpret_cast<WORD *> (rect.pBits);
-					int pitch = rect.Pitch / 2;
-
-					if(data->downscaled)
-					{
-						std::vector<WORD> buff(width / 2);
-						for(int j = 0; j < height / 2; ++j)
-						{
-							int line = (j * 2 * width);
-
-							for(int i = 0; i < width / 2; ++i)
-							{
-								int index[4] = 
-								{
-									line + i * 2,
-									line + i * 2 + 1,
-									line + i * 2 + width,
-									line + i * 2 + width + 1
-								};
-
-								int r = 0;
-								int g = 0;
-								int b = 0;
-								for(int k = 0; k < 4; ++k)
-								{
-									WORD value = src[index[k]];
-									r += (value >> 11) & 31;
-									g += (value >> 5) & 63;
-									b += value & 31;
-								}
-
-								r /= 4;
-								g /= 4;
-								b /= 4;
-
-								buff[i] = r << 11 | g << 5 | b;
-							}
-
-							memcpy(dst, &buff[0], width);
-							dst += pitch;
-						}
-					}
-					else
-					{
-						for(int j = 0; j < height; ++j)
-						{
-							memcpy(dst, src, width * 2);
-							src += width;
-							dst += pitch;
-						}
-					}
-				}
-
-				data->activeTexture->unlock();
+			if (!data->buffer) {
+				data->buffer = new Uint32[width * height];
+				memset(data->buffer, 0x00, width * height * 4);
 			}
+			Uint32 *buf = data->buffer;
+
+			data->test->read_pixels((char*)buf, width, height);
+			data->activeTexture->Copy32BitSysMembufferToTexture(buf);
+			data->lastFrame++;
 		}
-	}
-
-	int testFrame = data->test.frameIndex;
-	LeaveCriticalSection(&data->test.lock);
-
-	/*
-	if(!data->test.playing && data->lastFrame == testFrame)
-	{
-		if(data->test.streamBuffer)
+		else if(data->looping)
 		{
-			if(data->test.streamBuffer)
-				data->test.streamBuffer->deactivate();
-		}
-
-		if(!data->looping)
-		{
-			data->test.Stop();
-			data->finished = true;
+			//FIXME: restart video
+			data->test->restart();
+			data->startTime = currentTime;
 		}
 		else
-			data->test.Start();
-	}
-	*/
-
-	/*
-	if(!data->test.playing && data->lastFrame == testFrame)
-	{
-		if(data->test.streamBuffer)
 		{
-			if(data->test.streamBuffer)
-				data->test.streamBuffer->deactivate();
-		}
-
-		if(!data->looping)
-		{
-			data->test.Stop();
+			delete[] data->buffer;
+			data->buffer = 0;
 			data->finished = true;
-		}
-		else
-			data->test.Start();
-	}
-	*/
-	if(data->looping)
-	{
-		if(!data->test.playing)
-		{
-			if(data->test.streamBuffer)
-			{
-				if(data->test.streamBuffer)
-					data->test.streamBuffer->deactivate();
-			}
-
-			data->test.Start();
-		}
-	}
-	else
-	{
-		if(!data->test.playing && data->lastFrame == testFrame)
-		{
-			if(data->test.streamBuffer)
-			{
-				if(data->test.streamBuffer)
-					data->test.streamBuffer->deactivate();
-			}
-
-			data->test.Stop();
-			data->finished = true;
+			data->test->finish();
 		}
 	}
 }
@@ -547,6 +339,12 @@ void Storm3D_VideoStreamer::render(IStorm3D_Scene *scene)
 		return;
 
 	update();
-	scene->Render2D_Picture(data->material.get(), data->start, data->end, data->alpha, 0, 0,0,1,1);
+	float x, y;
+	getTextureCoords(x, y);
+	scene->Render2D_Picture(data->material.get(), data->start, data->end, data->alpha, 0, 0,0,x,y);
 }
-#endif
+
+void Storm3D_VideoStreamer::getTextureCoords(float &x, float &y)
+{
+	x = 1.0f; y = 1.0f;
+}

@@ -3,6 +3,8 @@
 #ifndef INCLUDED_FILESYSTEM_INPUT_STREAM_WRAPPER_H
 #define INCLUDED_FILESYSTEM_INPUT_STREAM_WRAPPER_H
 
+#include <stdlib.h>
+
 namespace frozenbyte {
 namespace filesystem {
 

@@ -4,10 +4,12 @@
 
 #include "ScriptManager.h"
 
+#ifdef _MSC_VER
 #pragma warning( disable : 4786 )
+#endif
 
 #include <assert.h>
-#include <process.h>
+#include "SimpleParser.h"
 #include "../convert/str2int.h"
 #include "../container/LinkedList.h"
 #include "../system/Logger.h"
@@ -38,69 +40,12 @@ namespace util
 
 	extern bool script_doublequotes_warning;
 
-	extern bool dont_add_externcallpushpop;
-
 	char scrman_importfilestack[SCRIPT_MAX_IMPORT_DEPTH][256 + 1]
     = { "s0", "s1" ,"s2" ,"s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11" };
 
   int scrman_importdepth = 0;
 
 	ScriptManager *ScriptManager::instance = NULL;
-
-	class ScriptParsingData
-	{
-	public:
-    int autoNestedIfs;
-    int manualNestedIfs;
-    int ifNestMask;
-    int isAlreadyManuallyNested;
-    bool loopReasonForManualNest;
-    bool autoNestingNotAllowed;
-    bool nestedInsideLoop;
-    bool didABreakLoop;
-
-		int commandCountIf;
-		int commandCountEndif;
-		int commandCountThen;
-		int commandCountSub;
-		int commandCountEndSub;
-		int commandCountLoop;
-		int commandCountEndLoop;
-		int commandCountSelect;
-		int commandCountEndSelect;
-		bool inSub;
-		int selectDepth;
-		int ifDepth;
-
-		Script *extendScript;
-
-		ScriptParsingData()
-		{
-			autoNestedIfs = 0;
-			manualNestedIfs = 0;
-			ifNestMask = 1;
-			isAlreadyManuallyNested = 0;
-			loopReasonForManualNest = false;
-			autoNestingNotAllowed = false;
-			nestedInsideLoop = false;
-			didABreakLoop = false;
-
-			commandCountIf = 0;
-			commandCountEndif = 0;
-			commandCountThen = 0;
-			commandCountSub = 0;
-			commandCountEndSub = 0;
-			commandCountLoop = 0;
-			commandCountEndLoop = 0;
-			commandCountSelect = 0;
-			commandCountEndSelect = 0;
-			inSub = false;
-			selectDepth = 0;
-			ifDepth = 0;
-
-			extendScript = NULL;
-		}
-	};
 
 
 	ScriptManager::ScriptManager()
@@ -321,7 +266,7 @@ namespace util
 	}
 
 
-	void ScriptManager::scriptCompileError(char *err, bool isError)
+	void ScriptManager::scriptCompileError(const char *err, bool isError)
 	{
 		error(err, scrman_currentline, isError);
 	}
@@ -437,6 +382,7 @@ namespace util
 						int got = fread(noppbuf2, flen, 1, noppf);
 						if (got == 1)
 						{
+#ifndef __APPLE__
 							FILE *noppfout = fopen(filename, "wb");
 							if (noppfout != NULL)
 							{
@@ -450,6 +396,7 @@ namespace util
 							} else {
 								Logger::getInstance()->warning("ScriptManager::loadScripts - Failed to open nopp-flagged preprocessed script file for writing.");
 							}
+#endif
 						} else {
 							Logger::getInstance()->warning("ScriptManager::loadScripts - Failed to read a file with preprocess off flag.");
 						}
@@ -574,7 +521,7 @@ namespace util
 		assert(buf_unchanged != NULL);
 
 		Timer::update();
-		int ippStartTime = Timer::getTime();
+		// int ippStartTime = Timer::getTime();
 
 		int expandedAmount = 0;
 
@@ -668,7 +615,7 @@ namespace util
 		*bufOut = buf;
 
 		Timer::update();
-		int ippEndTime = Timer::getTime();
+		// int ippEndTime = Timer::getTime();
 
 		/*
 		Logger::getInstance()->debug("script internal preprocess time");
@@ -679,506 +626,6 @@ namespace util
 
 		return true;
 	}
-
-
-	bool ScriptManager::processScriptLine(const char *filename, const char *cmd, const char *data, bool replace, Script **currentScriptPtr, int lineNumber, ScriptParsingData *d)
-	{
-		Script *currentScript = *currentScriptPtr;
-
-		bool lineok = false;
-
-		if (strcmp(cmd, "import") == 0)
-		{
-      if (scrman_importdepth < SCRIPT_MAX_IMPORT_DEPTH)
-      { 
-        if (scrman_importdepth >= 0)
-        {
-          if (scrman_currentfile != NULL)
-          {
-            strcpy(scrman_importfilestack[scrman_importdepth], scrman_currentfile);
-          } else {
-            scrman_importfilestack[scrman_importdepth][0] = '\0';
-          }
-        }
-      } else {
-				Logger::getInstance()->error("ScriptManager::loadMemoryScripts - Script import depth over maximum limit.");
-        assert(!"ScriptManager::loadMemoryScripts - Script import depth over maximum limit.");
-      }
-      scrman_importdepth++;
-
-			if (data[0] == '\"')
-			{
-				char *stringedData = new char[strlen(&data[1]) + 1];
-				strcpy(stringedData, &data[1]);
-				for (int stfix = strlen(stringedData) - 1; stfix >= 0; stfix--)
-				{
-					if (stringedData[stfix] == '\"')
-					{
-						stringedData[stfix] = '\0';
-						break;
-					}
-				}
-				this->loadScripts(stringedData, filename, false);
-				delete [] stringedData;
-			} else {
-				this->loadScripts(data, filename, false);
-			}
-
-      //Logger::getInstance()->error(scrman_currentfile);
-
-      scrman_importdepth--;
-      if (scrman_importdepth < SCRIPT_MAX_IMPORT_DEPTH)
-      { 
-        if (scrman_importdepth >= 0)
-        {
-          strcpy(scrman_currentfile, scrman_importfilestack[scrman_importdepth]);
-        }
-      } else {
-        assert(!"ScriptManager::loadMemoryScripts - Script import depth over maximum limit.");
-      }
-      assert(scrman_importdepth >= 0);
-
-			lineok = true;
-		}
-
-		if (strcmp(cmd, "script") == 0)
-		{ 					 
-			if (currentScript != NULL)
-			{
-				error("Expected endScript, script block not properly ended before next script block.", lineNumber, true);
-			}
-
-			int datalen = strlen(data);
-			int dataCut = datalen;
-			int extendNameStart = datalen;
-			for (int spseek = 0; spseek < datalen; spseek++)
-			{
-				if (data[spseek] == ' ' || data[spseek] == '\t')
-				{
-					if (dataCut > spseek)
-					{
-						dataCut = spseek;
-					}
-					if (strncmp(&data[spseek + 1], "extends ", 8) == 0)
-					{
-						extendNameStart = spseek + 8;
-						while (data[extendNameStart] == ' ' || data[extendNameStart] == '\t')
-						{
-							extendNameStart++;
-						}
-						break;
-					} else {
-						if (data[spseek + 1] != ' ' && data[spseek + 1] != '\t'
-							&& data[spseek + 1] != '\0')
-						{
-							error("Invalid script name.", lineNumber, true);
-							break;
-						}
-					}
-				}
-			}
-
-			std::string scriptNameStr = data; 
-			std::string extendScript = ""; 
-			if (dataCut < datalen)
-			{
-				scriptNameStr = scriptNameStr.substr(0, dataCut);
-			}
-			if (extendNameStart < datalen)
-			{
-				extendScript = &data[extendNameStart];
-
-				// (very unefficient, but who cares)
-				while (extendScript.length() > 0 && (extendScript[extendScript.length() - 1] == ' '
-					|| extendScript[extendScript.length() - 1] == '\t'))
-				{
-					extendScript = extendScript.substr(0, extendScript.length() - 1);
-				}
-			}
-			const char *scriptName = scriptNameStr.c_str();
-
-			Script *tmp = getScript(scriptName);
-			if (tmp != NULL)
-			{
-				if (replace)
-				{
-					int rhc;
-					SCRIPT_HASHCODE_CALC(scriptName, &rhc);
-
-					ScriptHashType::iterator iter = scriptNameHash->find(rhc);
-					if (iter != scriptNameHash->end())
-					{
-						allScripts->remove(tmp);
-						// FIXME: will crash if the script is being run!!!
-						// (no script processes with references to that
-						// script are allowed!)
-						// TODO: ...
-						delete tmp;
-						//psdhax
-						scriptNameHash->erase(iter);
-					}
-				} else {
-					if (tmp->getName() != NULL
-						&& data != NULL
-						&& strcmp(scriptName, tmp->getName()) != 0)
-					{
-						error("Script name hashcode calculation error, same hashcode for different script names.", lineNumber, true);
-						Logger::getInstance()->debug(scriptName);
-						Logger::getInstance()->debug(tmp->getName());
-					} else {
-						error("Redefinition of script.", lineNumber, true);
-					}
-				}
-			}
-
-			*currentScriptPtr = new Script();
-			currentScript = *currentScriptPtr;
-			currentScript->name = new char[strlen(scriptName) + 1];
-			strcpy(currentScript->name, scriptName);
-
-			currentScript->processorKeywordsAmount = keywordsAmount;
-			currentScript->processorKeywords = keywords;
-			currentScript->processorDatatypes = keywordDatatypes;
-
-			currentScript->processor = processor;
-
-			int hc;
-			SCRIPT_HASHCODE_CALC(currentScript->name, &hc);
-
-			scriptNameHash->insert(std::pair<int, Script *> (hc, currentScript));
-			allScripts->append(currentScript);
-
-			// include some subs from the script this one extends?
-			if (!extendScript.empty())
-			{
-				Script *exttmp = getScript(extendScript.c_str());
-				if (exttmp != NULL)
-				{
-					// mark this being extended, actual logic done at endScript command..
-					d->extendScript = exttmp;
-				} else {
-					error("Script extends another script that is not loaded.", lineNumber, true);
-				}
-			}
-
-			lineok = true;
-		}
-
-		if (strcmp(cmd, "endScript") == 0)
-		{ 					 
-			if (d->extendScript != NULL)
-			{
-				// include subs from extended script if this script does not have them...
-
-				// go through all subs
-				// TODO: should do this is correct order - the order the subs were defined originally!
-
-				SubIPHashType::iterator iter = d->extendScript->subIPHash->begin();
-				while (iter != d->extendScript->subIPHash->end())
-				{
-					int ip = (*iter).second;
-					const char *subName = d->extendScript->stringDataArray[ip];
-					if (!currentScript->hasSub(subName))
-					{
-//std::string foo = std::string("inheriting ") + subName;
-//error((char *)foo.c_str(), lineNumber, true);
-						std::string incdata = std::string(d->extendScript->getName()) + ":" + subName;
-						//currentScript->addCommand("sub", subName);
-						// can't use this, as this actually may include way more externIncludes - in which case, 
-						// it would be really bad to disable the pushes/pops.
-						//dont_add_externcallpushpop = true;
-						//currentScript->addCommand("externInclude", incdata.c_str());
-						//dont_add_externcallpushpop = false;
-						//currentScript->addCommand("endSub", NULL);
-
-						// HACK: hack hack! noOperation directly after start of sub interpreted as "interface"
-						if (d->extendScript->commandAmount > ip + 1 
-							&& d->extendScript->commandArray[ip + 1] == SCRIPT_CMD_NOP)
-						{
-							std::string errmsg = "Script does not implement \"";
-							errmsg += subName;
-							errmsg += "\" sub, which is defined as interface in the script being extended.";
-							error(errmsg.c_str(), lineNumber, true);
-						} else {
-							processScriptLine(filename, "sub", subName, replace, currentScriptPtr, lineNumber, d);
-							processScriptLine(filename, "externInclude", incdata.c_str(), replace, currentScriptPtr, lineNumber, d);
-							processScriptLine(filename, "endSub", NULL, replace, currentScriptPtr, lineNumber, d);
-						}
-
-					} else {
-//std::string foo = std::string("script has overridden ") + subName;
-//error((char *)foo.c_str(), lineNumber, true);
-					}
-					iter++;
-				}
-
-				d->extendScript = NULL;
-			}
-
-			if (currentScript == NULL)
-			{
-				error("Unexpected endScript, no script block started before end.", lineNumber, true);
-			} else {
-				currentScript->optimizeJumps();
-			}
-			*currentScriptPtr = NULL;
-			currentScript = *currentScriptPtr;
-			lineok = true;
-
-			if (d->commandCountSub != d->commandCountEndSub)
-			{
-				error("Script parse error, invalid sub block encountered.", lineNumber, true);
-			}
-			d->commandCountSub = 0;
-			d->commandCountEndSub = 0;
-		}
-
-		if (!lineok)
-		{
-			if (currentScript != NULL)
-			{
-        if (data != NULL && data[0] == '"'
-          && (data[strlen(data) - 1] == ' '
-          || data[strlen(data) - 1] == '\t'))
-        {
-          error("Whitespaces after likely string data, probably unintended?", lineNumber, false);
-        }
-
-				if (data != NULL && data[0] == '"' 
-					&& data[strlen(data) - 1] == '"')
-				{
-					char *datastrip = new char[strlen(data) + 1];
-					strcpy(datastrip, &data[1]);
-					datastrip[strlen(datastrip) - 1] = '\0';
-					scrman_currentline = lineNumber;
-					lineok = currentScript->addCommand(cmd, datastrip);
-					delete [] datastrip;
-				} else {
-          if (strcmp(cmd, "return") == 0)
-          {
-            if (d->ifDepth >= 16)
-            {
-              error("Nesting depth too great for nested return (if depth greater than 16).", lineNumber, true);
-						} else {
-							if (d->ifDepth >= 2)
-							{
-								char depthbuf[16];
-								strcpy(depthbuf, int2str((d->ifDepth << (32-4))));
-								bool retconvok = currentScript->addCommand("_returnMultiple", depthbuf); 
-								if (!retconvok)
-								{
-									error("Internal error while trying to convert nested return (bug).", lineNumber, true);
-									assert(!"nested return conversion bugged.");
-								}
-							}
-						}
-          }
-          if (strcmp(cmd, "loop") == 0)
-          {
-						d->commandCountLoop++;
-            d->autoNestingNotAllowed = true;
-            if ((d->isAlreadyManuallyNested & (d->ifNestMask * 2)) != 0)
-            {
-              d->loopReasonForManualNest = true;
-            }
-            // not nested inside the nested loop ;)
-            // should stack these though, but who cares...
-            d->nestedInsideLoop = false;
-          }
-          if (strcmp(cmd, "endLoop") == 0)
-          {
-						d->commandCountEndLoop++;
-            d->autoNestingNotAllowed = false;
-            d->nestedInsideLoop = false;
-            d->didABreakLoop = false;
-          }
-          if (strcmp(cmd, "if") == 0)
-          {
-						d->commandCountIf++;
-            d->ifDepth++;
-            d->ifNestMask *= 2;
-            // just some limit to make sure this thing does not 
-            // totally screw something up.
-            if (d->ifDepth >= 8)
-            {
-              error("If nesting depth over maximum allowed limit.", lineNumber, true);
-              assert(!"If nesting depth over maximum allowed limit.");
-            }
-            if (d->ifDepth >= 2)
-            {
-              if ((d->isAlreadyManuallyNested & d->ifNestMask) == 0)
-              {
-                //if (autoNestingNotAllowed)
-                //{
-                //  error("Cannot automatically nest if block because of loop (need to nest the loop manually).", lineNumber, true);
-                //  assert(!"Cannot automatically nest if block because of loop.");
-                //} else {
-									scrman_currentline = lineNumber;
-					        bool autonestok = currentScript->addCommand("_externCallPush", NULL); 
-                  if (!autonestok)
-                  {                      
-                    error("Internal error while trying to autonest if blocks, at _externCallPush (bug).", lineNumber, true);
-                    assert(!"if autonesting bugged at _externCallPush.");
-                  }
-                  d->autoNestedIfs++;
-                //}
-              }
-            }
-          }
-					scrman_currentline = lineNumber;
-					script_doublequotes_warning = true;
-					lineok = currentScript->addCommand(cmd, data);
-					script_doublequotes_warning = false;
-          if (strcmp(cmd, "endif") == 0)
-          {
-						d->commandCountEndif++;
-            if (d->ifDepth >= 2)
-            {
-              if ((d->isAlreadyManuallyNested & d->ifNestMask) == 0)
-              {
-                if (d->didABreakLoop)
-                {
-                  error("Bad automatically nested if block because of breakLoop (need to nest manually).", lineNumber, true);
-                  assert(!"Bad automatically nested if block because of breakLoop.");
-                }
-                d->didABreakLoop = false;
-
-								scrman_currentline = lineNumber;
-					      bool autonestok = currentScript->addCommand("_externCallPop", NULL); 
-                if (!autonestok)
-                {                      
-                  error("Internal error while trying to autonest if blocks, at _externCallPop (bug).", lineNumber, true);
-                  assert(!"if autonesting bugged at _externCallPop.");
-                }
-              }
-						} else {
-							d->didABreakLoop = false;
-            }
-            d->ifDepth--;
-            //isAlreadyManuallyNested &= (0xffff ^ ifNestMask);
-            d->ifNestMask /= 2;
-            if (d->ifDepth < 0)
-            {
-              error("Internal error while trying to autonest if blocks, if depth below zero.", lineNumber, true);
-              assert(!"Internal error while trying to autonest if blocks, if depth below zero.");
-            }
-          }
-          if (strcmp(cmd, "breakLoop") == 0)
-          {
-            d->didABreakLoop = true;
-            if (d->nestedInsideLoop)
-            {                    
-              error("Possibly an erronous use of manual _externCallPush/Pop nesting inside loop.", lineNumber, false);
-              assert(!"Possibly an erronous use of manual _externCallPush/Pop nesting inside loop.");
-            }
-          }
-          if (strcmp(cmd, "_externCallPush") == 0)
-          {
-            d->manualNestedIfs++;
-            d->isAlreadyManuallyNested |= (d->ifNestMask * 2);
-            if (d->autoNestingNotAllowed)
-            {
-              d->nestedInsideLoop = true;
-            }
-          }
-          if (strcmp(cmd, "_externCallPop") == 0)
-          {
-            d->isAlreadyManuallyNested &= (0xffff ^ (d->ifNestMask * 2));
-            d->nestedInsideLoop = false;
-          }
-          if (strcmp(cmd, "then") == 0)
-          {
-						d->commandCountThen++;
-						if (d->ifDepth == 0)
-						{
-              error("then encountered outside if block (if expected before then).", lineNumber, true);
-						}
-					}
-          if (strcmp(cmd, "local") == 0)
-          {
-						if (d->selectDepth != 0
-							|| d->commandCountLoop != 0
-							|| d->commandCountIf != 0)
-						{
-              error("Local variables must be declared in the beginning of the sub.", lineNumber, true);
-						}
-						d->inSub = true;
-					}
-          if (strcmp(cmd, "sub") == 0)
-          {
-						d->commandCountSub++;
-						if (d->inSub)
-						{
-              error("sub encountered while inside sub (endSub expected after sub).", lineNumber, true);
-						}
-						d->inSub = true;
-					}
-          if (strcmp(cmd, "endSub") == 0)
-          {
-						if (!d->inSub)
-						{
-              error("endSub encountered without sub (sub expected before endSub).", lineNumber, true);
-						}
-						d->commandCountEndSub++;
-						d->inSub = false;
-
-						if (d->commandCountThen != d->commandCountIf || d->commandCountEndif != d->commandCountIf)
-						{
-							if (d->commandCountEndif < d->commandCountIf)
-								error("Script parse error, invalid if block encountered (missing endif after if).", lineNumber, true);
-							else if (d->commandCountEndif > d->commandCountIf)
-								error("Script parse error, invalid if block encountered (missing if before endif).", lineNumber, true);
-							else
-								error("Script parse error, invalid if block encountered. (missing then inside if block)", lineNumber, true);
-						}
-						d->commandCountIf = 0;
-						d->commandCountThen = 0;
-						d->commandCountEndif = 0;
-
-						if (d->commandCountLoop != d->commandCountEndLoop)
-						{
-							error("Script parse error, invalid loop block encountered.", lineNumber, true);
-						}
-						d->commandCountLoop = 0;
-						d->commandCountEndLoop = 0;
-
-						if (d->commandCountSelect != d->commandCountEndSelect || d->selectDepth != 0)
-						{
-							error("Script parse error, invalid select block encountered.", lineNumber, true);
-						}
-						d->commandCountSelect = 0;
-						d->commandCountEndSelect = 0;
-						d->selectDepth = 0;
-					}
-          if (strcmp(cmd, "select") == 0)
-          {
-						d->commandCountSelect++;
-						if (d->selectDepth > 0)
-						{
-							// nested selects can exist? (with _externCallPush/Pop?)
-              //error("select encountered while inside select (endSelect expected after select).", lineNumber, true);
-						}
-						d->selectDepth++;
-					}
-          if (strcmp(cmd, "endSelect") == 0)
-          {
-						if (d->selectDepth == 0)
-						{
-              error("endSelect encountered without select (select expected before endSelect).", lineNumber, true);
-						}
-						d->commandCountEndSelect++;
-						d->selectDepth--;
-					}
-				}
-			} else {
-				error("Command outside script block.", lineNumber, true); 
-				lineok = true;
-			}
-		}
-
-		return lineok;
-	}
-
 
 
 	void ScriptManager::loadMemoryScripts(const char *filename, char *buf_unchanged, int datalen_unchanged, bool replace)
@@ -1265,7 +712,27 @@ namespace util
 		int lineNumber = 1;
 		int lastpos = 0;
 
-		ScriptParsingData parsingData;
+    int ifDepth = 0;
+    int autoNestedIfs = 0;
+    int manualNestedIfs = 0;
+    int ifNestMask = 1;
+    int isAlreadyManuallyNested = 0;
+    bool loopReasonForManualNest = false;
+    bool autoNestingNotAllowed = false;
+    bool nestedInsideLoop = false;
+    bool didABreakLoop = false;
+
+		int commandCountIf = 0;
+		int commandCountEndif = 0;
+		int commandCountThen = 0;
+		int commandCountSub = 0;
+		int commandCountEndSub = 0;
+		int commandCountLoop = 0;
+		int commandCountEndLoop = 0;
+		int commandCountSelect = 0;
+		int commandCountEndSelect = 0;
+		bool inSub = false;
+		int selectDepth = 0;
 
 		for (i = 0; i < datalen; i++)
 		{
@@ -1347,7 +814,383 @@ namespace util
 						}
 					}
 
-					bool lineok = processScriptLine(filename, cmd, data, replace, &currentScript, lineNumber, &parsingData);
+					bool lineok = false;
+
+					if (strcmp(cmd, "import") == 0)
+					{
+            if (scrman_importdepth < SCRIPT_MAX_IMPORT_DEPTH)
+            { 
+              if (scrman_importdepth >= 0)
+              {
+                if (scrman_currentfile != NULL)
+                {
+                  strcpy(scrman_importfilestack[scrman_importdepth], scrman_currentfile);
+                } else {
+                  scrman_importfilestack[scrman_importdepth][0] = '\0';
+                }
+              }
+            } else {
+							Logger::getInstance()->error("ScriptManager::loadMemoryScripts - Script import depth over maximum limit.");
+              assert(!"ScriptManager::loadMemoryScripts - Script import depth over maximum limit.");
+            }
+            scrman_importdepth++;
+
+						if (data[0] == '\"')
+						{
+							char *stringedData = new char[strlen(&data[1]) + 1];
+							strcpy(stringedData, &data[1]);
+							for (int stfix = strlen(stringedData) - 1; stfix >= 0; stfix--)
+							{
+								if (stringedData[stfix] == '\"')
+								{
+									stringedData[stfix] = '\0';
+									break;
+								}
+							}
+							this->loadScripts(stringedData, filename, false);
+							delete [] stringedData;
+						} else {
+							this->loadScripts(data, filename, false);
+						}
+
+            //Logger::getInstance()->error(scrman_currentfile);
+
+            scrman_importdepth--;
+            if (scrman_importdepth < SCRIPT_MAX_IMPORT_DEPTH)
+            { 
+              if (scrman_importdepth >= 0)
+              {
+                strcpy(scrman_currentfile, scrman_importfilestack[scrman_importdepth]);
+              }
+            } else {
+              assert(!"ScriptManager::loadMemoryScripts - Script import depth over maximum limit.");
+            }
+            assert(scrman_importdepth >= 0);
+
+						lineok = true;
+					}
+
+					if (strcmp(cmd, "script") == 0)
+					{ 					 
+						if (currentScript != NULL)
+						{
+							error("Expected endScript, script block not properly ended before next script block.", lineNumber, true);
+						}
+
+						Script *tmp = getScript(data);
+						if (tmp != NULL)
+						{
+							if (replace)
+							{
+								int rhc;
+								SCRIPT_HASHCODE_CALC(data, &rhc);
+
+								ScriptHashType::iterator iter = scriptNameHash->find(rhc);
+								if (iter != scriptNameHash->end())
+								{
+									allScripts->remove(tmp);
+									// FIXME: will crash if the script is being run!!!
+									// (no script processes with references to that
+									// script are allowed!)
+									// TODO: ...
+									delete tmp;
+									//psdhax
+									scriptNameHash->erase(iter);
+								}
+							} else {
+								if (tmp->getName() != NULL
+									&& data != NULL
+									&& strcmp(data, tmp->getName()) != 0)
+								{
+									error("Script name hashcode calculation error, same hashcode for different script names.", lineNumber, true);
+									Logger::getInstance()->debug(data);
+									Logger::getInstance()->debug(tmp->getName());
+								} else {
+									error("Redefinition of script.", lineNumber, true);
+								}
+							}
+						}
+
+						currentScript = new Script();
+						currentScript->name = new char[strlen(data) + 1];
+						strcpy(currentScript->name, data);
+
+						currentScript->processorKeywordsAmount = keywordsAmount;
+						currentScript->processorKeywords = keywords;
+						currentScript->processorDatatypes = keywordDatatypes;
+
+						currentScript->processor = processor;
+
+						int hc;
+						SCRIPT_HASHCODE_CALC(currentScript->name, &hc);
+
+						scriptNameHash->insert(std::pair<int, Script *> (hc, currentScript));
+						allScripts->append(currentScript);
+
+						lineok = true;
+					}
+
+					if (strcmp(cmd, "endScript") == 0)
+					{ 					 
+						if (currentScript == NULL)
+						{
+							error("Unexpected endScript, no script block started before end.", lineNumber, true);
+						} else {
+							currentScript->optimizeJumps();
+						}
+						currentScript = NULL;
+						lineok = true;
+
+						if (commandCountSub != commandCountEndSub)
+						{
+							error("Script parse error, invalid sub block encountered.", lineNumber, true);
+						}
+						commandCountSub = 0;
+						commandCountEndSub = 0;
+					}
+
+					if (!lineok)
+					{
+						if (currentScript != NULL)
+						{
+              if (data != NULL && data[0] == '"'
+                && (data[strlen(data) - 1] == ' '
+                || data[strlen(data) - 1] == '\t'))
+              {
+                error("Whitespaces after likely string data, probably unintended?", lineNumber, false);
+              }
+
+							if (data != NULL && data[0] == '"' 
+								&& data[strlen(data) - 1] == '"')
+							{
+								char *datastrip = new char[strlen(data) + 1];
+								strcpy(datastrip, &data[1]);
+								datastrip[strlen(datastrip) - 1] = '\0';
+								scrman_currentline = lineNumber;
+								lineok = currentScript->addCommand(cmd, datastrip);
+								delete [] datastrip;
+							} else {
+                if (strcmp(cmd, "return") == 0)
+                {
+                  if (ifDepth >= 16)
+                  {
+                    error("Nesting depth too great for nested return (if depth greater than 16).", lineNumber, true);
+									} else {
+										if (ifDepth >= 2)
+										{
+											char depthbuf[16];
+											strcpy(depthbuf, int2str((ifDepth << (32-4))));
+											bool retconvok = currentScript->addCommand("_returnMultiple", depthbuf); 
+											if (!retconvok)
+											{
+												error("Internal error while trying to convert nested return (bug).", lineNumber, true);
+												assert(!"nested return conversion bugged.");
+											}
+										}
+									}
+                }
+                if (strcmp(cmd, "loop") == 0)
+                {
+									commandCountLoop++;
+                  autoNestingNotAllowed = true;
+                  if ((isAlreadyManuallyNested & (ifNestMask * 2)) != 0)
+                  {
+                    loopReasonForManualNest = true;
+                  }
+                  // not nested inside the nested loop ;)
+                  // should stack these though, but who cares...
+                  nestedInsideLoop = false;
+                }
+                if (strcmp(cmd, "endLoop") == 0)
+                {
+									commandCountEndLoop++;
+                  autoNestingNotAllowed = false;
+                  nestedInsideLoop = false;
+                  didABreakLoop = false;
+                }
+                if (strcmp(cmd, "if") == 0)
+                {
+									commandCountIf++;
+                  ifDepth++;
+                  ifNestMask *= 2;
+                  // just some limit to make sure this thing does not 
+                  // totally screw something up.
+                  if (ifDepth >= 8)
+                  {
+                    error("If nesting depth over maximum allowed limit.", lineNumber, true);
+                    assert(!"If nesting depth over maximum allowed limit.");
+                  }
+                  if (ifDepth >= 2)
+                  {
+                    if ((isAlreadyManuallyNested & ifNestMask) == 0)
+                    {
+                      //if (autoNestingNotAllowed)
+                      //{
+                      //  error("Cannot automatically nest if block because of loop (need to nest the loop manually).", lineNumber, true);
+                      //  assert(!"Cannot automatically nest if block because of loop.");
+                      //} else {
+												scrman_currentline = lineNumber;
+								        bool autonestok = currentScript->addCommand("_externCallPush", NULL); 
+                        if (!autonestok)
+                        {                      
+                          error("Internal error while trying to autonest if blocks, at _externCallPush (bug).", lineNumber, true);
+                          assert(!"if autonesting bugged at _externCallPush.");
+                        }
+                        autoNestedIfs++;
+                      //}
+                    }
+                  }
+                }
+								scrman_currentline = lineNumber;
+								script_doublequotes_warning = true;
+								lineok = currentScript->addCommand(cmd, data);
+								script_doublequotes_warning = false;
+                if (strcmp(cmd, "endif") == 0)
+                {
+									commandCountEndif++;
+                  if (ifDepth >= 2)
+                  {
+                    if ((isAlreadyManuallyNested & ifNestMask) == 0)
+                    {
+                      if (didABreakLoop)
+                      {
+                        error("Bad automatically nested if block because of breakLoop (need to nest manually).", lineNumber, true);
+                        assert(!"Bad automatically nested if block because of breakLoop.");
+                      }
+                      didABreakLoop = false;
+
+											scrman_currentline = lineNumber;
+								      bool autonestok = currentScript->addCommand("_externCallPop", NULL); 
+                      if (!autonestok)
+                      {                      
+                        error("Internal error while trying to autonest if blocks, at _externCallPop (bug).", lineNumber, true);
+                        assert(!"if autonesting bugged at _externCallPop.");
+                      }
+                    }
+									} else {
+										didABreakLoop = false;
+                  }
+                  ifDepth--;
+                  //isAlreadyManuallyNested &= (0xffff ^ ifNestMask);
+                  ifNestMask /= 2;
+                  if (ifDepth < 0)
+                  {
+                    error("Internal error while trying to autonest if blocks, if depth below zero.", lineNumber, true);
+                    assert(!"Internal error while trying to autonest if blocks, if depth below zero.");
+                  }
+                }
+                if (strcmp(cmd, "breakLoop") == 0)
+                {
+                  didABreakLoop = true;
+                  if (nestedInsideLoop)
+                  {                    
+                    error("Possibly an erronous use of manual _externCallPush/Pop nesting inside loop.", lineNumber, false);
+                    assert(!"Possibly an erronous use of manual _externCallPush/Pop nesting inside loop.");
+                  }
+                }
+                if (strcmp(cmd, "_externCallPush") == 0)
+                {
+                  manualNestedIfs++;
+                  isAlreadyManuallyNested |= (ifNestMask * 2);
+                  if (autoNestingNotAllowed)
+                  {
+                    nestedInsideLoop = true;
+                  }
+                }
+                if (strcmp(cmd, "_externCallPop") == 0)
+                {
+                  isAlreadyManuallyNested &= (0xffff ^ (ifNestMask * 2));
+                  nestedInsideLoop = false;
+                }
+                if (strcmp(cmd, "then") == 0)
+                {
+									commandCountThen++;
+									if (ifDepth == 0)
+									{
+                    error("then encountered outside if block (if expected before then).", lineNumber, true);
+									}
+								}
+                if (strcmp(cmd, "local") == 0)
+                {
+									if (selectDepth != 0
+										|| commandCountLoop != 0
+										|| commandCountIf != 0)
+									{
+                    error("Local variables must be declared in the beginning of the sub.", lineNumber, true);
+									}
+									inSub = true;
+								}
+                if (strcmp(cmd, "sub") == 0)
+                {
+									commandCountSub++;
+									if (inSub)
+									{
+                    error("sub encountered while inside sub (endSub expected after sub).", lineNumber, true);
+									}
+									inSub = true;
+								}
+                if (strcmp(cmd, "endSub") == 0)
+                {
+									if (!inSub)
+									{
+                    error("endSub encountered without sub (sub expected before endSub).", lineNumber, true);
+									}
+									commandCountEndSub++;
+									inSub = false;
+
+									if (commandCountThen != commandCountIf || commandCountEndif != commandCountIf)
+									{
+										if (commandCountEndif < commandCountIf)
+											error("Script parse error, invalid if block encountered (missing endif after if).", lineNumber, true);
+										else if (commandCountEndif > commandCountIf)
+											error("Script parse error, invalid if block encountered (missing if before endif).", lineNumber, true);
+										else
+											error("Script parse error, invalid if block encountered. (missing then inside if block)", lineNumber, true);
+									}
+									commandCountIf = 0;
+									commandCountThen = 0;
+									commandCountEndif = 0;
+
+									if (commandCountLoop != commandCountEndLoop)
+									{
+										error("Script parse error, invalid loop block encountered.", lineNumber, true);
+									}
+									commandCountLoop = 0;
+									commandCountEndLoop = 0;
+
+									if (commandCountSelect != commandCountEndSelect || selectDepth != 0)
+									{
+										error("Script parse error, invalid select block encountered.", lineNumber, true);
+									}
+									commandCountSelect = 0;
+									commandCountEndSelect = 0;
+									selectDepth = 0;
+								}
+                if (strcmp(cmd, "select") == 0)
+                {
+									commandCountSelect++;
+									if (selectDepth > 0)
+									{
+										// nested selects can exist? (with _externCallPush/Pop?)
+                    //error("select encountered while inside select (endSelect expected after select).", lineNumber, true);
+									}
+									selectDepth++;
+								}
+                if (strcmp(cmd, "endSelect") == 0)
+                {
+									if (selectDepth == 0)
+									{
+                    error("endSelect encountered without select (select expected before endSelect).", lineNumber, true);
+									}
+									commandCountEndSelect++;
+									selectDepth--;
+								}
+							}
+						} else {
+							error("Command outside script block.", lineNumber, true); 
+							lineok = true;
+						}
+					}
 
 					if (!lineok)
 					{
@@ -1403,7 +1246,7 @@ namespace util
 			error("Expected endScript, script block not properly ended before end of file.", lineNumber, true);
 		}
 
-    if (parsingData.ifDepth != 0)
+    if (ifDepth != 0)
     {
 			error("Error processing if clauses, if depth not zero at end of file.", lineNumber, true); 
       assert(!"ScriptManager::loadMemoryScripts - if depth not zero at end of file.");
@@ -1417,12 +1260,12 @@ namespace util
     }
 		*/
 
-    if (parsingData.manualNestedIfs > 0 && !parsingData.loopReasonForManualNest)
+    if (manualNestedIfs > 0 && !loopReasonForManualNest)
     {
       // NOTICE: this is for temporary use only (maybe..?)
 			error("Manually nested blocks (_externCallPush/Pop) found, they should be removed.", lineNumber, false); 
       Logger::getInstance()->debug("Manually nested blocks, amount follows.");
-      Logger::getInstance()->debug(int2str(parsingData.manualNestedIfs));
+      Logger::getInstance()->debug(int2str(manualNestedIfs));
     }
 
 		delete [] buf;
@@ -1446,7 +1289,7 @@ namespace util
 		return NULL;
 	}
 
-	void ScriptManager::setKeywords(int amount, char **keywords, int *datatypes)
+	void ScriptManager::setKeywords(int amount, const char **keywords, int *datatypes)
 	{
 		// delete old arrays
 		if (this->keywords != NULL)

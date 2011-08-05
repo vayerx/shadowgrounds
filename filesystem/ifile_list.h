@@ -28,6 +28,7 @@ public:
 // These to file_list_util.h or something
 void getAllFiles(IFileList &list, const std::string &root, std::vector<std::string> &result, bool recurse, bool caseSensitive = false);
 void getAllDirs(IFileList &list, const std::string &root, std::vector<std::string> &result, bool recurse, bool caseSensitive = false);
+void convertLower(std::string &str);
 
 } // end of namespace filesystem
 } // end of namespace frozenbyte

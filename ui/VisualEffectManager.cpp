@@ -1,3 +1,4 @@
+#include <fstream>
 
 #include "precompiled.h"
 
@@ -19,7 +20,6 @@
 #include "../container/LinkedList.h"
 #include "../convert/str2int.h"
 #include "../util/SimpleParser.h"
-#include "../util/StringUtil.h"
 #include "../system/Logger.h"
 #include "../game/SimpleOptions.h"
 #include "../game/options/options_effects.h"
@@ -45,15 +45,15 @@
 #include <string>
 #include <vector>
 #include <list>
-#include <fstream>
 
 #include "../editor/parser.h"
 #include "../filesystem/input_stream.h"
 #include "../filesystem/file_package_manager.h"
 #include "../particle_editor2/particleeffect.h"
-#include "../particle_editor2/particlephysics.h"
+#include "../particle_editor2/ParticlePhysics.h"
 
 #include "../filesystem/ifile_list.h"
+#include "igios.h"
 
 #define MAX_VISUAL_EFFECT_TYPES 384
 
@@ -63,13 +63,6 @@ using namespace frozenbyte::particle;
 namespace ui
 {
 	extern int visual_effect_allocations;
-
-	struct NullDeleter
-	{
-		void operator() (void *)
-		{
-		}
-	};
 
 	class ManagedVisualEffectEntry 
 	{
@@ -199,7 +192,6 @@ namespace ui
 
 	void VisualEffectManager::detachVisualEffectsFromUnits()
 	{
-		LinkedList *delList = NULL;
 		LinkedListIterator iter = LinkedListIterator(visualEffects);
 		while (iter.iterateAvailable())
 		{
@@ -268,80 +260,23 @@ namespace ui
 					{
 						if (v != NULL)
 						{
-#ifndef LEGACY_FILES
-							if (strcmp(v, "<filename>") == 0)
+							for (int i = 0; i < atId; i++)
 							{
-								// assuming .vef extension in current filename (not for that checking though)
-								std::string filename = allFiles[vef];
-								if (filename.length() > 4)
+								if (visualEffectTypes[i].getName() != NULL
+								  && strcmp(v, visualEffectTypes[i].getName()) == 0)
 								{
-									filename = filename.substr(0, filename.length() - 4);
+									sp.error("VisualEffectManager - Duplicate visual effect name.");
+									break;
 								}
-								for (int i = filename.length() - 1; i >= 0; i--)
-								{
-									if (filename[i] == '/' || filename[i] == '\\')
-									{
-										filename = filename.substr(i + 1, filename.length() - (i + 1));
-										break;
-									}
-								}
-								if (!filename.empty())
-								{
-									for (int i = 0; i < atId; i++)
-									{
-										if (visualEffectTypes[i].getName() != NULL
-											&& strcmp(filename.c_str(), visualEffectTypes[i].getName()) == 0)
-										{
-											sp.error("VisualEffectManager - Duplicate visual effect name.");
-											break;
-										}
-									}
-									visualEffectTypes[atId].setName(filename.c_str());
-								}
-								lineok = true;
-							} else {
-#else
-							{
-#endif
-								for (int i = 0; i < atId; i++)
-								{
-									if (visualEffectTypes[i].getName() != NULL
-										&& strcmp(v, visualEffectTypes[i].getName()) == 0)
-									{
-										sp.error("VisualEffectManager - Duplicate visual effect name.");
-										break;
-									}
-								}
-								visualEffectTypes[atId].setName(v);
-								lineok = true;
 							}
-						} else {
-							visualEffectTypes[atId].setName(NULL);
 						}
+						visualEffectTypes[atId].setName(v);
+						lineok = true;
 					}
 					if (strcmp(k, "model") == 0)
 					{
-#ifndef LEGACY_FILES
-						if (v != NULL && strncmp(v, "<modelpath>", 11) == 0)
-						{
-							std::string modelpath = allFiles[vef];
-							// assuming .vef extension in current filename (not for that checking though)
-							if (modelpath.length() > (24+4) && modelpath.substr(0, 24) == "data/effect/visualeffect")
-							{
-								modelpath = std::string("data/model") + modelpath.substr(24, modelpath.length() - (24+4)) + ".s3d";
-								modelpath += std::string(&v[11]);
-							} else {
-								sp.error("VisualEffectManager - Failed to solve proper <modelpath>.");
-							}
-							visualEffectTypes[atId].setModelFilename(modelpath.c_str());
-							lineok = true;
-						} else {
-#else
-						{
-#endif
-							visualEffectTypes[atId].setModelFilename(v);
-							lineok = true;
-						}
+						visualEffectTypes[atId].setModelFilename(v);
+						lineok = true;
 					}
 					if (strcmp(k, "lighteffect") == 0)
 					{
@@ -369,26 +304,8 @@ namespace ui
 					}
 					if (strcmp(k, "particleeffect") == 0)
 					{
-#ifndef LEGACY_FILES
-						if (v != NULL && strcmp(v, "<particlepath>") == 0)
-						{
-							std::string particlepath = allFiles[vef];
-							// assuming .vef extension in current filename (not for that checking though)
-							if (particlepath.length() > (24+4) && particlepath.substr(0, 24) == "data/effect/visualeffect")
-							{
-								particlepath = std::string("data/effect/particle") + particlepath.substr(24, particlepath.length() - (24+4)) + ".pfx";
-							} else {
-								sp.error("VisualEffectManager - Failed to solve proper <particlepath>.");
-							}
-							visualEffectTypes[atId].setParticleEffect(particlepath.c_str());
-							lineok = true;
-						} else {
-#else
-						{
-#endif
-							visualEffectTypes[atId].setParticleEffect(v);
-							lineok = true;
-						}
+						visualEffectTypes[atId].setParticleEffect(v);
+						lineok = true;
 					}
 					if (strcmp(k, "hardware_fluid_particleeffect") == 0)
 					{
@@ -663,7 +580,7 @@ namespace ui
 			int fluidID = visualEffectTypes[visualEffectId].getParticleEffectHardwareFluidID();
 			if (fluidID != -1 && game::SimpleOptions::getBool(DH_OPT_B_PHYSICS_FLUIDS_ENABLED))
 			{
-#ifdef PHYSICS_PHYSX
+#if defined(PHYSICS_PHYSX) && !defined(NX_DISABLE_FLUIDS)
 				int fluidParticlesAmount = game->getGamePhysics()->getPhysicsLib()->getActiveFluidParticleAmount();
 				//if (game->getGamePhysics()->getPhysicsLib()->isRunningInHardware()
 				//	&& fluidParticlesAmount < game::SimpleOptions::getInt(DH_OPT_I_PHYSICS_MAX_FLUID_PARTICLES))
@@ -1179,7 +1096,7 @@ namespace ui
 			const char *particleEffect = visualEffectTypes[i].getParticleEffect();
 			if(particleEffect != NULL) 
 			{
-				frozenbyte::editor::Parser parser(false, false);
+				frozenbyte::editor::EditorParser parser(false, false);
 
 				filesystem::InputStream stream = filesystem::FilePackageManager::getInstance().getFile(particleEffect);
 				if(!stream.isEof())
@@ -1208,7 +1125,7 @@ namespace ui
 				const char *particleEffectHardwareFluid = visualEffectTypes[i].getParticleEffectHardwareFluid();
 				if(particleEffectHardwareFluid != NULL) 
 				{
-					frozenbyte::editor::Parser parser(false, false);
+					frozenbyte::editor::EditorParser parser(false, false);
 
 					filesystem::InputStream stream = filesystem::FilePackageManager::getInstance().getFile(particleEffectHardwareFluid);
 					if(!stream.isEof())
@@ -1236,7 +1153,7 @@ namespace ui
 				const char *particleEffectHardwareRigid = visualEffectTypes[i].getParticleEffectHardwareRigid();
 				if(particleEffectHardwareRigid != NULL) 
 				{
-					frozenbyte::editor::Parser parser;
+					frozenbyte::editor::EditorParser parser;
 
 					filesystem::InputStream stream = filesystem::FilePackageManager::getInstance().getFile(particleEffectHardwareRigid);
 					if(!stream.isEof())

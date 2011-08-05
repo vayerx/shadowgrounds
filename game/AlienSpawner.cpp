@@ -139,7 +139,6 @@ namespace game
 				return;
 
 
-			float closestDistSq = ALIENSPAWNER_MAX_SPAWN_RANGE * ALIENSPAWNER_MAX_SPAWN_RANGE;
 			int closestId = -1;
 
 #ifdef PROJECT_SURVIVOR
@@ -168,6 +167,7 @@ namespace game
 				}
 			}					
 #else
+			float closestDistSq = ALIENSPAWNER_MAX_SPAWN_RANGE * ALIENSPAWNER_MAX_SPAWN_RANGE;
 			// TODO: more efficient datastructure
 			for (int i = 0; i < ALIENSPAWNER_MAX_SPAWNPOINTS; i++)
 			{

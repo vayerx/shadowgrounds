@@ -4,7 +4,7 @@
 
 bool Forcewear::enabled = false;
 
-unsigned int Forcewear::stringToType (char *string)
+unsigned int Forcewear::stringToType (const char *string)
 {
 	if(strcmp(string, "machinegun") == 0)
 		return FW_MACHINEGUN;
@@ -54,5 +54,5 @@ void TearDownJacket( void ) {  };
 int SetEffect( int nEffect ) { return GLIB_OK; };
 int SetEffect2( int nLen, int nID ) { return GLIB_OK; };
 int GetErrorCode (void) { return GLIB_OK; };
-char *GetErrorText (void ) { return "..."; };
+const char *GetErrorText (void ) { return "..."; };
 

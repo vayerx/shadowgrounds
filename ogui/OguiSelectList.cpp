@@ -10,7 +10,7 @@
 #include "../system/Timer.h"
 #include "../ui/uidefaults.h"
 #include "OguiSelectList.h"
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 #include "../util/assert.h"
 
 class OguiWindow;
@@ -262,7 +262,11 @@ void OguiSelectList::refresh()
 					//listButs[i]->SetDownImage(style->selectedItem->imageDown);
 					//listButs[i]->SetDisabledImage(style->selectedItem->imageDisabled);
 				} else {
+#ifdef PROJECT_SHADOWGROUNDS
+					listButs[i]->SetStyle(style->highlightedUnselectedItem);
+#else
 					listButs[i]->SetStyle(style->unselectedItem);
+#endif
 					//listButs[i]->SetImage(style->unselectedItem->image);
 					//listButs[i]->SetDownImage(style->unselectedItem->imageDown);
 					//listButs[i]->SetDisabledImage(style->unselectedItem->imageDisabled);
@@ -273,7 +277,11 @@ void OguiSelectList::refresh()
 			listButs[i]->SetText(descs[scrolly + i]);
 			listButs[i]->SetDisabled(false);
 		} else {
+#ifdef PROJECT_SHADOWGROUNDS
+			listButs[i]->SetStyle(style->highlightedUnselectedItem);
+#else
 			listButs[i]->SetStyle(style->unselectedItem);
+#endif
 			//listButs[i]->SetImage(style->unselectedItem->image);
 			//listButs[i]->SetDownImage(style->unselectedItem->imageDown);
 			//listButs[i]->SetDisabledImage(style->unselectedItem->imageDisabled);

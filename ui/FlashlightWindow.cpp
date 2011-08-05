@@ -95,19 +95,25 @@ REGISTER_COMBATSUBWINDOW( FlashlightWindow );
 
 	void FlashlightWindow::hide(int fadeTime)
 	{
+    /*
 		if(fadeTime)
 			win->StartEffect(OGUI_WINDOW_EFFECT_FADEOUT, fadeTime);
 		else
 			win->Hide();
+    */
+    win->Hide();
 	}
 
 
 	void FlashlightWindow::show(int fadeTime)
 	{
+    /*
 		if(fadeTime)
 			win->StartEffect(OGUI_WINDOW_EFFECT_FADEIN, fadeTime);
 
 		win->Show();
+    */
+    win->Show();
 	}
 
 
@@ -120,13 +126,13 @@ REGISTER_COMBATSUBWINDOW( FlashlightWindow );
 		game::Flashlight *fl = game->gameUI->getFirstPerson(0)->getFlashlight();
 
 		int energyPercentage = 0;
-		int recharging = 0;
+		// int recharging = 0;
 		bool needsRecharge = false;
 		bool flashlightOn = false;
 		if (fl != NULL)
 		{
 			energyPercentage = fl->getFlashlightEnergy();
-			recharging = fl->getRechargingAmount();
+			// recharging = fl->getRechargingAmount();
 			needsRecharge = fl->doesNeedRecharge();
 			flashlightOn = fl->isFlashlightOn();
 		}

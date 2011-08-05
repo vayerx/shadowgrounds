@@ -1,7 +1,7 @@
 #ifndef INC_GENERICBARWINDOW_H
 #define INC_GENERICBARWINDOW_H
 
-#include "../ogui/ogui.h"
+#include "../ogui/Ogui.h"
 #include "ICombatSubWindow.h"
 #include <string>
 

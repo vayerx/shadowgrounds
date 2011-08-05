@@ -35,7 +35,7 @@ namespace game
     bool hitUnit; // hit to a unit
     VC3 position; // hit coordinates (of unit if not null, else just map)
     VC3 hitPlaneNormal; // hit plane normal direction - valid in some cases only!
-    Unit *unit; // hit unit or null if did not hit a unit
+    Unit *unit; // hit unit or null if did not hit a unit, can't be const
     Part *part; // hit part of the unit
 		int terrainInstanceId; // mapping to terrain object model instances
 		int terrainModelId; // mapping to terrain object model instances

@@ -9,7 +9,7 @@
 #include "../game/GameUI.h"
 #include "../game/DHLocaleManager.h"
 
-#include "../system/logger.h"
+#include "../system/Logger.h"
 #include <sstream>
 
 #include <vector>
@@ -19,16 +19,20 @@ using namespace game;
 
 namespace ui {
 
-static const int FADE_IN_TIME = 500;
-static const int FADE_OUT_TIME = 500;
+static const int GUITABS_FADE_IN_TIME = 500;
+static const int GUITABS_FADE_OUT_TIME = 500;
 
 class IngameGuiTabsImpl : public IOguiButtonListener, private IOguiEffectListener
 {
 public:
 	IngameGuiTabsImpl( Ogui* ogui, Game* game ) :
-		ogui( ogui ),
 		game( game ),
-		lastClosed( -1 )
+		ogui( ogui ),
+		window(NULL)
+		, font(NULL)
+		, currentActive(-1)
+		, lastClosed( -1 )
+		, visible(false)
 	{
 		init();
 	}
@@ -88,7 +92,7 @@ public:
 		if( visible == false )
 		{
 			visible = true;
-			window->StartEffect(OGUI_WINDOW_EFFECT_FADEIN, FADE_IN_TIME);
+			window->StartEffect(OGUI_WINDOW_EFFECT_FADEIN, GUITABS_FADE_IN_TIME);
 			window->SetReactMask( OGUI_WIN_REACT_MASK_ALL );
 			
 			if(buttons[ GameUI::WINDOW_TYPE_LOG ])
@@ -114,7 +118,7 @@ public:
 		if( visible == true )
 		{
 			visible = false;
-			window->StartEffect(OGUI_WINDOW_EFFECT_FADEOUT, FADE_OUT_TIME);
+			window->StartEffect(OGUI_WINDOW_EFFECT_FADEOUT, GUITABS_FADE_OUT_TIME);
 			window->SetReactMask( 0 );
 
 			if(buttons[ GameUI::WINDOW_TYPE_LOG ])

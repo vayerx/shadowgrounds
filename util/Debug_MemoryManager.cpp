@@ -2,8 +2,10 @@
 
 #include "precompiled.h"
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
 #pragma warning(disable:4786)
+#endif
 
 #include "Debug_MemoryManager.h"
 
@@ -162,7 +164,7 @@ namespace {
 	
 	// Hash data
 	static const int hashSize = 3677; // Prime number. Big enough?
-	static AllocationRoot hashMap[hashSize] = { 0 };
+	static AllocationRoot hashMap[hashSize] = { { 0 } };
 	
 	// Amount of allocation
 	static int allocationCount = 0;
@@ -329,7 +331,6 @@ namespace {
 	{
 		if(allocationCount > 0)
 		{
-			int currentIndex = 0;
 			for(int i = 0; i < hashSize; ++i)
 			{
 				AllocationLink *currentLink = hashMap[i].first;

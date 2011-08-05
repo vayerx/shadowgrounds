@@ -49,6 +49,7 @@ public:
 	void apply();
 
 	COL getColor(const VC2 &position) const;
+	void setShadow(const VC2 &position, float value, const VC2 &rect, const std::vector<PointLight> &lights, const VC3 &sunDir);
 
 	void doExport(Exporter &exporter) const;
 	filesystem::OutputStream &writeStream(filesystem::OutputStream &stream) const;

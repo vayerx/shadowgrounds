@@ -2,7 +2,7 @@
 
 #include "LocaleManager.h"
 #include "LocaleResource.h"
-#include "../editor/Parser.h"
+#include "../editor/parser.h"
 #include "../system/Logger.h"
 #include "../filesystem/file_package_manager.h"
 #include "../filesystem/input_stream.h"
@@ -216,7 +216,7 @@ void LocaleManager::loadResource(int resourceId, const char *filename, const cha
 	assert(resourceId >= 0);
 
 	LocaleResource &resource = *l.resources[resourceId].get();
-	Parser parser;
+	EditorParser parser;
 
 	filesystem::InputStream stream = filesystem::FilePackageManager::getInstance().getFile(filename);
 	if(!stream.isEof())
@@ -281,7 +281,7 @@ void LocaleManager::loadResource(int resourceId, const char *filename, const cha
 
 void LocaleManager::parse(const char localeId[2], const std::string &group)
 {
-	Parser parser;
+	EditorParser parser;
 
 	filesystem::InputStream stream = filesystem::FilePackageManager::getInstance().getFile(configName);
 	if(!stream.isEof())
@@ -360,7 +360,7 @@ LocaleManager::~LocaleManager()
 
 void LocaleManager::init(const char *configurationFile)
 {
-	Parser parser;
+	EditorParser parser;
 	filesystem::InputStream stream = filesystem::FilePackageManager::getInstance().getFile(configurationFile);
 	if(!stream.isEof())
 		stream >> parser;

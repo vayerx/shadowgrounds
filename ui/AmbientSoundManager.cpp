@@ -14,7 +14,9 @@
 #define AMBIENTSOUNDMAN_MAX_FIND_FREE_NUM 256
 
 // no more whining about "identifier was truncated to '255' characters.."
+#ifdef _MSC_VER
 #pragma warning(disable : 4786)
+#endif
 
 using namespace sfx;
 

@@ -71,12 +71,6 @@ typedef Storm3D_Texture *PStorm3D_Texture;
 // Includes (etc)
 //------------------------------------------------------------------
 
-// DX8 stuff
-#define D3D_OVERLOADS
-#include <d3d9.h>
-#include <d3dx9.h>
-
-
 
 //------------------------------------------------------------------
 // Defines etc.
@@ -94,15 +88,16 @@ typedef Storm3D_Texture *PStorm3D_Texture;
           dest.y=v1.z*v2.x-v1.x*v2.z; \
           dest.z=v1.x*v2.y-v1.y*v2.x;
 
-// DirectX com-object system needs this
-inline DWORD F2DW(FLOAT f) {return *((DWORD*)&f);}
-
 // Sets
+#ifdef _MSC_VER
 #pragma warning(disable:4786)	// For sets (Microsoft rulez;)
 #pragma warning(disable:4103)
+#endif
 #include <set>
 using namespace std;			// For sets
 
 // "this used in constructor" warning disable
+#ifdef _MSC_VER
 #pragma warning(disable:4355)
+#endif
 

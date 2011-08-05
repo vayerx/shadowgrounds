@@ -1,0 +1,361 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_MAINWINDOW DIALOGEX 0, 0, 382, 277
+STYLE DS_SETFONT | WS_CHILD | WS_BORDER
+FONT 8, "Microsoft Sans Serif", 400, 0, 0x0
+BEGIN
+    CONTROL         107,IDC_STATIC,"Static",SS_BITMAP | WS_BORDER,7,7,369,54
+    CONTROL         "",IDC_MAINTABS,"SysTabControl32",TCS_MULTILINE,7,65,368,193,WS_EX_TRANSPARENT
+    LTEXT           "www.shadowgroundssurvivor.com",IDC_URLLABEL,12,264,144,8
+END
+
+IDD_LAUNCHDIALOG DIALOGEX 0, 0, 362, 163
+STYLE DS_SETFONT | DS_CENTER | WS_CHILD
+EXSTYLE WS_EX_TRANSPARENT
+FONT 8, "Microsoft Sans Serif", 400, 0, 0x0
+BEGIN
+    PUSHBUTTON      "launcher_launch_button",IDC_BUTTON1,193,131,152,25
+    PUSHBUTTON      "launcher_check_updates",IDC_BUTTON2,193,111,152,15
+    GROUPBOX        "launcher_quick_settings",IDC_GROUPBOX,7,7,348,47
+    LTEXT           "launcher_language",IDC_LABEL1,14,23,97,10,NOT WS_GROUP
+    LTEXT           "launcher_overall_settings",IDC_LABEL2,121,23,113,10,NOT WS_GROUP
+    LTEXT           "launcher_resolution",IDC_LABEL3,242,23,95,10,NOT WS_GROUP
+    COMBOBOX        IDC_LANGCOMBO,14,33,99,68,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_OVERALLCOMBO,121,33,113,77,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_RESOLUTIONCOMBO,242,33,108,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "",IDC_INFOTEXT,14,110,107,44
+END
+
+IDD_GRAPHICSDIALOG DIALOGEX 0, 0, 362, 163
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    GROUPBOX        "launcher_graphics_details",IDC_GROUPBOX,6,0,240,162
+    LTEXT           "launcher_fake_shadows_texture_quality",IDC_LABEL1,12,12,113,8
+    CONTROL         "launcher_fullscreen",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,252,12,104,11
+    CONTROL         "launcher_weather_effects",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,252,25,104,11
+    CONTROL         "launcher_high_quality_lightmap",IDC_CHECK3,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,252,36,104,11
+    CONTROL         "launcher_extra_gamma_effects",IDC_CHECK4,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,252,49,104,11
+    CONTROL         "launcher_render_glow",IDC_CHECK5,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,252,60,104,11
+    CONTROL         "launcher_distortion_effects",IDC_CHECK6,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,252,73,104,11
+    CONTROL         "launcher_disappearing_corpses",IDC_CHECK7,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,252,84,104,11
+    CONTROL         "launcher_high_quality_video",IDC_CHECK8,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,252,97,104,11
+    CONTROL         "launcher_reset_renderer_after_load",IDC_CHECK9,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,252,108,104,11
+    CONTROL         "launcher_enable_menu_video",IDC_CHECK10,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,252,121,104,11
+    CONTROL         "launcher_vertical_sync",IDC_CHECK11,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,252,132,104,11
+    LTEXT           "launcher_misc_graphics",IDC_LABEL2,126,12,113,8
+    COMBOBOX        IDC_COMBO1,12,24,112,58,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO2,126,24,112,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "launcher_lighting_level",IDC_LABEL3,12,42,113,8
+    LTEXT           "launcher_anisotrophic_filtering",IDC_LABEL4,126,42,113,8
+    COMBOBOX        IDC_COMBO3,12,54,112,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO4,127,54,112,58,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "launcher_lighting_texture_quality",IDC_LABEL5,12,72,113,8
+    LTEXT           "launcher_antialiasing",IDC_LABEL6,126,72,113,8
+    COMBOBOX        IDC_COMBO5,12,84,112,58,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO6,127,84,112,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "launcher_particle_effects_level",IDC_LABEL7,12,102,113,8
+    LTEXT           "launcher_shadows_texture_quality",IDC_LABEL8,126,102,113,8
+    COMBOBOX        IDC_COMBO7,12,114,112,64,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO8,127,114,112,63,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "launcher_shadows_level",IDC_LABEL9,12,132,113,11
+    LTEXT           "launcher_texture_detail_level",IDC_LABEL10,126,132,113,11
+    COMBOBOX        IDC_COMBO9,12,144,112,66,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO10,127,144,112,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_SOUNDSDIALOG DIALOGEX 0, 0, 362, 164
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    GROUPBOX        "launcher_sounds",IDC_GROUPBOXSOUNDS,14,13,248,89
+    CONTROL         "launcher_sounds_enabled",IDC_SCHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,21,28,98,10
+    CONTROL         "launcher_hardware3d",IDC_SCHECK2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,149,28,107,10
+    CONTROL         "launcher_eax",IDC_SCHECK3,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,149,46,107,10
+    LTEXT           "launcher_speaker_type",IDC_SLABEL1,21,63,119,8
+    LTEXT           "launcher_mixing_rate",IDC_SLABEL2,149,63,110,8
+    COMBOBOX        IDC_SCOMBO1,21,74,110,68,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_SCOMBO2,149,74,106,68,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_PHYSICSDIALOG DIALOGEX 0, 0, 363, 163
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    GROUPBOX        "launcher_physics_level",IDC_PSTATIC2,14,18,282,31
+    COMBOBOX        IDC_PCOMBO1,21,29,267,69,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "launcher_use_ageia",IDC_PCHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,21,50,270,12
+    GROUPBOX        "launcher_misc",IDC_PSTATIC1,14,87,145,69
+    CONTROL         "launcher_multiple_mice",IDC_PCHECK2,"Button",BS_AUTOCHECKBOX | BS_TOP | BS_MULTILINE | WS_TABSTOP,21,100,123,48
+END
+
+IDD_MODDIALOG DIALOGEX 0, 0, 362, 163
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    GROUPBOX        "launcher_mod_selection",IDC_MSTATIC1,7,7,348,58
+    COMBOBOX        IDC_MCOMBO1,15,22,114,65,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "launcher_launch_game",IDC_MBUTTON2,247,22,102,14
+    PUSHBUTTON      "launcher_activate",IDC_MBUTTON1,132,22,102,14
+    LTEXT           "launcher_mod_info",IDC_MSTATIC3,12,40,328,20
+    GROUPBOX        "launcher_editor",IDC_MSTATIC2,7,86,348,70
+    LTEXT           "launcher_editor_info",IDC_MSTATIC4,12,96,331,32
+    PUSHBUTTON      "launcher_editor_tutorials",IDC_MBUTTON3,12,128,102,21
+    PUSHBUTTON      "launcher_editor_read_help",IDC_MBUTTON4,132,128,102,21
+    PUSHBUTTON      "launcher_editor_launch",IDC_MBUTTON5,247,128,102,21
+END
+
+IDD_UPDATESDIALOG DIALOGEX 0, 0, 364, 163
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    GROUPBOX        "launcher_updates_gameupdates",IDC_USTATIC1,7,7,350,46
+    CONTROL         "launcher_updates_automatic",IDC_UCHECK1,"Button",BS_AUTOCHECKBOX | BS_VCENTER | BS_MULTILINE | WS_TABSTOP,244,20,110,26
+    PUSHBUTTON      "launcher_check_updates",IDC_UBUTTON1,133,20,100,26
+    LTEXT           "(text field)",IDC_UPDATES_TEXTFIELD,15,24,111,12
+    GROUPBOX        "launcher_frozenbytenews",IDC_USTATIC2,7,56,350,100
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_MAINWINDOW, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 375
+        VERTGUIDE, 375
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 270
+    END
+
+    IDD_LAUNCHDIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 355
+        VERTGUIDE, 14
+        VERTGUIDE, 121
+        VERTGUIDE, 193
+        VERTGUIDE, 242
+        VERTGUIDE, 345
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 156
+        HORZGUIDE, 23
+        HORZGUIDE, 33
+        HORZGUIDE, 42
+        HORZGUIDE, 54
+        HORZGUIDE, 110
+    END
+
+    IDD_GRAPHICSDIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 355
+        VERTGUIDE, 14
+        VERTGUIDE, 126
+        VERTGUIDE, 251
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 156
+        HORZGUIDE, 16
+        HORZGUIDE, 25
+        HORZGUIDE, 38
+        HORZGUIDE, 46
+        HORZGUIDE, 60
+        HORZGUIDE, 68
+        HORZGUIDE, 99
+        HORZGUIDE, 116
+        HORZGUIDE, 131
+        HORZGUIDE, 142
+    END
+
+    IDD_SOUNDSDIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 355
+        VERTGUIDE, 14
+        VERTGUIDE, 142
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 157
+        HORZGUIDE, 22
+        HORZGUIDE, 40
+        HORZGUIDE, 57
+    END
+
+    IDD_PHYSICSDIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 356
+        VERTGUIDE, 14
+        VERTGUIDE, 21
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 156
+    END
+
+    IDD_MODDIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 355
+        VERTGUIDE, 12
+        VERTGUIDE, 132
+        VERTGUIDE, 234
+        VERTGUIDE, 247
+        VERTGUIDE, 349
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 156
+        HORZGUIDE, 22
+        HORZGUIDE, 108
+        HORZGUIDE, 128
+        HORZGUIDE, 149
+    END
+
+    IDD_UPDATESDIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 357
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 156
+        HORZGUIDE, 20
+        HORZGUIDE, 46
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Finnish resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FIN)
+#ifdef _WIN32
+LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BITMAP1             BITMAP                  "LauncherImage.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x17L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040b04b0"
+        BEGIN
+            VALUE "CompanyName", "Frozenbyte"
+            VALUE "FileDescription", "Shadowgrounds Survivor Launcher"
+            VALUE "FileVersion", "1, 0, 0, 1"
+            VALUE "InternalName", "Survivor Launcher"
+            VALUE "LegalCopyright", "Copyright (C) 2007"
+            VALUE "OriginalFilename", "Launcher.exe"
+            VALUE "ProductName", "Shadowgrounds Survivor Launcher"
+            VALUE "ProductVersion", "1, 0, 0, 1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x40b, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON1               ICON                    "..\\survivor\\icon3.ico"
+#endif    // Finnish resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

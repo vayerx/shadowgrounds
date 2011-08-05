@@ -34,7 +34,7 @@ struct ConvertFrom: private ConvertBase<Type>
 {
 	explicit ConvertFrom(const Type &t)
 	{
-		value.t = t;
+		ConvertBase<Type>::value.t = t;
 	}
 
 	using ConvertBase<Type>::getSize;
@@ -42,7 +42,7 @@ struct ConvertFrom: private ConvertBase<Type>
 	unsigned char getByte(int index) const
 	{
 		assert((index >= 0) && (index < getSize()));
-		return value.c[index];
+		return ConvertBase<Type>::value.c[index];
 	}
 };
 
@@ -54,16 +54,14 @@ struct ConvertTo: private ConvertBase<Type>
 	void setByte(int index, unsigned char c)
 	{
 		assert((index >= 0) && (index < getSize()));
-		value.c[index] = c;
+		ConvertBase<Type>::value.c[index] = c;
 	}
 
 	const Type &getValue() const
 	{
-		return value.t;
+		return ConvertBase<Type>::value.t;
 	}
 };
-
-typedef unsigned short uint16_t;
 
 } // end of namespace filesystem
 } // end of namespace frozenbyte

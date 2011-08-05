@@ -47,9 +47,10 @@ namespace game
 	CameraAreaParameters CameraScripting::cameraAreaParameters = CameraAreaParameters();	
 
 	void CameraScripting::process(util::ScriptProcess *sp, 
-		int command, int intData, char *stringData, ScriptLastValueType *lastValue, 
+		int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue,
 		GameScriptData *gsd, Game *game)
 	{
+		int intData = intFloat.i;
 		switch(command)
 		{
 		case GS_CMD_CAMERAPOSITION:
@@ -116,10 +117,9 @@ namespace game
 			}
 			game->gameUI->getGameCamera()->doMovement(1);
 			break;
-
 		case GS_CMD_SETCAMERAANGLEFLOAT:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				if (floatData >= 0.0f || floatData < 360.0f)
 				{
 					floatData -= Ani::getGlobalRotation();
@@ -166,7 +166,7 @@ namespace game
 
 		case GS_CMD_SETCAMERABETAANGLEFLOAT:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				if (floatData >= -180 || floatData < 180)
 				{
 					game->gameUI->getGameCamera()->setBetaAngle(floatData);
@@ -336,7 +336,7 @@ namespace game
 
 		case GS_CMD_setCameraFOVFloat:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				game->gameUI->getGameCamera()->setFOV(floatData);
 			}
 			break;
@@ -531,7 +531,7 @@ namespace game
 		case GS_CMD_setCameraAutozoomIndoor:
 			if (game->inCombat)
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				ui::CameraAutozoomer::setAreaZoom(ui::CameraAutozoomer::CAMERA_AUTOZOOMER_AREA_INDOOR, floatData);
 			}
 			break;
@@ -539,7 +539,7 @@ namespace game
 		case GS_CMD_setCameraAutozoomOutdoor:
 			if (game->inCombat)
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				ui::CameraAutozoomer::setAreaZoom(ui::CameraAutozoomer::CAMERA_AUTOZOOMER_AREA_OUTDOOR, floatData);
 			}
 			break;
@@ -586,7 +586,7 @@ namespace game
 
 		case GS_CMD_setCameraNearClipValue:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				if( game && game->gameScene && game->gameScene->getStormScene() && game->gameScene->getStormScene()->GetCamera() )
 					game->gameScene->getStormScene()->GetCamera()->SetZNear( floatData );
 			}
@@ -725,70 +725,70 @@ namespace game
 
 		case GS_CMD_setCameraAreaFOV:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				cameraAreaParameters.FOV = floatData;			
 			}
 			break;
 
 		case GS_CMD_setCameraAreaAngle:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				cameraAreaParameters.angle = floatData;			
 			}
 			break;
 
 		case GS_CMD_setCameraAreaBetaAngle:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				cameraAreaParameters.betaAngle = floatData;			
 			}
 			break;
 
 		case GS_CMD_setCameraAreaBank:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				cameraAreaParameters.bank = floatData;			
 			}
 			break;
 
 		case GS_CMD_setCameraAreaOffsetX:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				cameraAreaParameters.offset.x = floatData;			
 			}
 			break;
 
 		case GS_CMD_setCameraAreaOffsetY:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				cameraAreaParameters.offset.y = floatData;			
 			}
 			break;
 
 		case GS_CMD_setCameraAreaOffsetZ:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				cameraAreaParameters.offset.z = floatData;			
 			}
 			break;
 
 		case GS_CMD_setCameraAreaFollowX:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				cameraAreaParameters.follow.x = floatData*0.01f;			
 			}
 			break;
 
 		case GS_CMD_setCameraAreaFollowY:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				cameraAreaParameters.follow.y = floatData*0.01f;			
 			}
 			break;
 
 		case GS_CMD_setCameraAreaFollowZ:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				cameraAreaParameters.follow.z = floatData*0.01f;			
 			}
 			break;
@@ -834,7 +834,7 @@ namespace game
 
 		case GS_CMD_setCameraAreaDistance:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				cameraAreaParameters.distance = floatData;			
 			}
 			break;
@@ -851,35 +851,35 @@ namespace game
 
 		case GS_CMD_moveCameraAngle:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				game->getGameUI()->getCameraSystem()->moveCameraAngle(floatData);			
 			}
 			break;
 
 		case GS_CMD_moveCameraBetaAngle:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				game->getGameUI()->getCameraSystem()->moveCameraBetaAngle(floatData);			
 			}
 			break;
 
 		case GS_CMD_moveCameraBank:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				game->getGameUI()->getCameraSystem()->moveCameraBank(floatData);			
 			}
 			break;
 
 		case GS_CMD_moveCameraDistance:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				game->getGameUI()->getCameraSystem()->moveCameraDistance(floatData);			
 			}
 			break;
 
 		case GS_CMD_moveCameraFOV:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				game->getGameUI()->getCameraSystem()->moveCameraFOV(floatData);			
 			}
 			break;

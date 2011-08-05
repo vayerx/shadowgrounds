@@ -6,22 +6,22 @@
 #include <fstream>
 
 using namespace std;
-typedef map<string, string> ValueMap;
+typedef map<string, string> LocaleValueMap;
 
 namespace util {
 namespace {
 
 //#define LOCALERESOURCE_MAX_STRING_LENGTH 512
 //static char convertBuffer[LOCALERESOURCE_MAX_STRING_LENGTH];
-string convertBuffer;
+string resourceConvertBuffer;
 
 void add(const char *str, int start, int end)
 {
-	int length = convertBuffer.size();
-	convertBuffer.resize(length + (end - start));
+	int length = resourceConvertBuffer.size();
+	resourceConvertBuffer.resize(length + (end - start));
 
 	for(int i = start; i < end; ++i)
-		convertBuffer[i - start + length] = str[i];
+		resourceConvertBuffer[i - start + length] = str[i];
 }
 
 } // unnamed
@@ -39,7 +39,7 @@ const char *LocaleResource::get(const char *key) const
 	if(!key)
 		return 0;
 
-	ValueMap::const_iterator it = values.find(key);
+	LocaleValueMap::const_iterator it = values.find(key);
 	if(it == values.end())
 		return 0;
 
@@ -55,7 +55,7 @@ const char *LocaleResource::convert(const char *str) const
 	if(length < 3)
 		return str;
 
-	convertBuffer.resize(0);
+	resourceConvertBuffer.resize(0);
 	int copyStart = 0;
 	int copyEnd = 0;
 
@@ -125,7 +125,7 @@ const char *LocaleResource::convert(const char *str) const
 	if(copyEnd < length)
 		add(str, copyStart, length);
 
-	return convertBuffer.c_str();
+	return resourceConvertBuffer.c_str();
 }
 
 void LocaleResource::addPair(const char *key, const char *value)

@@ -59,7 +59,7 @@ namespace game
 				std::string score;
 			};
 			void getScoreValues(int &time, int &kills, int &scoreTime, int &scoreKills, int &totalScore);
-			void updateScoreList(std::vector<ScoreData> &scores, int &myPosition, const std::string &myName);
+			void updateScoreList(std::vector<ScoreData> &scores, unsigned int &myPosition, const std::string &myName);
 			static void loadScores(const char *file, std::vector<ScoreData> &scores);
 			static void saveScores(const char *file, std::vector<ScoreData> &scores);
 			static void setCurrentScoreFile(const char *file);

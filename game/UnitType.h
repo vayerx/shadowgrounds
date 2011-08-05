@@ -2,7 +2,9 @@
 #ifndef UNITTYPE_H
 #define UNITTYPE_H
 
+#ifdef _MSC_VER
 #pragma warning ( disable : 4786 )
+#endif
 
 #include "../container/LinkedList.h"
 #include "UnitActor.h"

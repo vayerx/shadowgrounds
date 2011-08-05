@@ -57,9 +57,10 @@ namespace game
 
 
 	void HitChainScripting::process(util::ScriptProcess *sp, 
-		int command, int intData, char *stringData, ScriptLastValueType *lastValue, 
+		int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue,
 		GameScriptData *gsd, Game *game)
 	{
+		int intData = intFloat.i;
 		switch(command)
 		{
 			case GS_CMD_PROJGETORIGINDIRECTIONX:
@@ -390,14 +391,14 @@ namespace game
 
 			case GS_CMD_PROJSETCHAINEDRANGE:
 				{
-					float floatData = *((float *)(&intData));
+					float floatData = intFloat.f;
 					projs_chainedRange = floatData;
 				}
 				break;
 
 			case GS_CMD_PROJSETCHAINEDVELOCITYFACTOR:
 				{
-					float floatData = *((float *)(&intData));
+					float floatData = intFloat.f;
 					projs_chainedVelocityFactor = floatData;
 				}
 				break;
@@ -466,7 +467,7 @@ namespace game
 
 			case GS_CMD_PROJFLATTENCHAINEDONPLANE:
 				{
-					float floatData = *((float *)(&intData));
+					float floatData = intFloat.f;
 					float projected = projs_hitPlaneNormal.GetDotWith(projs_chainedDirection);
 					projs_chainedDirection -= projs_hitPlaneNormal * (floatData*projected);
 

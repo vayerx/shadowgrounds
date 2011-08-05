@@ -35,19 +35,17 @@ namespace net
       virtual void close() 
         throw (NetDriverException*);
 
-// now handled before the net interface...
-
 			// special id'ed package management...
 			// (packages can be changed later on, and read multiple times, etc.)
-//			void enableRecordIdManagement(bool recordIdEnabled);
+			void enableRecordIdManagement(bool recordIdEnabled);
 
 			// seek stream position with given id or set to stream end if not found.
-//      void seekRecordId(int recordId, int subRecordId)
-//        throw (NetDriverException*);
+      void seekRecordId(int recordId, int subRecordId)
+        throw (NetDriverException*);
 
 			// following send will use this record id.
-//		  void setRecordId(int recordId, int subRecordId)
-//	      throw (NetDriverException*);
+		  void setRecordId(int recordId, int subRecordId)
+	      throw (NetDriverException*);
 
     private:
 			FileConnectionImpl *impl;

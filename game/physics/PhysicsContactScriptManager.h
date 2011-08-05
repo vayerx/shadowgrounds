@@ -2,7 +2,7 @@
 #ifndef PHYSICSCONTACTSCRIPTMANAGER_H
 #define PHYSICSCONTACTSCRIPTMANAGER_H
 
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 #include "IPhysicsContactListener.h"
 
 namespace game

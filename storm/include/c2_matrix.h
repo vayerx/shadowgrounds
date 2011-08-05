@@ -24,18 +24,14 @@ typedef TMatrix<float> MAT;
 //------------------------------------------------------------------
 template <class A> class TMatrix
 {
-//	bool is_id;		// Is this mat identity (inv is also)
-//	mutable bool inv_ok;	// Is inverse matrix up to date
-
 	A mat[16];
-//	mutable A mat_inv[16];
 
 public:
 
 	// Create...
 
 	// Creates ID-matrix
-	TMatrix() // : is_id(true), inv_ok(true) 
+	TMatrix()
 	{ 
 		// Leaving data uninitialized and not cheking those on GetTranslation() etc ..
 		// That's BAD!
@@ -63,23 +59,14 @@ public:
 	}
 
 	// Creates matrix from array
-	TMatrix(const A *f16) // : is_id(false), inv_ok(false)
+	TMatrix(const A *f16)
 	{
 		memcpy(mat,f16,sizeof(A)*16);
-	}
-
-	// Creates matrix from array. This matrix has also up to date inverse matrix
-	TMatrix(const A *f16,const A *f16_inv) //: is_id(false), inv_ok(true)
-	{
-		memcpy(mat,f16,sizeof(A)*16);
-		//memcpy(mat_inv,f16_inv,sizeof(A)*16);
 	}
 
 	// Creates identity matrix
 	void CreateIdentityMatrix()
 	{
-		//is_id=true;
-		//inv_ok=true;
 		mat[0] = 1;
 		mat[1] = 0;
 		mat[2] = 0;
@@ -104,9 +91,6 @@ public:
 	// Creates translation(move) matrix
 	void CreateTranslationMatrix(const Vec3<A> &translation)
 	{
-//		is_id=false;
-//		inv_ok=false;
-
 		mat[1]=mat[2]=mat[3]=0;
 		mat[4]=mat[6]=mat[7]=0;
 		mat[8]=mat[9]=mat[11]=0;
@@ -120,9 +104,6 @@ public:
 	// Creates scale matrix
 	void CreateScaleMatrix(const Vec3<A> &scale)
 	{
-//		is_id=false;
-//		inv_ok=false;
-
 		mat[1]=mat[2]=mat[3]=0.0f;
 		mat[4]=mat[6]=mat[7]=0.0f;
 		mat[8]=mat[9]=mat[11]=0.0f;
@@ -137,17 +118,6 @@ public:
 	// Creates rotation matrix
 	void CreateRotationMatrix(const Quat<A> &rotation)
 	{
-//		is_id=false;
-//		inv_ok=false;
-
-		// If rotation is ID (0,0,0,1)
-/*		if (rotation.GetIsIdentity())
-		{
-			is_id=true;
-			inv_ok=true;
-			return;
-		}
-*/
 		// Convert the quaternion to matrix
 		// Optimized code... Messy but fast... (even a P4 should survive with these 9 mults;)
 		A x2=rotation.x+rotation.x;
@@ -184,9 +154,6 @@ public:
 	// Creates camera matrix
 	void CreateCameraMatrix(const Vec3<A> &position,const Vec3<A> &target,const Vec3<A> &up)
 	{
-//		is_id=false;
-//		inv_ok=false;
-
 		// Calculate direction (Z) vector
 		Vec3<A> z=target-position;
 		
@@ -223,9 +190,6 @@ public:
 	// Creates base change matrix
 	void CreateBaseChangeMatrix(const Vec3<A> &base_x,const Vec3<A> &base_y,const Vec3<A> &base_z)
 	{
-//		is_id=false;
-//		inv_ok=false;
-
 		// Create the matrix
 		mat[0]=base_x.x;
 		mat[1]=base_y.x;
@@ -244,216 +208,143 @@ public:
 		mat[15]=1;
 	}
 
-
 	// Functions (these do not modify this matrix)...
 
 	TMatrix<A> GetInverse() const
 	{
-/*		// If the matrix is ID, then the inverse is also ID
-		if (is_id)
-		{
-			return TMatrix<A>();
-		}
-		else if (inv_ok)
-		{
-			return TMatrix<A>(mat_inv,mat);
-		}
-		else
-*/		{
-			// Set marker
-//			inv_ok=true;
+		A mat_inv[16] = { 0 };
 
-			A mat_inv[16] = { 0 };
+		A fDetInv = (A)1 / ( mat[0] * ( mat[5] * mat[10] - mat[6] * mat[9] ) -
+			                 mat[1] * ( mat[4] * mat[10] - mat[6] * mat[8] ) +
+				             mat[2] * ( mat[4] * mat[9] - mat[5] * mat[8] ) );
 
-			A fDetInv = (A)1 / ( mat[0] * ( mat[5] * mat[10] - mat[6] * mat[9] ) -
-				                 mat[1] * ( mat[4] * mat[10] - mat[6] * mat[8] ) +
-					             mat[2] * ( mat[4] * mat[9] - mat[5] * mat[8] ) );
+		mat_inv[0] =  fDetInv * ( mat[5] * mat[10] - mat[6] * mat[9] );
+		mat_inv[1] = -fDetInv * ( mat[1] * mat[10] - mat[2] * mat[9] );
+		mat_inv[2] =  fDetInv * ( mat[1] * mat[6] - mat[2] * mat[5] );
+		mat_inv[3] = 0;
 
-			mat_inv[0] =  fDetInv * ( mat[5] * mat[10] - mat[6] * mat[9] );
-			mat_inv[1] = -fDetInv * ( mat[1] * mat[10] - mat[2] * mat[9] );
-			mat_inv[2] =  fDetInv * ( mat[1] * mat[6] - mat[2] * mat[5] );
-			mat_inv[3] = 0;
+		mat_inv[4] = -fDetInv * ( mat[4] * mat[10] - mat[6] * mat[8] );
+		mat_inv[5] =  fDetInv * ( mat[0] * mat[10] - mat[2] * mat[8] );
+		mat_inv[6] = -fDetInv * ( mat[0] * mat[6] - mat[2] * mat[4] );
+		mat_inv[7] = 0;
 
-			mat_inv[4] = -fDetInv * ( mat[4] * mat[10] - mat[6] * mat[8] );
-			mat_inv[5] =  fDetInv * ( mat[0] * mat[10] - mat[2] * mat[8] );
-			mat_inv[6] = -fDetInv * ( mat[0] * mat[6] - mat[2] * mat[4] );
-			mat_inv[7] = 0;
+		mat_inv[8] =  fDetInv * ( mat[4] * mat[9] - mat[5] * mat[8] );
+		mat_inv[9] = -fDetInv * ( mat[0] * mat[9] - mat[1] * mat[8] );
+		mat_inv[10] =  fDetInv * ( mat[0] * mat[5] - mat[1] * mat[4] );
+		mat_inv[11] = 0;
 
-			mat_inv[8] =  fDetInv * ( mat[4] * mat[9] - mat[5] * mat[8] );
-			mat_inv[9] = -fDetInv * ( mat[0] * mat[9] - mat[1] * mat[8] );
-			mat_inv[10] =  fDetInv * ( mat[0] * mat[5] - mat[1] * mat[4] );
-			mat_inv[11] = 0;
+	    mat_inv[12] = -( mat[12] * mat_inv[0] + mat[13] * mat_inv[4] + mat[14] * mat_inv[8] );
+		mat_inv[13] = -( mat[12] * mat_inv[1] + mat[13] * mat_inv[5] + mat[14] * mat_inv[9] );
+		mat_inv[14] = -( mat[12] * mat_inv[2] + mat[13] * mat_inv[6] + mat[14] * mat_inv[10] );
+		mat_inv[15] = (A)1;
 
-		    mat_inv[12] = -( mat[12] * mat_inv[0] + mat[13] * mat_inv[4] + mat[14] * mat_inv[8] );
-			mat_inv[13] = -( mat[12] * mat_inv[1] + mat[13] * mat_inv[5] + mat[14] * mat_inv[9] );
-			mat_inv[14] = -( mat[12] * mat_inv[2] + mat[13] * mat_inv[6] + mat[14] * mat_inv[10] );
-			mat_inv[15] = (A)1;
-
-			return TMatrix<A>(mat_inv,mat);
-		}
+		return TMatrix<A>(mat_inv);
 	}
 
 	TMatrix<A> GetTranspose() const
 	{
-		// If the matrix is ID, then the transpose is also ID
-/*		if (is_id)
-		{	
-			return TMatrix<A>();
-		}
-		else
-*/		{
-			A mat_t[16];
+		A mat_t[16];
 
-			// Transpose it
-			mat_t[1]=mat[4];
-			mat_t[2]=mat[8];
-			mat_t[3]=mat[12];
-			mat_t[6]=mat[9];
-			mat_t[7]=mat[13];
-			mat_t[11]=mat[14];
+		// Transpose it
+		mat_t[1]=mat[4];
+		mat_t[2]=mat[8];
+		mat_t[3]=mat[12];
+		mat_t[6]=mat[9];
+		mat_t[7]=mat[13];
+		mat_t[11]=mat[14];
 
-			mat_t[4]=mat[1];
-			mat_t[8]=mat[2];
-			mat_t[12]=mat[3];
-			mat_t[9]=mat[6];
-			mat_t[13]=mat[7];
-			mat_t[14]=mat[11];
+		mat_t[4]=mat[1];
+		mat_t[8]=mat[2];
+		mat_t[12]=mat[3];
+		mat_t[9]=mat[6];
+		mat_t[13]=mat[7];
+		mat_t[14]=mat[11];
 
-			return Matrix(mat_t);
-		}
+		return TMatrix<A>(mat_t);
 	}
 
 	TMatrix<A> GetWithoutTranslation() const
 	{
-		// If the matrix is ID, then the result is also ID
-/*		if (is_id)
-		{
-			return TMatrix<A>();
-		}
-		else
-*/		{
-			TMatrix m(mat);
+		TMatrix m(mat);
 
-			// Remove translation
-			m.mat[12]=0;
-			m.mat[13]=0;
-			m.mat[14]=0;
+		// Remove translation
+		m.mat[12]=0;
+		m.mat[13]=0;
+		m.mat[14]=0;
 
-			return m;
-		}
+		return m;
 	}
 
 	// Functions (these modify this matrix)...
 	inline void Inverse()
 	{
-/*		// If the matrix is ID, then the inverse is also ID
-		if (is_id)
-		{
-			// Do nothing...
-		}
-		else if (inv_ok)
-		{
-			// Swap matrix and inverse
-			A temp[16];
-			memcpy(temp,mat_inv,sizeof(A)*16);
-			memcpy(mat_inv,mat,sizeof(A)*16);
-			memcpy(temp,mat_inv,sizeof(A)*16);
-		}
-		else
-*/		{
-			// Set marker
-//			inv_ok=true;
+		A mat_inv[16] = { 0 };
 
-			A mat_inv[16] = { 0 };
+		// Copy matrix to inverse
+		memcpy(mat_inv,mat,sizeof(A)*16);
 
-			// Copy matrix to inverse
-			memcpy(mat_inv,mat,sizeof(A)*16);
+		// Make new matrix (inversed)
+		A fDetInv = (A)1 / ( mat_inv[0] * ( mat_inv[5] * mat_inv[10] - mat_inv[6] * mat_inv[9] ) -
+			                     mat_inv[1] * ( mat_inv[4] * mat_inv[10] - mat_inv[6] * mat_inv[8] ) +
+				                 mat_inv[2] * ( mat_inv[4] * mat_inv[9] - mat_inv[5] * mat_inv[8] ) );
 
-			// Make new matrix (inversed)
-			A fDetInv = (A)1 / ( mat_inv[0] * ( mat_inv[5] * mat_inv[10] - mat_inv[6] * mat_inv[9] ) -
-				                     mat_inv[1] * ( mat_inv[4] * mat_inv[10] - mat_inv[6] * mat_inv[8] ) +
-					                 mat_inv[2] * ( mat_inv[4] * mat_inv[9] - mat_inv[5] * mat_inv[8] ) );
+		mat[0] =  fDetInv * ( mat_inv[5] * mat_inv[10] - mat_inv[6] * mat_inv[9] );
+		mat[1] = -fDetInv * ( mat_inv[1] * mat_inv[10] - mat_inv[2] * mat_inv[9] );
+		mat[2] =  fDetInv * ( mat_inv[1] * mat_inv[6] - mat_inv[2] * mat_inv[5] );
+		mat[3] = 0;
 
-			mat[0] =  fDetInv * ( mat_inv[5] * mat_inv[10] - mat_inv[6] * mat_inv[9] );
-			mat[1] = -fDetInv * ( mat_inv[1] * mat_inv[10] - mat_inv[2] * mat_inv[9] );
-			mat[2] =  fDetInv * ( mat_inv[1] * mat_inv[6] - mat_inv[2] * mat_inv[5] );
-			mat[3] = 0;
+		mat[4] = -fDetInv * ( mat_inv[4] * mat_inv[10] - mat_inv[6] * mat_inv[8] );
+		mat[5] =  fDetInv * ( mat_inv[0] * mat_inv[10] - mat_inv[2] * mat_inv[8] );
+		mat[6] = -fDetInv * ( mat_inv[0] * mat_inv[6] - mat_inv[2] * mat_inv[4] );
+		mat[7] = 0;
 
-			mat[4] = -fDetInv * ( mat_inv[4] * mat_inv[10] - mat_inv[6] * mat_inv[8] );
-			mat[5] =  fDetInv * ( mat_inv[0] * mat_inv[10] - mat_inv[2] * mat_inv[8] );
-			mat[6] = -fDetInv * ( mat_inv[0] * mat_inv[6] - mat_inv[2] * mat_inv[4] );
-			mat[7] = 0;
+		mat[8] =  fDetInv * ( mat_inv[4] * mat_inv[9] - mat_inv[5] * mat_inv[8] );
+		mat[9] = -fDetInv * ( mat_inv[0] * mat_inv[9] - mat_inv[1] * mat_inv[8] );
+		mat[10] =  fDetInv * ( mat_inv[0] * mat_inv[5] - mat_inv[1] * mat_inv[4] );
+		mat[11] = 0;
 
-			mat[8] =  fDetInv * ( mat_inv[4] * mat_inv[9] - mat_inv[5] * mat_inv[8] );
-			mat[9] = -fDetInv * ( mat_inv[0] * mat_inv[9] - mat_inv[1] * mat_inv[8] );
-			mat[10] =  fDetInv * ( mat_inv[0] * mat_inv[5] - mat_inv[1] * mat_inv[4] );
-			mat[11] = 0;
-
-			mat[12] = -( mat_inv[12] * mat[0] + mat_inv[13] * mat[4] + mat_inv[14] * mat[8] );
-			mat[13] = -( mat_inv[12] * mat[1] + mat_inv[13] * mat[5] + mat_inv[14] * mat[9] );
-			mat[14] = -( mat_inv[12] * mat[2] + mat_inv[13] * mat[6] + mat_inv[14] * mat[10] );
-			mat[15] = (A)1;
-		}
+		mat[12] = -( mat_inv[12] * mat[0] + mat_inv[13] * mat[4] + mat_inv[14] * mat[8] );
+		mat[13] = -( mat_inv[12] * mat[1] + mat_inv[13] * mat[5] + mat_inv[14] * mat[9] );
+		mat[14] = -( mat_inv[12] * mat[2] + mat_inv[13] * mat[6] + mat_inv[14] * mat[10] );
+		mat[15] = (A)1;
 	}
 
 	void Multiply(const TMatrix<A>& other)
 	{
-		// If the other is ID, then result is the other (that is not ID)
-/*		if (is_id)
-		{
-			if (other.is_id)
-			{
-				// No changes
-			}
-			else
-			{
-				// Overwrite this completely with other, if this is ID and the other is not.
-				memcpy(this,&other,sizeof(TMatrix<A>));
-			}
-		}
-		else
-		if (other.is_id)
-		{
-			// No changes
-		}
-		else
-*/		{
-			A tmat[16];
+		A tmat[16];
 
-			/*
-			In a 4x4 matrix
-			3  = 0
-			7  = 0
-			11 = 0
-			15 = 1
+		/*
+		In a 4x4 matrix
+		3  = 0
+		7  = 0
+		11 = 0
+		15 = 1
 
-			So let's optimize 28 multiplys off... 64 -> 36 multiplys. (78% more speed!)
-			*/
+		So let's optimize 28 multiplys off... 64 -> 36 multiplys. (78% more speed!)
+		*/
 
-			tmat[0] = mat[0] * other.mat[0] + mat[1] * other.mat[4] + mat[2] * other.mat[8];
-			tmat[1] = mat[0] * other.mat[1] + mat[1] * other.mat[5] + mat[2] * other.mat[9];
-			tmat[2] = mat[0] * other.mat[2] + mat[1] * other.mat[6] + mat[2] * other.mat[10];
-			tmat[3] = 0;
-                                                                          
-			tmat[4] = mat[4] * other.mat[0] + mat[5] * other.mat[4] + mat[6] * other.mat[8];
-			tmat[5] = mat[4] * other.mat[1] + mat[5] * other.mat[5] + mat[6] * other.mat[9];
-			tmat[6] = mat[4] * other.mat[2] + mat[5] * other.mat[6] + mat[6] * other.mat[10];
-			tmat[7] = 0;
-	                                                     
-			tmat[8] = mat[8] * other.mat[0] + mat[9] * other.mat[4] + mat[10] * other.mat[8];
-			tmat[9] = mat[8] * other.mat[1] + mat[9] * other.mat[5] + mat[10] * other.mat[9];
-			tmat[10] = mat[8] * other.mat[2] + mat[9] * other.mat[6] + mat[10] * other.mat[10];
-			tmat[11] = 0;
-                                                         
-			tmat[12] = mat[12] * other.mat[0] + mat[13] * other.mat[4] + mat[14] * other.mat[8] + other.mat[12];
-			tmat[13] = mat[12] * other.mat[1] + mat[13] * other.mat[5] + mat[14] * other.mat[9] + other.mat[13];
-			tmat[14] = mat[12] * other.mat[2] + mat[13] * other.mat[6] + mat[14] * other.mat[10] + other.mat[14];
-			tmat[15] = 1;
+		tmat[0] = mat[0] * other.mat[0] + mat[1] * other.mat[4] + mat[2] * other.mat[8];
+		tmat[1] = mat[0] * other.mat[1] + mat[1] * other.mat[5] + mat[2] * other.mat[9];
+		tmat[2] = mat[0] * other.mat[2] + mat[1] * other.mat[6] + mat[2] * other.mat[10];
+		tmat[3] = 0;
+                                                                      
+		tmat[4] = mat[4] * other.mat[0] + mat[5] * other.mat[4] + mat[6] * other.mat[8];
+		tmat[5] = mat[4] * other.mat[1] + mat[5] * other.mat[5] + mat[6] * other.mat[9];
+		tmat[6] = mat[4] * other.mat[2] + mat[5] * other.mat[6] + mat[6] * other.mat[10];
+		tmat[7] = 0;
+                                                     
+		tmat[8] = mat[8] * other.mat[0] + mat[9] * other.mat[4] + mat[10] * other.mat[8];
+		tmat[9] = mat[8] * other.mat[1] + mat[9] * other.mat[5] + mat[10] * other.mat[9];
+		tmat[10] = mat[8] * other.mat[2] + mat[9] * other.mat[6] + mat[10] * other.mat[10];
+		tmat[11] = 0;
+                                                     
+		tmat[12] = mat[12] * other.mat[0] + mat[13] * other.mat[4] + mat[14] * other.mat[8] + other.mat[12];
+		tmat[13] = mat[12] * other.mat[1] + mat[13] * other.mat[5] + mat[14] * other.mat[9] + other.mat[13];
+		tmat[14] = mat[12] * other.mat[2] + mat[13] * other.mat[6] + mat[14] * other.mat[10] + other.mat[14];
+		tmat[15] = 1;
 
-			// Set this matrix
-			memcpy(mat,tmat,sizeof(A)*16);
-//			inv_ok=false;
-		}
+		// Set this matrix
+		memcpy(mat,tmat,sizeof(A)*16);
 	}
 
 
@@ -461,81 +352,55 @@ public:
 
 	TMatrix<A> operator*(const TMatrix<A>& other) const
 	{
-		// If the other is ID, then result is the other (that is not ID)
-/*		if (is_id)
-		{
-			if (other.is_id)
-			{
-				return TMatrix<A>();
-			}
-			else
-			{	
-				return other;
-			}
-		}
-		else
-		if (other.is_id)
-		{
-			return *this;
-		}
-		else
-*/		{
-			A tmat[16];
+		A tmat[16];
 
-		    tmat[0] = mat[0] * other.mat[0] + mat[1] * other.mat[4] + mat[2] * other.mat[8];
-			tmat[1] = mat[0] * other.mat[1] + mat[1] * other.mat[5] + mat[2] * other.mat[9];
-			tmat[2] = mat[0] * other.mat[2] + mat[1] * other.mat[6] + mat[2] * other.mat[10];
-			tmat[3] = 0;
-		                                                                      
-			tmat[4] = mat[4] * other.mat[0] + mat[5] * other.mat[4] + mat[6] * other.mat[8];
-			tmat[5] = mat[4] * other.mat[1] + mat[5] * other.mat[5] + mat[6] * other.mat[9];
-			tmat[6] = mat[4] * other.mat[2] + mat[5] * other.mat[6] + mat[6] * other.mat[10];
-			tmat[7] = 0;
-	                                                     
-			tmat[8] = mat[8] * other.mat[0] + mat[9] * other.mat[4] + mat[10] * other.mat[8];
-			tmat[9] = mat[8] * other.mat[1] + mat[9] * other.mat[5] + mat[10] * other.mat[9];
-			tmat[10] = mat[8] * other.mat[2] + mat[9] * other.mat[6] + mat[10] * other.mat[10];
-			tmat[11] = 0;
-                                                         
-			tmat[12] = mat[12] * other.mat[0] + mat[13] * other.mat[4] + mat[14] * other.mat[8] + other.mat[12];
-			tmat[13] = mat[12] * other.mat[1] + mat[13] * other.mat[5] + mat[14] * other.mat[9] + other.mat[13];
-			tmat[14] = mat[12] * other.mat[2] + mat[13] * other.mat[6] + mat[14] * other.mat[10] + other.mat[14];
-			tmat[15] = (A)1;
+	    tmat[0] = mat[0] * other.mat[0] + mat[1] * other.mat[4] + mat[2] * other.mat[8];
+		tmat[1] = mat[0] * other.mat[1] + mat[1] * other.mat[5] + mat[2] * other.mat[9];
+		tmat[2] = mat[0] * other.mat[2] + mat[1] * other.mat[6] + mat[2] * other.mat[10];
+		tmat[3] = 0;
+	                                                                      
+		tmat[4] = mat[4] * other.mat[0] + mat[5] * other.mat[4] + mat[6] * other.mat[8];
+		tmat[5] = mat[4] * other.mat[1] + mat[5] * other.mat[5] + mat[6] * other.mat[9];
+		tmat[6] = mat[4] * other.mat[2] + mat[5] * other.mat[6] + mat[6] * other.mat[10];
+		tmat[7] = 0;
+                                                     
+		tmat[8] = mat[8] * other.mat[0] + mat[9] * other.mat[4] + mat[10] * other.mat[8];
+		tmat[9] = mat[8] * other.mat[1] + mat[9] * other.mat[5] + mat[10] * other.mat[9];
+		tmat[10] = mat[8] * other.mat[2] + mat[9] * other.mat[6] + mat[10] * other.mat[10];
+		tmat[11] = 0;
+                                                     
+		tmat[12] = mat[12] * other.mat[0] + mat[13] * other.mat[4] + mat[14] * other.mat[8] + other.mat[12];
+		tmat[13] = mat[12] * other.mat[1] + mat[13] * other.mat[5] + mat[14] * other.mat[9] + other.mat[13];
+		tmat[14] = mat[12] * other.mat[2] + mat[13] * other.mat[6] + mat[14] * other.mat[10] + other.mat[14];
+		tmat[15] = (A)1;
 
-			return TMatrix<A>(tmat);
-		}
+		return TMatrix<A>(tmat);
 	}
 
 	// Vector modify...
 	void TransformVector(Vec3<A> &vec) const
 	{
-//		if (!is_id)
-		{
-			// Transform as 4x3
-			A tmp_x=vec.x*mat[0]+vec.y*mat[4]+vec.z*mat[8]+mat[12];
-			A tmp_y=vec.x*mat[1]+vec.y*mat[5]+vec.z*mat[9]+mat[13];
-			A tmp_z=vec.x*mat[2]+vec.y*mat[6]+vec.z*mat[10]+mat[14];
+		// Transform as 4x3
+		A tmp_x=vec.x*mat[0]+vec.y*mat[4]+vec.z*mat[8]+mat[12];
+		A tmp_y=vec.x*mat[1]+vec.y*mat[5]+vec.z*mat[9]+mat[13];
+		A tmp_z=vec.x*mat[2]+vec.y*mat[6]+vec.z*mat[10]+mat[14];
 
-			vec.x=tmp_x;
-			vec.y=tmp_y;
-			vec.z=tmp_z;
-		}
+		vec.x=tmp_x;
+		vec.y=tmp_y;
+		vec.z=tmp_z;
 	}
 
 	// psd
 	void RotateVector(Vec3<A> &vec) const
 	{
-//		if (!is_id)
-		{
-			// Transform as 4x3
-			A tmp_x=vec.x*mat[0]+vec.y*mat[4]+vec.z*mat[8];
-			A tmp_y=vec.x*mat[1]+vec.y*mat[5]+vec.z*mat[9];
-			A tmp_z=vec.x*mat[2]+vec.y*mat[6]+vec.z*mat[10];
+		// Transform as 4x3
+		A tmp_x=vec.x*mat[0]+vec.y*mat[4]+vec.z*mat[8];
+		A tmp_y=vec.x*mat[1]+vec.y*mat[5]+vec.z*mat[9];
+		A tmp_z=vec.x*mat[2]+vec.y*mat[6]+vec.z*mat[10];
 
-			vec.x=tmp_x;
-			vec.y=tmp_y;
-			vec.z=tmp_z;
-		}
+		vec.x=tmp_x;
+		vec.y=tmp_y;
+		vec.z=tmp_z;
 	}
 
 	Vec3<A> GetTransformedVector(const Vec3<A> &vec) const
@@ -547,17 +412,8 @@ public:
 
 	void GetAsD3DCompatible4x4(A *dest) const
 	{
-/*		if (is_id)
-		{
-			ZeroMemory(dest,sizeof(A)*15);	// not 16 (optimizing;)
-			dest[0]=dest[5]=dest[10]=dest[15]=1;
-		}
-		else
-*/		{
-			//memcpy(dest,mat,sizeof(A)*16);
-			for(int i = 0; i < 16; ++i)
-				dest[i] = mat[i];
-		}
+		for(int i = 0; i < 16; ++i)
+			dest[i] = mat[i];
 	}
 
 	// Needed for exporters
@@ -572,9 +428,6 @@ public:
 	{
 		assert((index >= 0) && (index < 16));
 		mat[index] = value;
-
-//		inv_ok = false;
-//		is_id = false;
 	}
 
 	Quat<A> GetRotation() const
@@ -641,5 +494,10 @@ public:
 
 		return Vec3<A>(x,y,z);
 	}
-};
 
+	const A *GetAsFloat() const
+	{
+		return mat;
+	}
+
+};

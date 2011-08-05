@@ -12,7 +12,7 @@
 
 #define PLAYLIST_AMOUNT 7
 
-extern char *playlistNames[PLAYLIST_AMOUNT];
+extern const char *playlistNames[PLAYLIST_AMOUNT];
 
 #endif
 

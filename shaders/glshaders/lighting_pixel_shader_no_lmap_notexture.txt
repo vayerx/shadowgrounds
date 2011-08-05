@@ -1,0 +1,18 @@
+!!ARBfp1.0
+OPTION ARB_precision_hint_fastest;
+PARAM two = { 2.0, 2.0, 2.0, 2.0 };
+ATTRIB v0 = fragment.color.primary;
+ATTRIB v1 = fragment.color.secondary;
+OUTPUT outColor = result.color;
+TEMP r0, t2, t3;
+TXP t2, fragment.texcoord[2], texture[2], 2D;
+# fake
+TEX t3, fragment.texcoord[3], texture[3], 2D;
+# reflection
+ADD_SAT r0, v0, t2;
+MUL r0.rgb, r0, v1;
+MUL_SAT r0.rgb, r0.rgbb, two;
+MOV outColor.a, v0.a;
+LRP outColor.rgb, fragment.fogcoord.x, r0, state.fog.color;
+#MOV outColor, r0;
+END

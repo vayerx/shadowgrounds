@@ -1,20 +1,21 @@
-
 #include "precompiled.h"
+
+#include <boost/lexical_cast.hpp>
+#include <fstream>
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
 #include "AmbientAreaManager.h"
 #include "SoundMixer.h"
 #include "SoundLib.h"
-#include "../editor/Parser.h"
+#include "../editor/parser.h"
 #include "../editor/string_conversions.h"
-#include "../system/logger.h"
+#include "../system/Logger.h"
 #include "../filesystem/file_package_manager.h"
 #include "../filesystem/input_stream.h"
 #include <boost/shared_ptr.hpp>
 #include <vector>
 #include <map>
-#include <fstream>
 #include <string>
 
 using namespace std;
@@ -39,7 +40,6 @@ using namespace frozenbyte::editor;
 #endif
 
 namespace sfx {
-namespace {
 
 	struct Stream
 	{
@@ -69,9 +69,9 @@ namespace {
 			mode(Normal),
 			time(0),
 			fadeTime(1),
-			looped(false),
 			volumeTime(1),
 			volumeFadeTime(1),
+			looped(false),
 			oldMaxVolume(volume),
 			maxVolume(volume)
 		{
@@ -90,9 +90,9 @@ namespace {
 			mode(FadeIn),
 			time(0),
 			fadeTime(fadeTime_),
-			looped(true),
 			volumeTime(fadeTime_),
 			volumeFadeTime(fadeTime_),
+			looped(true),
 			oldMaxVolume(maxVolume_),
 			maxVolume(maxVolume_)
 		{
@@ -288,7 +288,7 @@ namespace {
 		}
 	};
 
-	typedef vector<shared_ptr<Stream> > StreamList;
+	typedef vector<shared_ptr<Stream> > AmbientStreamList;
 
 	// .......
 
@@ -441,11 +441,11 @@ namespace {
 		}
 	};
 
-	typedef map<string, AreaInfo> AreaMap;
+	typedef map<string, AreaInfo> AmbientAreaMap;
 
 	struct ListInfo
 	{
-		AreaMap areas;
+		AmbientAreaMap areas;
 		string active;
 
 		ListInfo()
@@ -471,7 +471,6 @@ namespace {
 		}
 	};
 
-} // unnamed
 
 struct AmbientAreaManager::Data
 {
@@ -481,8 +480,8 @@ struct AmbientAreaManager::Data
 	string eaxArea[2];
 
 	AreaType activeArea;
-	StreamList ambients;
-	StreamList randoms;
+	AmbientStreamList ambients;
+	AmbientStreamList randoms;
 
 	bool active;
 	bool ambientEnabled;
@@ -499,8 +498,9 @@ struct AmbientAreaManager::Data
 	{
 		activeArea = Outdoor;
 
-		Parser parser;
-		filesystem::FilePackageManager::getInstance().getFile(file) >> parser;
+		EditorParser parser;
+		filesystem::InputStream fileStream = filesystem::FilePackageManager::getInstance().getFile(file);
+		fileStream >> parser;
 
 		const ParserGroup &group = parser.getGlobals();
 		list[Outdoor].load(OUTDOOR_GROUP_NAME , group.getSubGroup(OUTDOOR_GROUP_NAME));
@@ -523,8 +523,8 @@ struct AmbientAreaManager::Data
 			const std::string &file = area.ambient.file;
 
 			// Fade out old ambients
-			StreamList::iterator it = ambients.begin();
-			StreamList::iterator existing = ambients.end();
+			AmbientStreamList::iterator it = ambients.begin();
+			AmbientStreamList::iterator existing = ambients.end();
 
 			for(; it != ambients.end(); ++it)
 			{
@@ -620,7 +620,7 @@ struct AmbientAreaManager::Data
 	{
 		// Fade & remove already finished streams
 		{
-			StreamList::iterator it = ambients.begin();
+			AmbientStreamList::iterator it = ambients.begin();
 			for(; it != ambients.end(); )
 			{
 				Stream *ptr = (*it).get();
@@ -680,7 +680,7 @@ struct AmbientAreaManager::Data
 
 	void fadeOut(int ms)
 	{
-		StreamList::iterator it = ambients.begin();
+		AmbientStreamList::iterator it = ambients.begin();
 		for(; it != ambients.end(); ++it)
 			(*it)->fadeOut(ms);
 

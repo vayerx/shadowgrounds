@@ -71,10 +71,8 @@ LRESULT WINAPI MouseHandler_MessageProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM 
 			// movement
 			m_info->oldX = m_info->X;
 			m_info->oldY = m_info->Y;
-			m_info->oldWheel = m_info->wheel;
 			am_info->oldX = am_info->X;
 			am_info->oldY = am_info->Y;
-			am_info->oldWheel = am_info->wheel;
 			if( (rawInput->data.mouse.usFlags & 1) == MOUSE_MOVE_ABSOLUTE )
 			{
 				m_info->X = rawInput->data.mouse.lLastX;
@@ -118,8 +116,8 @@ LRESULT WINAPI MouseHandler_MessageProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM 
 			if(rawInput->data.mouse.ulButtons & RI_MOUSE_BUTTON_4_UP)			m_info->button4 = false;
 			if(rawInput->data.mouse.ulButtons & RI_MOUSE_BUTTON_5_UP)			m_info->button5 = false;
 
-			m_info->wheel += (signed short)rawInput->data.mouse.usButtonData;
-			m_info->dwheel = m_info->wheel - m_info->oldWheel;
+			if(rawInput->data.mouse.ulButtons & RI_MOUSE_WHEEL)
+				m_info->dwheel = -(signed short)rawInput->data.mouse.usButtonData;
 
 			// ...and the "all mouses"
 			if(rawInput->data.mouse.ulButtons & RI_MOUSE_LEFT_BUTTON_DOWN)		am_info->leftButton = true;
@@ -139,8 +137,8 @@ LRESULT WINAPI MouseHandler_MessageProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM 
 			if(rawInput->data.mouse.ulButtons & RI_MOUSE_BUTTON_4_UP)			am_info->button4 = false;
 			if(rawInput->data.mouse.ulButtons & RI_MOUSE_BUTTON_5_UP)			am_info->button5 = false;
 
-			am_info->wheel += (signed short)rawInput->data.mouse.usButtonData;
-			am_info->dwheel = am_info->wheel - am_info->oldWheel;
+			if(rawInput->data.mouse.ulButtons & RI_MOUSE_WHEEL)
+				am_info->dwheel = -(signed short)rawInput->data.mouse.usButtonData;
 
 		}
 		else if( rawInput->header.dwType == RIM_TYPEKEYBOARD && RawInputDeviceHandler::keyboardInitialized )

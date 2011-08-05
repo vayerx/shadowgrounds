@@ -12,10 +12,13 @@
 #include <Storm3D_UI.h>
 #include <keyb3.h>
 #include "orvgui2.h"
+
+#include "../game/options/options_controllers.h"
+
 #include "../system/Logger.h"
 
 #include "../util/UnicodeConverter.h"
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 #include "../storm/storm3dv2/VertexFormats.h"
 
@@ -50,7 +53,7 @@ float og_mouse_sensitivity_x = 1.0f;
 float og_mouse_sensitivity_y = 1.0f;
 
 // and some old bad global stuff
-char *og_errorfile = "guierrors.txt";
+//const char *og_errorfile = "guierrors.txt";
 
 int got_orvgui = 0;
 
@@ -90,16 +93,11 @@ static orvgui_win *first_win = NULL;
 static orvgui_win *last_win = NULL;
 
 static orvgui_win *error_win = NULL;
-static orvgui_but *error_but1 = NULL;
-static orvgui_but *error_but2 = NULL;
-static orvgui_but *error_but3 = NULL;
 static int error_line = 0;
 
 static IStorm3D_Material *cursor_pic[OG_CURSORS];
 static int cursor_offset_x[OG_CURSORS];
 static int cursor_offset_y[OG_CURSORS];
-static int cursor_get_x[OG_CURSORS];
-static int cursor_get_y[OG_CURSORS];
 static int cursor_state[OG_CURSORS];
 static unsigned int cursor_control[OG_CURSORS];		
 static int cursor_control_keys[OG_CURSORS][6];
@@ -390,9 +388,11 @@ void og_update_cursor_positions()
 			Keyb3_ReadMouse(&mousex, &mousey, NULL, NULL, l);
 
 			// psd
+			/*
 			static int original_mouse_x[MAX_MICE] = {0,0,0,0,0,0,0,0,0,0,0,0};
 			static int original_mouse_y[MAX_MICE] = {0,0,0,0,0,0,0,0,0,0,0,0};
-			
+			*/
+
 			og_mouse_ox[l] = og_mouse_x[l];
 			og_mouse_oy[l] = og_mouse_y[l];
 			og_mouse_obut[l] = og_mouse_but[l];
@@ -400,11 +400,13 @@ void og_update_cursor_positions()
 
 			if (og_skip_cursor_movement != 0)
 			{
-				Keyb3_SetMousePos(original_mouse_x[l], original_mouse_y[l], l);
+				//Keyb3_SetMousePos(original_mouse_x[l], original_mouse_y[l], l);
 			} else {
 				// psd
+				/*
 				original_mouse_x[l] = mousex;
 				original_mouse_y[l] = mousey;
+				*/
 
 				og_mouse_x[l] = (int)(mousex * og_mouse_sensitivity_x) * OG_SCALE_MULTIPLIER / og_scale_x;
 				og_mouse_y[l] = (int)(mousey * og_mouse_sensitivity_y) * OG_SCALE_MULTIPLIER / og_scale_y;
@@ -521,6 +523,48 @@ void og_handle_hotkeys(void)
 }
 
 /* ----------------------------------------------------------- */
+
+
+// helper function for processing joystick inputs
+static void processJoystick(int joynum, int g, int &add_speed, int joystickMask, int joystickKey)
+{
+	if (cursor_control[g] & joystickMask)
+	{
+		if (got_joystick)
+		{
+			if (og_disable_kj_move == 0 && !og_menu_index_mode)
+			{
+				int x = 0, y = 0;
+
+				Keyb3_ReadJoystick(joynum, &x, &y, NULL, NULL, NULL, NULL);
+
+				int deadzoneSize = game::SimpleOptions::getInt(DH_OPT_I_JOYSTICK1_DEADZONE + joynum);
+
+				if (  (y < -deadzoneSize)
+				   || (y > deadzoneSize) )
+				{
+					add_speed = 1;
+					cursor_y[g] += (cursor_speed[g] >> 2) * (y - deadzoneSize) / (1000 - deadzoneSize);
+				}
+
+				if (  (x < -deadzoneSize)
+				   || (x > deadzoneSize) )
+				{
+					add_speed = 1;
+					cursor_x[g] += (cursor_speed[g] >> 2) * (x - deadzoneSize) / (1000 - deadzoneSize);
+				}
+
+			}
+			if (Keyb3_IsKeyDown(joystickKey - KEYCODE_JOY_UP + KEYCODE_JOY_BUTTON1) != 0) cursor_but[g] |= 1;
+			if (Keyb3_IsKeyDown(joystickKey - KEYCODE_JOY_UP + KEYCODE_JOY_BUTTON2) != 0) cursor_but[g] |= 2;
+			// Added for more sensible pad click buttons
+			if (Keyb3_IsKeyDown(joystickKey - KEYCODE_JOY_UP + KEYCODE_JOY_BUTTON9) != 0) cursor_but[g] |= 1;
+			if (Keyb3_IsKeyDown(joystickKey - KEYCODE_JOY_UP + KEYCODE_JOY_BUTTON10) != 0) cursor_but[g] |= 2;
+		}
+	}
+
+}
+
 
 // notice: does not call Keyb3_UpdateDevices(), call it before calling this!
 void og_run_gui(void)
@@ -642,130 +686,10 @@ void og_run_gui(void)
 			}
 		}
 
-		if (cursor_control[g] & OG_CTRL_MASK_JOYSTICK1)
-		{
-			if (got_joystick)
-			{
-				if (og_disable_kj_move == 0 && !og_menu_index_mode)
-				{
-					if (Keyb3_IsKeyDown(KEYCODE_JOY_UP) != 0)
-					{
-						add_speed = 1;
-						cursor_y[g]-=cursor_speed[g]>>2;
-					}
-					if (Keyb3_IsKeyDown(KEYCODE_JOY_LEFT) != 0)
-					{
-						add_speed = 1;
-						cursor_x[g]-=cursor_speed[g]>>2;
-					}
-					if (Keyb3_IsKeyDown(KEYCODE_JOY_RIGHT) != 0)
-					{
-						add_speed = 1;
-						cursor_x[g]+=cursor_speed[g]>>2;
-					}
-					if (Keyb3_IsKeyDown(KEYCODE_JOY_DOWN) != 0)
-					{
-						add_speed = 1;
-						cursor_y[g]+=cursor_speed[g]>>2;
-					}
-				}
-				if (Keyb3_IsKeyDown(KEYCODE_JOY_BUTTON1) != 0) cursor_but[g] |= 1;
-				if (Keyb3_IsKeyDown(KEYCODE_JOY_BUTTON2) != 0) cursor_but[g] |= 2;
-			}
-		}
-		if (cursor_control[g] & OG_CTRL_MASK_JOYSTICK2)
-		{
-			if (got_joystick)
-			{
-				if (og_disable_kj_move == 0 && !og_menu_index_mode)
-				{
-					if (Keyb3_IsKeyDown(KEYCODE_JOY2_UP) != 0)
-					{
-						add_speed = 1;
-						cursor_y[g]-=cursor_speed[g]>>2;
-					}
-					if (Keyb3_IsKeyDown(KEYCODE_JOY2_LEFT) != 0)
-					{
-						add_speed = 1;
-						cursor_x[g]-=cursor_speed[g]>>2;
-					}
-					if (Keyb3_IsKeyDown(KEYCODE_JOY2_RIGHT) != 0)
-					{
-						add_speed = 1;
-						cursor_x[g]+=cursor_speed[g]>>2;
-					}
-					if (Keyb3_IsKeyDown(KEYCODE_JOY2_DOWN) != 0)
-					{
-						add_speed = 1;
-						cursor_y[g]+=cursor_speed[g]>>2;
-					}
-				}
-				if (Keyb3_IsKeyDown(KEYCODE_JOY2_BUTTON1) != 0) cursor_but[g] |= 1;
-				if (Keyb3_IsKeyDown(KEYCODE_JOY2_BUTTON2) != 0) cursor_but[g] |= 2;
-			}
-		}
-		if (cursor_control[g] & OG_CTRL_MASK_JOYSTICK3)
-		{
-			if (got_joystick)
-			{
-				if (og_disable_kj_move == 0 && !og_menu_index_mode)
-				{
-					if (Keyb3_IsKeyDown(KEYCODE_JOY3_UP) != 0)
-					{
-						add_speed = 1;
-						cursor_y[g]-=cursor_speed[g]>>2;
-					}
-					if (Keyb3_IsKeyDown(KEYCODE_JOY3_LEFT) != 0)
-					{
-						add_speed = 1;
-						cursor_x[g]-=cursor_speed[g]>>2;
-					}
-					if (Keyb3_IsKeyDown(KEYCODE_JOY3_RIGHT) != 0)
-					{
-						add_speed = 1;
-						cursor_x[g]+=cursor_speed[g]>>2;
-					}
-					if (Keyb3_IsKeyDown(KEYCODE_JOY3_DOWN) != 0)
-					{
-						add_speed = 1;
-						cursor_y[g]+=cursor_speed[g]>>2;
-					}
-				}
-				if (Keyb3_IsKeyDown(KEYCODE_JOY3_BUTTON1) != 0) cursor_but[g] |= 1;
-				if (Keyb3_IsKeyDown(KEYCODE_JOY3_BUTTON2) != 0) cursor_but[g] |= 2;
-			}
-		}
-		if (cursor_control[g] & OG_CTRL_MASK_JOYSTICK4)
-		{
-			if (got_joystick)
-			{
-				if (og_disable_kj_move == 0 && !og_menu_index_mode)
-				{
-					if (Keyb3_IsKeyDown(KEYCODE_JOY4_UP) != 0)
-					{
-						add_speed = 1;
-						cursor_y[g]-=cursor_speed[g]>>2;
-					}
-					if (Keyb3_IsKeyDown(KEYCODE_JOY4_LEFT) != 0)
-					{
-						add_speed = 1;
-						cursor_x[g]-=cursor_speed[g]>>2;
-					}
-					if (Keyb3_IsKeyDown(KEYCODE_JOY4_RIGHT) != 0)
-					{
-						add_speed = 1;
-						cursor_x[g]+=cursor_speed[g]>>2;
-					}
-					if (Keyb3_IsKeyDown(KEYCODE_JOY4_DOWN) != 0)
-					{
-						add_speed = 1;
-						cursor_y[g]+=cursor_speed[g]>>2;
-					}
-				}
-				if (Keyb3_IsKeyDown(KEYCODE_JOY4_BUTTON1) != 0) cursor_but[g] |= 1;
-				if (Keyb3_IsKeyDown(KEYCODE_JOY4_BUTTON2) != 0) cursor_but[g] |= 2;
-			}
-		}
+		processJoystick(0, g, add_speed, OG_CTRL_MASK_JOYSTICK1, KEYCODE_JOY_UP);
+		processJoystick(1, g, add_speed, OG_CTRL_MASK_JOYSTICK2, KEYCODE_JOY2_UP);
+		processJoystick(2, g, add_speed, OG_CTRL_MASK_JOYSTICK3, KEYCODE_JOY3_UP);
+		processJoystick(3, g, add_speed, OG_CTRL_MASK_JOYSTICK4, KEYCODE_JOY4_UP);
 		if (og_disable_kj_move == 0)
 		{
 			if (add_speed == 0)
@@ -1911,6 +1835,16 @@ void og_draw_button(orvgui_but *but)
 		float tx2 = but->scroll_x + but->repeat_x * ((float)but->cliprightx / 100.0f);
 		float ty2 = but->scroll_y + but->repeat_y * ((float)but->clipbottomy / 100.0f);
 
+#ifdef PROJECT_SHADOWGROUNDS
+		if (strstr(tmp->GetName(), "video material"))
+		{
+			tx1 = but->scroll_x;
+			ty1 = but->scroll_y;
+			tx2 = but->scroll_x + (1.0f * but->repeat_x);
+			ty2 = but->scroll_y + (1.0f * but->repeat_y);
+		}
+#endif
+
 		if(but->vertices == NULL || but->num_vertices == 0)
 		{
 			og_renderer->Render2D_Picture(tmp, 
@@ -1942,10 +1876,10 @@ void og_draw_button(orvgui_but *but)
 	debugMaterialInit();
 	if(og_visualize_windows)
 	{
-		float tx1 = but->scroll_x + but->repeat_x * ((float)but->clipleftx / 100.0f);
+		/*float tx1 = but->scroll_x + but->repeat_x * ((float)but->clipleftx / 100.0f);
 		float ty1 = but->scroll_y + but->repeat_y * ((float)but->cliptopy / 100.0f);
 		float tx2 = but->scroll_x + but->repeat_x * ((float)but->cliprightx / 100.0f);
-		float ty2 = but->scroll_y + but->repeat_y * ((float)but->clipbottomy / 100.0f);
+		float ty2 = but->scroll_y + but->repeat_y * ((float)but->clipbottomy / 100.0f);*/
 
 		IStorm3D_Material *mat = debug_button_material;
 		if(!but->enabled) mat = debug_button_disabled_material;
@@ -2419,9 +2353,9 @@ orvgui_win *og_create_window(unsigned char type, short x, short y,
 	*/
 	if (x < 0) x = 0;
 	if (y < 0) y = 0;
-	if ((x+sizex) > scr_size_x * OG_SCALE_MULTIPLIER / og_scale_x) 
+	if ((x+sizex) > (scr_size_x * OG_SCALE_MULTIPLIER / og_scale_x))
 		x = (short)(scr_size_x * OG_SCALE_MULTIPLIER / og_scale_x - sizex);
-	if ((y+sizey)> scr_size_y * OG_SCALE_MULTIPLIER / og_scale_y ) 
+	if ((y+sizey) > (scr_size_y * OG_SCALE_MULTIPLIER / og_scale_y))
 		y = (short)(scr_size_y * OG_SCALE_MULTIPLIER / og_scale_y - sizey);
 	//if (x+sizex > scr_size_x) x = (short)(scr_size_x - sizex);
 	//if (y+sizey > scr_size_y) y = (short)(scr_size_y - sizey);
@@ -2890,15 +2824,15 @@ void og_write_text_transp(orvgui_win *win, IStorm3D_Font *font,
 		// added the * alpha - Pete
 		float f = ( win->alpha * alpha );
 
-		if(font && !font->isUnicode())
-		{
+		/*if(font && !font->isUnicode())
+		{*/
 			og_renderer->Render2D_Text(font, 
 				VC2((float)((win->put_x + x) * og_scale_x / (float)OG_SCALE_MULTIPLIER), 
 				(float)((win->put_y + y) * og_scale_y / (float)OG_SCALE_MULTIPLIER)), 
 				VC2((float)(fontwidth * og_scale_x / (float)OG_SCALE_MULTIPLIER), 
 				(float)(fontheight * og_scale_y / (float)OG_SCALE_MULTIPLIER)), 
 				text,f,color);
-		}
+		/*}
 		else
 		{
 			std::wstring uniText;
@@ -2910,7 +2844,7 @@ void og_write_text_transp(orvgui_win *win, IStorm3D_Font *font,
 				VC2((float)(fontwidth * og_scale_x / (float)OG_SCALE_MULTIPLIER), 
 				(float)(fontheight * og_scale_y / (float)OG_SCALE_MULTIPLIER)), 
 				uniText.c_str(),f,color);
-		}
+		}*/
 	}
 
 
@@ -3038,7 +2972,7 @@ static void og_error_terminate(void)
 /* ----------------------------------------------------------- */
 
 // TODO
-void og_show_error(char *msg)
+void og_show_error(const char *msg)
 {
 	//FILE *f;
 

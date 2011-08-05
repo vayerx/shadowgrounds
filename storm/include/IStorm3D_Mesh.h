@@ -6,7 +6,6 @@
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
-#include <windows.h>
 
 // Common datatype includes
 #include "DatatypeDef.h"
@@ -66,8 +65,6 @@ public:
 	virtual void ChangeFaceCount(int new_face_count)=0;		// Old faces are lost
 	virtual void ChangeVertexCount(int new_vertex_count)=0;	// Old vertices are lost
 	virtual void UpdateCollisionTable()=0;	// Use this after editing, if you want collisions to this object
-
-	virtual int GetCollisionFaces()=0;
 
 	// Test collision (these return true if collided)
 	virtual bool RayTrace(const VC3 &position,const VC3 &direction_normalized,float ray_length,Storm3D_CollisionInfo &rti, bool accurate = true)=0;

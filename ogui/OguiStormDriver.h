@@ -2,7 +2,9 @@
 #ifndef OGUISTORMDRIVER_H
 #define OGUISTORMDRIVER_H
 
-#pragma warning(disable : 4290) 
+#ifdef _MSC_VER
+#pragma warning(disable : 4290)
+#endif
 
 #include <Storm3D_UI.h>
 #include "../container/LinkedList.h"
@@ -104,7 +106,7 @@ public:
 class OguiStormDriver : public IOguiDriver
 {
 public:
-  OguiStormDriver(IStorm3D *storm3d, IStorm3D_Scene *stormScene);
+  OguiStormDriver(IStorm3D *storm3d, IStorm3D_Scene *stormScene) throw (OguiException *);
   ~OguiStormDriver();
   virtual IOguiImage *LoadOguiImage(const char *filename) throw (OguiException *);
   virtual IOguiImage *LoadOguiImage(int width, int height) throw (OguiException *);
@@ -114,12 +116,12 @@ public:
   virtual IOguiImage *ConvertVideoToImage( IStorm3D_VideoStreamer* stream, IStorm3D_StreamBuilder *streamBuilder );
 
 	// call before storm empty (or video textures will crash)
-	void prepareForNextStormGeneration(IStorm3D_Scene *stormScene);
+	void prepareForNextStormGeneration(IStorm3D_Scene *stormScene) throw (OguiException *);
 
   // call this when storm does something nasty, such as Empty() method call
   // in general, should be called if any storm texture(, etc.) pointers
   // get invalidated.
-  void nextStormGeneration(IStorm3D_Scene *stormScene);
+  void nextStormGeneration(IStorm3D_Scene *stormScene) throw (OguiException *);
 
 	// get rid of texture cache, cos nextStormGeneration is called when storm has already
 	// been destroyed. (so cannot do this in there)

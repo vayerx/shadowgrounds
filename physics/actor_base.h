@@ -1,7 +1,7 @@
 #ifndef INCLUDED_FROZENBYTE_ACTOR_BASE_H
 #define INCLUDED_FROZENBYTE_ACTOR_BASE_H
 
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 
 class NxActor;
 class NxScene;
@@ -21,7 +21,7 @@ protected:
 	int intData;
 
 	ActorBase();
-	~ActorBase();
+	virtual ~ActorBase();
 
 	void init();
 
@@ -40,7 +40,6 @@ public:
 	float getKineticEnergy() const;
 	bool checkOverlapOBB(const VC3 &center, const VC3 &radius, const QUAT &rotation) const;
 	bool getVolumeUnderWater(float water_height, VC3 &min, VC3 &max) const;
-	float getMass() const;
 
 	void setPosition(const VC3 &position);
 	void setRotation(const QUAT &rotation);
@@ -60,11 +59,7 @@ public:
 	void addTorqueVelocityChange(const VC3 &torque, bool smooth = false);
 	void addTorqueImpulse(const VC3 &torque, bool smooth = false);
 
-	void setLinearDamping(float damping);
-	void setAngularDamping(float damping);
-	float getLinearDamping() const;
-	float getAngularDamping() const;
-
+	void setDamping(float linearDamping, float angularDamping);
 	void putToSleep();
 
 	// Collision group

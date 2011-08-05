@@ -13,6 +13,7 @@ namespace game
 	public:
 		virtual Projectile *createNewProjectileTrackerInstance() = 0;
 		virtual void projectileDeleted(Projectile *projectile) = 0;
+		virtual ~IProjectileTrackerFactory() {};
 	};
 }
 

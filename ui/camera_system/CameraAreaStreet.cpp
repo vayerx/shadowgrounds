@@ -159,7 +159,7 @@ void CameraAreaStreet::update( VC3 positionOfInterest, float currentAngle, int e
 			betaAngleOffset = 0;
 			distanceOffset = 0;
 			if (!hasEntryPoint) {
-				float a = abs(currentAngle-matchAngle2(angle, currentAngle));
+				float a = fabs(currentAngle-matchAngle2(angle, currentAngle));
 				if ((a<ANGLE_TOLERANCE) || (a>(180-ANGLE_TOLERANCE))) {
 					entryPoint = positionOfInterest;
 					hasEntryPoint = true;

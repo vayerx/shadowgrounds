@@ -3,8 +3,6 @@
 
 #include "ItemManager.h"
 
-#include <Storm3D_UI.h>
-
 #include "Game.h"
 #include "GameRandom.h"
 #include "GameUI.h"
@@ -74,46 +72,6 @@ namespace game
 {
 
 namespace {
-
-	VC3 getEulerAngles(QUAT quat)
-	{
-		quat.Inverse();
-		MAT tm;
-		tm.CreateRotationMatrix(quat);
-
-		float heading = 0.f;
-		float attitude = 0.f;
-		float bank = 0.f;
-
-		float m00 = tm.Get(0);
-		float m02 = tm.Get(2);
-		float m10 = tm.Get(4);
-		float m11 = tm.Get(5);
-		float m12 = tm.Get(6);
-		float m20 = tm.Get(8);
-		float m22 = tm.Get(10);
-
-		if(m10 > 0.998f)
-		{
-			heading = atan2f(m02, m22);
-			attitude = PI/2.f;
-			bank = 0.f;
-		}
-		else if(m10 < -0.998f)
-		{
-			heading = atan2f(m02, m22);
-			attitude = -PI/2;
-			bank = 0.f;
-		}
-		else
-		{
-			heading = atan2f(-m20, m00);
-			attitude = asinf(m10);
-			bank = atan2f(-m12, m11);
-		}
-
-		return VC3(bank, heading, attitude);
-	}
 
 #ifdef PHYSICS_INUSE
 void createPhysicsForItem( Item* item, GamePhysics* physics, float mass )
@@ -619,7 +577,7 @@ void createPhysicsForItem( Item* item, GamePhysics* physics, float mass )
 	{
 		int itemTypeId = -1;
 
-		if (itemTypeId == NULL)
+		if (itemType == NULL)
 		{
 			Logger::getInstance()->warning("ItemManager::getNearestItemOfType - Null itemType parameter given.");	
 			fb_assert(!"ItemManager::getNearestItemOfType - Null itemType parameter given.");

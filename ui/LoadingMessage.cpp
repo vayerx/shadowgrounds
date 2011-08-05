@@ -1,17 +1,18 @@
 
 #include "precompiled.h"
 
+#include <set>
+using namespace std;
+
 #include "LoadingMessage.h"
 
+#include <istorm3D_terrain_renderer.h>
 #include <Storm3D_UI.h>
 #include "uidefaults.h"
 #include "../ogui/Ogui.h"
 #include "../convert/str2int.h"
 #include "../game/DHLocaleManager.h"
-using namespace std;
-#include <set>
 #include "../storm/storm3dv2/Iterator.h"
-#include <istorm3d_terrain_renderer.h>
 
 namespace ui
 {
@@ -66,15 +67,9 @@ namespace ui
 			int y = game::getLocaleGuiInt("gui_loadingbar_y",0);
 			int w = game::getLocaleGuiInt("gui_loadingbar_w",0);
 			int h = game::getLocaleGuiInt("gui_loadingbar_h",0);
-			bar_bg = ogui->CreateSimpleImageButton(win, x, y, w, h, game::getLocaleGuiString("gui_loadingbar_background"), NULL, NULL, NULL);
+			bar_bg = ogui->CreateSimpleImageButton(win, x, y, w, h, game::getLocaleGuiString("gui_loadingbar_background"), NULL, NULL, 0);
 			
-#ifdef PROJECT_AOV
-			// I like a clipping version better than stretching...
-			bar = ogui->CreateSimpleImageButton(win, x, y, w, h, game::getLocaleGuiString("gui_loadingbar_foreground"), NULL, NULL, NULL);
-			bar->SetClip(0, 0, (float)loading_bar_value, 100);
-#else
-			bar = ogui->CreateSimpleImageButton(win, x, y, loading_bar_value * w / 100, h, game::getLocaleGuiString("gui_loadingbar_foreground"), NULL, NULL, NULL);
-#endif
+			bar = ogui->CreateSimpleImageButton(win, x, y, loading_bar_value * w / 100, h, game::getLocaleGuiString("gui_loadingbar_foreground"), NULL, NULL, 0);
 
 			bar_num = ogui->CreateTextLabel(win, x, y, w, h, "");
 			std::string text = int2str(loading_bar_value) + std::string("%");

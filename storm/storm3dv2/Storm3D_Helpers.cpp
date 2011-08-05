@@ -1,6 +1,8 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 //------------------------------------------------------------------
 // Includes
@@ -9,25 +11,19 @@
 #include "storm3d_model_object.h"
 #include "storm3d_model.h"
 #include "Storm3D_Bone.h"
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 
-
-//------------------------------------------------------------------
-// Storm3D_Helper_Camera stuff
-//------------------------------------------------------------------
 Storm3D_Helper_Camera::Storm3D_Helper_Camera(const char *_name,Storm3D_Model *_parent_model,VC3 _position,VC3 _direction,VC3 _up) :
 	Storm3D_Helper_AInterface(_name,_parent_model,_position, this),
-	direction(_direction),upvec(_up),animation(this)
+	animation(this),direction(_direction),upvec(_up)
 {
 }
-
 
 IStorm3D_Helper::HTYPE Storm3D_Helper_Camera::GetHelperType()
 {
 	return IStorm3D_Helper::HTYPE_CAMERA;
 }
-
 
 void Storm3D_Helper_Camera::SetName(const char *_name)
 {
@@ -35,7 +31,6 @@ void Storm3D_Helper_Camera::SetName(const char *_name)
 	name=new char[strlen(_name)+1];
 	strcpy(name,_name);
 }
-
 
 const char *Storm3D_Helper_Camera::GetName()
 {
@@ -47,32 +42,28 @@ IStorm3D_Bone *Storm3D_Helper_Camera::GetParentBone()
 	return parent_bone;
 }
 
-void Storm3D_Helper_Camera::SetPosition(VC3 &_position)
+void Storm3D_Helper_Camera::SetPosition(const VC3 &_position)
 {
 	position=_position;
 	update_globals=true;
 }
 
-
-void Storm3D_Helper_Camera::SetDirection(VC3 &_direction)
+void Storm3D_Helper_Camera::SetDirection(const VC3 &_direction)
 {
 	direction=_direction;
 	update_globals=true;
 }
 
-
-void Storm3D_Helper_Camera::SetUpVector(VC3 &_up)
+void Storm3D_Helper_Camera::SetUpVector(const VC3 &_up)
 {
 	upvec=_up;
 	update_globals=true;
 }
 
-
 VC3 &Storm3D_Helper_Camera::GetPosition()
 {
 	return position;
 }
-
 
 VC3 &Storm3D_Helper_Camera::GetGlobalPosition()
 {
@@ -81,12 +72,10 @@ VC3 &Storm3D_Helper_Camera::GetGlobalPosition()
 	return position_global;
 }
 
-
 VC3 &Storm3D_Helper_Camera::GetDirection()
 {
 	return direction;
 }
-
 
 VC3 &Storm3D_Helper_Camera::GetGlobalDirection()
 {
@@ -95,13 +84,10 @@ VC3 &Storm3D_Helper_Camera::GetGlobalDirection()
 	return direction_global;
 }
 
-
-
 VC3 &Storm3D_Helper_Camera::GetUpVector()
 {
 	return upvec;
 }
-
 
 VC3 &Storm3D_Helper_Camera::GetGlobalUpVector()
 {
@@ -147,36 +133,30 @@ void Storm3D_Helper_Camera::Animation_Clear()
 	animation.Clear();
 }
 
-
 void Storm3D_Helper_Camera::Animation_AddNewPositionKeyFrame(int time,const VC3 &position)
 {
 	animation.AddNewPositionKeyFrame(time,position);
 }
-
 
 void Storm3D_Helper_Camera::Animation_AddNewDirectionKeyFrame(int time,const VC3 &position)
 {
 	animation.AddNewDirectionKeyFrame(time,position);
 }
 
-
 void Storm3D_Helper_Camera::Animation_AddNewUpVectorKeyFrame(int time,const VC3 &position)
 {
 	animation.AddNewUpVectorKeyFrame(time,position);
 }
-
 
 void Storm3D_Helper_Camera::Animation_SetLoop(int end_time)
 {
 	animation.SetLoop(end_time);
 }
 
-
 void Storm3D_Helper_Camera::Animation_SetCurrentTime(int time)
 {
 	animation.SetCurrentTime(time);
 }
-
 
 void Storm3D_Helper_Camera::UpdateGlobals()
 {
@@ -209,22 +189,16 @@ void Storm3D_Helper_Camera::UpdateGlobals()
 }
 
 
-
-//------------------------------------------------------------------
-// Storm3D_Helper_Vector stuff
-//------------------------------------------------------------------
 Storm3D_Helper_Vector::Storm3D_Helper_Vector(const char *_name,Storm3D_Model *_parent_model,VC3 _position,VC3 _direction) :
 	Storm3D_Helper_AInterface(_name,_parent_model,_position, this),
-	direction(_direction),animation(this)
+	animation(this), direction(_direction)
 {
 }
-
 
 IStorm3D_Helper::HTYPE Storm3D_Helper_Vector::GetHelperType()
 {
 	return IStorm3D_Helper::HTYPE_VECTOR;
 }
-
 
 void Storm3D_Helper_Vector::SetName(const char *_name)
 {
@@ -232,7 +206,6 @@ void Storm3D_Helper_Vector::SetName(const char *_name)
 	name=new char[strlen(_name)+1];
 	strcpy(name,_name);
 }
-
 
 const char *Storm3D_Helper_Vector::GetName()
 {
@@ -244,25 +217,22 @@ IStorm3D_Bone *Storm3D_Helper_Vector::GetParentBone()
 	return parent_bone;
 }
 
-void Storm3D_Helper_Vector::SetPosition(VC3 &_position)
+void Storm3D_Helper_Vector::SetPosition(const VC3 &_position)
 {
 	position=_position;
 	update_globals=true;
 }
 
-
-void Storm3D_Helper_Vector::SetDirection(VC3 &_direction)
+void Storm3D_Helper_Vector::SetDirection(const VC3 &_direction)
 {
 	direction=_direction;
 	update_globals=true;
 }
 
-
 VC3 &Storm3D_Helper_Vector::GetPosition()
 {
 	return position;
 }
-
 
 VC3 &Storm3D_Helper_Vector::GetGlobalPosition()
 {
@@ -271,12 +241,10 @@ VC3 &Storm3D_Helper_Vector::GetGlobalPosition()
 	return position_global;
 }
 
-
 VC3 &Storm3D_Helper_Vector::GetDirection()
 {
 	return direction;
 }
-
 
 VC3 &Storm3D_Helper_Vector::GetGlobalDirection()
 {
@@ -309,30 +277,25 @@ void Storm3D_Helper_Vector::Animation_Clear()
 	animation.Clear();
 }
 
-
 void Storm3D_Helper_Vector::Animation_AddNewPositionKeyFrame(int time,const VC3 &position)
 {
 	animation.AddNewPositionKeyFrame(time,position);
 }
-
 
 void Storm3D_Helper_Vector::Animation_AddNewDirectionKeyFrame(int time,const VC3 &position)
 {
 	animation.AddNewDirectionKeyFrame(time,position);
 }
 
-
 void Storm3D_Helper_Vector::Animation_SetLoop(int end_time)
 {
 	animation.SetLoop(end_time);
 }
 
-
 void Storm3D_Helper_Vector::Animation_SetCurrentTime(int time)
 {
 	animation.SetCurrentTime(time);
 }
-
 
 void Storm3D_Helper_Vector::UpdateGlobals()
 {
@@ -361,21 +324,15 @@ void Storm3D_Helper_Vector::UpdateGlobals()
 }
 
 
-
-//------------------------------------------------------------------
-// Storm3D_Helper_Point stuff
-//------------------------------------------------------------------
 Storm3D_Helper_Point::Storm3D_Helper_Point(const char *_name,Storm3D_Model *_parent_model,VC3 _position) :
 	Storm3D_Helper_AInterface(_name,_parent_model,_position, helper),animation(this)
 {
 }
 
-
 IStorm3D_Helper::HTYPE Storm3D_Helper_Point::GetHelperType()
 {
 	return IStorm3D_Helper::HTYPE_POINT;
 }
-
 
 void Storm3D_Helper_Point::SetName(const char *_name)
 {
@@ -383,7 +340,6 @@ void Storm3D_Helper_Point::SetName(const char *_name)
 	name=new char[strlen(_name)+1];
 	strcpy(name,_name);
 }
-
 
 const char *Storm3D_Helper_Point::GetName()
 {
@@ -395,7 +351,7 @@ IStorm3D_Bone *Storm3D_Helper_Point::GetParentBone()
 	return parent_bone;
 }
 
-void Storm3D_Helper_Point::SetPosition(VC3 &_position)
+void Storm3D_Helper_Point::SetPosition(const VC3 &_position)
 {
 	position=_position;
 	update_globals=true;
@@ -449,22 +405,6 @@ void Storm3D_Helper_Point::Animation_SetCurrentTime(int time)
 
 void Storm3D_Helper_Point::UpdateGlobals()
 {
-	/*
-	if (update_globals) 
-	{
-		update_globals=false;
-		position_global=position;
-		if (parent_object)
-		{
-			parent_object->GetMXG().TransformVector(position_global);
-		}
-		else
-		{
-			parent_model->GetMX().TransformVector(position_global);
-		}
-	}
-	*/
-
 	if(update_globals)
 	{
 		update_globals=false;
@@ -486,22 +426,16 @@ void Storm3D_Helper_Point::UpdateGlobals()
 }
 
 
-
-//------------------------------------------------------------------
-// Storm3D_Helper_Box stuff
-//------------------------------------------------------------------
 Storm3D_Helper_Box::Storm3D_Helper_Box(const char *_name,Storm3D_Model *_parent_model,VC3 _position,VC3 _size) :
 	Storm3D_Helper_AInterface(_name,_parent_model,_position, helper),
-	size(_size),animation(this)
+	animation(this),size(_size)
 {
 }
-
 
 IStorm3D_Helper::HTYPE Storm3D_Helper_Box::GetHelperType()
 {
 	return IStorm3D_Helper::HTYPE_BOX;
 }
-
 
 void Storm3D_Helper_Box::SetName(const char *_name)
 {
@@ -509,7 +443,6 @@ void Storm3D_Helper_Box::SetName(const char *_name)
 	name=new char[strlen(_name)+1];
 	strcpy(name,_name);
 }
-
 
 const char *Storm3D_Helper_Box::GetName()
 {
@@ -521,24 +454,21 @@ IStorm3D_Bone *Storm3D_Helper_Box::GetParentBone()
 	return parent_bone;
 }
 
-void Storm3D_Helper_Box::SetPosition(VC3 &_position)
+void Storm3D_Helper_Box::SetPosition(const VC3 &_position)
 {
 	position=_position;
 	update_globals=true;
 }
-
 
 void Storm3D_Helper_Box::SetSize(VC3 &_size)
 {
 	size=_size;
 }
 
-
 VC3 &Storm3D_Helper_Box::GetPosition()
 {
 	return position;
 }
-
 
 VC3 &Storm3D_Helper_Box::GetGlobalPosition()
 {
@@ -546,7 +476,6 @@ VC3 &Storm3D_Helper_Box::GetGlobalPosition()
 	UpdateGlobals();
 	return position_global;
 }
-
 
 VC3 &Storm3D_Helper_Box::GetSize()
 {
@@ -563,30 +492,25 @@ void Storm3D_Helper_Box::Animation_Clear()
 	animation.Clear();
 }
 
-
 void Storm3D_Helper_Box::Animation_AddNewPositionKeyFrame(int time,const VC3 &position)
 {
 	animation.AddNewPositionKeyFrame(time,position);
 }
-
 
 void Storm3D_Helper_Box::Animation_AddNewSizeKeyFrame(int time,const VC3 &position)
 {
 	animation.AddNewDirectionKeyFrame(time,position);
 }
 
-
 void Storm3D_Helper_Box::Animation_SetLoop(int end_time)
 {
 	animation.SetLoop(end_time);
 }
 
-
 void Storm3D_Helper_Box::Animation_SetCurrentTime(int time)
 {
 	animation.SetCurrentTime(time);
 }
-
 
 void Storm3D_Helper_Box::UpdateGlobals()
 {
@@ -606,22 +530,16 @@ void Storm3D_Helper_Box::UpdateGlobals()
 }
 
 
-
-//------------------------------------------------------------------
-// Storm3D_Helper_Sphere stuff
-//------------------------------------------------------------------
 Storm3D_Helper_Sphere::Storm3D_Helper_Sphere(const char *_name,Storm3D_Model *_parent_model,VC3 _position,float _radius) :
 	Storm3D_Helper_AInterface(_name,_parent_model,_position, helper),
-	radius(_radius),animation(this)
+	animation(this),radius(_radius)
 {
 }
-
 
 IStorm3D_Helper::HTYPE Storm3D_Helper_Sphere::GetHelperType()
 {
 	return IStorm3D_Helper::HTYPE_SPHERE;
 }
-
 
 void Storm3D_Helper_Sphere::SetName(const char *_name)
 {
@@ -629,7 +547,6 @@ void Storm3D_Helper_Sphere::SetName(const char *_name)
 	name=new char[strlen(_name)+1];
 	strcpy(name,_name);
 }
-
 
 const char *Storm3D_Helper_Sphere::GetName()
 {
@@ -641,24 +558,21 @@ IStorm3D_Bone *Storm3D_Helper_Sphere::GetParentBone()
 	return parent_bone;
 }
 
-void Storm3D_Helper_Sphere::SetPosition(VC3 &_position)
+void Storm3D_Helper_Sphere::SetPosition(const VC3 &_position)
 {
 	position=_position;
 	update_globals=true;
 }
-
 
 void Storm3D_Helper_Sphere::SetRadius(float _radius)
 {
 	radius=_radius;
 }
 
-
 VC3 &Storm3D_Helper_Sphere::GetPosition()
 {
 	return position;
 }
-
 
 VC3 &Storm3D_Helper_Sphere::GetGlobalPosition()
 {
@@ -666,7 +580,6 @@ VC3 &Storm3D_Helper_Sphere::GetGlobalPosition()
 	UpdateGlobals();
 	return position_global;
 }
-
 
 float Storm3D_Helper_Sphere::GetRadius()
 {
@@ -683,30 +596,25 @@ void Storm3D_Helper_Sphere::Animation_Clear()
 	animation.Clear();
 }
 
-
 void Storm3D_Helper_Sphere::Animation_AddNewPositionKeyFrame(int time,const VC3 &position)
 {
 	animation.AddNewPositionKeyFrame(time,position);
 }
-
 
 void Storm3D_Helper_Sphere::Animation_AddNewRadiusKeyFrame(int time,float radius)
 {
 	animation.AddNewDirectionKeyFrame(time,VC3(radius,0,0));
 }
 
-
 void Storm3D_Helper_Sphere::Animation_SetLoop(int end_time)
 {
 	animation.SetLoop(end_time);
 }
 
-
 void Storm3D_Helper_Sphere::Animation_SetCurrentTime(int time)
 {
 	animation.SetCurrentTime(time);
 }
-
 
 void Storm3D_Helper_Sphere::UpdateGlobals()
 {
@@ -724,5 +632,3 @@ void Storm3D_Helper_Sphere::UpdateGlobals()
 		}
 	}
 }
-
-

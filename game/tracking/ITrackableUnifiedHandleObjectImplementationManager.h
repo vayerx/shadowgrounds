@@ -19,6 +19,7 @@ namespace tracking
 		virtual QUAT getTrackableUnifiedHandleRotation(UnifiedHandle unifiedHandle) const = 0;
 		virtual VC3 getTrackableUnifiedHandleVelocity(UnifiedHandle unifiedHandle) const = 0;
 		virtual ITrackableUnifiedHandleObjectIterator *getTrackableUnifiedHandleObjectsFromArea(const VC3 &position, float radius, TRACKABLE_TYPEID_DATATYPE typeMask) = 0;
+		virtual ~ITrackableUnifiedHandleObjectImplementationManager() {};
 
 		// NOTE: should have angular velocity too, but for now that is not so important.
 	};

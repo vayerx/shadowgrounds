@@ -134,10 +134,11 @@ public:
 		if( showMessage > 0 && ( game->gameTimer - lastTimeShownMessage ) > comboMessageLength )
 		{
 			showMessage = 0;
-			bool result = false;
+			// bool result = false;
 			
 			if( textbut ) 
-				result = textbut->SetText( "" );
+				/* result = */
+					textbut->SetText( "" );
 
 		}
 	}

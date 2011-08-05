@@ -40,8 +40,6 @@ namespace game
 		fb_assert(progressBar != NULL);
 		fb_assert(game != NULL);
 
-		bool deleteProgBarAfterThis = false;
-
 		bool changeLabel = false;
 		bool useInterruptedLabel = false;
 
@@ -90,11 +88,11 @@ namespace game
 			}
 		}
 
-		bool wasInterruptedButVisible = false;
+		// bool wasInterruptedButVisible = false;
 		if (progressBar->restartedWhileVisible)
 		{
 			progressBar->restartedWhileVisible = false;
-			wasInterruptedButVisible = true;
+			// wasInterruptedButVisible = true;
 			changeLabel = true;
 		}
 

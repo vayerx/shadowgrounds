@@ -1,13 +1,14 @@
 
 #include "precompiled.h"
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
 #pragma warning(disable:4786)
+#endif
 
 #include "TextureCache.h"
 #include "../system/Logger.h"
-#include <istorm3d.h>
-#include <istorm3d_texture.h>
+#include <IStorm3D.h>
 #include "../filesystem/input_stream_wrapper.h"
 
 #include <boost/lexical_cast.hpp>
@@ -20,7 +21,6 @@ using namespace std;
 using namespace boost;
 
 namespace frozenbyte {
-namespace {
 
 	static const int TEMPORARY_TIME = 20 * 1000;
 
@@ -33,7 +33,7 @@ namespace {
 		}
 	};
 
-	void makeLower(std::string &string)
+	static void makeLower(std::string &string)
 	{
 		for(unsigned int i = 0; i < string.size(); ++i)
 			string[i] = tolower(string[i]);
@@ -84,10 +84,9 @@ namespace {
 
 	struct TextureData
 	{
-		void *data;
+		char *data;
 		size_t data_size;
 	};
-}
 
 typedef list<TemporaryTexture> TimedTemporaryList;
 
@@ -106,7 +105,8 @@ struct TextureCache::Data
 	int loadflags;
 
 	Data(IStorm3D &storm_)
-	:	storm(storm_)
+	:	storm(storm_),
+		loadflags(0)
 	{
 	}
 

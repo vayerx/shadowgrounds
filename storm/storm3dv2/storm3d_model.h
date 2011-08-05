@@ -7,7 +7,7 @@
 // Includes
 //------------------------------------------------------------------
 #include "storm3d_common_imp.h"
-#include "istorm3d_model.h"
+#include "IStorm3D_Model.h"
 #include <vector>
 #include <list>
 #include <string>
@@ -176,14 +176,6 @@ class Storm3D_Model : public IStorm3D_Model
 	int terrainInstanceId;
 	int terrainModelId;
 
-	/*
-	VC3 light_position1;
-	COL light_color1;
-	float light_range1;
-	VC3 light_position2;
-	COL light_color2;
-	float light_range2;
-	*/
 	signed short light_index[LIGHT_MAX_AMOUNT];
 
 	VC3 sun_direction;
@@ -194,9 +186,7 @@ class Storm3D_Model : public IStorm3D_Model
 
 	std::string effectTextureName;
 	mutable AABB bounding_box;
-	mutable AABB collision_bounding_box;
 	mutable bool box_ok;
-	mutable bool collision_box_ok;
 
 	float max_scale;
 
@@ -242,17 +232,16 @@ public:
 
 	// Helpers
 	void Helper_Delete(IStorm3D_Helper *help);
-	IStorm3D_Helper_Point *Helper_Point_New(const char *name,VC3 &_position);
-	IStorm3D_Helper_Vector *Helper_Vector_New(const char *name,VC3 &_position,VC3 &_direction);
-	IStorm3D_Helper_Camera *Helper_Camera_New(const char *name,VC3 &_position,VC3 &_direction,VC3 &_up);
-	IStorm3D_Helper_Box *Helper_Box_New(const char *name,VC3 &_position,VC3 &_size);
-	IStorm3D_Helper_Sphere *Helper_Sphere_New(const char *name,VC3 &_position,float radius);
+	IStorm3D_Helper_Point *Helper_Point_New(const char *name, const VC3 &_position);
+	IStorm3D_Helper_Vector *Helper_Vector_New(const char *name, const VC3 &_position, const VC3 &_direction);
+	IStorm3D_Helper_Camera *Helper_Camera_New(const char *name, const VC3 &_position, const VC3 &_direction, const VC3 &_up);
+	IStorm3D_Helper_Box *Helper_Box_New(const char *name, const VC3 &_position, const VC3 &_size);
+	IStorm3D_Helper_Sphere *Helper_Sphere_New(const char *name, const VC3 &_position, float radius);
 
 	IStorm3D_Helper *SearchHelper(const char *name);
 
 	// Bones
 	IStorm3D_Bone *SearchBone(const char *name);
-	IStorm3D_Bone *GetBone(int i);
 
 	// Bone animations
 	bool SetRandomAnimation(IStorm3D_BoneAnimation *animation);
@@ -275,24 +264,11 @@ public:
 	void ApplyAnimations();
 
 	// Set position/rotation/scale
-	void SetPosition(VC3 &_position);
-	void SetRotation(QUAT &_rotation);
-	void SetScale(VC3 &_scale);
+	void SetPosition(const VC3 &_position);
+	void SetRotation(const QUAT &_rotation);
+	void SetScale(const VC3 &_scale);
 	void SetSelfIllumination(const COL &color) { self_illumination = color; }
 	
-	/*
-	void SetLighting(int index, const VC3 &position, const COL &color, float range) 
-	{ 
-		if(index == 0)
-		{
-			light_position1 = position; light_color1 = color; light_range1 = range; 
-		}
-		else
-		{
-			light_position2 = position; light_color2 = color; light_range2 = range; 
-		}
-	}
-	*/
 	void SetLighting(int index, signed short light_index_) 
 	{ 
 		if(index >= 0 && index < LIGHT_MAX_AMOUNT)
@@ -334,10 +310,6 @@ public:
 	void SphereCollision(const VC3 &position,float radius,Storm3D_CollisionInfo &cinf, bool accurate);
 	float GetRadius() const { return bounding_radius * max_scale; }
 	const AABB &GetBoundingBox() const;
-	// NEW: added different bounding boxes for physics/collision (since visualization bounding box really 
-	// is no good for other than rendering purposes) --jpk
-	virtual const AABB &GetPhysicsBoundingBox() const; 
-	virtual const AABB &GetCollisionBoundingBox() const; 
 
 	bool hasBones ( );
 
@@ -358,6 +330,3 @@ public:
 	friend struct Storm3D_TerrainModelsData;
 	friend class Storm3D_TerrainGroup;
 };
-
-
-

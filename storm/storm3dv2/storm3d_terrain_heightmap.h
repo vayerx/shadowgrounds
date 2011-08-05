@@ -3,8 +3,9 @@
 #ifndef INCLUDED_STORM3D_TERRAIN_HEIGHTMAP_H
 #define INCLUDED_STORM3D_TERRAIN_HEIGHTMAP_H
 
-#include "DatatypeDef.h"
 #include <boost/scoped_ptr.hpp>
+#include "DatatypeDef.h"
+#include <istorm3d_spotlight.h>
 
 class Storm3D;
 class Storm3D_Scene;
@@ -26,7 +27,7 @@ class Storm3D_TerrainHeightmap
 	boost::scoped_ptr<Storm3D_TerrainHeightmapData> data;
 
 public:
-	Storm3D_TerrainHeightmap(Storm3D &storm, bool ps13);
+	Storm3D_TerrainHeightmap(Storm3D &storm);
 	~Storm3D_TerrainHeightmap();
 
 	void setHeightMap(const unsigned short *buffer, const VC2I &resolution, const VC3 &size, int textureDetail, unsigned short *forceMap, int heightmapMultiplier, int obstaclemapMultiplier);
@@ -39,7 +40,7 @@ public:
 	unsigned short *getCollisionHeightmap();
 
 	void calculateVisibility(Storm3D_Scene &scene);
-	void renderTextures(Storm3D_Scene &scene, bool atiShader);
+	void renderTextures(Storm3D_Scene &scene);
 
 	enum RenderMode
 	{
@@ -47,14 +48,8 @@ public:
 		Depth,
 		Projection,
 	};
-	enum RenderType
-	{
-		Ati,
-		Nv
-	};
 
-	void renderDepth(Storm3D_Scene &scene, Storm3D_Camera *camera, RenderMode mode, RenderType type, int spot_type, Storm3D_Spotlight *spot);
-	//void renderDepth(Storm3D_Scene &scene, Storm3D_Camera *camera, bool atiShader, bool atiLightingShader, int spot_type);
+	void renderDepth(Storm3D_Scene &scene, Storm3D_Camera *camera, RenderMode mode, IStorm3D_Spotlight::Type spot_type, Storm3D_Spotlight *spot);
 
 	// Texturing
 	int addTerrainTexture(Storm3D_Texture &texture);

@@ -14,6 +14,15 @@ class OguiWindow;
 namespace ui
 {
 
+enum directions
+{
+	topleft = 0,
+	topright = 1,
+	bottomright = 2,
+	bottomleft = 3,
+	buttontext = 4
+};
+
 class TargetDisplayWindowButton
 {
 public:

@@ -9,7 +9,7 @@
 
 #include <DatatypeDef.h>
 #include <IStorm3D.h>
-#include <istorm3d_mesh.h>
+#include <IStorm3D_Mesh.h>
 
 #include "GameScriptData.h"
 #include "GameScriptingUtils.h"
@@ -34,23 +34,15 @@
 #include "../UnitList.h"
 #include "../SimpleOptions.h"
 #include "../options/options_players.h"
-#include "../options/options_graphics.h"
 #include "../../ui/GameController.h"
 #include "../../ui/CombatWindow.h"
 #include "../../util/LipsyncManager.h"
 #include "../../util/StringUtil.h"
-#include "../../ui/Animator.h"
-
-#include "../physics/gamephysics.h"
-#include "../physics/abstractphysicsobject.h"
 
 #include "../../system/Logger.h"
 #include "../../system/Timer.h"
-#include "../../convert/int64_to_hex.h"
-#include <stdio.h>
 
 #include "../../convert/str2int.h"
-#include "../../convert/int64_to_hex.h"
 #include "../../util/ScriptProcess.h"
 #include "../../util/ScriptManager.h"
 #include "../../util/TextureCache.h"
@@ -62,22 +54,26 @@
 #include "../unified_handle.h"
 #include "../../ui/ErrorWindow.h"
 #include "../../ui/ElaborateHintMessageWindow.h"
-#include "../../ui/LightManager.h"
 #ifdef PROJECT_SURVIVOR
 	#include "../../ui/GenericTextWindow.h"
 #endif
-#include <istorm3d_terrain_renderer.h>
+#include <istorm3D_terrain_renderer.h>
 #include "../UnifiedHandleManager.h"
 #include "../GameWorldFold.h"
-#include "../../editor/UniqueEditorObjectHandle.h"
-#include "../../editor/ueoh_to_id_string.h"
+
+#ifdef PHYSICS_PHYSX
+#include "../../physics/physics_lib.h"
+#include "../../util/StringUtil.h"
+#endif
 
 #include "../../util/Debug_MemoryManager.h"
 
 #include "GameScripting.h"
 
 // HACK:
-//#include "../../chat/SGScriptChatter.h"
+#include "../../chat/SGScriptChatter.h"
+
+#include "../userdata.h"
 
 #ifdef PROJECT_CLAW_PROTO
 #ifndef USE_CLAW_CONTROLLER
@@ -98,12 +94,11 @@ namespace game
 {
 	extern bool game_in_start_combat;
 
-	static UnifiedHandle gs_lastAddedParticleSpawnerHandle = UNIFIED_HANDLE_NONE;
-
 	void MiscScripting::process(util::ScriptProcess *sp, 
-		int command, int intData, char *stringData, ScriptLastValueType *lastValue, 
+		int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue,
 		GameScriptData *gsd, Game *game, bool *pause)
 	{
+		int intData = intFloat.i;
 		switch(command)
 		{
 		case GS_CMD_WAIT:
@@ -549,7 +544,7 @@ namespace game
 
 					// end of move this.
 
-					*lastValue = game->addCustomScriptProcess(name.c_str(), NULL, params);
+					*lastValue = game->addCustomScriptProcess(name.c_str(), (Unit *) NULL, params);
 
 					if (params != NULL)
 						delete params;
@@ -1223,8 +1218,6 @@ namespace game
 						spawner->setDirection(dir);
 						spawner->setSpawnerWeapon(weap);
 						spawner->enable();
-
-						gs_lastAddedParticleSpawnerHandle = game->particleSpawnerManager->getUnifiedHandle(spawner);
 					} else {
 						sp->error("MiscScripting::process - addParticleSpawner, attempt to use non-weapon part type.");
 					}
@@ -1355,10 +1348,6 @@ namespace game
 
 		case GS_CMD_MAKEHEIGHTAREABLOCKED:
 			game->gameMap->makeHeightAreaBlocked(game->gameMap->scaledToHeightmapX(gsd->position.x), game->gameMap->scaledToHeightmapY(gsd->position.z));
-			break;
-
-		case GS_CMD_makeUnreachableAreaFromPositionBlocked:
-			game->gameMap->makeUnreachableAreasBlocked(game->gameMap->scaledToObstacleX(gsd->position.x), game->gameMap->scaledToObstacleY(gsd->position.z));
 			break;
 
 		case GS_CMD_RANDOMBELOWCURRENTVALUE:
@@ -1635,11 +1624,11 @@ namespace game
 						int c = *lastValue;
 
 #ifdef LEGACY_FILES
-						std::string tmp = "Profiles/";
+						std::string tmp = igios_mapUserDataPrefix("Profiles/");
 						tmp += game->getGameProfiles()->getCurrentProfile( c );
 						tmp += "/Config/keybinds.txt";
 #else
-						std::string tmp = "profiles/";
+						std::string tmp = igios_mapUserDataPrefix("profiles/");
 						tmp += game->getGameProfiles()->getCurrentProfile( c );
 						tmp += "/config/keybinds.txt";
 #endif
@@ -1829,11 +1818,11 @@ namespace game
 			break;
 
 		case GS_CMD_chatConnect:
-			//chat::SGScriptChatter::getInstance(game)->connect();
+			chat::SGScriptChatter::getInstance(game)->connect();
 			break;
 
 		case GS_CMD_chatSend:
-			/*if (stringData != NULL)
+			if (stringData != NULL)
 			{
 				char *s = stringData;
 				if (stringData[0] == '$' && stringData[1] == '\0')
@@ -1846,11 +1835,11 @@ namespace game
 				}
 			} else {
 				sp->error("GameScripting::process - chatSend parameter missing.");
-			}*/
+			}
 			break;
 
 		case GS_CMD_chatSendMessage:
-			/*if (stringData != NULL)
+			if (stringData != NULL)
 			{
 				char *s = stringData;
 				if (stringData[0] == '$' && stringData[1] == '\0')
@@ -1864,11 +1853,11 @@ namespace game
 				}
 			} else {
 				sp->error("GameScripting::process - chatSend parameter missing.");
-			}*/
+			}
 			break;
 
 		case GS_CMD_chatReceive:
-			//chat::SGScriptChatter::getInstance(game)->receiveMessages();
+			chat::SGScriptChatter::getInstance(game)->receiveMessages();
 			break;
 
 		case GS_CMD_consoleMiniQuery:
@@ -1972,6 +1961,52 @@ namespace game
 			}
 			break;
 
+		case GS_CMD_physSetGroupColl:
+		case GS_CMD_physSetGroupCont:
+#ifdef PHYSICS_PHYSX
+			if (stringData != NULL)
+			{
+				std::string str = stringData;
+				std::vector<std::string> splitted = util::StringSplit(",", str);
+
+				if (splitted.size() == PHYSICS_MAX_COLLISIONGROUPS + 1)
+				{
+					std::string rowstr = util::StringRemoveWhitespace(splitted[0]);
+					int row = str2int(rowstr.c_str());
+
+					if (row >= 0 && row < PHYSICS_MAX_COLLISIONGROUPS)
+					{
+						for(int col = 0; col < PHYSICS_MAX_COLLISIONGROUPS; col++)
+						{
+							std::string colstr = util::StringRemoveWhitespace(splitted[1 + col]);
+							int value = 0;
+							if (colstr != "-")
+							{
+								value = str2int(colstr.c_str());
+							}
+							if (command == GS_CMD_physSetGroupCont)
+								frozenbyte::physics::physicslib_group_cont[row][col] = value;
+							else
+								frozenbyte::physics::physicslib_group_coll[row][col] = (value != 0 ? true : false);
+						}
+					} else {
+						sp->error("GameScripting::process - physSetGroupColl/Cont parameter invalid, parameter does not start with a valid collision group value.");
+					}
+				} else {
+					sp->error("GameScripting::process - physSetGroupColl/Cont parameter invalid, wrong number of entries.");
+				}
+
+			} else {
+				if (command == GS_CMD_physSetGroupCont)
+					sp->warning("GameScripting::process - physSetGroupCont parameter missing.");
+				else
+					sp->warning("GameScripting::process - physSetGroupColl parameter missing.");
+			}
+#else
+			sp->warning("GameScripting::process - physSetGroupColl/Cont not supported by used physics implementation.");
+#endif
+			break;
+
 		case GS_CMD_openCombatSubWindow:
 			if( stringData != NULL && game->gameUI->getCombatWindow( gsd->player ) )
 			{
@@ -2047,14 +2082,6 @@ namespace game
 
 		case GS_CMD_setClawToPosition:
 			game->getClawController()->setTargetPosition(gsd->position);			
-			break;
-
-		case GS_CMD_getClawPosition:
-			gsd->position = game->getClawController()->getClawPosition();
-			break;
-
-		case GS_CMD_clawHasObject:
-			*lastValue = game->getClawController()->hasActor() ? 1 : 0;
 			break;
 #endif
 
@@ -2200,6 +2227,220 @@ namespace game
 			}
 			break;
 
+		case GS_CMD_getTerrainObjectMetaValueString:
+			if (stringData != NULL)
+			{
+				if (VALIDATE_UNIFIED_HANDLE_BITS(gsd->unifiedHandle))
+				{
+					if (IS_UNIFIED_HANDLE_TERRAIN_OBJECT(gsd->unifiedHandle))
+					{
+						if (game->unifiedHandleManager->doesObjectExist(gsd->unifiedHandle))
+						{
+							if (game->gameUI->getTerrain() != NULL
+								&& game->gameUI->getTerrain()->hasObjectTypeMetaValue(gsd->unifiedHandle, stringData))
+							{
+								gsd->setStringValue(game->gameUI->getTerrain()->getObjectTypeMetaValue(gsd->unifiedHandle, stringData).c_str());
+							} else {
+								sp->warning("MiscScripting::process - getTerrainObjectMetaValueString, object type does not have requested meta key.");
+								Logger::getInstance()->debug(stringData);
+								gsd->setStringValue(NULL);
+							}
+						} else {
+							sp->error("MiscScripting::process - getTerrainObjectMetaValueString, object does not exist with given unified handle.");
+							gsd->setStringValue(NULL);
+						}
+					} else {
+						sp->error("MiscScripting::process - getTerrainObjectMetaValueString, object with given unified handle is not a terrain object.");
+						gsd->setStringValue(NULL);
+					}
+				} else {
+					sp->error("MiscScripting::process - getTerrainObjectMetaValueString, invalid unified handle.");
+					gsd->setStringValue(NULL);
+				}
+			} else {
+				sp->error("MiscScripting::process - getTerrainObjectMetaValueString parameter missing (terrain object meta key name expected).");
+				gsd->setStringValue(NULL);
+			}
+			break;			
+
+		case GS_CMD_hasTerrainObjectMetaValueString:
+			if (stringData != NULL)
+			{
+				if (VALIDATE_UNIFIED_HANDLE_BITS(gsd->unifiedHandle))
+				{
+					if (IS_UNIFIED_HANDLE_TERRAIN_OBJECT(gsd->unifiedHandle))
+					{
+						if (game->unifiedHandleManager->doesObjectExist(gsd->unifiedHandle))
+						{
+							if (game->gameUI->getTerrain() != NULL
+								&& game->gameUI->getTerrain()->hasObjectTypeMetaValue(gsd->unifiedHandle, stringData))
+							{
+								*lastValue = 1;
+							} else {
+								*lastValue = 0;
+							}
+						} else {
+							sp->error("MiscScripting::process - hasTerrainObjectMetaValueString, object does not exist with given unified handle.");
+							*lastValue = 0;
+						}
+					} else {
+						sp->error("MiscScripting::process - hasTerrainObjectMetaValueString, object with given unified handle is not a terrain object.");
+						*lastValue = 0;
+					}
+				} else {
+					sp->error("MiscScripting::process - hasTerrainObjectMetaValueString, invalid unified handle.");
+					*lastValue = 0;
+				}
+			} else {
+				sp->error("MiscScripting::process - hasTerrainObjectMetaValueString parameter missing (terrain object meta key name expected).");
+				*lastValue = 0;
+			}
+			break;			
+
+		case GS_CMD_getTerrainObjectVariable:
+			if (stringData != NULL)
+			{
+				if (VALIDATE_UNIFIED_HANDLE_BITS(gsd->unifiedHandle))
+				{
+					if (IS_UNIFIED_HANDLE_TERRAIN_OBJECT(gsd->unifiedHandle))
+					{
+						if (game->gameUI->getTerrain() != NULL
+							&& game->unifiedHandleManager->doesObjectExist(gsd->unifiedHandle))
+						{
+							int varNum = game->gameUI->getTerrain()->getObjectVariableNumberByName(stringData);
+							if (varNum != -1)
+							{
+								*lastValue = game->gameUI->getTerrain()->getObjectVariableValue(gsd->unifiedHandle, varNum);
+							} else {
+								sp->warning("MiscScripting::process - getTerrainObjectVariable, terrain object variable of given name does not exist.");
+								Logger::getInstance()->debug(stringData);
+								*lastValue = 0;
+							}
+						} else {
+							sp->error("MiscScripting::process - getTerrainObjectVariable, object does not exist with given unified handle.");
+							*lastValue = 0;
+						}
+					} else {
+						sp->error("MiscScripting::process - getTerrainObjectVariable, object with given unified handle is not a terrain object.");
+						*lastValue = 0;
+					}
+				} else {
+					sp->error("MiscScripting::process - getTerrainObjectVariable, invalid unified handle.");
+					*lastValue = 0;
+				}
+			} else {
+				sp->error("MiscScripting::process - getTerrainObjectVariable parameter missing (terrain object variable name expected).");
+				*lastValue = 0;
+			}
+			break;			
+
+		case GS_CMD_setTerrainObjectVariable:
+			if (stringData != NULL)
+			{
+				if (VALIDATE_UNIFIED_HANDLE_BITS(gsd->unifiedHandle))
+				{
+					if (IS_UNIFIED_HANDLE_TERRAIN_OBJECT(gsd->unifiedHandle))
+					{
+						if (game->gameUI->getTerrain() != NULL
+							&& game->unifiedHandleManager->doesObjectExist(gsd->unifiedHandle))
+						{
+							int varNum = game->gameUI->getTerrain()->getObjectVariableNumberByName(stringData);
+							if (varNum != -1)
+							{
+								game->gameUI->getTerrain()->setObjectVariableValue(gsd->unifiedHandle, varNum, *lastValue);
+							} else {
+								sp->warning("MiscScripting::process - setTerrainObjectVariable, terrain object variable of given name does not exist.");
+								Logger::getInstance()->debug(stringData);
+							}
+						} else {
+							sp->error("MiscScripting::process - setTerrainObjectVariable, object does not exist with given unified handle.");
+						}
+					} else {
+						sp->error("MiscScripting::process - setTerrainObjectVariable, object with given unified handle is not a terrain object.");
+					}
+				} else {
+					sp->error("MiscScripting::process - setTerrainObjectVariable, invalid unified handle.");
+				}
+			} else {
+				sp->error("MiscScripting::process - setTerrainObjectVariable parameter missing (terrain object variable name expected).");
+			}
+			break;			
+
+		case GS_CMD_changeTerrainObjectTo:
+			if (stringData != NULL)
+			{
+				if (VALIDATE_UNIFIED_HANDLE_BITS(gsd->unifiedHandle))
+				{
+					if (IS_UNIFIED_HANDLE_TERRAIN_OBJECT(gsd->unifiedHandle))
+					{
+						if (game->gameUI->getTerrain() != NULL
+							&& game->unifiedHandleManager->doesObjectExist(gsd->unifiedHandle))
+						{
+							int modelId = game->gameUI->getTerrain()->getModelIdForFilename(stringData);
+							if (modelId != -1)
+							{
+								gsd->unifiedHandle = game->gameUI->getTerrain()->changeObjectTo(gsd->unifiedHandle, modelId);
+								if (gsd->unifiedHandle == UNIFIED_HANDLE_NONE)
+								{
+									sp->error("MiscScripting::process - changeTerrainObjectTo, Terrain::changeObjectTo failed (internal error?).");
+								}
+							} else {
+								sp->error("MiscScripting::process - changeTerrainObjectTo, no terrain object model loaded with given filename.");
+							}
+						} else {
+							sp->error("MiscScripting::process - changeTerrainObjectTo, object does not exist with given unified handle.");
+						}
+					} else {
+						sp->error("MiscScripting::process - changeTerrainObjectTo, object with given unified handle is not a terrain object.");
+					}
+				} else {
+					sp->error("MiscScripting::process - changeTerrainObjectTo, invalid unified handle.");
+				}
+			} else {
+				sp->error("MiscScripting::process - changeTerrainObjectTo, parameter missing (terrain object variable name expected).");
+			}
+			break;			
+
+		case GS_CMD_deleteTerrainObject:
+			if (VALIDATE_UNIFIED_HANDLE_BITS(gsd->unifiedHandle))
+			{
+				if (IS_UNIFIED_HANDLE_TERRAIN_OBJECT(gsd->unifiedHandle))
+				{
+					if (game->gameUI->getTerrain() != NULL
+						&& game->unifiedHandleManager->doesObjectExist(gsd->unifiedHandle))
+					{
+						game->gameUI->getTerrain()->deleteTerrainObject(gsd->unifiedHandle);
+					} else {
+						sp->error("MiscScripting::process - deleteTerrainObject, object does not exist with given unified handle.");
+					}
+				} else {
+					sp->error("MiscScripting::process - deleteTerrainObject, object with given unified handle is not a terrain object.");
+				}
+			} else {
+				sp->error("MiscScripting::process - deleteTerrainObject, invalid unified handle.");
+			}
+			break;			
+
+		case GS_CMD_setTerrainObjectDamageTextureFadeFactorToFloatValue:
+			if (VALIDATE_UNIFIED_HANDLE_BITS(gsd->unifiedHandle))
+			{
+				if (IS_UNIFIED_HANDLE_TERRAIN_OBJECT(gsd->unifiedHandle))
+				{
+					if (game->gameUI->getTerrain() != NULL
+						&& game->unifiedHandleManager->doesObjectExist(gsd->unifiedHandle))
+					{
+						game->gameUI->getTerrain()->setInstanceDamageTexture(gsd->unifiedHandle, gsd->floatValue);
+					} else {
+						sp->error("MiscScripting::process - setTerrainObjectDamageTextureFadeFactor, object does not exist with given unified handle.");
+					}
+				} else {
+					sp->error("MiscScripting::process - setTerrainObjectDamageTextureFadeFactor, object with given unified handle is not a terrain object.");
+				}
+			} else {
+				sp->error("MiscScripting::process - setTerrainObjectDamageTextureFadeFactor, invalid unified handle.");
+			}
+			break;			
+
 		case GS_CMD_getUnifiedHandleObjectDistanceToPosition:
 			if (VALIDATE_UNIFIED_HANDLE_BITS(gsd->unifiedHandle))
 			{
@@ -2232,12 +2473,154 @@ namespace game
 			}
 			break;			
 
+		case GS_CMD_doesReplacementForTerrainObjectExist:
+			if (VALIDATE_UNIFIED_HANDLE_BITS(gsd->unifiedHandle))
+			{
+				if (IS_UNIFIED_HANDLE_TERRAIN_OBJECT(gsd->unifiedHandle))
+				{
+					if (game->gameUI->getTerrain() != NULL)
+					{
+						if (!game->gameUI->getTerrain()->doesTrackableUnifiedHandleObjectExist(gsd->unifiedHandle))
+						{
+							UnifiedHandle uh = game->gameUI->getTerrain()->getReplacementForUnifiedHandleObject(gsd->unifiedHandle);
+							if (uh != UNIFIED_HANDLE_NONE)
+								*lastValue = 1;
+							else
+								*lastValue = 0;
+						} else {
+							// sp->warning("... terrain object was not even destroyed? ...");
+							*lastValue = 0;
+						}
+					}
+				} else {
+					sp->error("MiscScripting::process - getReplacementForTerrainObject, object with given unified handle is not a terrain object.");
+					*lastValue = 0;
+				}
+			} else {
+				sp->error("MiscScripting::process - getReplacementForTerrainObject, invalid unified handle.");
+				*lastValue = 0;
+			}
+			break;			
+
+		case GS_CMD_getReplacementForTerrainObject:
+			if (VALIDATE_UNIFIED_HANDLE_BITS(gsd->unifiedHandle))
+			{
+				if (IS_UNIFIED_HANDLE_TERRAIN_OBJECT(gsd->unifiedHandle))
+				{
+					if (game->gameUI->getTerrain() != NULL)
+					{
+						if (!game->gameUI->getTerrain()->doesTrackableUnifiedHandleObjectExist(gsd->unifiedHandle))
+						{
+							gsd->unifiedHandle = game->gameUI->getTerrain()->getReplacementForUnifiedHandleObject(gsd->unifiedHandle);
+						} else {
+							// sp->warning("... terrain object was not even destroyed? ...");
+							gsd->unifiedHandle = UNIFIED_HANDLE_NONE;
+						}
+					}
+				} else {
+					sp->error("MiscScripting::process - getReplacementForTerrainObject, object with given unified handle is not a terrain object.");
+					gsd->unifiedHandle = UNIFIED_HANDLE_NONE;
+				}
+			} else {
+				sp->error("MiscScripting::process - getReplacementForTerrainObject, invalid unified handle.");
+				gsd->unifiedHandle = UNIFIED_HANDLE_NONE;
+			}
+			break;			
+
 		case GS_CMD_unifiedHandleToValue:
 			*lastValue = gsd->unifiedHandle;
 			break;
 
 		case GS_CMD_valueToUnifiedHandle:
 			gsd->unifiedHandle = *lastValue;
+			break;			
+
+		case GS_CMD_findClosestTerrainObjectOfMaterial:
+			if (stringData != NULL)
+			{
+				if (game->gameUI->getTerrain() != NULL)
+				{
+					// NOTE: hard coded max radius value here.
+					float maxRadius = 100.0f;
+					gsd->unifiedHandle = game->gameUI->getTerrain()->findClosestTerrainObjectOfMaterial(gsd->position, stringData, maxRadius);
+					if (VALIDATE_UNIFIED_HANDLE_BITS(gsd->unifiedHandle))
+					{
+						*lastValue = 1;
+					} else {
+						*lastValue = 0;
+					}
+				} else {
+					*lastValue = 0;
+				}
+			} else {
+				sp->error("MiscScripting::process - findClosestTerrainObjectOfMaterial parameter missing.");
+			}
+			break;			
+
+
+		case GS_CMD_setTerrainObjectByIdString:
+			if (stringData != NULL)
+			{
+				if (game->gameUI->getTerrain() != NULL)
+				{
+					gsd->unifiedHandle = game->gameUI->getTerrain()->findTerrainObjectByIdString(stringData);
+					if (VALIDATE_UNIFIED_HANDLE_BITS(gsd->unifiedHandle))
+					{
+						*lastValue = 1;
+					} else {
+						*lastValue = 0;
+					}
+				} else {
+					*lastValue = 0;
+				}
+			} else {
+				sp->error("MiscScripting::process - setTerrainObjectByIdString parameter missing.");
+			}
+			break;			
+
+		case GS_CMD_getTerrainObjectPosition:
+			// NOTE: this is the same as getUnifiedHandleObjectPosition, but for terrain object only.
+			if (VALIDATE_UNIFIED_HANDLE_BITS(gsd->unifiedHandle))
+			{
+				if (IS_UNIFIED_HANDLE_TERRAIN_OBJECT(gsd->unifiedHandle))
+				{
+					if (game->gameUI->getTerrain() != NULL)
+					{
+						if (game->gameUI->getTerrain()->doesTrackableUnifiedHandleObjectExist(gsd->unifiedHandle))
+						{
+							gsd->position = game->gameUI->getTerrain()->getTrackableUnifiedHandlePosition(gsd->unifiedHandle);
+						} else {
+							sp->error("MiscScripting::process - getTerrainObjectPosition, terrain object with given unified handle does not exist.");
+						}
+					}
+				} else {
+					sp->error("MiscScripting::process - getTerrainObjectPosition, object with given unified handle is not a terrain object.");
+				}
+			} else {
+				sp->error("MiscScripting::process - getTerrainObjectPosition, invalid unified handle.");
+			}
+			break;			
+
+		case GS_CMD_getTerrainObjectIdString:
+			if (VALIDATE_UNIFIED_HANDLE_BITS(gsd->unifiedHandle))
+			{
+				if (IS_UNIFIED_HANDLE_TERRAIN_OBJECT(gsd->unifiedHandle))
+				{
+					if (game->gameUI->getTerrain() != NULL)
+					{
+						if (game->gameUI->getTerrain()->doesTrackableUnifiedHandleObjectExist(gsd->unifiedHandle))
+						{
+							gsd->setStringValue(game->gameUI->getTerrain()->getTerrainObjectIdString(gsd->unifiedHandle));
+						} else {
+							sp->error("MiscScripting::process - getTerrainObjectIdString, terrain object with given unified handle does not exist.");
+						}
+					}
+				} else {
+					sp->error("MiscScripting::process - getTerrainObjectIdString, object with given unified handle is not a terrain object.");
+				}
+			} else {
+				sp->error("MiscScripting::process - getTerrainObjectIdString, invalid unified handle.");
+			}
 			break;			
 
 		case GS_CMD_savegameStats:
@@ -2288,7 +2671,7 @@ namespace game
 
 		case GS_CMD_addWorldFoldToPosition:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				VC3 tmp = gsd->position;
 				// Where the heck does this offset come from?
 				//tmp.x -= 0.4475f;
@@ -2318,7 +2701,7 @@ namespace game
 		case GS_CMD_setWorldFoldAngle:
 			if (*lastValue > 0) 
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				GameWorldFold::getInstance()->setFoldAngle(*lastValue, floatData);
 			} else {
 				sp->warning("MiscScripting::process - setWorldFoldAngle, invalid world fold number.");
@@ -2390,17 +2773,7 @@ namespace game
 				{
 					gsd->unifiedHandle = game->units->getUnifiedHandle(game->units->getIdForUnit(s->unit));
 					*lastValue = 1;
-				}
-#ifdef LEGACY_FILES
-				// no support for unified handles.
-#else
-				else if (s->unifiedHandle != UNIFIED_HANDLE_NONE)
-				{
-					gsd->unifiedHandle = s->unifiedHandle;
-					*lastValue = 1;
-				}
-#endif
-				else {
+				} else {
 					gsd->unifiedHandle = UNIFIED_HANDLE_NONE;
 					*lastValue = 0;
 				}
@@ -2492,194 +2865,27 @@ namespace game
 			}
 			break;
 
-		case GS_CMD_getUnifiedHandleObjectByUniqueEditorObjectHandleString:
-		case GS_CMD_getUnifiedHandleObjectByUniqueEditorObjectHandleHex:
-			if (stringData != NULL)
+		case GS_CMD_swapCursors:
+			if( stringData != NULL )
 			{
-				gsd->unifiedHandle = UNIFIED_HANDLE_NONE;
-				UniqueEditorObjectHandle ueoh = 0;
-
-				bool paramOk = false;
-				if (command == GS_CMD_getUnifiedHandleObjectByUniqueEditorObjectHandleString)
+				int c1,c2;
+				if(sscanf(stringData, "%i,%i", &c1, &c2) != 2)
 				{
-					if (strlen(stringData) <= 8
-						&& (strlen(stringData) < 7 || (stringData[7] & 0x80) == 0))
-					{
-						ueoh = id_string_to_ueoh(stringData);
-						paramOk = true;
-					} else {
-						sp->error("MiscScripting::process - getUnifiedHandleObjectByUniqueEditorObjectHandleString, parameter invalid (string must be at most 8 characters, using 7 bit chars).");
-					}
-				}
-				if (command == GS_CMD_getUnifiedHandleObjectByUniqueEditorObjectHandleHex)
-				{
-					if (strlen(stringData) != 16)
-					{
-						ueoh = (UniqueEditorObjectHandle)hex_to_int64(stringData);
-						if (hex_to_int64_errno() == 0 && ueoh != 0)
-						{
-							paramOk = true;
-						}
-					}
-					if (!paramOk)
-					{
-						sp->error("MiscScripting::process - getUnifiedHandleObjectByUniqueEditorObjectHandleHex, parameter invalid (expected 16 character long hexadecimal string).");
-					}
-				}
-
-				if (paramOk)
-				{
-					if (ueoh == 0)
-					{
-						// this should never happen! (due to the above string validity check)
-						sp->error("MiscScripting::process - getUnifiedHandleObjectByUniqueEditorObjectHandleString/Hex, internal error.");
-						assert(!"MiscScripting::process - getUnifiedHandleObjectByUniqueEditorObjectHandleString/Hex, internal error.");
-					} else {
-
-						// first seek if it is found in units
-						gsd->unifiedHandle = game->units->findUnifiedHandleByUniqueEditorObjectHandle(ueoh);
-
-						// then seek if it is found in lights
-						if (gsd->unifiedHandle == UNIFIED_HANDLE_NONE)
-						{
-							gsd->unifiedHandle = game->gameUI->getLightManager()->findUnifiedHandleByUniqueEditorObjectHandle(ueoh);
-						}
-
-						// then seek if it is found in terrain
-						if (gsd->unifiedHandle == UNIFIED_HANDLE_NONE && game->gameUI->getTerrain() != NULL)
-						{
-							gsd->unifiedHandle = game->gameUI->getTerrain()->findUnifiedHandleByUniqueEditorObjectHandle(ueoh);
-						}
-
-						// if found in none, show an error message
-						if (gsd->unifiedHandle == UNIFIED_HANDLE_NONE)
-						{
-							sp->error("MiscScripting::process - getUnifiedHandleObjectByUniqueEditorObjectHandleString/Hex, no object with given UEOH.");
-						}
-					}
-				//} else {
-					// this is now handled above...
-					//sp->error("MiscScripting::process - getUnifiedHandleObjectByUniqueEditorObjectHandleString/Hex, parameter invalid.");
-					//gsd->unifiedHandle = UNIFIED_HANDLE_NONE;
-				}
-			} else {
-				sp->error("MiscScripting::process - getUnifiedHandleObjectByUniqueEditorObjectHandleString/Hex, parameter missing.");
-				gsd->unifiedHandle = UNIFIED_HANDLE_NONE;
-			}
-			break;
-
-		case GS_CMD_attachAddedParticleSpawnerToUnifiedHandleObject:
-			if (gs_lastAddedParticleSpawnerHandle != UNIFIED_HANDLE_NONE)
-			{
-				if (VALIDATE_UNIFIED_HANDLE_BITS(gs_lastAddedParticleSpawnerHandle))
-				{
-					if (IS_UNIFIED_HANDLE_PARTICLE_SPAWNER(gs_lastAddedParticleSpawnerHandle))
-					{
-						if (game->unifiedHandleManager->doesObjectExist(gs_lastAddedParticleSpawnerHandle))
-						{
-							if (VALIDATE_UNIFIED_HANDLE_BITS(gsd->unifiedHandle)
-								&& !IS_UNIFIED_HANDLE_PARTICLE_SPAWNER(gsd->unifiedHandle))
-							{
-								if (game->unifiedHandleManager->doesObjectExist(gsd->unifiedHandle))
-								{
-									game->particleSpawnerManager->attachParticleSpawner(gs_lastAddedParticleSpawnerHandle, gsd->unifiedHandle);
-								} else {
-									sp->error("MiscScripting::process - attachAddedParticleSpawnerToUnifiedHandleObject, object with given unified handle does not exist.");
-								}
-							} else {
-								sp->error("MiscScripting::process - attachAddedParticleSpawnerToUnifiedHandleObject, invalid unified handle or handle points to a particle spawner.");
-							}
-						} else {
-							sp->error("MiscScripting::process - attachAddedParticleSpawnerToUnifiedHandleObject, particle spawner no-longer exists.");
-						}
-					} else {
-						sp->error("MiscScripting::process - attachAddedParticleSpawnerToUnifiedHandleObject, unexpected particlespawner handle type (internal error).");
-					}
-				} else {
-					sp->error("MiscScripting::process - attachAddedParticleSpawnerToUnifiedHandleObject, invalid particlespawner unified handle (internal error).");
-				}
-			} else {
-				sp->error("MiscScripting::process - attachAddedParticleSpawnerToUnifiedHandleObject, must first add a particle spawner.");
-			}
-			gs_lastAddedParticleSpawnerHandle = UNIFIED_HANDLE_NONE;
-			break;
-
-		case GS_CMD_spawnProjectileAttachingToUnifiedHandle:
-			if (stringData != NULL)
-			{
-				if (VALIDATE_UNIFIED_HANDLE_BITS(gsd->unifiedHandle))
-				{
-					if (game->unifiedHandleManager->doesObjectExist(gsd->unifiedHandle))
-					{
-						PartType *pt = getPartTypeById(PARTTYPE_ID_STRING_TO_INT(stringData));
-						if (pt == NULL) 
-						{ 
-							sp->error("MiscScripting::process - spawnProjectileAttachingToUnifiedHandle, reference to unloaded part type.");
-						} else {
-							if (pt->isInherited(getPartTypeById(PARTTYPE_ID_STRING_TO_INT("Weap"))))
-							{
-								// WARNING: unsafe cast!
-								Weapon *weap = (Weapon *)pt;
-								VC3 projpos = gsd->position;
-								game->gameMap->keepWellInScaledBoundaries(&projpos.x, &projpos.z);
-								float angle = (float)(*lastValue);
-								VC3 dir = VC3(0,0,0);
-								dir.x = -sinf(UNIT_ANGLE_TO_RAD(angle));
-								dir.z = -cosf(UNIT_ANGLE_TO_RAD(angle));
-
-								Projectile *proj = ParticleSpawner::spawnProjectileWithWeapon(game, weap, projpos, dir, 0.0f, gsd->unifiedHandle);
-							} else {
-								sp->error("MiscScripting::process - spawnProjectileAttachingToUnifiedHandle, attempt to use non-weapon part type.");
-							}
-						}
-					} else {
-						sp->error("MiscScripting::process - spawnProjectileAttachingToUnifiedHandle, object with given unified handle does not exist.");
-					}
-				} else {
-					sp->error("MiscScripting::process - spawnProjectileAttachingToUnifiedHandle, invalid unified handle.");
-				}
-			} else {
-				sp->error("MiscScripting::process - spawnProjectileAttachingToUnifiedHandle, parameter missing.");
-			}
-			break;
-
-		case GS_CMD_preloadPartTypeModel:
-			if (stringData != NULL)
-			{
-				PartType *pt = getPartTypeById(PARTTYPE_ID_STRING_TO_INT(stringData));
-				if (pt == NULL) 
-				{ 
-					sp->error("MiscScripting::process - preloadPartTypeModel reference to unloaded part type.");
+					sp->error("MiscScripting::process - swapCursors expects parameter format 'cursor1,cursor2'.");
 					break;
 				}
 
-				if (pt->getVisualObjectModel() == NULL)
-				{
-					sp->error("MiscScripting::process - preloadPartTypeModel part type has no model.");
-					break;
-				}
-
-				ui::VisualObject *obj = pt->getVisualObjectModel()->getNewObjectInstance();
-				delete obj;
-
-			} else {
-				sp->error("MiscScripting::process - preloadPartTypeModel parameter missing.");
+				game->gameUI->SwapCursorImages(c1, c2);
+			}
+			else
+			{
+				sp->error("MiscScripting::process - swapCursors missing parameter.");
 			}
 			break;
 
-		case GS_CMD_preloadAnimation:
-			if (stringData != NULL)
+		case GS_CMD_resetSwappedCursors:
 			{
-				Animator::preloadAnimation(stringData);
-			} else {
-				sp->error("MiscScripting::process - preloadAnimation parameter missing.");
-			}
-			break;
-
-		case GS_CMD_setReflectionEnabled:
-			{
-				if(SimpleOptions::getBool(DH_OPT_B_RENDER_REFLECTION))
-					game->gameUI->getTerrain()->GetTerrain()->getRenderer().enableFeature(IStorm3D_TerrainRenderer::Reflection, intData == 0 ? false : true );
+				game->gameUI->ResetSwappedCursorImages();
 			}
 			break;
 

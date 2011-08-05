@@ -276,7 +276,7 @@ namespace game
 				strcat(filepath, "/ani_");
 				strcat(filepath, impl->name);
 				strcat(filepath, ".dhs");
-
+#ifndef __APPLE__
 				FILE *f = fopen(filepath, "rb");
 				if (f != NULL)
 				{
@@ -299,6 +299,7 @@ namespace game
 					strcat(backuppath, int2str((int)time(0)));
 					strcat(backuppath, "_");
 					strcat(backuppath, ".bak");
+
 					FILE *fw = fopen(backuppath, "wb");
 					if (fw != NULL)
 					{
@@ -307,6 +308,7 @@ namespace game
 					} else {
 						Logger::getInstance()->warning("Ani::startRecord - Failed to create ani backup file.");
 					}
+
 					delete [] backbuf;
 					// end of backup
 
@@ -322,6 +324,7 @@ namespace game
 						Logger::getInstance()->error("Ani::startRecord - Fix this problem before stopRecord or the recorded data may be lost.");
 					}
 				}
+#endif
 			} else {
 				Logger::getInstance()->error("Ani::startRecord - Note, file path too long, recorded data will be lost unless the problem is fixed.");
 			}
@@ -429,11 +432,11 @@ namespace game
 				strcat(filepath, "/ani_");
 				strcat(filepath, impl->name);
 				strcat(filepath, ".dhs");
-
+#ifndef __APPLE__
 				FILE *f = fopen(filepath, "wb");
 				if (f != NULL)
 				{
-					char *tmp = "#!dhs -nopp\r\n";
+					const char *tmp = "#!dhs -nopp\r\n";
 					fwrite(tmp, strlen(tmp), 1, f);
 
 					tmp = "script ani_";
@@ -454,7 +457,7 @@ namespace game
 				} else {
 					Logger::getInstance()->error("Ani::stopRecord - Record save failed, file could not be opened for writing.");
 				}
-
+#endif
 			} else {
 				Logger::getInstance()->error("Ani::stopRecord - Record save failed, file path too long.");
 			}

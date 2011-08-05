@@ -21,9 +21,10 @@ using namespace ui;
 namespace game
 {
 	void StringScripting::process(util::ScriptProcess *sp, 
-		int command, int intData, char *stringData, ScriptLastValueType *lastValue, 
+		int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue,
 		GameScriptData *gsd, Game *game)
 	{
+		int intData = intFloat.i;
 		switch(command)
 		{
 		case GS_CMD_SETSTRING:
@@ -141,7 +142,7 @@ namespace game
 
 		case GS_CMD_VALUETOCLOCKSTRING:
 			{
-				char *sep = ":";
+				const char *sep = ":";
 				if (stringData != NULL)
 				{
 					sep = stringData;

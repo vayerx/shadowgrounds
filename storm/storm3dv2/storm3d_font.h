@@ -6,10 +6,9 @@
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
+#include "SDL_ttf.h"
 #include "storm3d_common_imp.h"
-#include "istorm3d_font.h"
-
-struct ID3DXFont;
+#include "IStorm3D_Font.h"
 
 //------------------------------------------------------------------
 // Storm3D_Font
@@ -26,8 +25,7 @@ class Storm3D_Font : public IStorm3D_Font
 	char *letter_characters;		// Letter characters in font (a,b,c,d... etc.)
 	BYTE *letter_width;				// Letter width (for each letter in font)
 
-	ID3DXFont *font;
-	ID3DXSprite *sprite;
+	TTF_Font *font;
 	char *face;
 	int width;
 	int height;
@@ -62,6 +60,7 @@ public:
 	int GetCharacterWidth(wchar_t *string, int length) const;
 	bool isUnicode() const;
 
+	TTF_Font *GetFont();
 	const char *GetFace() const;
 	int GetWidth() const;
 	int GetHeight() const;

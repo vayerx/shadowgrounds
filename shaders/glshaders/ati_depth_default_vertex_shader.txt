@@ -1,0 +1,35 @@
+!!ARBvp1.0
+PARAM mvp[4] = { state.matrix.mvp };
+#fromList ["c"]
+TEMP r0;
+PARAM c[100] = { program.env[0..99] };
+OUTPUT oPos = result.position;
+OUTPUT oT0 = result.texcoord[0];
+OUTPUT oT1 = result.texcoord[1];
+# Depth shader for ATi shadowing:
+#   -> Transform vertex
+#   -> Pass TC0
+#   -> Output depth to TC1
+# Constant declarations:
+#   -> c[0..3] -> World x View x Projection matrix
+#   -> c[4..7] -> Spot matrix
+# Vertex data:
+#   -> v0 -> position
+#   -> v1,2 -> texture coordinates
+#   -> v3 -> normal
+ATTRIB v0 = vertex.position;
+ATTRIB v3 = vertex.normal;
+ATTRIB v1 = vertex.texcoord[0];
+ATTRIB v2 = vertex.texcoord[1];
+# ** POSITION **
+# Transform position to clip space
+DP4 r0.x, v0, mvp[0];
+DP4 r0.y, v0, mvp[1];
+DP4 r0.z, v0, mvp[2];
+DP4 r0.w, v0, mvp[3];
+
+MOV oPos, r0;
+# Texture coordinates
+MOV oT0.xy, v1.xyyy;
+MUL oT1.xy, r0.zzzz, c[11].w;
+END

@@ -161,25 +161,40 @@ public:
         }
         HRESULT CoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter = NULL, DWORD dwClsContext = CLSCTX_ALL)
         {
-                assert(p == NULL);
-                return ::CoCreateInstance(rclsid, pUnkOuter, dwClsContext, __uuidof(T), (void**)&p);
-        }
-        HRESULT CoCreateInstance(LPCOLESTR szProgID, LPUNKNOWN pUnkOuter = NULL, DWORD dwClsContext = CLSCTX_ALL)
-        {
-                CLSID clsid;
-                HRESULT hr = CLSIDFromProgID(szProgID, &clsid);
-                assert(p == NULL);
-                if (SUCCEEDED(hr))
-                        hr = ::CoCreateInstance(clsid, pUnkOuter, dwClsContext, __uuidof(T), (void**)&p);
-                return hr;
-        }
-        template <class Q>
-        HRESULT QueryInterface(Q** pp) const
-        {
-                assert(pp != NULL && *pp == NULL);
-                return p->QueryInterface(__uuidof(Q), (void**)pp);
-        }
-        T* p;
+			assert(p == NULL);
+#ifdef __GNUC__
+			assert(!"CoCreateInstance: not supported");
+            return 0;
+#else
+			return ::CoCreateInstance(rclsid, pUnkOuter, dwClsContext, __uuidof(T), (void**)&p);
+#endif
+		}
+		HRESULT CoCreateInstance(LPCOLESTR szProgID, LPUNKNOWN pUnkOuter = NULL, DWORD dwClsContext = CLSCTX_ALL)
+		{
+#ifdef __GNUC__
+			assert(!"CoCreateInstance: not supported");
+            return 0;
+#else
+			CLSID clsid;
+				HRESULT hr = CLSIDFromProgID(szProgID, &clsid);
+				assert(p == NULL);
+				if (SUCCEEDED(hr))
+					hr = ::CoCreateInstance(clsid, pUnkOuter, dwClsContext, __uuidof(T), (void**)&p);
+				return hr;
+#endif
+		}
+		template <class Q>
+			HRESULT QueryInterface(Q** pp) const
+		{
+			assert(pp != NULL && *pp == NULL);
+#ifdef __GNUC__
+			assert(!"QueryInterface: not supported");
+            return 0;
+#else
+			return p->QueryInterface(__uuidof(Q), (void**)pp);
+#endif
+		}
+		T* p;
 };
 
 #endif

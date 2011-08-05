@@ -1,25 +1,20 @@
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
+
+#include <vector>
+#include <boost/shared_ptr.hpp>
+#include <GL/glew.h>
 
 #include "Storm3D_ProceduralManager.h"
 #include "storm3d.h"
 #include "storm3d_texture.h"
 #include "storm3d_terrain_utils.h"
-#include "storm3d_shadermanager.h"
-#include <istorm3d_logger.h>
-#include <d3d9.h>
-#include <boost/shared_ptr.hpp>
+#include "Storm3D_ShaderManager.h"
 
 using namespace boost;
 using namespace std;
 
-namespace {
-
-	struct NullDeleter
-	{
-		void operator() (const void *) const
-		{
-		}
-	};
 
 	struct TexCoord
 	{
@@ -37,29 +32,7 @@ namespace {
 		}
 	};
 
-	void clamp(float &value)
-	{
-		float intval = floorf(value);
-		if(fabsf(intval) > 1.f)
-			value = fmodf(value, intval);
-
-		/*
-		if(value > 0)
-		{
-			float intval = floorf(value);
-			if(intval > 1.f)
-				value = fmodf(value, intval);
-		}
-		else
-		{
-			float intval = floorf(value);
-			if(intval < -1.f)
-				value = fmodf(value, intval);
-		}
-		*/
-	}
-
-	void animateSource(TexCoord &coord, const Storm3D_ProceduralManager::Source &source, float timeFactor)
+	static void animateSource(TexCoord &coord, const Storm3D_ProceduralManager::Source &source, float timeFactor)
 	{
 		coord.timeValue += timeFactor;
 		coord.baseFactor.x = 1.f / source.texture.scale.x;
@@ -180,16 +153,15 @@ namespace {
 		}
 	};
 
-	typedef map<string, ProceduralEffect> EffectList;
-}
+	typedef map<string, ProceduralEffect> ProceduralEffectList;
 
 struct Storm3D_ProceduralManager::Data
 {
 	Storm3D &storm;
-	CComPtr<IDirect3DTexture9> target;
-	CComPtr<IDirect3DTexture9> offsetTarget;
+	boost::shared_ptr<glTexWrapper> target;
+	boost::shared_ptr<glTexWrapper> offsetTarget;
 
-	EffectList effects;
+	ProceduralEffectList effects;
 	string active;
 
 	IStorm3D_Logger *logger;
@@ -204,17 +176,29 @@ struct Storm3D_ProceduralManager::Data
 
 	bool useFallback;
 	shared_ptr<Storm3D_Texture> fallback;
+	Framebuffer *fbo;
 
 	Data(Storm3D &storm_)
 	:	storm(storm_),
 		logger(0),
 		distortionMode(false),
 		hasDistortion(false),
-		//useFallback(true)
-		useFallback(false)
+		useFallback(false),
+		fbo(NULL)
 	{
 	}
 
+	~Data() {
+		if (fbo != NULL) {
+			delete fbo; fbo = NULL;
+		}
+	}
+
+	//! Add effect
+	/*!
+		\param name effect name
+		\param effect effect to add
+	*/
 	void addEffect(const string &name, const Effect &effect)
 	{
 		ProceduralEffect result;
@@ -234,29 +218,39 @@ struct Storm3D_ProceduralManager::Data
 		}
 	}
 
-	void init(CComPtr<IDirect3DTexture9> target_, CComPtr<IDirect3DTexture9> offsetTarget_)
+	//! Initialize data
+	/*
+		\param target_ render target
+		\param offsetTarget_ offset render target
+		\param targetWidth_ render target width
+		\param targetHeight_ render target height
+	*/
+	void init(boost::shared_ptr<glTexWrapper> target_, boost::shared_ptr<glTexWrapper> offsetTarget_)
 	{
-		IDirect3DDevice9 &device = *storm.GetD3DDevice();
+		if (fbo != NULL) {
+			delete fbo;
+		}
+		fbo = new Framebuffer();
 		target = target_;
 		offsetTarget = offsetTarget_;
 
 		if(!target)
 			return;
 
-		vshader.reset(new frozenbyte::storm::VertexShader(device));
+		vshader.reset(new frozenbyte::storm::VertexShader());
 		vshader->createProceduralShader();
-		pshader.reset(new frozenbyte::storm::PixelShader(device));
+		pshader.reset(new frozenbyte::storm::PixelShader());
 		pshader->createProceduralShader();
 
 		if(offsetTarget)
 		{
-			poffsetShader.reset(new frozenbyte::storm::PixelShader(device));
+			poffsetShader.reset(new frozenbyte::storm::PixelShader());
 			poffsetShader->createProceduralOffsetShader();
 		}
 
 		{
 			vbuffer.reset(new frozenbyte::storm::VertexBuffer());
-			vbuffer->create(device, 4, 8 * sizeof(float), false);
+			vbuffer->create(4, 8 * sizeof(float), false);
 			float *ptr = reinterpret_cast<float *> (vbuffer->lock());
 			if(ptr)
 			{
@@ -277,7 +271,7 @@ struct Storm3D_ProceduralManager::Data
 		}
 		{
 			ibuffer.reset(new frozenbyte::storm::IndexBuffer());
-			ibuffer->create(device, 2, false);
+			ibuffer->create(2, false);
 
 			unsigned short *ptr = ibuffer->lock();
 			if(ptr)
@@ -295,6 +289,10 @@ struct Storm3D_ProceduralManager::Data
 		}
 	}
 
+	//! Set effect as active
+	/*!
+		\param name name of effect
+	*/
 	void setActive(const string &name)
 	{
 		if(name.empty())
@@ -303,7 +301,7 @@ struct Storm3D_ProceduralManager::Data
 			return;
 		}
 
-		EffectList::iterator it = effects.find(name);
+		ProceduralEffectList::iterator it = effects.find(name);
 		if(it == effects.end())
 			return;
 
@@ -311,23 +309,26 @@ struct Storm3D_ProceduralManager::Data
 		active = name;
 	}
 
+	//! Render effect
+	/*!
+		\param e effect
+		\param width width
+		\param height height
+		\param offsetTarget use offset target
+	*/
 	void render(const ProceduralEffect &e, float width, float height, bool offsetTarget)
 	{
-		IDirect3DDevice9 &device = *storm.GetD3DDevice();
-
-		float textureOffset = -.5f;
-		float buffer[] = 
-		{
-			textureOffset, height,         1.f, 1.f,   0.f, 1.f, 0.f, 1.f,
-			textureOffset, textureOffset,  1.f, 1.f,   0.f, 0.f, 0.f, 0.f,
-			width, height,                 1.f, 1.f,   1.f, 1.f, 1.f, 1.f,
-			width, textureOffset,          1.f, 1.f,   1.f, 0.f, 1.f, 0.f
-		};
-
-		if(e.texture1)
+		if(e.texture1) {
 			e.texture1->Apply(1);
-		if(e.texture2)
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+		}
+
+		if(e.texture2) {
 			e.texture2->Apply(3);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+		}
 
 		if(offsetTarget)
 		{
@@ -371,101 +372,112 @@ struct Storm3D_ProceduralManager::Data
 		constants[28 + 0] = c2.baseOffset.x;
 		constants[28 + 1] = c2.baseOffset.y;
 
-		device.SetVertexShaderConstantF(0, constants, 8);
+		for (int i = 0; i < 8; i++) {
+			glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, i, constants + (4 * i));
+		}
 
 		float scale1 = (offsetTarget) ? e.effect.distortion1.offset.scale.x : e.effect.source1.offset.scale.x;
 		float scale2 = (offsetTarget) ? e.effect.distortion2.offset.scale.x : e.effect.source2.offset.scale.x;
-		device.SetTextureStageState(1, D3DTSS_BUMPENVMAT00, F2DW(scale1));
-		device.SetTextureStageState(1, D3DTSS_BUMPENVMAT01, F2DW(0.f));
-		device.SetTextureStageState(1, D3DTSS_BUMPENVMAT10, F2DW(0.f));
-		device.SetTextureStageState(1, D3DTSS_BUMPENVMAT11, F2DW(scale1));
-		device.SetTextureStageState(3, D3DTSS_BUMPENVMAT00, F2DW(scale2));
-		device.SetTextureStageState(3, D3DTSS_BUMPENVMAT01, F2DW(0.f));
-		device.SetTextureStageState(3, D3DTSS_BUMPENVMAT10, F2DW(0.f));
-		device.SetTextureStageState(3, D3DTSS_BUMPENVMAT11, F2DW(scale2));
+
+		float param[4] = { scale1, 0, 0, 0 };
+		glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0, param);
+		param[0] = 0; param[1] = scale1;
+		glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 1, param);
+
+		param[0] = scale2; param[1] = 0;
+		glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 3, param);
+		param[0] = 0; param[1] = scale2;
+		glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 4, param);
 
 		if(offsetTarget)
 		{
+			poffsetShader->apply();
+
 			float scale = (scale1 + scale2) * .25f;
 			float c2[4] = { scale, scale, scale, scale };
-			device.SetPixelShaderConstantF(2, c2, 1);
-
-			poffsetShader->apply();
+			glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 2, c2);
 		}
 		else
 		{
 			pshader->apply();
 		}
-	
-		vbuffer->apply(device, 0);
-		ibuffer->render(device, 2, 4, 0);
 
-		device.SetPixelShader(0);
+		vbuffer->apply(0);
+		ibuffer->render(2, 4);
+
+		frozenbyte::storm::PixelShader::disable();
 	}
 
+	//! Update effect
+	/*!
+		\param ms
+	*/
 	void update(int ms)
 	{
 		if(useFallback)
 			return;
 
-		IDirect3DDevice9 &device = *storm.GetD3DDevice();
 		if(active.empty() || !target)
 			return;
 
 		ProceduralEffect &e = effects[active];
 		e.animate(ms);
 
-		CComPtr<IDirect3DSurface9> renderSurface;
-		CComPtr<IDirect3DSurface9> originalSurface;
-		target->GetSurfaceLevel(0, &renderSurface);
-		if(!renderSurface)
-			return;
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_ALPHA_TEST);
+		glDisable(GL_BLEND);
+		fbo->setRenderTarget(target);
+		if (fbo->validate()) {
+			render(e, (float)target->getWidth(), (float)target->getHeight(), false);
 
-		device.SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
-		device.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-		device.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-		device.GetRenderTarget(0, &originalSurface);
-		device.SetRenderTarget(0, renderSurface);
-		//device.Clear(0, 0, D3DCLEAR_TARGET, 0xFFFFFFFF, 1, 0);
-
-		D3DSURFACE_DESC desc;
-		renderSurface->GetDesc(&desc);
-		render(e, float(desc.Width), float(desc.Height), false);
-
-		if(distortionMode && offsetTarget)
-		{
-			CComPtr<IDirect3DSurface9> renderSurface;
-			offsetTarget->GetSurfaceLevel(0, &renderSurface);
-
-			device.SetRenderTarget(0, renderSurface);
-			if(e.distortion1 && e.distortion2 && e.effect.enableDistortion)
+			if(distortionMode && offsetTarget)
 			{
-				render(e, float(desc.Width / 2), float(desc.Height / 2), true);
-				hasDistortion = true;
+				fbo->setRenderTarget(offsetTarget);
+				if (fbo->validate()) {
+					if(e.distortion1 && e.distortion2 && e.effect.enableDistortion)
+					{
+						render(e, (float)(target->getWidth() / 2), (float)(target->getHeight() / 2), true);
+						hasDistortion = true;
+					}
+					else
+						hasDistortion = false;
+				} else {
+					igiosWarning("Storm3D_ProceduralManager::Data::update: renderTarget validate failed\n");
+					fbo->disable();
+					return;
+				}
 			}
-			else
-				hasDistortion = false;
+		} else {
+			igiosWarning("Storm3D_ProceduralManager::Data::update: renderTarget validate failed\n");
+			fbo->disable();
 		}
 
-		device.SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
-		device.SetRenderTarget(0, originalSurface);
 
-		target->GenerateMipSubLevels();
+		glEnable(GL_DEPTH_TEST);
+		fbo->disable();
 	}
 
+	//! Enable distortion
+	/*
+		\param enable true to enable
+	*/
 	void enableDistortion(bool enable)
 	{
 		distortionMode = enable;
 	}
 
+	//! Reset
 	void reset()
 	{
 		fallback.reset();
 		effects.clear();
-		if(target)
-			target.Release();
-		if(offsetTarget)
-			offsetTarget.Release();
+		if(target) {
+			target.reset();
+		}
+
+		if(offsetTarget) {
+			offsetTarget.reset();
+		}
 
 		vbuffer.reset();
 		ibuffer.reset();
@@ -474,51 +486,89 @@ struct Storm3D_ProceduralManager::Data
 	}
 };
 
+//! Constructor
 Storm3D_ProceduralManager::Storm3D_ProceduralManager(Storm3D &storm)
 {
 	scoped_ptr<Data> tempData(new Data(storm));
 	data.swap(tempData);
 }
 
+//! Destructor
 Storm3D_ProceduralManager::~Storm3D_ProceduralManager()
 {
 }
 
+//! Set the logger
+/*!
+	\param logger logger
+*/
 void Storm3D_ProceduralManager::setLogger(IStorm3D_Logger *logger)
 {
 	data->logger = logger;
 }
 
-void Storm3D_ProceduralManager::setTarget(CComPtr<IDirect3DTexture9> &target, CComPtr<IDirect3DTexture9> &offsetTarget)
+//! Set render target
+/*!
+	\param target target
+	\param offsetTarget offset target
+	\param targetWidth target width
+	\param targetHeight target height
+*/
+void Storm3D_ProceduralManager::setTarget(boost::shared_ptr<glTexWrapper> target, boost::shared_ptr<glTexWrapper> offsetTarget)
 {
 	data->init(target, offsetTarget);
 }
 
+//! Add effect
+/*!
+	\param name name
+	\param effect effect to add
+*/
 void Storm3D_ProceduralManager::addEffect(const string &name, const Effect &effect)
 {
 	data->addEffect(name, effect);
 }
 
+//! Enable distortion
+/*!
+	\param enable true to enable
+*/
 void Storm3D_ProceduralManager::enableDistortionMode(bool enable)
 {
 	data->enableDistortion(enable);
 }
 
+//! Set to use fallback textures
+/*!
+	\param fallback true to use fallback
+*/
 void Storm3D_ProceduralManager::useFallback(bool fallback)
 {
 	data->useFallback = fallback;
 }
 
+//! Set active effect
+/*!
+	\param name name of active effect
+*/
 void Storm3D_ProceduralManager::setActiveEffect(const std::string &name)
 {
 	data->setActive(name);
 }
 
+//! Update
+/*!
+	\param ms
+*/
 void Storm3D_ProceduralManager::update(int ms)
 {
 	data->update(ms);
 }
 
+//! Apply render target
+/*
+	\param stage texture stage
+*/
 void Storm3D_ProceduralManager::apply(int stage)
 {
 	if(data->useFallback || !data->target)
@@ -528,19 +578,31 @@ void Storm3D_ProceduralManager::apply(int stage)
 	}
 	else
 	{
-		IDirect3DDevice9 &device = *data->storm.GetD3DDevice();
 		if(data->target)
-			device.SetTexture(stage, data->target);
+		{
+			glActiveTexture(GL_TEXTURE0 + stage);
+			data->target->bind();
+		}
 	}
 }
 
+//! Apply offset render target
+/*
+	\param stage texture stage
+*/
 void Storm3D_ProceduralManager::applyOffset(int stage)
 {
-	IDirect3DDevice9 &device = *data->storm.GetD3DDevice();
 	if(data->offsetTarget)
-		device.SetTexture(stage, data->offsetTarget);
+	{
+		glActiveTexture(GL_TEXTURE0 + stage);
+		data->offsetTarget->bind();
+	}
 }
 
+//! Does this have a distortion texture
+/*
+	\return true if distortion
+*/
 bool Storm3D_ProceduralManager::hasDistortion() const
 {
 	if(data->useFallback || !data->target)
@@ -549,12 +611,19 @@ bool Storm3D_ProceduralManager::hasDistortion() const
 	return data->hasDistortion;
 }
 
+//! Release targets
 void Storm3D_ProceduralManager::releaseTarget()
 {
-	data->target.Release();
-	data->offsetTarget.Release();
+	if (data->target) {
+		data->target.reset();
+	}
+
+	if (data->offsetTarget) {
+		data->offsetTarget.reset();
+	}
 }
 
+//! Reset
 void Storm3D_ProceduralManager::reset()
 {
 	data->reset();

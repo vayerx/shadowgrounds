@@ -476,7 +476,7 @@ namespace game
 			fileExists = true;
 			fclose(f);
 		}
-
+#ifndef __APPLE__
 		if (!fileExists)
 		{
 			// first create initial file...
@@ -496,7 +496,7 @@ namespace game
 				return;
 			}
 		}
-
+#endif
 		util::TextFileModifier tfm;
 		bool loadok = tfm.loadFile(impl->recordBatchFile);
 		if (!loadok)
@@ -995,7 +995,7 @@ namespace game
 			fileExists = true;
 			fclose(f);
 		}
-
+#ifndef __APPLE__
 		if (!fileExists)
 		{
 			// first create initial file...
@@ -1013,7 +1013,7 @@ namespace game
 				return -1;
 			}
 		}
-
+#endif
 		// now, write this dump to that file...
 		util::TextFileModifier tfm;
 		bool loadok = tfm.loadFile(impl->cameraFile);

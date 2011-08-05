@@ -34,11 +34,11 @@ public:
 
   OguiButton *triggerButton;
   OguiWindow *triggerWindow;
-  void *extraArgument;
+  const void *extraArgument;
 
 
   OguiButtonEvent(EVENT_TYPE evt, int curnum, int scrx, int scry, int relx, int rely, 
-    int but, int obut, OguiButton *trig, OguiWindow *trigwin, void *arg);
+    int but, int obut, OguiButton *trig, OguiWindow *trigwin, const void *arg);
 };
 
 #endif

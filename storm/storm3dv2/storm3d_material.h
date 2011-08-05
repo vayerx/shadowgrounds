@@ -6,10 +6,12 @@
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
-#include "storm3d_common_imp.h"
-#include "istorm3d_material.h"
 #include <string>
 
+#include <GL/glew.h>
+#include "storm3d_common_imp.h"
+#include "IStorm3D_Material.h"
+#include "igios3D.h"
 
 
 //------------------------------------------------------------------
@@ -107,7 +109,6 @@ private:
 	float reflection_blend_factor;
 
 public:
-
 	void updateScroll(float time_delta, int frame_id);
 	const std::string &getEffectTextureName() const { return effectTextureName; }
 	bool hasLocalReflection() const { return local_reflection; }
@@ -154,7 +155,6 @@ public:
 	float GetGlow() const;
 	float GetGlowFactor() const;
 	const VC2 &getScrollOffset1() const { return scrollOffset1; }
-	const VC2 &getScrollOffset2() const { return scrollOffset2; }
 
 	// Get layer's textures
 	IStorm3D_Texture *GetBaseTexture();
@@ -186,7 +186,6 @@ public:
 };
 
 
-
 //------------------------------------------------------------------
 // Storm3D_Material_TextureLayer
 //------------------------------------------------------------------
@@ -206,9 +205,7 @@ class Storm3D_Material_TextureLayer
 	IStorm3D_Material::TEX_GEN texcoord_gen;
 
 	// Blending operation conversion to DX8
-	D3DTEXTUREOP GetDX8MultitexBlendingOp();
-	D3DBLEND GetDX8MultipassSourceAlpha();
-	D3DBLEND GetDX8MultipassDestinationAlpha();
+	GLint GetMultitexBlendingOp();
 
 	// Compare (used when new material is loaded -> saves memory and processing power)
 	bool IsIdenticalWith(const Storm3D_Material_TextureLayer *other) const;
@@ -222,6 +219,3 @@ class Storm3D_Material_TextureLayer
 
 	friend class Storm3D_Material;
 };
-
-
-

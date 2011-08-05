@@ -1,3 +1,5 @@
+#ifndef GAMEVIDEOPLAYER_H
+#define GAMEVIDEOPLAYER_H
 
 #include <Storm3D_UI.h>
 class IStorm3D_StreamBuilder;
@@ -11,3 +13,4 @@ namespace ui
 	};
 
 }
+#endif // GAMEVIDEOPLAYER_H

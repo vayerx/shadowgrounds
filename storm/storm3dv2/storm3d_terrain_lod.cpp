@@ -1,82 +1,21 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
+
+#include <vector>
 
 #include "storm3d_terrain_lod.h"
 #include "storm3d_terrain_utils.h"
 #include "storm3d.h"
 #include "storm3d_scene.h"
-#include <atlbase.h>
-#include <d3d9.h>
 
 #include <boost/static_assert.hpp>
 #include <boost/scoped_array.hpp>
 
-#include "..\..\util\Debug_MemoryManager.h"
-//#include "../exporters/shared/nvtristrip.h"
+#include "../../util/Debug_MemoryManager.h"
 
-namespace {
-/*
-	int generateIndexBuffer(short int *buffer, int resolution, int lodFactor)
-	{
-		// Vertexcache optimized strips. 
-		// No idea what this does, copy paste from old system ;-)
-		// Which cache size(?)
-		// -- psd
-
-		int x = 0;
-		int y = 0;
-		int direction = 0;
-		int curbsize = resolution / lodFactor;
-
-		int faceAmount = 0;
-
-		for(y = 0; y < curbsize; ++y)
-		{	
-			for(x = 0; x < curbsize + 2; ++x)
-			{
-				if(direction == 0)
-				{
-					if(x == curbsize + 1)
-					{
-						if(y < curbsize - 1)
-						{
-							buffer[faceAmount++] = (y + 1) * (resolution + 1) * lodFactor + (x - 1) * lodFactor;
-						}
-					}
-					else
-					{
-						buffer[faceAmount++] = y * (resolution + 1) * lodFactor + x * lodFactor;
-						buffer[faceAmount++] = (y + 1) * (resolution + 1) * lodFactor + x * lodFactor;
-					}
-				}
-				else
-				{
-					if(x == curbsize + 1)
-					{
-						if(y < curbsize - 1)
-						{
-							buffer[faceAmount++] = (y + 1) * (resolution + 1) * lodFactor;
-						}
-					}
-					else
-					{
-						buffer[faceAmount++] = y * (resolution + 1) * lodFactor + (curbsize - x) * lodFactor;
-						buffer[faceAmount++] = (y + 1) * (resolution + 1) * lodFactor + (curbsize - x) * lodFactor;
-					}
-				}
-			}
-
-			// Change the direction (in each row)
-			if (direction == 0) 
-				direction = 1; 
-			else 
-				direction = 0;
-		}
-
-		return faceAmount - 2;
-	}
-*/
 	static const int LOD_AMOUNT = 3;
 
 	static const int CENTER_BLOCK_SIZE = IStorm3D_Terrain::CENTER_BLOCK_SIZE;
@@ -86,7 +25,6 @@ namespace {
 
 	struct LodIndexBuffer
 	{
-		//CComPtr<IDirect3DIndexBuffer8> indexBuffer;
 		frozenbyte::storm::IndexBuffer indexBuffer;
 		int faceAmount;
 		int lodFactor;
@@ -104,13 +42,13 @@ namespace {
 		{
 		}
 
-		void generate(IDirect3DDevice9 &device, Type type, int resolution, int lodFactor_, bool leftLod, bool rightLod, bool upLod, bool downLod, unsigned char *clipBuffer)
+		void generate(Type type, int resolution, int lodFactor_, bool leftLod, bool rightLod, bool upLod, bool downLod, unsigned char *clipBuffer)
 		{
 			faceAmount = 0;
 			lodFactor = lodFactor_;
 
 			int bufferSize = (resolution - 1) * (resolution - 1) * 6 * sizeof(short);
-			indexBuffer.create(device, (resolution - 1) * (resolution - 1) * 2, false);
+			indexBuffer.create((resolution - 1) * (resolution - 1) * 2, false);
 
 			boost::scoped_array<unsigned short> tempBuffer(new unsigned short[bufferSize / sizeof(short)]);
 			if(!tempBuffer)
@@ -128,13 +66,13 @@ namespace {
 			indexBuffer.unlock();
 		}
 
-		void generateCenters(IDirect3DDevice9 &device, int resolution, int lodFactor_, int mask, unsigned char *clipBuffer)
+		void generateCenters(int resolution, int lodFactor_, int mask, unsigned char *clipBuffer)
 		{
 			faceAmount = 0;
 			lodFactor = lodFactor_;
 
 			int bufferSize = (resolution - lodFactor) * (resolution - lodFactor) * 2;
-			indexBuffer.create(device, bufferSize, false);
+			indexBuffer.create(bufferSize, false);
 
 			unsigned short *buffer = indexBuffer.lock();
 			if(!buffer)
@@ -221,9 +159,6 @@ namespace {
 
 				createFace(buffer, -1, 0, lodFactor * resolution, lodFactor * resolution + lodFactor, resolution, clipBuffer);
 				createFace(buffer, -1, (resolution - 1 - lodFactor) * resolution, (resolution - 1 ) * resolution, (resolution - 1 - lodFactor) * resolution + lodFactor, resolution, clipBuffer);
-
-				//createFace(buffer, -1, 0, lodFactor * resolution, lodFactor);
-				//createFace(buffer, -1, (resolution - 1 - lodFactor) * resolution, (resolution - 1 ) * resolution, (resolution - 1 - lodFactor) * resolution + lodFactor);
 			}
 			else
 				generateHorizontal(buffer, resolution, startVertex, -lodFactor, clipBuffer);
@@ -234,9 +169,6 @@ namespace {
 				
 				createFace(buffer, -1, resolution - 1, resolution * lodFactor + resolution - 1 - lodFactor, resolution * lodFactor + resolution - 1, resolution, clipBuffer);
 				createFace(buffer, -1, (resolution - 1 - lodFactor) * resolution + resolution - 1 - lodFactor, (resolution - 1) * resolution + resolution - 1, (resolution - 1 - lodFactor) * resolution + resolution - 1, resolution, clipBuffer);
-
-				//createFace(buffer, -1, resolution - 1, resolution * lodFactor + resolution - 1 - lodFactor, resolution * lodFactor + resolution - 1);
-				//createFace(buffer, -1, (resolution - 1) * resolution + resolution - 1 - lodFactor, (resolution - 1) * resolution + resolution - 1, (resolution - 1 - lodFactor) * resolution + resolution - 1);
 			}
 			else
 				generateHorizontal(buffer, resolution, endVertex, lodFactor, clipBuffer);
@@ -247,9 +179,6 @@ namespace {
 
 				createFace(buffer, -1, 0, resolution * lodFactor + lodFactor, lodFactor, resolution, clipBuffer);
 				createFace(buffer, -1, resolution - 1, endVertex, lodFactor * resolution + endVertex, resolution, clipBuffer);
-
-				//createFace(buffer, -1, resolution * lodFactor, resolution * lodFactor + lodFactor, lodFactor);
-				//createFace(buffer, -1, resolution - 1, endVertex, lodFactor * resolution + endVertex);
 			}
 			else
 				generateVertical(buffer, resolution, startVertex, -lodFactor, clipBuffer);
@@ -260,9 +189,6 @@ namespace {
 
 				createFace(buffer, -1, (resolution - 1) * resolution, (resolution - 1) * resolution + lodFactor, (resolution - 1 - lodFactor) * resolution + lodFactor, resolution, clipBuffer);
 				createFace(buffer, -1, (resolution - 1) * resolution + resolution - 1 - lodFactor, (resolution - 1) * resolution + resolution - 1, (resolution - 1 - lodFactor) * resolution + resolution - 1 - lodFactor, resolution, clipBuffer);
-
-				//createFace(buffer, -1, (resolution - 1) * resolution, (resolution - 1) * resolution + lodFactor, (resolution - 1 - lodFactor) * resolution + lodFactor);
-				//createFace(buffer, -1, (resolution - 1) * resolution + resolution - 1 - lodFactor, (resolution - 1 - lodFactor) * resolution + resolution - 1, (resolution - 1 - lodFactor) * resolution + resolution - 1 - lodFactor);
 			}
 			else
 				generateVertical(buffer, resolution, endVertex, lodFactor, clipBuffer);
@@ -275,9 +201,6 @@ namespace {
 			{
 				int position = y * resolution + x;
 
-				//int f1 = position + lodFactor;
-				//int f2 = position;
-				//int f3 = position + resolution * lodFactor;
 				int f1 = position + lodFactor + resolution * lodFactor;
 				int f2 = position;
 				int f3 = position + resolution * lodFactor;
@@ -288,9 +211,6 @@ namespace {
 					buffer[faceAmount++] = f3;
 				}
 
-				//int f4 = position + resolution * lodFactor;
-				//int f5 = position + resolution * lodFactor + lodFactor;
-				//int f6 = position + lodFactor;
 				int f4 = position;
 				int f5 = position + resolution * lodFactor + lodFactor;
 				int f6 = position + lodFactor;
@@ -309,7 +229,6 @@ namespace {
 			{
 				int position = y * resolution + column;
 
-				//if(y > 0)
 				{
 					int f1 = position;
 					int f2 = position + direction - resolution * lodFactor;
@@ -341,7 +260,6 @@ namespace {
 			{
 				int position = row * resolution + x;
 
-				//if(x > 0)
 				{
 					int f1 = position;
 					int f2 = position + lodFactor + direction * resolution;
@@ -419,7 +337,7 @@ namespace {
 		// Center in 16 pieces (2x2 chunks, same ordering)
 		LodIndexBuffer centerBuffers[16];
 
-		void generate(IDirect3DDevice9 &device, int resolution, int lod, unsigned char *clipBuffer, IStorm3D_Logger *logger)
+		void generate(int resolution, int lod, unsigned char *clipBuffer, IStorm3D_Logger *logger)
 		{
 			for(int l = 0; l < 2; ++l)
 			for(int r = 0; r < 2; ++r)
@@ -433,12 +351,12 @@ namespace {
 
 				int index = l + r*2 + u*4 + d*8;
 				
-				fullBuffers[index].generate(device, LodIndexBuffer::FullBuffer, resolution, lod, leftLod, rightLod, upLod, downLod, clipBuffer);
-				linkBuffers[index].generate(device, LodIndexBuffer::LinkBuffer, resolution, lod, leftLod, rightLod, upLod, downLod, clipBuffer);
+				fullBuffers[index].generate(LodIndexBuffer::FullBuffer, resolution, lod, leftLod, rightLod, upLod, downLod, clipBuffer);
+				linkBuffers[index].generate(LodIndexBuffer::LinkBuffer, resolution, lod, leftLod, rightLod, upLod, downLod, clipBuffer);
 			}
 
 			for(int i = 0; i < CENTER_BLOCK_AMOUNT; ++i)
-				centerBuffers[i].generateCenters(device, resolution, lod,  i, clipBuffer);
+				centerBuffers[i].generateCenters(resolution, lod,  i, clipBuffer);
 
 			{
 				for(int i = 0; i < 16; ++i)
@@ -450,7 +368,6 @@ namespace {
 			}
 		}
 	};
-} // unnamed
 
 struct Storm3D_TerrainLodData
 {
@@ -470,52 +387,59 @@ struct Storm3D_TerrainLodData
 	int getLOD(float range)
 	{
 		return 0;
-		/*
-		float start = 2.5f * blockSize;
-		for(int i = 0; i < LOD_AMOUNT; ++i)
-			if(range < i * 1.5 * blockSize + start)
-				return i;
-
-		/*
-		float start = 2.f * blockSize;
-		for(int i = 1; i < LOD_AMOUNT; ++i)
-			if(range < i * 1.5 * blockSize + start)
-				return i;
-		*/
-
+		// What's this? -tn
 		return LOD_AMOUNT - 1;
 	}
 };
 
+//! Constructor
 Storm3D_TerrainLod::Storm3D_TerrainLod(Storm3D &storm)
 {
 	boost::scoped_ptr<Storm3D_TerrainLodData> tempData(new Storm3D_TerrainLodData(storm));
 	data.swap(tempData);
 }
 
+//! Destructor
 Storm3D_TerrainLod::~Storm3D_TerrainLod()
 {
 }
 
+//! Generate LODs
+/*!
+	\param resolution LOD resolution
+	\param clipBuffer pointer to clip buffer
+*/
 void Storm3D_TerrainLod::generate(int resolution, unsigned char *clipBuffer)
 {
 	data->maxVertex = (resolution * resolution);
 	for(int i = 0; i < LOD_AMOUNT; ++i)
 	{
 		LOD &lod = data->lodBuffers[i];
-		lod.generate(*data->storm.GetD3DDevice(), resolution, 1 << i, clipBuffer, data->storm.getLogger());
+		lod.generate(resolution, 1 << i, clipBuffer, data->storm.getLogger());
 	}
 }
 
+//! Set LOD block radius
+/*!
+	\param size block size
+*/
 void Storm3D_TerrainLod::setBlockRadius(float size)
 {
 	data->blockSize = size;
 }
 
+//! Render LODs
+/*!
+	\param scene scene
+	\param subMask
+	\param renge
+	\param rangeX1
+	\param rangeY1
+	\param rangeX2
+	\param rangeY2
+*/
 void Storm3D_TerrainLod::render(Storm3D_Scene &scene, int subMask, float range, float rangeX1, float rangeY1, float rangeX2, float rangeY2)
 {
-	IDirect3DDevice9 &device = *data->storm.GetD3DDevice();
-
 	int lod = data->getLOD(range);
 
 	bool lodX1 = data->getLOD(rangeX1) > lod;
@@ -537,19 +461,20 @@ void Storm3D_TerrainLod::render(Storm3D_Scene &scene, int subMask, float range, 
 	if(subMask == -1)
 	{
 		LodIndexBuffer &indexBuffer = data->lodBuffers[lod].fullBuffers[index];
-		indexBuffer.indexBuffer.render(device, indexBuffer.faceAmount, data->maxVertex);
+		// this renders the terrain
+		indexBuffer.indexBuffer.render(indexBuffer.faceAmount, data->maxVertex);
 
 		scene.AddPolyCounter(indexBuffer.faceAmount);
 	}
 	else
 	{
 		LodIndexBuffer &indexBuffer = data->lodBuffers[lod].centerBuffers[subMask];
-		indexBuffer.indexBuffer.render(device, indexBuffer.faceAmount, data->maxVertex);
+		indexBuffer.indexBuffer.render(indexBuffer.faceAmount, data->maxVertex);
 
 		scene.AddPolyCounter(indexBuffer.faceAmount);
 
 		LodIndexBuffer &linkBuffer = data->lodBuffers[lod].linkBuffers[index];
-		linkBuffer.indexBuffer.render(device, linkBuffer.faceAmount, data->maxVertex);
+		linkBuffer.indexBuffer.render(linkBuffer.faceAmount, data->maxVertex);
 
 		scene.AddPolyCounter(linkBuffer.faceAmount);
 	}

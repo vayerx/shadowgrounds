@@ -3,7 +3,7 @@
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
-#include <storm3d_ui.h>
+#include <Storm3D_UI.h>
 #include <vector>
 #include "track.h"
 
@@ -48,8 +48,8 @@ void VectorTrack::getValue(void* v, float t) const {
 		*f = m_keys.back()->value;
 		return;
 	}
-	int i = 0;
-	for(; i < (int)m_keys.size()-1; i++) {
+	size_t i = 0;
+	for(; i < m_keys.size()-1; i++) {
 		if(m_keys[i+1]->time > t)
 			break;
 	}

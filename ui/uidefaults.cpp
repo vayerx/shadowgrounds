@@ -3,7 +3,7 @@
 
 #include "uidefaults.h"
 #include "../filesystem/input_stream_wrapper.h"
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 namespace ui
 {
@@ -213,7 +213,7 @@ namespace ui
     //defaultOgui = ogui;
 
     defaultFont = ogui->LoadFont("data/gui/font/common/default.ogf");
-    defaultIngameFont = ogui->LoadFont("data/gui/font/common/default_ingame.ogf");
+    defaultIngameFont = ogui->LoadFont("data/gui/font/common/default.ogf");
 
     closeImage = ogui->LoadOguiImage("data/gui/common/button/close.tga");
     closeImageDown = ogui->LoadOguiImage("data/gui/common/button/close_down.tga");

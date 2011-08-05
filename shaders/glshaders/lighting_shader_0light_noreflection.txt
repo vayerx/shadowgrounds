@@ -1,0 +1,86 @@
+!!ARBvp1.0
+PARAM object[4] = { state.matrix.program[0] };
+PARAM mvp[4] = { state.matrix.mvp };
+PARAM tm2[4] = { state.matrix.texture[2] };
+#fromList ["c"]
+TEMP r0, r1, r5, r7, r8;
+PARAM c[100] = { program.env[0..99] };
+OUTPUT oD0 = result.color.primary;
+OUTPUT oD1 = result.color.secondary;
+OUTPUT oFog = result.fogcoord;
+OUTPUT oPos = result.position;
+OUTPUT oT0 = result.texcoord[0];
+OUTPUT oT1 = result.texcoord[1];
+OUTPUT oT2 = result.texcoord[2];
+# Default shader:
+#   -> Transform vertex
+#   -> Apply ambient color
+#   -> Apply surface color
+#   -> Apply directional light
+#   -> Apply base texturing 
+# Light direction could be transformed to 
+# model space and avoid rotating normal.
+# Constant declarations:
+#   -> c[0..3] -> World x View x Projection matrix
+#   -> c[4..6] -> World matrix (first 3 rows)   
+#   -> c[7]    -> Ambient color (.w transparency)
+#   -> c[8]    -> Diffuse color
+#   -> c[9]    -> Light position1 (.w 0.f for clamping)
+#   -> c[10]   -> Light color1 (.w -> 1 / range)
+#   -> c[11]   -> Sun direction (.w offset.x)
+#   -> c[12]   -> Light position2 (.w offset.y)
+#   -> c[13]   -> Light color2 (.w -> 1 / range)
+#   -> c[18]   -> Camera position
+#   -> c[19]   -> Fog (height, 1/range)
+# Vertex data:
+#   -> v0 -> position
+#   -> v1,2 -> texture coordinates
+#   -> v3 -> normal
+ATTRIB v0 = vertex.position;
+ATTRIB v3 = vertex.normal;
+ATTRIB v1 = vertex.texcoord[0];
+ATTRIB v2 = vertex.texcoord[1];
+# ** POSITION **
+# Transform position to clip space
+DP4 r8.x, v0, mvp[0];
+DP4 r8.y, v0, mvp[1];
+DP4 r8.z, v0, mvp[2];
+DP4 r8.w, v0, mvp[3];
+
+MOV oPos, r8;
+# r5 -> vertex normal
+DP3 r5.x, v3, object[0];
+DP3 r5.y, v3, object[1];
+DP3 r5.z, v3, object[2];
+# r1 -> vertex position
+DP4 r7.x, v0, object[0];
+DP4 r7.y, v0, object[1];
+DP4 r7.z, v0, object[2];
+# Directional (sun)
+DP3 r1.x, r5.xyzz, c[11].xyzz;
+MAX r1.x, r1.xxxx, c[9].w;
+MOV r0, r1.xxxx;
+# Add ambient color and multiply with material color
+ADD r0, c[7].xyzz, r0.xyzz;
+MIN oD0.xyz, r0.xyzz, v0.w;
+MOV oD0.w, c[7].w;
+MOV oD1, c[8];
+# Texturing
+ADD oT0.x, v1.xyyy, c[11].w;
+ADD oT0.y, v1.xyyy, c[12].w;
+# Lightmap filter coordinates
+MOV oT1.xy, v2;
+# Fake position
+DP4 r0.x, r8, tm2[0];
+DP4 r0.y, r8, tm2[1];
+DP4 r0.z, r8, tm2[2];
+DP4 r0.w, r8, tm2[3];
+TEMP tmp;
+RCP tmp, r0.w;
+MUL r0, r0, tmp;
+
+MOV oT2, r0;
+# Height fog
+SUB r0, r7.y, c[19].x;
+MUL oFog, r0.xxxx, c[19].y;
+END

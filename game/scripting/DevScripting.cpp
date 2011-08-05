@@ -50,6 +50,7 @@
 #include "../../util/Debug_MemoryManager.h"
 
 #include "../../ui/MenuCollection.h"
+#include "igios.h"
 
 using namespace ui;
 
@@ -69,9 +70,10 @@ namespace game
   extern PhysicsContactDamageManager *gameui_physicsDamageManager;
 
 	void DevScripting::process(util::ScriptProcess *sp, 
-		int command, int intData, char *stringData, ScriptLastValueType *lastValue, 
+		int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue,
 		GameScriptData *gsd, Game *game, bool *pause)
 	{
+		int intData = intFloat.i;
 		switch(command)
 		{
 		case GS_CMD_ERROR:
@@ -346,7 +348,10 @@ namespace game
 			if (*lastValue == 0)
 			{
 				sp->warning("DevScripting::process - devAssert.");
-				FB_ASSERT(!"DevScripting::process - devAssert.");
+				igios_unimplemented();
+				// this is disabled
+				// need to fix in scripts?
+				//FB_ASSERT(!"DevScripting::process - devAssert.");
 			}
 			break;
 
@@ -537,7 +542,7 @@ namespace game
 			break;
 
 		case GS_CMD_devPhysicsConnectToRemoteDebugger:
-#ifndef FINAL_RELEASE_BUILD
+#if (!defined (FINAL_RELEASE_BUILD)) && defined (PHYSICS_PHYSX)
 			if (stringData != NULL)
 			{
 				game->getGamePhysics()->getPhysicsLib()->connectToRemoteDebugger(stringData, 5425);

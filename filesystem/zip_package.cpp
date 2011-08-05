@@ -3,19 +3,21 @@
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
 #pragma warning(disable:4786)
+#endif
 
 #include "zip_package.h"
 #include "empty_buffer.h"
-#include "../system/logger.h"
+#include "../system/Logger.h"
 #include "../convert/str2int.h"
 #include "ifile_list.h"
 
-// minizip
-#include "unzip.h"
-#pragma comment(lib, "minizip.lib")
+#include "detail/unzip.h"
+#ifdef _MSC_VER
 #pragma comment(lib, "zlib.lib")
+#endif
 
 #include <map>
 #include <stack>
@@ -24,24 +26,13 @@
 
 namespace frozenbyte {
 namespace filesystem {
-namespace {
+
 
 	static const int BUFFER_SIZE = 100 * 1024;
 
 	// ---
 
-	void convertLower(std::string &str)
-	{
-		for(unsigned int i = 0; i < str.size(); ++i)
-		{
-			str[i] = tolower(str[i]);
-
-			if(str[i] == '\\')
-				str[i] = '/';
-		}
-	}
-
-	int findTokenIndex(const std::string &str, const std::string &token, std::string::size_type start)
+	static std::string::size_type findTokenIndex(const std::string &str, const std::string &token, std::string::size_type start)
 	{
 		if(token.size() >= str.size() - start)
 			return str.npos;
@@ -65,7 +56,7 @@ namespace {
 		return str.npos;
 	}
 
-	bool containsToken(const std::string &string, const std::string &token, std::string::size_type start)
+	static bool containsToken(const std::string &string, const std::string &token, std::string::size_type start)
 	{
 		if(start + token.size() >= string.size())
 			return false;
@@ -79,7 +70,7 @@ namespace {
 		return true;
 	}
 
-	void findTokens(const std::string &string, std::vector<std::string> &result, const std::string &separator)
+	static void findTokens(const std::string &string, std::vector<std::string> &result, const std::string &separator)
 	{
 		std::string::size_type start = string.find_first_of(separator);
 		if(start == string.npos)
@@ -141,6 +132,9 @@ namespace {
 		int size;
 		unz_file_pos filePosition;
 
+		std::string filename;
+		int crc;
+
 		ZipFileData()
 		:	size(0)
 		{
@@ -170,7 +164,8 @@ namespace {
 
 		void findFiles()
 		{
-			unz_global_info globalInfo = { 0 };
+			unz_global_info globalInfo;
+			memset(&globalInfo, '\0', sizeof(unz_global_info));
 			if(unzGetGlobalInfo(fileId, &globalInfo) != UNZ_OK)
 				return;
 
@@ -180,18 +175,36 @@ namespace {
 				if(i != 0 && unzGoToNextFile(fileId) != UNZ_OK)
 					break;
 
-				unz_file_info fileInfo = { 0 };
+				unz_file_info fileInfo;
+				memset(&fileInfo, '\0', sizeof(fileInfo));
 				if(unzGetCurrentFileInfo(fileId, &fileInfo, file, sizeof(file) - 1, 0, 0, 0, 0) != UNZ_OK)
 					return;
 				if(fileInfo.uncompressed_size <= 0)
 					continue;
 
 				ZipFileData zipFile;
+				zipFile.filename = file;
 				zipFile.size = fileInfo.uncompressed_size;
+				zipFile.crc = fileInfo.crc;
 				unzGetFilePos(fileId, &zipFile.filePosition);
 
+				{
+					// lowercase and change backslashes to forward slashes
+					// not using function convertLower (from file_list.cpp)
+					// because mutating a std::string is expensive
+					unsigned char *c = reinterpret_cast<unsigned char *>(file);
+					while (*c != '\0')
+					{
+						if (isupper(*c))
+						{
+							*c = tolower(*c);
+						} else if (*c == '\\') {
+							*c = '/';
+						}
+						++c;
+					}
+				}
 				std::string filename = file;
-				convertLower(filename);
 				fileList[filename] = zipFile;
 			}
 		}
@@ -226,7 +239,9 @@ namespace {
 				// This only detects search tokens which begin with "*"
 
 				if(index == file.size() - tokens[0].size())
-					result.addFile(file);
+				{
+					result.addFile(it->second.filename);
+				}
 
 				/*
 				// Crap. Just find each token index (if has) and move those forward hierarchically if needed
@@ -262,6 +277,21 @@ namespace {
 			convertLower(file);
 
 			it = fileList.find(file);
+			
+			/*
+			ZipFileList::iterator iter;
+			int t = file.find("pictures/startup.dds", 0);
+			if( t != std::string::npos )
+			{
+				for( iter = fileList.begin(); iter != fileList.end(); iter++ )
+				{
+					igiosWarning("%s \n", iter->first);
+				}
+
+				igiosWarning("========================================================\n");
+			}
+			*/
+
 			if(it == fileList.end())
 				return false;
 
@@ -411,7 +441,7 @@ namespace {
 		}
 	};
 
-#else
+#else  // READ_CHUNKS
 
 	class ZipInputBuffer: public IInputStreamBuffer
 	{
@@ -423,15 +453,24 @@ namespace {
 
 		void fillBuffer()
 		{
-			int readSize = fileData.size;
+			unsigned int readSize = fileData.size;
+			if (buffer.size() < readSize)
+				buffer.resize(readSize);
 
 			if(unzGoToFilePos(zipData->fileId, &fileData.filePosition) != UNZ_OK)
 				return;
 			if(unzOpenCurrentFile(zipData->fileId) != UNZ_OK)
 				return;
 
-			int bytes = unzReadCurrentFile(zipData->fileId, &buffer[0], readSize);
+#ifndef NDEBUG
+			unsigned int bytes =
+#endif
+			unzReadCurrentFile(zipData->fileId, &buffer[0], readSize);
+#ifndef NDEBUG
+			// FIXME: this should not be assert but checked always
+			// assert is only for programmer bugs, not runtime errors!
 			assert(bytes == readSize);
+#endif
 
 			unzCloseCurrentFile(zipData->fileId);
 		}
@@ -470,6 +509,11 @@ namespace {
 			return false;
 		}
 
+		int getCRC() const
+		{
+			return fileData.crc;
+		}
+
 		int getSize() const
 		{
 			return fileData.size;
@@ -482,9 +526,8 @@ namespace {
 		}
 	};
 
-#endif
+#endif  // READ_CHUNKS
 
-}
 
 struct ZipPackageData
 {
@@ -535,6 +578,17 @@ InputStream ZipPackage::getFile(const std::string &fileName)
 	}
 
 	return inputStream;
+}
+
+
+unsigned int ZipPackage::getCrc(const std::string &fileName)
+{
+	ZipFileList::iterator it;
+	if(data->zipData->findFile(fileName, it))
+	{
+		return it->second.crc;
+	}
+	return 0;
 }
 
 } // end of namespace filesystem

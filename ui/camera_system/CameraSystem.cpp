@@ -159,7 +159,6 @@ void CameraSystem::setCameraAngle(float a)
 
 void CameraSystem::setCameraBetaAngle(float a)
 {
-	cameraMode[mode]->setCameraBetaAngle(a);
 }
 
 void CameraSystem::setCameraBank(float a)
@@ -253,7 +252,6 @@ float CameraSystem::getFOV()
 {
 	return FOV;
 }
-
 
 
 } // end of namespace ui

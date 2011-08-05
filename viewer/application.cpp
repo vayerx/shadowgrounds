@@ -32,6 +32,7 @@
 #include <istorm3d_terrain_renderer.h>
 
 #pragma comment(lib, "fmodvc.lib")
+#pragma comment(lib, "storm3dv2.lib")
 
 namespace frozenbyte {
 namespace viewer {
@@ -303,11 +304,7 @@ namespace {
 
 		void execute(int id)
 		{
-#ifdef LEGACY_FILES
 			std::vector<std::string> fileNames = editor::getMultipleOpenFileName("s3d", "Data\\Models");
-#else
-			std::vector<std::string> fileNames = editor::getMultipleOpenFileName("s3d", "data\\model");
-#endif
 			if(fileNames.empty())
 				return;
 
@@ -343,11 +340,7 @@ namespace {
 
 		void execute(int id)
 		{
-#ifdef LEGACY_FILES
 			std::vector<std::string> fileNames = editor::getMultipleOpenFileName("s3d", "Data\\Models");
-#else
-			std::vector<std::string> fileNames = editor::getMultipleOpenFileName("s3d", "data\\model");
-#endif
 			if(!fileNames.empty())
 				sharedData.lipsync->reset();
 
@@ -372,11 +365,7 @@ namespace {
 
 		void execute(int id)
 		{
-#ifdef LEGACY_FILES
 			std::string fileName = editor::getOpenFileName("b3d", "Data\\Models");
-#else
-			std::string fileName = editor::getOpenFileName("b3d", "data\\model");
-#endif
 			if(!fileName.empty())
 			{
 				sharedData.model.loadBones(fileName);
@@ -476,11 +465,7 @@ namespace {
 
 		void execute(int id)
 		{
-#ifdef LEGACY_FILES
 			std::vector<std::string> fileNames = editor::getMultipleOpenFileName("anm", "Data\\Animations");
-#else
-			std::vector<std::string> fileNames = editor::getMultipleOpenFileName("anm", "data\\animation");
-#endif
 			if(fileNames.empty())
 				return;
 
@@ -760,11 +745,7 @@ namespace {
 
 		void execute(int id)
 		{
-#ifdef LEGACY_FILES
 			std::string fileName = editor::getOpenFileName("wav", "Data\\Sounds\\Vocals");
-#else
-			std::string fileName = editor::getOpenFileName("wav", "data\\audio\\sound\\mission_specific");
-#endif
 			if(fileName.empty())
 				return;
 

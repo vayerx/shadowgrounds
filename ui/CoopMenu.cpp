@@ -8,7 +8,7 @@
 #include "OptionsMenu.h"
 
 #include "../util/assert.h"
-#include "../ogui/ogui.h"
+#include "../ogui/Ogui.h"
 #include "../ui/MenuCollection.h"
 #include "../game/DHLocaleManager.h"
 #include "../game/Game.h"
@@ -25,6 +25,8 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include "../game/userdata.h"
+
 using namespace game;
 
 namespace ui {
@@ -34,7 +36,7 @@ std::string CoopMenu::none;
 
 
 // Converts player number into a running number
-static int convertToRunningNum( int i )
+int CoopMenu::convertToRunningNum( int i )
 {
 	switch( i )
 	{
@@ -55,7 +57,7 @@ static int convertToRunningNum( int i )
 	return -1;
 }
 
-static CoopMenu::COMMANDS convertToPlayerNum( int i )
+CoopMenu::COMMANDS CoopMenu::convertToPlayerNum( int i )
 {
 	switch( i )
 	{
@@ -76,34 +78,11 @@ static CoopMenu::COMMANDS convertToPlayerNum( int i )
 	return CoopMenu::COMMANDS_STARTGAME;
 }
 
-static void setSinglePlayer( Game* game )
-{
-	SimpleOptions::setBool( DH_OPT_B_1ST_PLAYER_ENABLED, true );
-	SimpleOptions::setBool( DH_OPT_B_2ND_PLAYER_ENABLED, false );
-	SimpleOptions::setBool( DH_OPT_B_3RD_PLAYER_ENABLED, false );
-	SimpleOptions::setBool( DH_OPT_B_4TH_PLAYER_ENABLED, false );
-
-	if( game->getGameUI()->getController( 0 )->controllerTypeHasMouse() )
-	{
-		SimpleOptions::setBool( DH_OPT_B_1ST_PLAYER_HAS_CURSOR, true );
-	}
-	else
-	{
-		SimpleOptions::setBool( DH_OPT_B_1ST_PLAYER_HAS_CURSOR, false );
-	}
-	SimpleOptions::setInt( DH_OPT_I_1ST_PLAYER_CONTROL_SCHEME, game->getGameUI()->getController( 0 )->getControllerType() );
-
-	game->gameUI->getController( 1 )->unloadConfiguration();
-	game->gameUI->getController( 2 )->unloadConfiguration();
-	game->gameUI->getController( 3 )->unloadConfiguration();
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 
 CoopMenu::CoopMenu( MenuCollection* menu, MenuCollection::Fonts* fonts, Ogui* o_gui, Game* g ) :
 	MenuBaseImpl( NULL ),
-	menuCollection( menu ),
-	fonts( fonts ),
 
 	coopBigText( NULL ),
 	coopProfileList( NULL ),
@@ -111,14 +90,18 @@ CoopMenu::CoopMenu( MenuCollection* menu, MenuCollection::Fonts* fonts, Ogui* o_
 	coopCaptureEvents( NULL ),
 	coopCurrentSelection( -1 ),
 
-	
-	optionsBigText( NULL ),
+	gameProfiles( NULL ),
 
+	menuCollection( menu ),
+	fonts( fonts ),
+
+	styles(),
 	selectListStyle( NULL ),
-	styles(),	
+
 	textLabels(),
 	startGame( NULL ),
-	gameProfiles( NULL )
+
+	optionsBigText( NULL )
 {
 	///////////////////////////////////////////////////////////////////////////
 	
@@ -388,7 +371,7 @@ void CoopMenu::applyChanges()
 				tmp += game->getGameProfiles()->getCurrentProfile( i );
 				tmp += "/config/keybinds.txt";
 #endif
-				game->gameUI->getController( i )->loadConfiguration( tmp.c_str() );
+				game->gameUI->getController( i )->loadConfiguration( igios_mapUserDataPrefix(tmp).c_str() );
 			}
 
 		}
@@ -541,7 +524,7 @@ bool CoopMenu::enableCoopGameSettings(Game *game, bool test_only)
 				tmp += game->getGameProfiles()->getCurrentProfile( i );
 				tmp += "/config/keybinds.txt";
 #endif
-				game->gameUI->getController( i )->loadConfiguration( tmp.c_str() );
+				game->gameUI->getController( i )->loadConfiguration( igios_mapUserDataPrefix(tmp).c_str() );
 			}
 
 		}
@@ -559,10 +542,14 @@ bool CoopMenu::enableCoopGameSettings(Game *game, bool test_only)
 				GameController* gameController = game->getGameUI()->getController( c );
 
 				{
+#ifndef NDEBUG
 					int foo = gameController->getControllerType();
+#endif
 					gameController->reloadConfiguration();
 
+#ifndef NDEBUG
 					assert( foo == gameController->getControllerType() );
+#endif
 				}
 				
 				if( gameController->controllerTypeHasMouse() )
@@ -657,8 +644,8 @@ void CoopMenu::createCooperativeMenu()
 	
 	buttonPaddingString = "";
 
-	int profile_button_x = buttonX;
-	int profile_button_y = buttonY;
+	/*int profile_button_x = buttonX;
+	int profile_button_y = buttonY;*/
 	addSelectionButton( getCoopPlayerName( COMMANDS_PLAYER1 ), COMMANDS_PLAYER1, fonts->medium.normal );
 	addSelectionButton( getCoopPlayerName( COMMANDS_PLAYER2 ), COMMANDS_PLAYER2, fonts->medium.normal );
 	addSelectionButton( getCoopPlayerName( COMMANDS_PLAYER3 ), COMMANDS_PLAYER3, fonts->medium.normal );
@@ -761,7 +748,7 @@ OguiButtonStyle* CoopMenu::loadStyle( const std::string& button_name )
 
 void CoopMenu::openCoopProfileMenu( int i )
 {
-	coopCaptureEvents = ogui->CreateSimpleImageButton( win, 0, 0, getLocaleGuiInt( "gui_coopmenu_window_w", 1024 ), getLocaleGuiInt( "gui_coopmenu_window_h", 768 ), NULL, NULL, NULL, NULL );
+	coopCaptureEvents = ogui->CreateSimpleImageButton( win, 0, 0, getLocaleGuiInt( "gui_coopmenu_window_w", 1024 ), getLocaleGuiInt( "gui_coopmenu_window_h", 768 ), NULL, NULL, NULL, 0 );
 	coopCaptureEvents->SetListener( this );
 
 	int scroll_button_w = 0;

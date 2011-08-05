@@ -1,6 +1,13 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
+
+#include <map>
+#include <vector>
+#include <string>
+#include <queue>
 
 #include "storm3d_terrain_groups.h"
 #include "storm3d_terrain_utils.h"
@@ -13,29 +20,23 @@
 #include "storm3d_material.h"
 #include "storm3d_scene.h"
 #include "storm3d_spotlight.h"
-#include "vertexformats.h"
-#include "storm3d_shadermanager.h"
-#include "storm3d_bone.h"
+#include "VertexFormats.h"
+#include "Storm3D_ShaderManager.h"
+#include "Storm3D_Bone.h"
 #include <c2_qtree.h>
 
-#include <map>
-#include <vector>
-#include <atlbase.h>
-#include <d3d9.h>
-
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 using namespace std;
 using namespace boost;
 
-namespace {
 
 	struct SharedModel;
 	struct Instance;
 	typedef vector<SharedModel> ModelList;
-	typedef vector<shared_ptr<Instance> > InstanceList;
+	typedef vector<shared_ptr<Instance> > ModelInstanceList;
 
-	struct AnimationDeleter
+	struct ModelAnimationDeleter
 	{
 		void operator ()(IStorm3D_BoneAnimation *a)
 		{
@@ -48,7 +49,7 @@ namespace {
 	{
 		shared_ptr<IStorm3D_Model> model;
 		shared_ptr<IStorm3D_Model> fadeModel;
-		InstanceList instances;
+		ModelInstanceList instances;
 
 		std::string bones;
 		std::string idleAnimation;
@@ -82,22 +83,7 @@ namespace {
 				if(distance > radius)
 					radius = distance;
 
-
 				float meshRadius = mesh->GetRadius();
-				/*
-				float meshRadius = 0;
-				const Storm3D_Vertex *buffer = mesh->GetVertexBufferReadOnly();
-
-				for(int i = 0; i < mesh->GetVertexCount(); ++i)
-				{
-					VC2 vertex(buffer[i].position.x, buffer[i].position.z);
-					float vertexLength = vertex.GetLength();
-
-					if(vertexLength > meshRadius)
-						meshRadius = vertexLength;
-				}
-				*/
-
 				if(meshRadius + objectDistance > radius2d)
 					radius2d = meshRadius + objectDistance;
 			}
@@ -120,14 +106,6 @@ namespace {
 
 		COL ambient;
 
-		/*
-		VC3 lightPosition1;
-		COL lightColor1;
-		float lightRange1;
-		VC3 lightPosition2;
-		COL lightColor2;
-		float lightRange2;
-		*/
 		signed short lightIndex[LIGHT_MAX_AMOUNT];
 
 		Quadtree<Instance>::Entity *entity;
@@ -143,8 +121,6 @@ namespace {
 			instanceId(-1),
 			ambient(ambient_),
 			entity(0),
-			//lightRange1(5.f),
-			//lightRange2(5.f),
 			radius2d(0),
 			lightmapped(false),
 			inBuilding(false)
@@ -208,27 +184,24 @@ namespace {
 		}
 	};
 
-	typedef Quadtree<Instance> Tree;
+	typedef Quadtree<Instance> InstanceTree;
 	typedef map<IStorm3D_Model *, InstanceInfo> InstanceMap;
 
-} // unnamed
 
 struct Storm3D_TerrainGroupData
 {
 	Storm3D &storm;
-	IDirect3DDevice9 &device;
 	Storm3D_TerrainModels &terrainModels;
 
 	VC2 sceneSize;
 
 	ModelList models;
-	boost::scoped_ptr<Tree> tree;
+	boost::scoped_ptr<InstanceTree> tree;
 
 	InstanceMap instanceMap;
 
-	Storm3D_TerrainGroupData(Storm3D &storm_, Storm3D_TerrainModels &terrainModels_, bool ps14)
+	Storm3D_TerrainGroupData(Storm3D &storm_, Storm3D_TerrainModels &terrainModels_)
 	:	storm(storm_),
-		device(*storm.GetD3DDevice()),
 		terrainModels(terrainModels_)
 	{
 	}
@@ -241,11 +214,11 @@ namespace {
 		std::vector<Instance *> instances;
 		int current;
 
-		Tree *tree;
+		InstanceTree *tree;
 		Storm3D_TerrainModels &terrainModels;
 
 	public:
-		TerrainIterator(Tree *tree_, const VC3 &position, float radius, Storm3D_TerrainModels &terrainModels_)
+		TerrainIterator(InstanceTree *tree_, const VC3 &position, float radius, Storm3D_TerrainModels &terrainModels_)
 		:	current(0),
 			tree(tree_),
 			terrainModels(terrainModels_)
@@ -306,16 +279,26 @@ namespace {
 
 } // unnamed
 
-Storm3D_TerrainGroup::Storm3D_TerrainGroup(Storm3D &storm, Storm3D_TerrainModels &models, bool ps14)
+//! Constructor
+Storm3D_TerrainGroup::Storm3D_TerrainGroup(Storm3D &storm, Storm3D_TerrainModels &models)
 {
-	boost::scoped_ptr<Storm3D_TerrainGroupData> tempData(new Storm3D_TerrainGroupData(storm, models, ps14));
+	boost::scoped_ptr<Storm3D_TerrainGroupData> tempData(new Storm3D_TerrainGroupData(storm, models));
 	data.swap(tempData);
 }
 
+//! Destructor
 Storm3D_TerrainGroup::~Storm3D_TerrainGroup()
 {
 }
 
+//! Add model to terrain group
+/*!
+	\param model model
+	\param fadeModel fade model
+	\param bones model bones
+	\param idleAnimation model idle animation
+	\return index of added model
+*/
 int Storm3D_TerrainGroup::addModel(boost::shared_ptr<Storm3D_Model> model, boost::shared_ptr<Storm3D_Model> fadeModel, const std::string &bones, const std::string &idleAnimation)
 {
 	assert(model);
@@ -326,18 +309,26 @@ int Storm3D_TerrainGroup::addModel(boost::shared_ptr<Storm3D_Model> model, boost
 	return index;
 }
 
+//! Remove all model instances
 void Storm3D_TerrainGroup::removeModels()
 {
 	removeInstances();
 }
 
+//! Add instance of model
+/*!
+	\param modelId model ID
+	\param position instance position
+	\param rotation instance rotation
+	\param color instance color
+	\return index of added instance
+*/
 int Storm3D_TerrainGroup::addInstance(int modelId, const VC3 &position, const QUAT &rotation, const COL &color)
 {
 	assert(modelId >= 0 && modelId < int(data->models.size()));
 	SharedModel &original = data->models[modelId];
 
 	shared_ptr<IStorm3D_Model> m(original.model->GetClone(true, false, true));
-	//m->SetNoCollision(original.model->GetNoCollision());
 
 	shared_ptr<IStorm3D_Model> mf;
 	if(original.fadeModel)
@@ -347,14 +338,13 @@ int Storm3D_TerrainGroup::addInstance(int modelId, const VC3 &position, const QU
 	{
 		IStorm3D_BoneAnimation *ba = data->storm.CreateNewBoneAnimation(original.idleAnimation.c_str());
 		if(ba)
-			original.animation.reset(ba, AnimationDeleter());
+			original.animation.reset(ba, ModelAnimationDeleter());
 	}
 
 	m->SetPosition(const_cast<VC3 &> (position));
 	m->SetRotation(const_cast<QUAT &> (rotation));
 	m->SetSelfIllumination(color);
 #ifdef PHYSICS_NONE
-	// PSDHAX!!!
 	m->SetNoCollision(true);
 #endif
 
@@ -413,6 +403,12 @@ int Storm3D_TerrainGroup::addInstance(int modelId, const VC3 &position, const QU
 	return index;
 }
 
+//! Set position of model instance
+/*!
+	\param modelId model ID
+	\param instanceId instance ID
+	\param position instance position
+*/
 void Storm3D_TerrainGroup::setInstancePosition(int modelId, int instanceId, const VC3 &position)
 {
 	assert(modelId >= 0 && instanceId >= 0);
@@ -446,6 +442,12 @@ void Storm3D_TerrainGroup::setInstancePosition(int modelId, int instanceId, cons
 		instance.fadeModel->SetPosition(const_cast<VC3 &> (position));
 }
 
+//! Set rotation of model instance
+/*!
+	\param modelId model ID
+	\param instanceId instance ID
+	\param rotation instance rotation
+*/
 void Storm3D_TerrainGroup::setInstanceRotation(int modelId, int instanceId, const QUAT &rotation)
 {
 	assert(modelId >= 0 && instanceId >= 0);
@@ -464,6 +466,14 @@ void Storm3D_TerrainGroup::setInstanceRotation(int modelId, int instanceId, cons
 		instance.fadeModel->SetRotation(const_cast<QUAT &> (rotation));
 }
 
+//! Set light color of model instance
+/*!
+	\param modelId model ID
+	\param instanceId instance ID
+	\param light instance light
+	\param lightId light ID
+	\param color instance light color
+*/
 void Storm3D_TerrainGroup::setInstanceLight(int modelId, int instanceId, int light, int lightId, const COL &color)
 {
 	assert(modelId >= 0 && instanceId >= 0);
@@ -480,36 +490,26 @@ void Storm3D_TerrainGroup::setInstanceLight(int modelId, int instanceId, int lig
 	Instance &instance = *original.instances[instanceId];
 	instance.lightIndex[light] = lightId;
 
-	/*
-	if(light == 0)
-	{
-		instance.lightPosition1 = lightPosition;
-		instance.lightColor1 = lightColor;
-		instance.lightRange1 = lightRange;
-	}
-	else
-	{
-		instance.lightPosition2 = lightPosition;
-		instance.lightColor2 = lightColor;
-		instance.lightRange2 = lightRange;
-	}
-	*/
-
 	if(instance.model)
 	{
-		//instance.model->SetLighting(light, lightPosition, lightColor, lightRange);
 		instance.model->SetLighting(light, lightId);
 		instance.model->SetSelfIllumination(color);
 	}
 
 	if(instance.fadeModel)
 	{
-		//instance.fadeModel->SetLighting(light, lightPosition, lightColor, lightRange);
 		instance.fadeModel->SetLighting(light, lightId);
 		instance.fadeModel->SetSelfIllumination(color);
 	}
 }
 
+//! Set sunlight properties of model instance
+/*!
+	\param modelId model ID
+	\param instanceId instance ID
+	\param direction instance sunlight direction
+	\param strength instance sunlight strength
+*/
 void Storm3D_TerrainGroup::setInstanceSun(int modelId, int instanceId, const VC3 &direction, float strength)
 {
 	assert(modelId >= 0 && instanceId >= 0);
@@ -527,6 +527,12 @@ void Storm3D_TerrainGroup::setInstanceSun(int modelId, int instanceId, const VC3
 		instance.fadeModel->SetDirectional(direction, strength);
 }
 
+//! Set lightmapping status of model instance
+/*!
+	\param modelId model ID
+	\param instanceId instance ID
+	\param lightmapped true to enable lightmapping
+*/
 void Storm3D_TerrainGroup::setInstanceLightmapped(int modelId, int instanceId, bool lightmapped)
 {
 	assert(modelId >= 0 && instanceId >= 0);
@@ -552,6 +558,12 @@ void Storm3D_TerrainGroup::setInstanceLightmapped(int modelId, int instanceId, b
 	}
 }
 
+//! Set fade factor of model instance
+/*!
+	\param modelId model ID
+	\param instanceId instance ID
+	\param factor fade factor
+*/
 void Storm3D_TerrainGroup::setInstanceFade(int modelId, int instanceId, float factor)
 {
 	assert(modelId >= 0 && instanceId >= 0);
@@ -566,20 +578,6 @@ void Storm3D_TerrainGroup::setInstanceFade(int modelId, int instanceId, float fa
 	if(factor < 0.02f)
 		factor = 0.02f;
 
-/*
-	if(instance.model)
-	{
-		boost::scoped_ptr<Iterator<IStorm3D_Model_Object *> > objectIterator(instance.model->ITObject->Begin());
-		for(; !objectIterator->IsEnd(); objectIterator->Next())
-		{
-			IStorm3D_Model_Object *object = objectIterator->GetCurrent();
-			if(!object)
-				continue;
-
-			object->SetForceAlpha(1.f - factor);
-		}
-	}
-*/
 	if(instance.fadeModel)
 	{
 		boost::scoped_ptr<Iterator<IStorm3D_Model_Object *> > objectIterator(instance.fadeModel->ITObject->Begin());
@@ -596,6 +594,12 @@ void Storm3D_TerrainGroup::setInstanceFade(int modelId, int instanceId, float fa
 	}
 }
 
+//! Set inside/outside status of model instance
+/*!
+	\param modelId model ID
+	\param instanceId instance ID
+	\param inBuilding true to set instance status to inside building
+*/
 void Storm3D_TerrainGroup::setInstanceInBuilding(int modelId, int instanceId, bool inBuilding)
 {
 	assert(modelId >= 0 && instanceId >= 0);
@@ -610,6 +614,12 @@ void Storm3D_TerrainGroup::setInstanceInBuilding(int modelId, int instanceId, bo
 		((Storm3D_Model *)instance.fadeModel.get())->terrain_inbuilding_object = inBuilding;
 }
 
+//! Set occluding status of model instance
+/*!
+	\param modelId model ID
+	\param instanceId instance ID
+	\param occluded true to set instance occluded
+*/
 void Storm3D_TerrainGroup::setInstanceOccluded(int modelId, int instanceId, bool occluded)
 {
 	assert(modelId >= 0 && instanceId >= 0);
@@ -637,6 +647,11 @@ IStorm3D_Model * Storm3D_TerrainGroup::getInstanceModel ( int modelId, int insta
 	return instance.model.get();
 }
 
+//! Remove model instance
+/*!
+	\param modelId model ID
+	\param instanceId instance ID
+*/
 void Storm3D_TerrainGroup::removeInstance(int modelId, int instanceId)
 {
 	assert(modelId >= 0 && instanceId >= 0);
@@ -658,6 +673,7 @@ void Storm3D_TerrainGroup::removeInstance(int modelId, int instanceId)
 	}
 }
 
+//! Remove all instances of models
 void Storm3D_TerrainGroup::removeInstances()
 {
 	ModelList::iterator it = data->models.begin();
@@ -665,8 +681,8 @@ void Storm3D_TerrainGroup::removeInstances()
 	{
 		SharedModel &model = *it;
 		
-		InstanceList::iterator i = model.instances.begin();
-		for(i; i != model.instances.end(); ++i)
+		ModelInstanceList::iterator i = model.instances.begin();
+		for(; i != model.instances.end(); ++i)
 		{
 			Instance &instance = *(*i);
 			instance.erase(data->tree.get(), data->terrainModels);
@@ -683,29 +699,18 @@ void Storm3D_TerrainGroup::removeInstances()
 	data->instanceMap.clear();
 }
 
+//! Set instance colors to multiplier
+/*!
+	\param color color
+*/
 void Storm3D_TerrainGroup::setInstanceColorsToMultiplier(const COL &color)
 {
-	/*
-	ModelList::iterator it = data->models.begin();
-	for(; it != data->models.end(); ++it)
-	{
-		SharedModel &model = *it;
-		
-		InstanceList::iterator i = model.instances.begin();
-		for(i; i != model.instances.end(); ++i)
-		{
-			Instance &instance = *(*i);
-
-			if(instance.model)
-			{
-				instance.model->SetSelfIllumination(instance.ambient * color);
-				instance.model->SetLighting(instance.lightPosition, instance.lightColor * color);
-			}
-		}
-	}
-	*/
 }
 
+//! Enable or disable collisions of models
+/*!
+	\param enable true to enable collisions
+*/
 void Storm3D_TerrainGroup::enableCollision(bool enable)
 {
 	bool flag = false;
@@ -717,8 +722,8 @@ void Storm3D_TerrainGroup::enableCollision(bool enable)
 	{
 		SharedModel &model = *it;
 		
-		InstanceList::iterator i = model.instances.begin();
-		for(i; i != model.instances.end(); ++i)
+		ModelInstanceList::iterator i = model.instances.begin();
+		for(; i != model.instances.end(); ++i)
 		{
 			Instance &instance = *(*i);
 			if(instance.model)
@@ -727,6 +732,10 @@ void Storm3D_TerrainGroup::enableCollision(bool enable)
 	}
 }
 
+//! Enable or disable collisions of big models
+/*!
+	\param enable true to enable collisions
+*/
 void Storm3D_TerrainGroup::enableBigCollision(bool enable)
 {
 	bool flag = false;
@@ -740,8 +749,8 @@ void Storm3D_TerrainGroup::enableBigCollision(bool enable)
 		if(static_cast<Storm3D_Model *> (model.model.get())->bounding_radius < 3.f)
 			continue;
 		
-		InstanceList::iterator i = model.instances.begin();
-		for(i; i != model.instances.end(); ++i)
+		ModelInstanceList::iterator i = model.instances.begin();
+		for(; i != model.instances.end(); ++i)
 		{
 			Instance &instance = *(*i);
 
@@ -751,6 +760,10 @@ void Storm3D_TerrainGroup::enableBigCollision(bool enable)
 	}
 }
 
+//! Enable or disable collisions of lightmapped models
+/*!
+	\param enable true to enable collisions
+*/
 void Storm3D_TerrainGroup::enableLightmapCollision(bool enable)
 {
 	bool flag = false;
@@ -762,8 +775,8 @@ void Storm3D_TerrainGroup::enableLightmapCollision(bool enable)
 	{
 		SharedModel &model = *it;
 		
-		InstanceList::iterator i = model.instances.begin();
-		for(i; i != model.instances.end(); ++i)
+		ModelInstanceList::iterator i = model.instances.begin();
+		for(; i != model.instances.end(); ++i)
 		{
 			Instance &instance = *(*i);
 			//if(instance.lightmapped && instance.model)
@@ -779,6 +792,10 @@ void Storm3D_TerrainGroup::enableLightmapCollision(bool enable)
 	}
 }
 
+//! Set size of scene
+/*!
+	\param size scene size
+*/
 void Storm3D_TerrainGroup::setSceneSize(const VC3 &size)
 {
 	data->sceneSize = VC2(size.x, size.z);
@@ -786,14 +803,28 @@ void Storm3D_TerrainGroup::setSceneSize(const VC3 &size)
 	VC2 minSize(-size.x, -size.z);
 	VC2 maxSize(size.x, size.z);
 
-	data->tree.reset(new Tree(minSize, maxSize));
+	data->tree.reset(new InstanceTree(minSize, maxSize));
 }
 
+//! Get model iterator
+/*!
+	\param position
+	\param radius
+	\return iterator
+*/
 boost::shared_ptr<IStorm3D_TerrainModelIterator> Storm3D_TerrainGroup::getModelIterator(const VC3 &position, float radius)
 {
 	return boost::shared_ptr<IStorm3D_TerrainModelIterator> (new TerrainIterator(data->tree.get(), position, radius, data->terrainModels));
 }
 
+//! Find object near given location
+/*!
+	\param position search center
+	\param radius search radius
+	\param modelId reference to returned model ID
+	\param instanceId reference to returned instance ID
+	\return true if found
+*/
 bool Storm3D_TerrainGroup::findObject(const VC3 &position, float radius, int &modelId, int &instanceId)
 {
 	Storm3D_CollisionInfo info;

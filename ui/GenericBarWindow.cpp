@@ -37,8 +37,8 @@ GenericBarWindow::GenericBarWindow( Ogui* ogui, game::Game* game, int player ) :
 	hidden( false ),
 	reallyHidden( false ),
 	messageOnHide(),
-	messageOnShow( "" ),
 	messageOnHideStyle( ),
+	messageOnShow( "" ),
 	fadeOffTime( default_fadeOffTime ),
 	fadeOutTime( default_fadingTime ),
 	fadeInTime( default_fadingTime )

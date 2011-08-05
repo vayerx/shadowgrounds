@@ -56,9 +56,10 @@ namespace game
 	char *itemCustomHighlightText = NULL;
 
 	void ItemScripting::process(util::ScriptProcess *sp, 
-		int command, int intData, char *stringData, ScriptLastValueType *lastValue, 
+		int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue,
 		GameScriptData *gsd, Game *game, bool *pause)
 	{
+		int intData = intFloat.i;
 		switch(command)
 		{
 		case GS_CMD_REMOVEITEM:

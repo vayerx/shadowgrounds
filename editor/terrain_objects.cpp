@@ -145,9 +145,7 @@ namespace {
 			unsigned int internalHandle = _time32(NULL);
 
 			uniqueEditorObjectHandle = UniqueEditorObjectHandleManager::createNewUniqueHandle(internalHandle);
-
-			// why???
-			//uniqueEditorObjectHandle = 0;
+			uniqueEditorObjectHandle = 0;
 		}
 	};
 
@@ -440,33 +438,6 @@ struct TerrainObjectsData
 			collision.collisionData.collisionPosition.z = terrainModel.objects[object.index].position.y;
 			collision.create(storm);
 		}
-	}
-
-	VC3 getObjectPosition(TerrainObject &object)
-	{
-		ModelContainer::iterator it = models.find(object.fileName);
-		if(it == models.end())
-			return VC3(0,0,0);
-
-		TerrainModel &terrainModel = (*it).second;
-		if(object.index >= int(terrainModel.objects.size()))
-			return VC3(0,0,0);
-
-		return VC3(terrainModel.objects[object.index].position.x, terrainModel.objects[object.index].height, terrainModel.objects[object.index].position.y);
-	}
-
-	// (how can this be so difficult...)
-	UniqueEditorObjectHandle getObjectHandle(TerrainObject &object)
-	{
-		ModelContainer::iterator it = models.find(object.fileName);
-		if(it == models.end())
-			return 0;
-
-		TerrainModel &terrainModel = (*it).second;
-		if(object.index >= int(terrainModel.objects.size()))
-			return 0;
-		
-		return terrainModel.objects[object.index].uniqueEditorObjectHandle;
 	}
 
 	void updateObject(TerrainObject &object, float height)
@@ -1097,14 +1068,9 @@ struct TerrainObjectsData
 			}
 			m->LoadS3D(modelFileName.c_str());
 
-			//AABB aabb = m->GetBoundingBox();
-			// don't use the visualization bounding box for physics, use the collision/physics instead. --jpk
-			if (strstr(fileName.c_str(), "roof_torch") != 0)
-			{
-				assert(!"torch!");
-			}
-			AABB aabb = m->GetPhysicsBoundingBox();
+			m->GetBoundingBox();
 
+			AABB aabb = m->GetBoundingBox();
 			VC3 size = aabb.mmax - aabb.mmin;
 
 			if(objectData.physicsType == 2) // box
@@ -1160,7 +1126,7 @@ struct TerrainObjectsData
 				inBuilding = true;
 
 			VC3 pos(object.position.x, object.terrainHeight, object.position.y);
-			exporterObjects.addObject(id, pos, object.rotation, lights.ambient, object.height, lights.lightIndices, tm.lightmapped, inBuilding, sunDir * object.lightMultiplier, object.lightMultiplier, object.uniqueEditorObjectHandle);
+			exporterObjects.addObject(id, pos, object.rotation, lights.ambient, object.height, lights.lightIndices, tm.lightmapped, inBuilding, sunDir * object.lightMultiplier, object.lightMultiplier);
 		}
 	}
 
@@ -1482,16 +1448,6 @@ TerrainObject TerrainObjects::traceActiveCollision(const VC3 &rayOrigin, const V
 void TerrainObjects::moveObject(TerrainObject &terrainObject, const VC2 &delta)
 {
 	data->updateObject(terrainObject, delta);
-}
-
-VC3 TerrainObjects::getObjectPosition(TerrainObject &terrainObject)
-{
-	return data->getObjectPosition(terrainObject);
-}
-
-UniqueEditorObjectHandle TerrainObjects::getObjectHandle(TerrainObject &terrainObject)
-{
-	return data->getObjectHandle(terrainObject);
 }
 
 void TerrainObjects::moveObject(TerrainObject &terrainObject, float height)

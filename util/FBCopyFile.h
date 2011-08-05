@@ -2,6 +2,8 @@
 #ifndef COPYFILE_H
 #define COPYFILE_H
 
+#include <string>
+
 namespace util
 {
 	class FBCopyFile

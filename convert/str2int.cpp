@@ -2,12 +2,14 @@
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifndef __GNUC__
 #pragma warning(disable:4103)
 #pragma warning(disable:4786)
+#endif
 
 #include <string.h>
 #include "str2int.h"
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 
 char convert_strbuf[16];
@@ -91,7 +93,7 @@ int str2int_errno()
   return _last_str2int_errno;
 }
 
-char *time2str(int secs)
+const char *time2str(int secs)
 {
   if (secs < 0) 
   {

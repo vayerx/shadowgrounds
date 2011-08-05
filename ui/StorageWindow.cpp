@@ -14,7 +14,7 @@
 #include "../game/Part.h"
 #include "../game/GameUI.h"
 
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 // button id's for storage window
 #define STORAGEW_EXIT 1
@@ -373,7 +373,7 @@ namespace ui
 
         storageAmountList->addItem(PARTTYPE_ID_INT_TO_STRING(pt->getPartTypeId()), 
           int2str(storageAmount));
-        char *tmp = "";
+        const char *tmp = "";
         if (storageAmount > 0) tmp = int2str((pt->getPrice() / 2) - lowestRepairPrice);
         sellPriceList->addItem(PARTTYPE_ID_INT_TO_STRING(pt->getPartTypeId()), 
           tmp);

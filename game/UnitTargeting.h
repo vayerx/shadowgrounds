@@ -48,7 +48,7 @@ namespace game
      * Used to give enemy unit targets for the unit.
      * @param targetUnit Unit*, the unit to be targeted.
      */
-    void setTarget(Unit *targetUnit);
+    void setTarget(Unit *targetUnit); // targetUnit can't be const
 
     /**
      * Sets a target, should be used by unit level ai.
@@ -70,7 +70,7 @@ namespace game
      * Returns true if the unit has a target.
      * @return bool, true if the unit has a target.
      */
-    inline bool hasTarget()
+    inline bool hasTarget() const
     {
       return targetSet;
     }
@@ -83,9 +83,10 @@ namespace game
 
     /**
      * Returns the target unit of this unit.
-     * @return Unit*, pointer to target unit or NULL if no unit targeted.
+	 * @return Unit*, pointer to target unit or NULL if no unit targeted.
+     *         can't return const
      */
-    Unit *getTargetUnit();
+    Unit *getTargetUnit() const;
 
     /**
      * Returns the target position of this unit.
@@ -120,7 +121,7 @@ namespace game
 
   private:
     VC3 targetPosition;
-    Unit *targetUnit;
+	Unit *targetUnit; // can't be const
     bool groundTarget;
     bool targetSet;
     bool autoTarget;  // if target was acquired by unit level ai

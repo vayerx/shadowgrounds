@@ -12,11 +12,7 @@
 #include <IStorm3D_Model.h>
 
 #include <map>
-#include <hash_map>
 #include <math.h>
-
-// REMOVE
-#include <windows.h>
 
 //#define AI_PATHFIND_MAX_DEPTH 16000
 //#define AI_PATHFIND_HASHMAP_SIZE (2029 * 4 - 3)
@@ -35,16 +31,6 @@ const float AI_MAX_COST_PORTAL_ESTIMATE = 30.f * 8.f;
 int pathfind_findroutes_since_last_clear = 0;
 int pathfind_findroutes_failed_since_last_clear = 0;
 
-#ifdef PROJECT_CLAW_PROTO
-	int pathfind_claw_x = 0;
-	int pathfind_claw_y = 0;
-	int pathfind_claw_dist = 0;
-	int pathfind_player_x = 0;
-	int pathfind_player_y = 0;
-	int pathfind_player_dist = 0;
-	#include "../game/BurningMap.h"
-	extern BurningMap *burningMap;
-#endif
 
 namespace frozenbyte {
 namespace ai {
@@ -637,16 +623,16 @@ unsigned char *pathfind_debug_data = NULL;
 
 PathFind::PathFind()
 :	heuristicWeight(2.0f),
-	xSizeHeightmap(-1),
-	ySizeHeightmap(-1),
 	xSize(-1),
 	ySize(-1),
 	accuracyShift(1),
+	pathfindDepth(AI_PATHFIND_MAX_DEPTH),
+	xSizeHeightmap(-1),
+	ySizeHeightmap(-1),
 	coverAvoidDistance(0),
 	coverBlockDistance(0),
 	coverMap(0),
 	lightMap(0),
-	pathfindDepth(AI_PATHFIND_MAX_DEPTH),
 	portalRoutesDisabled(false)
 {	
 }
@@ -1128,6 +1114,7 @@ yEnd += yEnd % 2;
 			ambientLightCost = powf(ambientLightCost, 1.5f);
 		}
 	}
+
 	// cannot let it check all possibilities, takes too much time.
 	// computer jams if there is no route.
 	// so just added a failure counter...
@@ -1229,16 +1216,6 @@ for(int i = nodes[currentNode].xIndex - 2; i <= nodes[currentNode].xIndex + 2; i
 			if(isBlocked(i, j) == true)
 				continue;
 
-#ifdef PROJECT_CLAW_PROTO
-// hack: avoid burning objects
-if(burningMap)
-{
-	int cost = burningMap->getCost(i, j);
-	if(cost > 0)
-		continue;
-}
-#endif
-
 			// Too great height difference?
 			if(isMovable(nodes[currentNode].xIndex, nodes[currentNode].yIndex, i, j, maxHeightDifference) == false)
 				continue;
@@ -1257,34 +1234,6 @@ if(burningMap)
 			nodes[loopNode].realCost += realCost(nodes[currentNode].xIndex, nodes[currentNode].yIndex, i, j, climbPenalty);
 			nodes[loopNode].totalCost = nodes[loopNode].realCost;
 			nodes[loopNode].totalCost += estimateCost(i, j, xEnd, yEnd) + ambientLightCost;
-
-#ifdef PROJECT_CLAW_PROTO
-// hack: add cost for going close to claw
-{
-	int dx = i - pathfind_claw_x;
-	int dy = j - pathfind_claw_y;
-	int dist = dx * dx + dy * dy;
-	if(dist < pathfind_claw_dist)
-	{
-		int cost = (pathfind_claw_dist - dist);
-		nodes[loopNode].realCost += cost;
-		nodes[loopNode].totalCost += cost;
-	}
-}
-// hack: add cost for going close to player
-{
-	int dx = i - pathfind_player_x;
-	int dy = j - pathfind_player_y;
-	int dist = dx * dx + dy * dy;
-	if(dist < pathfind_player_dist)
-	{
-		int cost = (pathfind_player_dist - dist);
-		nodes[loopNode].realCost += cost;
-		nodes[loopNode].totalCost += cost;
-	}
-}
-#endif
-
 
 			// Is it too close to cover
 			if (coverAvoidDistance > 0)

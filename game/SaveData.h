@@ -2,7 +2,7 @@
 #ifndef SAVEDATA_H
 #define SAVEDATA_H
 
-#include <windows.h> // to get BYTE ;)
+typedef unsigned char BYTE;
 
 namespace game
 {

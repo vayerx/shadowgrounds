@@ -17,7 +17,7 @@
 #include "storm3d_animation.h"
 #include "storm3d_scene.h"
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 
 //------------------------------------------------------------------

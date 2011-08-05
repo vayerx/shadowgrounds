@@ -13,8 +13,10 @@
 
 #include "../system/Logger.h"
 
+#include "../game/userdata.h"
+
 #define SCREENSHOT_DIR "Screenshots"
-#define SCREENSHOT_FILE_STR "Screenshots/shot_%d_%02d_%02d__%d_%s_%s_%c.bmp"
+#define SCREENSHOT_FILE_STR "%sScreenshots/shot_%d_%02d_%02d__%d_%s_%s_%c.tga"
 
 namespace util
 {
@@ -50,7 +52,7 @@ namespace util
     char alphabet = 'A';
     while (true)
     {
-      sprintf(filename, SCREENSHOT_FILE_STR, year, month, day, hour, minstr, secstr, alphabet);
+      sprintf(filename, SCREENSHOT_FILE_STR, igios_getUserDataPrefix().c_str(), year, month, day, hour, minstr, secstr, alphabet);
 
       f = fopen(filename, "rb");
 

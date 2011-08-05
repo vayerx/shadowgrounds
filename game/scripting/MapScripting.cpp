@@ -73,7 +73,7 @@ namespace game
 	PortalList portalCache;
 
 	void MapScripting::process(util::ScriptProcess *sp, 
-		int command, int intData, char *stringData, ScriptLastValueType *lastValue, 
+		int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue,
 		GameScriptData *gsd, Game *game)
 	{
 		switch(command)
@@ -134,7 +134,7 @@ namespace game
 
 			case GS_CMD_SETMISSIONOBJECTIVERANGE:
 				{
-					float floatData = *((float *)(&intData));
+					float floatData = intFloat.f;
 					maps_objective_range = floatData;
 				}
 				break;
@@ -504,7 +504,7 @@ namespace game
 
 						//IStorm3D_Texture * static_texture = game->gameUI->getStorm3D()->CreateNewTexture( "", TEXLOADFLAGS_NOCOMPRESS, 0, mapData, width*height*4 );
 						IStorm3D_Texture * static_texture = game->gameUI->getStorm3D()->CreateNewTexture( width, height, IStorm3D_Texture::TEXTYPE_BASIC );
-						static_texture->Copy32BitSysMembufferToTexture( (DWORD *)mapData );
+						static_texture->Copy32BitSysMembufferToTexture( (Uint32 *)mapData );
 						static_texture->saveToFile( filename.c_str() );
 
 						static_texture->Release();

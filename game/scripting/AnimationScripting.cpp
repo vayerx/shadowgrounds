@@ -39,14 +39,14 @@ using namespace ui;
 namespace game
 {
 	void AnimationScripting::process(util::ScriptProcess *sp, 
-		int command, int intData, char *stringData, ScriptLastValueType *lastValue, 
+		int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue,
 		GameScriptData *gsd, Game *game, bool *pause)
 	{
 		Ani *ani = AniManager::getInstance()->getCurrentScriptAni();
 
 		// WARNING: casting intData to float
 		// the intData may not always contain a proper float value!!!
-		float floatData = *((float *)&intData);
+		float floatData = intFloat.f;
 
 		switch(command)
 		{

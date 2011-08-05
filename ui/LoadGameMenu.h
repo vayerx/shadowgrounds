@@ -18,6 +18,8 @@ namespace game
 namespace ui
 {
 
+extern int mission_max;
+
 class LoadGameMenu : public MenuBaseImpl
 {
 public:

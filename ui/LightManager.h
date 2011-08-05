@@ -3,9 +3,8 @@
 
 #include <boost/scoped_ptr.hpp>
 #include <string>
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 #include "../game/unified_handle_type.h"
-#include "../editor/UniqueEditorObjectHandle.h"
 
 class IStorm3D;
 class IStorm3D_Scene;
@@ -16,12 +15,6 @@ namespace util
 {
 	class SelfIlluminationChanger;
 	class LightMap;
-}
-
-// bad dependency
-namespace game
-{
-	class UnifiedHandleManager;
 }
 
 class Terrain;
@@ -97,10 +90,6 @@ struct Light
 	float updateRange;
 	bool enabled;
 	bool dynamic;
-	bool attached;
-
-	bool brightnessHack;
-	int timeValue;
 
 	Light();
 };
@@ -175,32 +164,17 @@ public:
 	void removeLight(int light);
 	void clearLights();
 
-	// get unified handle for light with given unique editor object handle
-	// or return UNIFIED_HANDLE_NONE if no such light found.
-	UnifiedHandle findUnifiedHandleByUniqueEditorObjectHandle(UniqueEditorObjectHandle ueoh) const;
-
 	UnifiedHandle getUnifiedHandle(int lightId) const;
 	int getLightId(UnifiedHandle handle) const;
 	bool doesLightExist(UnifiedHandle handle) const;
 	UnifiedHandle getFirstLight() const;
 	UnifiedHandle getNextLight(UnifiedHandle handle) const;
 
-	VC3 getLightPosition(UnifiedHandle unifiedHandle) const;
-	void setLightPositionByUnifiedHandle(UnifiedHandle unifiedHandle, const VC3 &position);
-
-	UnifiedHandle findClosestLight(const VC3 &position);
-	UnifiedHandle findClosestDetachedLight(const VC3 &position);
-	void attachLight(UnifiedHandle light, UnifiedHandle toObject);
-
 	void getLighting(const VC3 &position, PointLights &lights, float radius, bool smoothedTransitions, bool includeFactor = true, IStorm3D_Model *override_model = NULL) const;
 	float getFakelightFactor(const VC3 &point) const;
 	COL getApproximatedLightingForIndices(const VC3 &position, const PointLights &lights) const;
 
-#if !(defined PROJECT_EDITOR) && !defined(PROJECT_VIEWER) && !defined(PROJECT_PARTICLE_EDITOR)
-	void update(const VC3 &player, const VC3 &center, int ms, game::UnifiedHandleManager *uhman);
-#else
-	void update(const VC3 &player, const VC3 &center, int ms, void *dummy);
-#endif
+	void update(const VC3 &player, const VC3 &center, int ms);
 
 	void setLightingSpotCullRange(float cullRange);
 	void setLightingSpotFadeoutRange(float fadeoutRange);

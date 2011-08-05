@@ -7,7 +7,7 @@
 // Includes
 //------------------------------------------------------------------
 #include "storm3d_common_imp.h"
-#include "storm3d_datatypes.h"
+#include "Storm3D_Datatypes.h"
 
 
 
@@ -20,7 +20,7 @@ struct ClipPlane
 	bool active;
 
 	ClipPlane() : active(false) {};
-	ClipPlane(const PLANE &pl) : active(true),plane(pl) {};
+	ClipPlane(const PLANE &pl) : plane(pl),active(true) {};
 };
 
 
@@ -74,7 +74,7 @@ struct IntLiList
 
 	// Creation
 	IntLiList() : next(NULL) {}
-	IntLiList(int _data) : next(NULL),data(_data) {}
+	IntLiList(int _data) : data(_data),next(NULL) {}
 
 	// Destructor (recursive)
 	~IntLiList()

@@ -11,6 +11,8 @@ namespace game
 		virtual bool runGamePhysicsScript(const char *scriptname, const char *subname) = 0;
 
 		virtual void *getGamePhysicsScriptRunnerImplementation() = 0;
+
+		virtual ~IGamePhysicsScriptRunner() {};
 	};
 }
 

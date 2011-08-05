@@ -2,6 +2,7 @@
 #define INCLUDED_ISTORM3D_STREAM_BUFFER_H
 
 #include <boost/shared_ptr.hpp>
+#include <SDL.h>
 
 class IStorm3D_Stream
 {
@@ -12,8 +13,8 @@ public:
 	virtual void deactivate() = 0;
 
 	// channels * bits
-	virtual void addSample(const char *buffer, int length, unsigned __int64 start, unsigned __int64 duration) = 0;
-	virtual unsigned __int64 getCurrentTime() const = 0;
+	virtual void addSample(const char *buffer, int length, Uint64 start, Uint64 duration) = 0;
+	virtual Uint64 getCurrentTime() const = 0;
 };
 
 class IStorm3D_StreamBuilder

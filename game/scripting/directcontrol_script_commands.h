@@ -33,16 +33,6 @@ GS_CMD_SIMPLE(19, directControlSetAimMode, STRING)
 GS_CMD_SIMPLE(20, directControlSetAimPositionIgnoringMode, NONE)
 GS_CMD_SIMPLE(21, directControlSetAimToPositionByMode, NONE)
 
-GS_CMD_SIMPLE(22, directControlAddCustomEventUsingTimeMsecValue, STRING)
-
-GS_CMD_SIMPLE(23, directControlClearEventFlagByName, STRING)
-GS_CMD_SIMPLE(24, directControlClearObjectTouchLeftEventFlag, NONE)
-GS_CMD_SIMPLE(25, directControlClearObjectTouchRightEventFlag, NONE)
-GS_CMD_SIMPLE(26, directControlClearStaticTouchLeftEventFlag, NONE)
-GS_CMD_SIMPLE(27, directControlClearStaticTouchRightEventFlag, NONE)
-GS_CMD_SIMPLE(28, directControlClearUnitTouchLeftEventFlag, NONE)
-GS_CMD_SIMPLE(29, directControlClearUnitTouchRightEventFlag, NONE)
-
 #undef GS_CMD_BASE
 
 // up to 2299

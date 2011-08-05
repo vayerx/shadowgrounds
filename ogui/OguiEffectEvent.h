@@ -2,10 +2,14 @@
 #ifndef OGUIEFFECTEVENT_H
 #define OGUIEFFECTEVENT_H
 
+
+#include <boost/utility.hpp>
+
+
 class OguiWindow;
 
 
-class OguiEffectEvent
+class OguiEffectEvent : public boost::noncopyable
 {
 public:
 
@@ -21,9 +25,12 @@ public:
 
   EVENT_TYPE eventType;
 
+  // not owned
   OguiWindow *triggerWindow;
 
   OguiEffectEvent(EVENT_TYPE evt, OguiWindow *trigwin);
+
+  ~OguiEffectEvent();
 };
 
 #endif

@@ -1,10 +1,16 @@
 #include "precompiled.h"
 
-#include <IStorm3D_VideoStreamer.h>
-
+#include <boost/lexical_cast.hpp>
 #include <fstream>
 #include <string.h>
 #include <stdio.h>
+
+#include <istorm3d_videostreamer.h>
+
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 #include "../util/fb_assert.h"
 #include "../container/LinkedList.h"
 #include "OguiException.h"
@@ -25,7 +31,9 @@
 #include "../game/options/options_locale.h"
 
 using namespace frozenbyte;
-#pragma warning(disable : 4290) 
+#ifdef _MSC_VER
+#pragma warning(disable : 4290)
+#endif
 
 extern int scr_size_x;
 extern int scr_size_y;
@@ -52,7 +60,7 @@ OguiStormFont::OguiStormFont()
 	isItalic = false;
 	fontWidth = 0;
 	fontHeight = 0;
-	COL color = COL(1.f, 1.f, 1.f);
+	col = COL(1.f, 1.f, 1.f);
 }
 
 OguiStormFont::~OguiStormFont()
@@ -90,7 +98,7 @@ int OguiStormFont::getStringWidth(const char *text)
 	if(!chrdef)
 	{
 		std::wstring uniText;
-		frozenbyte::util::convertToWide(text, uniText);
+		util::convertToWide(text, uniText);
 		
 		if( uniText.empty() == false )
 			return getStringWidth(uniText.c_str());
@@ -247,10 +255,12 @@ OguiStormDriver::~OguiStormDriver()
 		im->parent = NULL;
 	}
 
+#ifdef WIN32
 	for(unsigned int i = 0; i < fontResources.size(); i++)
 	{
 		RemoveFontResource(fontResources[i].c_str());
 	}
+#endif
 
 	og_setRendererScene(NULL);
 	og_setStorm3D(NULL);
@@ -286,7 +296,7 @@ IOguiImage *OguiStormDriver::LoadOguiImage(const char *filename)
 	{
 		// just to pass the (deleted) filename to exception data pointer
 		// helps debugging in case of exception, must not be used otherwise though
-		const char *invalidptr = filename; 
+		//const char *invalidptr = filename; 
 		delete tmp;
 		ogui_storm_driver_error("OguiStormDriver::LoadOguiImage - Could not load image.", filename);
 		//throw new OguiException(emsg, invalidptr);
@@ -394,7 +404,7 @@ IOguiFont *OguiStormDriver::LoadFont(const char *filename)
 	{
 		//filesystem::InputStream stream = filesystem::createInputFileStream(filename);
 		filesystem::InputStream stream = filesystem::FilePackageManager::getInstance().getFile(filename);
-		editor::Parser parser;
+		editor::EditorParser parser;
 		parser.readStream(stream);
 		const editor::ParserGroup &group = parser.getGlobals();
 
@@ -405,6 +415,9 @@ IOguiFont *OguiStormDriver::LoadFont(const char *filename)
 		bool bold = editor::convertFromString<bool> (group.getValue("bold"), false);
 		bool italic = editor::convertFromString<bool> (group.getValue("italic"), false);
 
+
+#ifdef WIN32
+		// / IGIOS TL: FIXME: whut?
 		// load unicode font from file hax
 		std::string fontFile = group.getValue("font_file");
 
@@ -426,9 +439,10 @@ IOguiFont *OguiStormDriver::LoadFont(const char *filename)
 			{
 				Logger::getInstance()->error( "OguiStromDriver::LoadFont() - Couldn't load font file" );
 			} else {
-				fontResources.push_back(fontFile);
+				fontResources.push_back(fontFile); // IGIOS TL: this should be kept even if everything else goes
 			}
 		}
+#endif
 
 		// Convert
 		width = scr_size_x * width / 1024;

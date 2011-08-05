@@ -12,9 +12,26 @@
 #include <map>
 #include <vector>
 #include <boost/shared_ptr.hpp>
+
+#ifdef WIN32
 #include <windows.h>
 
-namespace frozenbyte {
+#else
+#include <unistd.h>
+
+static inline int GetCurrentDirectory(int size, char *buf) {
+#ifdef __APPLE__
+	return strlen(getcwd(buf, size));
+#else
+	return strnlen(getcwd(buf, size), size);
+#endif
+}
+
+#define SetCurrentDirectory(dir) chdir((dir))
+
+#endif
+
+using namespace frozenbyte;
 namespace util {
 
 struct ModSelector::Data
@@ -37,11 +54,7 @@ struct ModSelector::Data
 
 	void findMods()
 	{
-#ifdef LEGACY_FILES
 		const std::string root = "Mods";
-#else
-		const std::string root = "mods";
-#endif
 
 		filesystem::StandardPackage files;
 		filesystem::FileList fileList;
@@ -55,7 +68,7 @@ struct ModSelector::Data
 		{
 			const std::string &fullName = fileList.getDirName(root, i);
 			std::string dirName;
-			int index = fullName.find_first_of("/\\");
+			std::string::size_type index = fullName.find_first_of("/\\");
 			if(index != fullName.npos)
 				dirName = fullName.substr(index + 1, fullName.size() - index - 1);
 
@@ -63,7 +76,7 @@ struct ModSelector::Data
 			if(stream.isEof())
 				continue;
 
-			editor::Parser parser;
+			editor::EditorParser parser;
 			stream >> parser;
 
 			const editor::ParserGroup &group = parser.getGlobals();
@@ -90,7 +103,7 @@ struct ModSelector::Data
 		filesystem::InputStream stream = filesystem::createInputFileStream("mods/active.txt");
 #endif
 
-		editor::Parser parser;
+		editor::EditorParser parser;
 		stream >> parser;
 
 		const editor::ParserGroup &group = parser.getGlobals();
@@ -106,7 +119,6 @@ struct ModSelector::Data
 		std::map<std::string, std::string>::iterator it = modList.begin();
 		for(; it != modList.end(); ++it)
 		{
-			const std::string &s = it->second;
 			if(strcmp(it->second.c_str(), active.c_str()) == 0)
 			{
 				for(unsigned int i = 0; i < modStringList.size(); ++i)
@@ -134,7 +146,7 @@ struct ModSelector::Data
 		//stream << file;
 
 		for(unsigned int i = 0; i < file.size(); ++i)
-			stream << unsigned char(file[i]);
+			stream << (unsigned char)(file[i]);
 	}
 
 	void restoreDir()
@@ -148,11 +160,7 @@ struct ModSelector::Data
 			return;
 
 		std::string dir = workingDir;
-#ifdef LEGACY_FILES
 		dir += "\\Mods\\";
-#else
-		dir += "\\mods\\";
-#endif
 		dir += active;
 
 		{
@@ -253,4 +261,3 @@ void ModSelector::changeDir()
 }
 
 } // util
-} // frozenbyte

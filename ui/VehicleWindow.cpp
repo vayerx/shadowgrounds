@@ -1,5 +1,10 @@
 #include "precompiled.h"
 
+#include <map>
+#include <list>
+#include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
+
 #include "VehicleWindow.h"
 
 #include "../game/Unit.h"
@@ -27,10 +32,7 @@
 
 #include "../game/DHLocaleManager.h"
 
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
-#include <map>
-#include <list>
+#include "igios.h"
 
 using namespace game;
 

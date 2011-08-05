@@ -27,7 +27,7 @@
 #include "../system/Logger.h"
 #include "../convert/str2int.h"
 
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 #define ANIRECW_CLOSE 1
 
@@ -82,7 +82,7 @@ namespace ui
 
 #ifdef LEGACY_FILES
 
-		char *bgpic = "Data/GUI/Windows/anirecorder.tga";
+		const char *bgpic = "Data/GUI/Windows/anirecorder.tga";
     win = ogui->CreateSimpleWindow(0, 0, 512, 256+40+16, bgpic);
 
 		font = ogui->LoadFont("Data/Fonts/anirecorder.ogf");
@@ -1738,7 +1738,7 @@ namespace ui
 
 		if (this->selectedUnit != NULL)
 		{
-			int selectionNumber = 0;
+			// int selectionNumber = 0;
 			bool selectionOk = false;
 			LinkedList *units = this->aniRecorder->getUnitList();
 			int unitnum = 0;
@@ -1748,7 +1748,7 @@ namespace ui
 				if (this->selectedUnit == u)
 				{
 					selectionOk = true;
-					selectionNumber = unitnum;
+					// selectionNumber = unitnum;
 					this->unitSelectList->setSelected(unitnum, true);
 				} else {
 					this->unitSelectList->setSelected(unitnum, false);

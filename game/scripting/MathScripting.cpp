@@ -20,9 +20,10 @@ using namespace ui;
 namespace game
 {
 	void MathScripting::process(util::ScriptProcess *sp, 
-		int command, int intData, char *stringData, ScriptLastValueType *lastValue, 
+		int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue,
 		GameScriptData *gsd, Game *game)
 	{
+		int intData = intFloat.i;
 		switch(command)
 		{
 		case GS_CMD_VALUEEQUALS:
@@ -166,14 +167,14 @@ namespace game
 
 		case GS_CMD_addFloatValue:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				gsd->floatValue += floatData;
 			}
 			break;
 
 		case GS_CMD_divideFloatValue:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				if (floatData != 0.0f)
 				{
 					gsd->floatValue /= floatData;
@@ -186,14 +187,14 @@ namespace game
 
 		case GS_CMD_multiplyFloatValue:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				gsd->floatValue *= floatData;
 			}
 			break;
 
 		case GS_CMD_floatValueEquals:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				if (gsd->floatValue == floatData)
 					*lastValue = 1;
 				else
@@ -203,7 +204,7 @@ namespace game
 
 		case GS_CMD_floatValueGreaterThan:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				if (gsd->floatValue > floatData)
 					*lastValue = 1;
 				else
@@ -213,7 +214,7 @@ namespace game
 
 		case GS_CMD_floatValueLessThan:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				if (gsd->floatValue < floatData)
 					*lastValue = 1;
 				else
@@ -227,7 +228,7 @@ namespace game
 
 		case GS_CMD_setFloatValue:
 			{
-				float floatData = *((float *)&intData);
+				float floatData = intFloat.f;
 				gsd->floatValue = floatData;
 			}
 			break;

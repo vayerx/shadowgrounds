@@ -18,6 +18,8 @@ namespace tracking
 		//virtual ITrackableObject *createNewTrackableObjectInstance() = 0;
 
 		virtual ITrackableObjectIterator *getTrackablesFromArea(const VC3 &globalPosition, float radius) = 0;
+
+		virtual ~ITrackableObjectFactory() {};
 	};
 
 }

@@ -14,7 +14,13 @@
 //------------------------------------------------------------------
 // Defines for DLL export/import
 //------------------------------------------------------------------
-#ifdef STORM3DV2_EXPORTS	// Do not define this inside your program!
+
+#if defined WIN32 && !defined __WINE__
+
+#ifdef __GNUC__
+	#define ST3D_EXP_DLLAPI
+	#define ST3D_IMP_DLLAPI
+#elif defined(STORM3DV2_EXPORTS)	// Do not define this inside your program!
 	#define ST3D_EXP_DLLAPI __declspec(dllexport)
 	#define ST3D_IMP_DLLAPI __declspec(dllimport)
 #else
@@ -22,6 +28,18 @@
 	#define ST3D_IMP_DLLAPI __declspec(dllexport)
 #endif
 
+#else
+
+
+#ifdef STORM3DV2_EXPORTS	// Do not define this inside your program!
+	#define ST3D_EXP_DLLAPI __attribute__((visibility("default")))
+	#define ST3D_IMP_DLLAPI 
+#else
+	#define ST3D_EXP_DLLAPI
+	#define ST3D_IMP_DLLAPI
+#endif
+
+#endif
 
 
 //------------------------------------------------------------------

@@ -400,7 +400,7 @@ int getMaterialFromString( const std::string& string )
 		}
 	}
 
-	char *getName()
+	const char *getName()
 	{
 		return "";
 	}
@@ -435,14 +435,14 @@ int getMaterialFromString( const std::string& string )
 			if (name != NULL) delete [] name;
 			name = new char[strlen(value) + 1];
 			strcpy(name, value);
-#ifndef PROJECT_SHADOWGROUNDS
+//#ifndef PROJECT_SHADOWGROUNDS
 			if (this->unitTypeId == 0)
 			{
 				int tmp;
 				UNIT_HASHCODE_CALC(name, &tmp);
 				setUnitTypeId(tmp);
 			}
-#endif
+//#endif
 			return true;
 		}
 		if (strcmp(key, "jumptiming") == 0)

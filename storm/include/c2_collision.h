@@ -3,54 +3,51 @@
 #ifndef INCLUDED_C2_COLLISION_H
 #define INCLUDED_C2_COLLISION_H
 
-#pragma once
+#include <stdlib.h>
 #include "c2_vectors.h"
 #include "c2_sphere.h"
 #include "c2_aabb.h"
 #include "c2_ray.h"
 #include "c2_oobb.h"
 
-namespace detail
+enum Outcode
 {
-	enum Outcode
-	{
-		RightClip = 1 << 0,
-		LeftClip = 1 << 1,
-		TopClip = 1 << 2,
-		BottomClip = 1 << 3,
-		FrontClip = 1 << 4,
-		BackClip = 1 << 5
-	};
+	RightClip = 1 << 0,
+	LeftClip = 1 << 1,
+	TopClip = 1 << 2,
+	BottomClip = 1 << 3,
+	FrontClip = 1 << 4,
+	BackClip = 1 << 5
+};
 
-	inline int getCohenSutherlandOutcode(const AABB &box, const VC3 &point)
-	{
-		int code = 0;
+static inline int getCohenSutherlandOutcode(const AABB &box, const VC3 &point)
+{
+	int code = 0;
 
-		const VC3 &max = box.mmax;
-		const VC3 &min = box.mmin;
+	const VC3 &max = box.mmax;
+	const VC3 &min = box.mmin;
 
-		float x = point.x;
-		float y = point.y;
-		float z = point.z;
+	float x = point.x;
+	float y = point.y;
+	float z = point.z;
 
-		if(x > max.x)
-			code |= RightClip;
-		else if(x < min.x)
-			code |= LeftClip;
+	if(x > max.x)
+		code |= RightClip;
+	else if(x < min.x)
+		code |= LeftClip;
 
-		if(y > max.y)
-			code |= TopClip;
-		else if(y < min.y)
-			code |= BottomClip;
+	if(y > max.y)
+		code |= TopClip;
+	else if(y < min.y)
+		code |= BottomClip;
 
-		if(z > max.z)
-			code |= BackClip;
-		else if(z < min.z)
-			code |= FrontClip;
+	if(z > max.z)
+		code |= BackClip;
+	else if(z < min.z)
+		code |= FrontClip;
 
-		return code;
-	}
-} // detail
+	return code;
+}
 
 inline bool collision(const Ray &ray, const Sphere &sphere)
 {
@@ -112,11 +109,11 @@ inline bool collision(const Ray &ray, const AABB &box)
 	VC3 directionVector = ray.direction * ray.range;
 	VC3 end = start + directionVector;
 
-	int outcode1 = detail::getCohenSutherlandOutcode(box, start);
+	int outcode1 = getCohenSutherlandOutcode(box, start);
 	if(!outcode1)
 		return true; // inside?
 
-	int outcode2 = detail::getCohenSutherlandOutcode(box, end);
+	int outcode2 = getCohenSutherlandOutcode(box, end);
 	if(!outcode2)
 		return true; // inside?
 
@@ -130,10 +127,10 @@ inline bool collision(const Ray &ray, const AABB &box)
 	// Find actual intersection
 	// Div by zero if ray is degenerate
 
-	if(outcode1 & (detail::RightClip | detail::LeftClip)) 
+	if(outcode1 & (RightClip | LeftClip)) 
 	{
 		float x = 0;
-		if(outcode1 & detail::RightClip) 
+		if(outcode1 & RightClip) 
 			x = max.x;
 		else
 			x = min.x;
@@ -147,10 +144,10 @@ inline bool collision(const Ray &ray, const AABB &box)
 			return true;
 	}
 
-	if(outcode1 & (detail::TopClip | detail::BottomClip)) 
+	if(outcode1 & (TopClip | BottomClip)) 
 	{
 		float y = 0;
-		if(outcode1 & detail::TopClip)
+		if(outcode1 & TopClip)
 			y = max.y;
 		else
 			y = min.y;
@@ -164,10 +161,10 @@ inline bool collision(const Ray &ray, const AABB &box)
 			return true;
 	}
 
-	if(outcode1 & (detail::FrontClip | detail::BackClip)) 
+	if(outcode1 & (FrontClip | BackClip)) 
 	{
 		float z = 0;
-		if(outcode1 & detail::BackClip)
+		if(outcode1 & BackClip)
 			z = max.z;
 		else
 			z = min.z;

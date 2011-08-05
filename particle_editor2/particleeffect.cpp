@@ -3,27 +3,29 @@
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
-
+#ifdef _MSC_VER
 #pragma warning( disable : 4800 )
+#endif
 
-#include <storm3d_ui.h>
-#include <boost/shared_ptr.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <vector>
 #include <string>
 #include <map>
 #include <list>
 #include <istream>
 #include <ostream>
-#include "..\editor\string_conversions.h"
-#include "..\editor\parser.h"
+#include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
+#include <Storm3D_UI.h>
+#include "../editor/string_conversions.h"
+#include "../editor/parser.h"
 #include "track.h"
 //#include "paramblock.h"
 #include "parseutil.h"
 #include "particlesystem.h"
 #include "particleeffect.h"
 #ifdef PHYSICS_PHYSX
-#include "particlephysics.h"
+#include "ParticlePhysics.h"
 #include "../physics/physics_lib.h"
 #endif
 
@@ -31,7 +33,8 @@
 #include "cloudparticlesystem.h"
 #include "modelparticlesystem.h"
 #include "pointarrayparticlesystem.h"
-#include <boost/shared_ptr.hpp>
+
+#include "igios.h"
 
 namespace frozenbyte {
 namespace particle {
@@ -212,7 +215,7 @@ public:
 		else
 		{
 			assert(!"undefined class name");
-			MessageBox(0, "Undefined class name.", "Error", MB_OK);
+			igiosErrorMessage("Undefined class name.");
 			return NULL;
 		}
 
@@ -287,7 +290,7 @@ void ParticleEffectManager::recreate(IStorm3D* s3d, IStorm3D_Scene* scene) {
 }
 
 
-int ParticleEffectManager::loadParticleEffect(const Parser& parser) {
+int ParticleEffectManager::loadParticleEffect(const EditorParser& parser) {
 	const ParserGroup& g = parser.getGlobals();
 	const ParserGroup& eg = g.getSubGroup("effect");
 	int nSystems = convertFromString<int>(eg.getValue("num_systems", "0"), 0);
@@ -496,8 +499,10 @@ void ParticleEffectManager::tick() {
 void ParticleEffectManager::render() 
 {
 #ifdef PHYSICS_PHYSX
+#ifndef NX_DISABLE_FLUIDS
 	if(physics)
 		physics->resetFluidRendering();
+#endif
 #endif
 
 	std::list< boost::shared_ptr<IParticleSystem> >::iterator it = m_systems.begin();

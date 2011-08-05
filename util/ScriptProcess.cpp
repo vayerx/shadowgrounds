@@ -4,9 +4,6 @@
 
 #include "ScriptProcess.h"
 
-// TEMP
-#include <windows.h>
-
 #include <assert.h>
 #include "Script.h"
 #include "../system/Logger.h"
@@ -170,7 +167,7 @@ namespace util
 			while (iter.iterateAvailable())
 			{
 				// WARNING: unsafe cast - is this really an int??? (i think it is :)
-				int val = (int)iter.iterateNext();
+				intptr_t val = (intptr_t)iter.iterateNext();
 				this->ipStack->append((void *)val);
 			}
 		}
@@ -179,7 +176,7 @@ namespace util
 			while (iter.iterateAvailable())
 			{
 				// WARNING: unsafe cast - is this really an int??? (i think it is :)
-				int val = (int)iter.iterateNext();
+				intptr_t val = (intptr_t)iter.iterateNext();
 				this->userStack->append((void *)val);
 			}
 			this->userStackSize = otherScriptProcess->userStackSize;

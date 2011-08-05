@@ -1,0 +1,22 @@
+!!ARBfp1.0
+OPTION ARB_precision_hint_fastest;
+OUTPUT outColor = result.color;
+TEMP r0, r1, t0, t1, t2;
+# Weights
+TEX t0, fragment.texcoord[0], texture[0], 2D;
+# Source1
+TEX t1, fragment.texcoord[1], texture[1], 2D;
+# Source2
+TEX t2, fragment.texcoord[2], texture[2], 2D;
+# Texture 1
+#mov r0.a, t0.b
+#mul r0, t1, r0.a
+# Texture 2
+#mad r0, t2, t0.a, r0
+MUL r0.rgb, t2, t0.a;
+#MOV r1.a, t0.b;
+# Texture 2
+MAD outColor.rgb, t1, t0.r, r0;
+MOV outColor.a, t1.a;
+#MOV outColor, r0;
+END

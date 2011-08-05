@@ -3,7 +3,7 @@
 #ifndef INCLUDED_ISTORM3D_FAKESPOTLIGHT_H
 #define INCLUDED_ISTORM3D_FAKESPOTLIGHT_H
 
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 #include <boost/shared_ptr.hpp>
 
 class IStorm3D_FakeSpotlight

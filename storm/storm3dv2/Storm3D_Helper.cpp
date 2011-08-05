@@ -25,9 +25,9 @@
 //------------------------------------------------------------------
 Storm3D_Helper::Storm3D_Helper(char *_name,Storm3D_Model *_parent_model,
 							 Storm3D_Helper::HTYPE _helper_type) :
-	update_globals(true),
 	parent_model(_parent_model),
 	parent_object(NULL),
+	update_globals(true),
 	helper_type(_helper_type)
 {
 	// Create name

@@ -2,7 +2,7 @@
 #define INCLUDED_DECALMANAGER_H
 
 #include <boost/scoped_ptr.hpp>
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 #include <vector>
 
 class IStorm3D_TerrainDecalSystem;

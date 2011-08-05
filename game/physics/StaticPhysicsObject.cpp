@@ -1,5 +1,10 @@
-
 #include "precompiled.h"
+
+#include <assert.h>
+#include <string>
+#include <map>
+
+#include <boost/foreach.hpp>
 
 #include "StaticPhysicsObject.h"
 
@@ -12,14 +17,13 @@
 #include "../../physics/static_mesh_actor.h"
 #include "../../physics/actor_base.h"
 #include <IStorm3D_Model.h>
+#include <igios.h>
 #endif
-#include <assert.h>
-#include <string>
 
 namespace game
 {
 #ifdef PHYSICS_PHYSX
-	typedef std::map<std::string, boost::shared_ptr<frozenbyte::physics::StaticMesh>> MeshHash;
+	typedef std::map<std::string, boost::shared_ptr<frozenbyte::physics::StaticMesh> > MeshHash;
 #endif
 
 	class StaticPhysicsObjectImpl
@@ -60,6 +64,14 @@ namespace game
 			frozenbyte::physics::Cooker cooker;
 			std::string cookfile = filename + ".cook";
 
+			// normalize
+			// FIXME: ugly hack
+			// remove and fix the datafiles
+			BOOST_FOREACH (char &c, cookfile)
+			{
+				if (c == '\\') c = '/';
+			}
+
 			if (!FileTimestampChecker::isFileUpToDateComparedTo(cookfile.c_str(), filename.c_str()))
 			{
 				// cooking failed
@@ -86,7 +98,7 @@ namespace game
 				return boost::shared_ptr<frozenbyte::physics::StaticMesh>();
 			}
 
-			meshHash.insert(std::pair<std::string, boost::shared_ptr<frozenbyte::physics::StaticMesh>>(filename, m));
+			meshHash.insert(std::pair<std::string, boost::shared_ptr<frozenbyte::physics::StaticMesh> >(filename, m));
 
 			// MOVED FROM BUILDINGADDER
 			if(model)
@@ -114,25 +126,23 @@ namespace game
 #endif
 
 
-	StaticPhysicsObject::StaticPhysicsObject(GamePhysics *gamePhysics, const char *filename, IStorm3D_Model *model, const VC3 &position, const QUAT &rotation, int collisionGroup) 
+	StaticPhysicsObject::StaticPhysicsObject(GamePhysics *gamePhysics, const char *filename, IStorm3D_Model *model, const VC3 &position, const QUAT &rotation) 
 		: AbstractPhysicsObject(gamePhysics)
 	{ 
 		this->impl = new StaticPhysicsObjectImpl(filename, model);
 		this->position = position;
 		this->rotation = rotation;
 		this->dynamicActor = false;
-		this->collisionGroup = collisionGroup;
 	}
 
 #ifdef PHYSICS_PHYSX
-	StaticPhysicsObject::StaticPhysicsObject(GamePhysics *gamePhysics, boost::shared_ptr<frozenbyte::physics::StaticMesh> &mesh, const VC3 &position, const QUAT &rotation, int collisionGroup)
+	StaticPhysicsObject::StaticPhysicsObject(GamePhysics *gamePhysics, boost::shared_ptr<frozenbyte::physics::StaticMesh> &mesh, const VC3 &position, const QUAT &rotation)
 		: AbstractPhysicsObject(gamePhysics)
 	{
 		this->impl = new StaticPhysicsObjectImpl(mesh);
 		this->position = position;
 		this->rotation = rotation;
 		this->dynamicActor = false;
-		this->collisionGroup = collisionGroup;
 	}
 #endif
 
@@ -147,7 +157,7 @@ namespace game
 		boost::shared_ptr<frozenbyte::physics::StaticMesh> staticMeshSPtr = impl->getMesh(gamePhysics, position, rotation);
 		
 		// cooking failed
-		if(!staticMeshSPtr || !staticMeshSPtr->getMesh())
+		if(!staticMeshSPtr)
 		{
 			// return NULL pointer
 			return PHYSICS_ACTOR();
@@ -156,10 +166,7 @@ namespace game
 		boost::shared_ptr<frozenbyte::physics::ActorBase> actor = gamePhysics->getPhysicsLib()->createStaticMeshActor(staticMeshSPtr, position, rotation);
 
 		if(actor)
-		{
-			actor->setCollisionGroup(this->collisionGroup);
 			actor->setIntData(soundMaterial);
-		}
 
 		if(impl->mesh)
 			impl->mesh.reset();
@@ -180,23 +187,6 @@ namespace game
 	{
 		// this is a static object, no syncing...
 		//AbstractPhysicsObject::syncImplementationObject(obj);
-	}
-
-	void StaticPhysicsObject::syncInactiveImplementationObject(PHYSICS_ACTOR &obj)
-	{
-		if (moveToPosition)
-		{
-			obj->setPosition(position);
-			moveToPosition = false;
-		}
-
-		if (moveToRotation)
-		{
-			obj->setRotation(rotation);
-			moveToRotation = false;
-		}
-
-		this->dirty = false;
 	}
 
 	void StaticPhysicsObject::clearImplementationResources()

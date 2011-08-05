@@ -1,6 +1,8 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 //------------------------------------------------------------------
 // Includes
@@ -14,180 +16,21 @@
 #include "storm3d_model_object.h"
 #include "storm3d_helper.h"
 #include "storm3d_light.h"
-#include "..\..\filesystem\input_stream_wrapper.h"
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../filesystem/input_stream_wrapper.h"
+#include "../../util/Debug_MemoryManager.h"
 
 int storm3d_bone_allocs = 0;
 using namespace frozenbyte;
 
-//------------------------------------------------------------------
-// Storm3D_BoneAnimation
-//------------------------------------------------------------------
-Storm3D_BoneAnimation::Storm3D_BoneAnimation(const char *filename)
-:	reference_count(1), 
-	bone_id(0),
-
-	loop_time(0)
+//! Constructor
+Storm3D_BoneAnimation::Storm3D_BoneAnimation(const char *file_name)
+:	bone_id(0),
+	loop_time(0),
+	reference_count(1)
 {
 	successfullyLoaded = false;
 
-	bool combine = false;
-	std::string combineWithFilename;
-	std::vector<std::string> combineBoneNames;
-
-	char actual_filename[512+1];
-	int filename_len = strlen(filename);
-	if (filename_len < 512) 
-	{
-		strcpy(actual_filename, filename);
-		for (int i = 0; i < filename_len; i++)
-		{
-			if (actual_filename[i] == '@')
-			{
-				int restoreAtPos = -1;
-				for (int j = i+1; j < filename_len; j++)
-				{
-					if (actual_filename[j] == '@')
-					{
-						actual_filename[j] = '\0';
-						restoreAtPos = j;
-						break;
-					}
-				}
-				actual_filename[i] = '\0';
-
-				combine = true;
-
-				bool gotFirstOne = false;
-				int lastCommaPos = i;
-				for (int j = i + 1; j < filename_len + 1; j++)
-				{
-					if (actual_filename[j] == '+'
-						|| actual_filename[j] == '\0')
-					{
-						// interpret first token as filename, rest as bone names
-						if (!gotFirstOne)
-						{
-							// file name
-							assert(j >= (lastCommaPos + 1));
-							combineWithFilename = std::string(&actual_filename[lastCommaPos + 1]).substr(0, j - (lastCommaPos + 1));
-							if (combineWithFilename.empty())
-							{
-								assert(!"Storm3D_BoneAnimation - Combine filename empty.");
-								/*
-								if (Storm3D2->getLogger() != NULL)
-								{
-									Storm3D2->getLogger()->warning("Storm3D_BoneAnimation - Combine filename empty.");
-									Storm3D2->getLogger()->debug(filename);
-								}
-								*/
-							}
-							lastCommaPos = j;
-							gotFirstOne = true;
-						} else {
-							// bone name
-							assert(j >= (lastCommaPos + 1));
-							std::string tmp = std::string(&actual_filename[lastCommaPos + 1]).substr(0, j - (lastCommaPos + 1));
-							if (tmp.empty())
-							{
-								assert(!"Storm3D_BoneAnimation - Combine bone name empty.");
-								/*
-								if (Storm3D2->getLogger() != NULL)
-								{
-									Storm3D2->getLogger()->warning("Storm3D_Model::LoadBones - Combine bone name empty.");
-									Storm3D2->getLogger()->debug(filename);
-								}
-								*/
-							} else {
-								combineBoneNames.push_back(tmp);
-							}
-							lastCommaPos = j;							
-						}
-						if (actual_filename[j] == '\0')
-							break;
-					}
-				}
-				if (restoreAtPos != -1)
-				{
-					actual_filename[restoreAtPos] = '@';
-				}
-			}	
-		}
-	} else {
-		assert(0);
-		return;
-	}
-
-	std::vector<std::string> boneNamesByNumber;
-	if (combine)
-	{
-		/*
-		if (Storm3D2->getLogger() != NULL)
-		{
-			Storm3D2->getLogger()->debug((std::string("Storm3D_BoneAnimation - Combining with animation: ") + combineWithFilename).c_str());
-			for (int i = 0; i < (int)combineBoneNames.size(); i++)
-			{
-				Storm3D2->getLogger()->debug((std::string("bone: ") + combineBoneNames[i]).c_str());
-			}
-		}
-		*/
-		// HACK: since the animation file itself does not contain bone names, i'm reading in 
-		// a hacky file which contains the names.
-		// TODO: should modify the animation file format and exporter instead (yikes!)
-		std::string bonenames = actual_filename;
-		for (int i = (int)bonenames.length(); i >= 0; i--)
-		{
-			if (bonenames[i] == '/'
-				|| bonenames[i] == '\\')
-			{
-				std::string foldername = bonenames.substr(0, i + 1);
-				bonenames = foldername + "bone_names";
-
-				if (combineWithFilename.length() >= 5 
-					&& combineWithFilename.substr(0, 5) == "data/")
-				{
-					// absolute path for another animation, so do nothing to it
-				} else {
-					// relative path
-					combineWithFilename = foldername + combineWithFilename;
-				}
-				break;
-			}
-		}
-		bonenames += ".bnam";
-
-		filesystem::FB_FILE *fp = filesystem::fb_fopen(bonenames.c_str(), "rb");
-		if(fp != NULL)
-		{
-			int filesize = filesystem::fb_fsize(fp);
-			char *buf = new char[filesize + 1];
-			filesystem::fb_fread(buf, filesize, 1, fp);
-			buf[filesize] = '\0';
-
-			int lastPos = 0;
-			for (int i = 0; i < filesize; i++)
-			{
-				if (buf[i] == '\r' || buf[i] == '\n')
-				{
-					buf[i] = '\0';
-					if (i > lastPos)
-					{
-						std::string tmp = &buf[lastPos];
-						boneNamesByNumber.push_back(tmp);
-					}
-					lastPos = i + 1;
-				}
-			}
-
-			delete [] buf;
-			filesystem::fb_fclose(fp);
-		} else {
-			assert(!"Storm3D_BoneAnimation - No bone names file found.");
-		}
-	}
-		
-
-	filesystem::FB_FILE *fp = filesystem::fb_fopen(actual_filename, "rb");
+	filesystem::FB_FILE *fp = filesystem::fb_fopen(file_name, "rb");
 	if(fp == 0)
 		return;
 
@@ -207,12 +50,6 @@ Storm3D_BoneAnimation::Storm3D_BoneAnimation(const char *filename)
 	
 	int bone_count = 0;
 	filesystem::fb_fread(&bone_count, sizeof(int), 1, fp);
-
-	if (combine)
-	{
-		// TODO: need a logger instead of assert.
-		assert(boneNamesByNumber.size() == bone_count);
-	}
 
 	// resize containers
 	bone_rotations.resize(bone_count);
@@ -244,144 +81,68 @@ Storm3D_BoneAnimation::Storm3D_BoneAnimation(const char *filename)
 				bone_positions[i].push_back(std::pair<int,Vector>(time,position));
 			}
 		}
-
-		if (combine
-			&& boneNamesByNumber.size() == bone_count)
-		{
-			for (int bn = 0; bn < (int)combineBoneNames.size(); bn++)
-			{
-				if (boneNamesByNumber[i] == combineBoneNames[bn])
-				{
-					// replace this bone animation data with another...
-
-					// HACK: copy&paste ahead. should definately refactor this whole thing...
-					filesystem::FB_FILE *fp_rep = filesystem::fb_fopen(combineWithFilename.c_str(), "rb");
-					if(fp_rep != 0)
-					{
-						char header_rep[5] = { 0 };
-						filesystem::fb_fread(header_rep, sizeof(char), 5, fp_rep);
-						if((memcmp(header_rep,"ANM11",5) != 0))
-						{
-							filesystem::fb_fclose(fp_rep);
-							return;
-						}
-
-						int dummy1;
-						int dummy2;
-
-						// Bone id
-						filesystem::fb_fread(&dummy1, sizeof(int), 1, fp_rep);
-
-						// Loop time in ms
-						filesystem::fb_fread(&dummy2, sizeof(int), 1, fp_rep);
-						
-						int bone_count_rep = 0;
-						filesystem::fb_fread(&bone_count_rep, sizeof(int), 1, fp_rep);
-
-						assert(bone_count_rep == bone_count);
-
-						// For every bone
-						for(int i_rep = 0; i_rep < bone_count_rep; ++i_rep)
-						{
-							int key_count_rep = 0;
-							filesystem::fb_fread(&key_count_rep, sizeof(int), 1, fp_rep);
-							
-							int position_key_count_rep = 0;
-							filesystem::fb_fread(&position_key_count_rep, sizeof(int), 1, fp_rep);
-
-							if (i_rep == i)
-							{
-								bone_rotations[i].clear();
-								bone_positions[i].clear();
-							}
-
-							for(int j_rep = 0; j_rep < key_count_rep; ++j_rep)
-							{
-								int time_rep;
-								Rotation rotation_rep;
-								Vector position_rep;
-
-								filesystem::fb_fread(&time_rep, sizeof(int), 1, fp_rep);
-								filesystem::fb_fread(&rotation_rep, sizeof(float), 4, fp_rep);
-
-								if (i_rep == i)
-								{
-									bone_rotations[i].push_back(std::pair<int,Rotation>(time_rep,rotation_rep));
-								}
-
-								if(position_key_count_rep > 0)
-								{
-									filesystem::fb_fread(&position_rep, sizeof(float), 3, fp_rep);
-									if (i_rep == i)
-									{
-										bone_positions[i].push_back(std::pair<int,Vector>(time_rep,position_rep));
-									}
-								}
-							}
-						}
-
-						filesystem::fb_fclose(fp_rep);
-					} else {
-						assert(!"Storm3D_BoneAnimation - Failed to open animation file used in combine.");
-					}
-					// (end of copy&paste)
-
-					break;
-				}
-			}
-		}
-
 	}
 
 	filesystem::fb_fclose(fp);
 	successfullyLoaded = true;	
 }
 
+//! Destructor
 Storm3D_BoneAnimation::~Storm3D_BoneAnimation()
 {
 }
 
-
+//! Check if bone animation was loaded successfully
+/*!
+	\return true if loading was success
+*/
 bool Storm3D_BoneAnimation::WasSuccessfullyLoaded() const
 {
 	return successfullyLoaded;
 }
 
+//! Add reference to bone animation
 void Storm3D_BoneAnimation::AddReference()
 {
 	++reference_count;
 }
 
+//! Release reference from bone animation
 void Storm3D_BoneAnimation::Release()
 {
 	if(--reference_count == 0)
 		delete this;
 }
 
+//! Get length of bone animation
+/*!
+	\return animation loop duration
+*/
 int Storm3D_BoneAnimation::GetLength()
 {
 	return loop_time;
 }
 
+//! Get ID of bone animation
+/*!
+	\return animation ID
+*/
 int Storm3D_BoneAnimation::GetId()
 {
 	return bone_id;
 }
 
-// Search for key index
 // ToDo: change to binary seach
 template<class T>
+
+//! Search for key index
+/*!
+	\param keys animation keys
+	\param time time
+	\return index
+*/
 static int SearchIndexNext(const std::vector<T> &keys, int time)
 {
-/*
-	for(int i = 0; i < keys.size(); ++i)
-	{
-		if(keys[i].first > time)
-			return i;
-	}
-
-	return 0;
-*/
 	// Constant fps 25
 	int index =  (time / 40) + 1;
 	if(index < int(keys.size()))
@@ -390,6 +151,13 @@ static int SearchIndexNext(const std::vector<T> &keys, int time)
 	return 0;
 }
 
+//! Get rotation of given bone at given time
+/*!
+	\param bone_index bone index
+	\param time time
+	\param result pointer to rotation structure
+	\return true if found
+*/
 bool Storm3D_BoneAnimation::GetRotation(int bone_index, int time, Rotation *result) const
 {
 	time %= loop_time;
@@ -430,10 +198,16 @@ bool Storm3D_BoneAnimation::GetRotation(int bone_index, int time, Rotation *resu
 
 	// Slerp (interpolate). Now this is final rotation
 	*result = prev_key.second.GetSLInterpolationWith(next_key.second, slerp_amount);
-	//*result = prev_key.second;
 	return true;
 }
 
+//! Get position of given bone at given time
+/*!
+	\param bone_index bone index
+	\param time time
+	\param result pointer to position vector
+	\return true if found
+*/
 bool Storm3D_BoneAnimation::GetPosition(int bone_index, int time, Vector *result) const
 {
 	time %= loop_time;
@@ -479,21 +253,18 @@ bool Storm3D_BoneAnimation::GetPosition(int bone_index, int time, Vector *result
 	return true;
 }
 
-
-//------------------------------------------------------------------
-// Storm3D_Bone
-//------------------------------------------------------------------
+//! Constructor
 Storm3D_Bone::Storm3D_Bone()
 :	name(NULL),
 	global_tm_ok(false),
 	has_childs(false),
-	useForceTransform(false),
-	noCollision(false)
+	useForceTransform(false)
 
 {
 	storm3d_bone_allocs++;
 }
 
+//! Destructor
 Storm3D_Bone::~Storm3D_Bone()
 {
 	storm3d_bone_allocs--;
@@ -518,11 +289,22 @@ Storm3D_Bone::~Storm3D_Bone()
 	}
 }
 
+//! Get original global rotation
+/*!
+	\return rotation
+*/
 QUAT Storm3D_Bone::GetOriginalGlobalRotation()
 {
 	return original_inverse_tm.GetRotation().GetInverse();
 }
 
+//! Set original properties of bone
+/*!
+	\param position bone position
+	\param rotation bone rotation
+	\param model_position parent model position
+	\param model_rotation parent model rotation
+*/
 void Storm3D_Bone::SetOriginalProperties(const Vector &position, const Rotation &rotation, const Vector &model_position, const Rotation &model_rotation)
 {
 	this->position = position;
@@ -538,37 +320,31 @@ void Storm3D_Bone::SetOriginalProperties(const Vector &position, const Rotation 
 	original_inverse_tm.Inverse();
 }
 
+//! Set special properties of bone
+/*!
+	\param length_ bone length
+	\param thickness_ bone thickness
+*/
 void Storm3D_Bone::SetSpecialProperties(float length_, float thickness_)
 {
 	length = length_;
 	thickness = thickness_;
 }
 
+//! Set parent index of bone
+/*!
+	\param index index
+*/
 void Storm3D_Bone::SetParentIndex(int index)
 {
 	parent_index = index;
 }
 
-void Storm3D_Bone::SetNoCollision(bool noCollision)
-{
-	this->noCollision = noCollision;
-}
-
-/*
-float Storm3D_Bone::GetLenght()
-{
-	return length;
-}
-
-float Storm3D_Bone::GetThickness()
-{
-	return thickness;
-}
-
-int Storm3D_Bone::GetParentIndex()
-{
-	return parent_index;
-}
+//! Animate bone position
+/*!
+	\param animated_position new position of bone
+	\param interpolate_amount amount of interpolation
+	\param interpolate true to use interpolation
 */
 void Storm3D_Bone::AnimatePosition(const Vector &animated_position, float interpolate_amount, bool interpolate)
 {
@@ -581,6 +357,12 @@ void Storm3D_Bone::AnimatePosition(const Vector &animated_position, float interp
 	}
 }
 
+//! Animate bone rotation
+/*!
+	\param animated_rotation new rotation of bone
+	\param interpolate_amount amount of interpolation
+	\param interpolate true to use interpolation
+*/
 void Storm3D_Bone::AnimateRotation(const Rotation &animated_rotation, float interpolate_amount, bool interpolate)
 {
 	if(interpolate == false)
@@ -589,6 +371,12 @@ void Storm3D_Bone::AnimateRotation(const Rotation &animated_rotation, float inte
 		current_rotation = current_rotation.GetSLInterpolationWith(animated_rotation, interpolate_amount);
 }
 
+//! Animate bone rotation relatively
+/*!
+	\param animated_rotation new rotation of bone
+	\param interpolate_amount amount of interpolation
+	\param interpolate true to use interpolation
+*/
 void Storm3D_Bone::AnimateRelativeRotation(const Rotation &animated_rotation, float interpolate_amount, bool interpolate)
 {
 	Rotation relative_rotation = animated_rotation * rotation.GetInverse();
@@ -600,6 +388,10 @@ void Storm3D_Bone::AnimateRelativeRotation(const Rotation &animated_rotation, fl
 		current_rotation = current_rotation.GetSLInterpolationWith(final_rotation, interpolate_amount);
 }
 
+//! Set name of bone
+/*!
+	\param name name
+*/
 void Storm3D_Bone::SetName(const char *name)
 {
 	delete[] this->name;
@@ -608,11 +400,19 @@ void Storm3D_Bone::SetName(const char *name)
 	strcpy(this->name, name);
 }
 
+//! Get name of bone
+/*!
+	\return name
+*/
 const char *Storm3D_Bone::GetName() const
 {
 	return name;
 }
 
+//! Inform bone that its parent has moved
+/*!
+	\param new_parent_tm new parent translation matrix
+*/
 void Storm3D_Bone::ParentMoved(const Matrix &new_parent_tm)
 {
 	parent_tm = new_parent_tm;
@@ -622,6 +422,10 @@ void Storm3D_Bone::ParentMoved(const Matrix &new_parent_tm)
 	InformChangeToChilds();
 }
 
+//! Inform bone that its parent has moved
+/*!
+	\param pos new parent position vector
+*/
 void Storm3D_Bone::ParentPositionMoved(const VC3 &pos)
 {
 	// HAX to update bone helper _positions_ instantly
@@ -636,6 +440,7 @@ void Storm3D_Bone::ParentPositionMoved(const VC3 &pos)
 		(*ih)->update_globals = true;
 }
 
+//! Propagate bone position changes to its children
 void Storm3D_Bone::InformChangeToChilds()
 {
 	// This cyclic, friend trusting systems just sucks
@@ -650,6 +455,10 @@ void Storm3D_Bone::InformChangeToChilds()
 		(*ih)->update_globals = true;
 }
 
+//! Add child to bone
+/*!
+	\param object new child object
+*/
 void Storm3D_Bone::AddChild(IStorm3D_Model_Object *object)
 {
 	Storm3D_Model_Object *o = static_cast<Storm3D_Model_Object*> (object);
@@ -663,13 +472,15 @@ void Storm3D_Bone::AddChild(IStorm3D_Model_Object *object)
 	InformChangeToChilds();
 }
 
+//! Add child to bone
+/*!
+	\param helper_ new helper child object
+*/
 void Storm3D_Bone::AddChild(IStorm3D_Helper *helper_)
 {
-/*
 	// Reinterpret cast since AInterface should be derived from IHelper
 	// This is safe anyway (as far as reinterpret's can)
-	Storm3D_Helper_AInterface *helper = reinterpret_cast<Storm3D_Helper_AInterface *> (helper_);
-*/
+	//Storm3D_Helper_AInterface *helper = reinterpret_cast<Storm3D_Helper_AInterface *> (helper_);
 	Storm3D_Helper_AInterface *helper = 0;
 
 	switch(helper_->GetHelperType())
@@ -713,6 +524,10 @@ void Storm3D_Bone::AddChild(IStorm3D_Helper *helper_)
 	InformChangeToChilds();
 }
 
+//! Remove child from bone
+/*!
+	\param object child object to remove
+*/
 void Storm3D_Bone::RemoveChild(IStorm3D_Model_Object *object)
 {
 	Storm3D_Model_Object *o = static_cast<Storm3D_Model_Object*> (object);
@@ -721,6 +536,10 @@ void Storm3D_Bone::RemoveChild(IStorm3D_Model_Object *object)
 	objects.erase(o);
 }
 
+//! Remove child from bone
+/*!
+	\param helper_ helper child object to remove
+*/
 void Storm3D_Bone::RemoveChild(IStorm3D_Helper *helper_)
 {
 	Storm3D_Helper_AInterface *helper = 0;
@@ -761,6 +580,12 @@ void Storm3D_Bone::RemoveChild(IStorm3D_Helper *helper_)
 	helpers.erase(helper);
 }
 
+//! Set force transformation
+/*!
+	\param useForceSettings true to use force settings
+	\param position force position
+	\param rotation force rotation
+*/
 void Storm3D_Bone::SetForceTransformation(bool useForceSettings, const VC3 &position, const QUAT &rotation)
 {
 	forcePosition = position;
@@ -768,6 +593,10 @@ void Storm3D_Bone::SetForceTransformation(bool useForceSettings, const VC3 &posi
 	useForceTransform = useForceSettings;
 }
 
+//! Transform a set of bones
+/*!
+	\param bones bones to transform
+*/
 void Storm3D_Bone::TransformBones(std::vector<Storm3D_Bone*> *bones)
 {
 	Matrix t;
@@ -780,7 +609,6 @@ void Storm3D_Bone::TransformBones(std::vector<Storm3D_Bone*> *bones)
 		{
 			b->model_tm.CreateRotationMatrix(b->forceRotation);
 			t.CreateTranslationMatrix(b->forcePosition);
-			//b->model_tm = t;
 			b->model_tm.Multiply(t);
 		}
 		else

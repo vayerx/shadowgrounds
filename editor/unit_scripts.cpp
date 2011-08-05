@@ -7,6 +7,7 @@
 #include "string_conversions.h"
 #include "parser.h"
 #include "../filesystem/input_file_stream.h"
+#include "../filesystem/file_package_manager.h"
 #include <istorm3d_model.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
@@ -19,9 +20,9 @@ namespace frozenbyte {
 namespace editor {
 namespace {
 #ifdef LEGACY_FILES
-	const char *unitName = "Editor/Units.fbpt";
-	const char *scriptName = "Editor/Scripts.fbt";
-	const char *configName = "Editor/Configurations.fbt";
+	const char *unitName = "Editor\\Units.fbpt";
+	const char *scriptName = "Editor\\Scripts.fbt";
+	const char *configName = "Editor\\Configurations.fbt";
 #else
 	const char *unitName = "editor/units.fbpt";
 	const char *scriptName = "editor/scripts.fbpt";
@@ -290,9 +291,9 @@ struct UnitScriptsData
 		//std::ifstream(unitName) >> unitParser;
 		//std::ifstream(configName) >> configParser;
 		//std::ifstream(scriptName) >> scriptParser;
-		filesystem::createInputFileStream(unitName) >> unitParser;
-		filesystem::createInputFileStream(configName) >> configParser;
-		filesystem::createInputFileStream(scriptName) >> scriptParser;
+		filesystem::FilePackageManager::getInstance().getFile(unitName) >> unitParser;
+		filesystem::FilePackageManager::getInstance().getFile(configName) >> configParser;
+		filesystem::FilePackageManager::getInstance().getFile(scriptName) >> scriptParser;
 
 		parseUnits(unitParser);
 		parseConfigs(configParser);

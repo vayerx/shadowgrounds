@@ -1,6 +1,8 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 //------------------------------------------------------------------
 // Includes
@@ -13,18 +15,17 @@
 #include "storm3d_texture.h"
 #include "storm3d_scene.h"
 #include "VertexFormats.h"
+#include "igios3D.h"
 
 #include "Storm3D_Bone.h"
 #include "Storm3D_ShaderManager.h"
 #include <algorithm>
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 int storm3d_mesh_allocs = 0;
 int storm3d_dip_calls = 0;
 
-//------------------------------------------------------------------
-// Storm3D_Mesh::Storm3D_Mesh
-//------------------------------------------------------------------
+//! Constructor
 Storm3D_Mesh::Storm3D_Mesh(Storm3D *s2, Storm3D_ResourceManager &resourceManager_) :
 	Storm3D2(s2),
 	resourceManager(resourceManager_),
@@ -33,31 +34,34 @@ Storm3D_Mesh::Storm3D_Mesh(Storm3D *s2, Storm3D_ResourceManager &resourceManager
 	render_vertex_amount(0),
 	hasLods(false),
 	vertexes(NULL),
-	dx_vbuf(NULL),
+	bone_weights(NULL),
+	vbuf(0),
+	radius(0),
+	sq_radius(0),
+	radius2d(0),
+	rb_update_needed(true),
 	update_vx(true),
 	update_vx_amount(true),
 	update_fc(true),
 	update_fc_amount(true),
 	col_rebuild_needed(true),
-	radius(0),
-	sq_radius(0),
-	radius2d(0),
-	rb_update_needed(true),
-	bone_weights(NULL),
 	sphere_ok(false),
-	box_ok(false),
-	collision_faces(-1)
+	box_ok(false)
 {
 	for(int i = 0; i < LOD_AMOUNT; ++i)
 	{
 		render_face_amount[i] = 0;
 		face_amount[i] = 0;
 		faces[i] = 0;
-		dx_ibuf[i] = 0;
+		ibuf[i] = 0;
 	}
 	storm3d_mesh_allocs++;
 }
 
+//! Get bounding sphere of mesh
+/*!
+	\return bounding sphere
+*/
 const Sphere &Storm3D_Mesh::getBoundingSphere() const
 {
 	if(!sphere_ok)
@@ -93,7 +97,10 @@ const Sphere &Storm3D_Mesh::getBoundingSphere() const
 	return bounding_sphere;
 }
 
-
+//! Get bounding box of mesh
+/*!
+	\return bounding box
+*/
 const AABB &Storm3D_Mesh::getBoundingBox() const
 {
 	if(!box_ok)
@@ -127,9 +134,7 @@ const AABB &Storm3D_Mesh::getBoundingBox() const
 	return bounding_box;
 }
 
-//------------------------------------------------------------------
-// Storm3D_Mesh::~Storm3D_Mesh
-//------------------------------------------------------------------
+//! Destructor
 Storm3D_Mesh::~Storm3D_Mesh()
 {
 	storm3d_mesh_allocs--;
@@ -144,36 +149,36 @@ Storm3D_Mesh::~Storm3D_Mesh()
 	delete[] bone_weights;
 
 	// Release buffers
-	if (dx_vbuf) 
-		dx_vbuf->Release();
+	if (glIsBuffer(vbuf)) {
+		glDeleteBuffers(1, &vbuf);
+		vbuf = 0;
+	}
+
+	for (int i = 0; i < LOD_AMOUNT; i++) {
+		if (glIsBuffer(ibuf[i]))
+			glDeleteBuffers(1, &ibuf[i]);
+	}
 
 	for(int i = 0; i < LOD_AMOUNT; ++i)
 	{
 		delete[] faces[i];
-		
-		if (dx_ibuf[i]) 
-			dx_ibuf[i]->Release();
 	}
 
 	if(material)
 		resourceManager.removeUser(material, this);
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Mesh::CreateNewClone - makes a clone of the mesh
-// -jpk
-//------------------------------------------------------------------
+//! Make a clone of the mesh
+/*!
+	\return clone
+*/
 IStorm3D_Mesh *Storm3D_Mesh::CreateNewClone()
 {
 	Storm3D_Mesh *ret = (Storm3D_Mesh *)Storm3D2->CreateNewMesh();
 
 	if (material)
 	{
-		//ret->material = (Storm3D_Material *)material->CreateNewClone();
 		ret->UseMaterial((Storm3D_Material *)material->CreateNewClone());
-		//ret->UseMaterial(material);
 	}
 
 	ret->vertex_amount = this->vertex_amount;
@@ -206,16 +211,15 @@ IStorm3D_Mesh *Storm3D_Mesh::CreateNewClone()
 			ret->bone_weights[i] = bone_weights[i];
 	}
 
-	ret->collision_faces = collision_faces;
-
 	return ret;
 }
 
-
-//------------------------------------------------------------------
-// Storm3D_Mesh::PrepareForRender (v3)
-//------------------------------------------------------------------
-// You can set scene=NULL, object=NULL if you dont need animation
+//! Prepare mesh for render
+/*!
+	\param scene scene
+	\param object model object
+	You can set scene=NULL, object=NULL if you don't need animation
+*/
 void Storm3D_Mesh::PrepareForRender(Storm3D_Scene *scene,Storm3D_Model_Object *object)
 {
 	// Check if material is changed in a way that forces object
@@ -234,144 +238,68 @@ void Storm3D_Mesh::PrepareForRender(Storm3D_Scene *scene,Storm3D_Model_Object *o
 		update_vx_amount=true;
 	}
 
-	/*
-	else if (material)
-	{
-		if (material->GetBumpType()==Storm3D_Material::BUMPTYPE_DOT3)	// DOT3 only
-		{
-			if (vbuf_fvf!=FVF_VXFORMAT_TC2)
-			{
-				update_vx=true;
-				update_vx_amount=true;
-			}
-		} 
-		else
-		if ((material->GetMultiTextureType()==Storm3D_Material::MTYPE_TEX_EMBM_REF)
-			||(material->GetMultiTextureType()==Storm3D_Material::MTYPE_DUALTEX_EMBM_REF))	// TEX_EMBM_REF only
-		{
-			if (vbuf_fvf!=FVF_VXFORMAT_TC2)
-			{
-				update_vx=true;
-				update_vx_amount=true;
-			}
-		} 
-		else	// Other than DOT3 or TEX_EMBM_REF
-		{
-			if (material->GetTextureCoordinateSetCount()==0)
-			{
-				if (vbuf_fvf!=FVF_VXFORMAT_TC2)
-				{
-					update_vx=true;
-					update_vx_amount=true;
-				}
-			}
-			else
-			{
-				if (vbuf_fvf!=FVF_VXFORMAT_TC2)
-				{
-					update_vx=true;
-					update_vx_amount=true;
-				}
-			}
-		}
-	}
-	else	// No material
-	{
-		// If material was removed, it usually means rebuild. (but not always)
-		if (vbuf_fvf!=FVF_VXFORMAT_TC2)
-		{
-			update_vx=true;
-			update_vx_amount=true;
-		}
-	}
-	*/
-
 	// If rebuild is needed: do it!
 	ReBuild();
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Mesh::PrepareMaterialForRender (v3)
-//------------------------------------------------------------------
+//! Prepare material for render
+/*!
+	\param scene scene
+	\param object model object
+*/
 void Storm3D_Mesh::PrepareMaterialForRender(Storm3D_Scene *scene,Storm3D_Model_Object *object)
 {
 	// Apply material (if it is not already active)
 	if (material!=Storm3D2->active_material)
 	{
 		// Create world matrix
-		float mxx[16];
-		object->GetMXG().GetAsD3DCompatible4x4(mxx);
+		MAT mxx;
+		mxx = object->GetMXG();
 
-		if (material) material->Apply(scene,0,vbuf_fvf,(D3DMATRIX*)mxx);
+		if (material)
+			material->Apply(scene,0,vbuf_fvf,(D3DMATRIX*)&mxx);
 		else
 		{
-			// No material
-			// Default: "white plastic"...
-
 			// Set stages (color only)
-			Storm3D2->D3DDevice->SetRenderState(D3DRS_ALPHATESTENABLE,FALSE);
-			Storm3D2->D3DDevice->SetRenderState(D3DRS_ZWRITEENABLE,TRUE);
-			Storm3D2->D3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE,FALSE);
-			Storm3D2->D3DDevice->SetTexture(0,NULL);
-			Storm3D2->D3DDevice->SetTextureStageState(0,D3DTSS_COLOROP,D3DTOP_SELECTARG1);
-			Storm3D2->D3DDevice->SetTextureStageState(0,D3DTSS_COLORARG1,D3DTA_DIFFUSE);
-			Storm3D2->D3DDevice->SetTextureStageState(0,D3DTSS_ALPHAOP,D3DTOP_DISABLE);
-			Storm3D2->D3DDevice->SetTextureStageState(1,D3DTSS_COLOROP,D3DTOP_DISABLE);
+			glEnable(GL_ALPHA_TEST);
+			glDepthMask(GL_TRUE);
+			glEnable(GL_BLEND);
+			glActiveTexture(GL_TEXTURE0);
+			glDisable(GL_TEXTURE_2D);
+			glDisable(GL_TEXTURE_3D);
+			glDisable(GL_TEXTURE_CUBE_MAP);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_PRIMARY_COLOR);
+			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glDisable(GL_TEXTURE_2D);
+			glDisable(GL_TEXTURE_3D);
+			glDisable(GL_TEXTURE_CUBE_MAP);
 
-
-			// Setup material
-			D3DMATERIAL9 mat;
-
-			// Set diffuse
-			mat.Diffuse.r=mat.Ambient.r=1; 
-			mat.Diffuse.g=mat.Ambient.g=1; 
-			mat.Diffuse.b=mat.Ambient.b=1; 
-			mat.Diffuse.a=mat.Ambient.a=0; 
-
-			// Set self.illum
-			mat.Emissive.r=0; 
-			mat.Emissive.g=0; 
-			mat.Emissive.b=0; 
-			mat.Emissive.a=0; 
-
-			// Set specular
-			mat.Specular.r=1; 
-			mat.Specular.g=1; 
-			mat.Specular.b=1; 
-			mat.Specular.a=0; 
-			mat.Power=25; 
-
-			// Use this material
-			Storm3D2->D3DDevice->SetMaterial(&mat);
-/* PSD
-			// Apply shader
-			Storm3D2->D3DDevice->SetVertexShader(vbuf_fvf);
-*/
 			// Set active material
 			Storm3D2->active_material=NULL;
 		}
 	}
 
 	// If object is scaled use normalizenormals, otherwise don't
-	if ((fabsf(object->scale.x-1.0f)>=0.001)||
-		(fabsf(object->scale.y-1.0f)>=0.001)||
-		(fabsf(object->scale.z-1.0f)>=0.001)) Storm3D2->D3DDevice->SetRenderState(D3DRS_NORMALIZENORMALS,TRUE);
-		else Storm3D2->D3DDevice->SetRenderState(D3DRS_NORMALIZENORMALS,FALSE);
+	if ((fabsf(object->scale.x-1.0f)>=0.001)|| (fabsf(object->scale.y-1.0f)>=0.001) || (fabsf(object->scale.z-1.0f)>=0.001))
+		glEnable(GL_NORMALIZE);
+	else
+		glDisable(GL_NORMALIZE);
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Mesh::RenderBuffers (v3)
-//------------------------------------------------------------------
+//! Render buffers
+/*!
+	\param object model object
+*/
 void Storm3D_Mesh::RenderBuffers(Storm3D_Model_Object *object)
 {
 	// Test
-	if (dx_vbuf==NULL) 
+	if (!glIsBuffer(vbuf)) 
 		return;
-	if (dx_ibuf[0]==NULL) 
+	if (!glIsBuffer(ibuf[0])) 
 		return;
 
 	int lod = object->parent_model->lodLevel;
@@ -383,70 +311,67 @@ void Storm3D_Mesh::RenderBuffers(Storm3D_Model_Object *object)
 		for(unsigned int i = 0; i < bone_chunks[lod].size(); ++i)
 		{
 			Storm3D_ShaderManager *manager = Storm3D_ShaderManager::GetSingleton();
-			manager->SetShader(Storm3D2->D3DDevice, bone_chunks[lod][i].bone_indices);
+			manager->SetShader(bone_chunks[lod][i].bone_indices);
 
-			Storm3D2->D3DDevice->SetIndices(bone_chunks[lod][i].index_buffer);
-			Storm3D2->D3DDevice->SetStreamSource(0, bone_chunks[lod][i].vertex_buffer, 0, vbuf_vsize);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bone_chunks[lod][i].index_buffer);
+			setStreamSource(0, bone_chunks[lod][i].vertex_buffer, 0, vbuf_vsize);
 
-			frozenbyte::storm::validateDevice(*Storm3D2->D3DDevice, Storm3D2->getLogger());
-			Storm3D2->D3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0,
-				0,bone_chunks[lod][i].vertex_count,0, bone_chunks[lod][i].index_count);
+			glDrawRangeElements(GL_TRIANGLES, 0, bone_chunks[lod][i].vertex_count, bone_chunks[lod][i].index_count*3, GL_UNSIGNED_SHORT, NULL);
 
 			++storm3d_dip_calls;
 		}
 	}
 	else
 	{
-		Storm3D2->D3DDevice->SetStreamSource(0, dx_vbuf, 0, vbuf_vsize);
-		Storm3D2->D3DDevice->SetIndices(dx_ibuf[lod]);
-		
-		frozenbyte::storm::validateDevice(*Storm3D2->D3DDevice, Storm3D2->getLogger());
-		Storm3D2->D3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0,
-			0,render_vertex_amount,0,render_face_amount[lod]);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuf[lod]);
+		setStreamSource(0, vbuf, 0, vbuf_vsize);
+
+		glDrawRangeElements(GL_TRIANGLES, 0, render_vertex_amount, render_face_amount[lod]*3, GL_UNSIGNED_SHORT, NULL);
 
 		++storm3d_dip_calls;
 	}
 }
 
-//------------------------------------------------------------------
-// Storm3D_Mesh::RenderBuffersWithoutTransformation (v3)
-//------------------------------------------------------------------
+//! Render buffers without transformation
 void Storm3D_Mesh::RenderBuffersWithoutTransformation()
 {
 	// Test
-	if (dx_vbuf==NULL) return;
-	if (dx_ibuf==NULL) return;
+	if (!glIsBuffer(vbuf)) 
+		return;
+	if (!glIsBuffer(ibuf[0])) 
+		return;
 
 	// Mesh buffer change optimization (v2.6)
 	if (Storm3D2->active_mesh!=this)
 	{
-		Storm3D2->D3DDevice->SetStreamSource(0,dx_vbuf,0,vbuf_vsize);
-		Storm3D2->D3DDevice->SetIndices(dx_ibuf[0]);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuf[0]);
+		setStreamSource(0, vbuf, 0, vbuf_vsize);
 	}
 
 	// Render it!
-	frozenbyte::storm::validateDevice(*Storm3D2->D3DDevice, Storm3D2->getLogger());
-	Storm3D2->D3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0,
-		0,vertex_amount,0,face_amount[0]);
-	
+	glDrawRangeElements(GL_TRIANGLES, 0, vertex_amount, face_amount[0]*3, GL_UNSIGNED_SHORT, NULL);
+
 	// Mesh buffer change optimization (v2.6)
 	Storm3D2->active_mesh=this;
 	++storm3d_dip_calls;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Mesh::Render
-//------------------------------------------------------------------
+//! Render
+/*!
+	\param scene
+	\param mirrored
+	\param object
+*/
 void Storm3D_Mesh::Render(Storm3D_Scene *scene,bool mirrored,Storm3D_Model_Object *object)
 {
 	// Prepare for rendering (v3)
 	PrepareForRender(scene,object);
 
 	// Test
-	if (dx_vbuf==NULL) return;
-	if (dx_ibuf==NULL) return;
+	if (!glIsBuffer(vbuf)) 
+		return;
+	if (!glIsBuffer(ibuf[0])) 
+		return;
 
 	// Prepare material for rendering (v3)
 	PrepareMaterialForRender(scene,object);
@@ -458,16 +383,8 @@ void Storm3D_Mesh::Render(Storm3D_Scene *scene,bool mirrored,Storm3D_Model_Objec
 		{
 			bool ds,wf;
 			material->GetSpecial(ds,wf);
-
-			if (!ds)
-			{
-//				Storm3D2->D3DDevice->SetRenderState(D3DRS_CULLMODE,D3DCULL_CW);
-			}
 		}
 	}
-
-	//if(GetKeyState('R') & 0x80)
-	//	Storm3D2->D3DDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
 
 	int lod = object->parent_model->lodLevel;
 	if(!hasLods)
@@ -478,19 +395,22 @@ void Storm3D_Mesh::Render(Storm3D_Scene *scene,bool mirrored,Storm3D_Model_Objec
 	scene->AddPolyCounter(face_amount[lod]);
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Mesh::RenderWithoutMaterial (v3)
-//------------------------------------------------------------------
+//! Render without material
+/*!
+	\param scene
+	\param mirrored
+	\param object
+*/
 void Storm3D_Mesh::RenderWithoutMaterial(Storm3D_Scene *scene,bool mirrored,Storm3D_Model_Object *object)
 {
 	// Prepare for rendering (v3)
 	PrepareForRender(scene,object);
 
 	// Test
-	if (dx_vbuf==NULL) return;
-	if (dx_ibuf==NULL) return;
+	if (!glIsBuffer(vbuf)) 
+		return;
+	if (!glIsBuffer(ibuf[0])) 
+		return;
 
 	// Reverse culling if mirrored
 	if (mirrored)
@@ -499,11 +419,6 @@ void Storm3D_Mesh::RenderWithoutMaterial(Storm3D_Scene *scene,bool mirrored,Stor
 		{
 			bool ds,wf;
 			material->GetSpecial(ds,wf);
-
-			if (!ds)
-			{
-//				Storm3D2->D3DDevice->SetRenderState(D3DRS_CULLMODE,D3DCULL_CW);
-			}
 		}
 	}
 
@@ -512,40 +427,39 @@ void Storm3D_Mesh::RenderWithoutMaterial(Storm3D_Scene *scene,bool mirrored,Stor
 	scene->AddPolyCounter(face_amount[0]);
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Mesh::RenderToBackground
-//------------------------------------------------------------------
+//! Render mesh to background
+/*!
+	\param scene
+	\param object
+*/
 void Storm3D_Mesh::RenderToBackground(Storm3D_Scene *scene,Storm3D_Model_Object *object)
 {
 	// Prepare for rendering (v3)
 	PrepareForRender(scene,object);
 
 	// Test
-	if (dx_vbuf==NULL) return;
-	if (dx_ibuf==NULL) return;
+	if (!glIsBuffer(vbuf)) 
+		return;
+	if (!glIsBuffer(ibuf[0])) 
+		return;
 
 	// Prepare material for rendering (v3)
 	PrepareMaterialForRender(scene,object);
 
 	// Disable some states
-	Storm3D2->D3DDevice->SetRenderState(D3DRS_SPECULARENABLE,FALSE);
-	Storm3D2->D3DDevice->SetRenderState(D3DRS_ZENABLE,FALSE);
-	Storm3D2->D3DDevice->SetRenderState(D3DRS_NORMALIZENORMALS,FALSE);
+	//Storm3D2->D3DDevice->SetRenderState(D3DRS_SPECULARENABLE,FALSE);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_NORMALIZE);
 
 	// Render vertex buffers
 	RenderBuffers(object);
 	scene->AddPolyCounter(face_amount[0]);
 
 	// Return states
-	Storm3D2->D3DDevice->SetRenderState(D3DRS_ZENABLE,TRUE);
+	glEnable(GL_DEPTH_TEST);
 }
 
-
-//------------------------------------------------------------------
-// Storm3D_Mesh::ReBuild
-//------------------------------------------------------------------
+//! Rebuild mesh
 void Storm3D_Mesh::ReBuild()
 {
 	// Test if rebuilding is needed
@@ -553,7 +467,7 @@ void Storm3D_Mesh::ReBuild()
 		(!update_fc)&&(!update_fc_amount)) return;
 
 	// Test array sizes
-	if ((face_amount[0]<1)/*&&(facestrip_length<3)*/) return;
+	if ((face_amount[0]<1)) return;
 	if (vertex_amount<1) return;
 
 	// Select format for vertexbuffer
@@ -574,24 +488,17 @@ void Storm3D_Mesh::ReBuild()
 	vbuf_vsize=size;
 	vbuf_fvf=fvf;
 
-	// Create DX8 vertex/index buffers...
-
+	// Create vertex/index buffers
 	if (update_vx_amount)
 	{
-		// Create new vertexbuffer (and release old)
-		if (dx_vbuf) dx_vbuf->Release();
+		// Create new vertexbuffer
+		// on GL we don't need to release old
+		if (!glIsBuffer(vbuf)) {
+			glGenBuffers(1, &vbuf);
+		}
 
-		// psd: fixme!
-		if(Storm3D_ShaderManager::GetSingleton()->SoftwareShaders() == true)
-		{
-			Storm3D2->D3DDevice->CreateVertexBuffer(vertex_amount*size,D3DUSAGE_SOFTWAREPROCESSING|D3DUSAGE_WRITEONLY,
-				fvf,D3DPOOL_MANAGED,&dx_vbuf, 0);
-		}
-		else
-		{
-			Storm3D2->D3DDevice->CreateVertexBuffer(vertex_amount*size,D3DUSAGE_WRITEONLY,
-				fvf,D3DPOOL_MANAGED,&dx_vbuf, 0);
-		}
+		glBindBuffer(GL_ARRAY_BUFFER, vbuf);
+		glBufferData(GL_ARRAY_BUFFER, vertex_amount*size, NULL, GL_DYNAMIC_DRAW);
 	}
 
 	int lodLevels = hasLods ? LOD_AMOUNT : 1;
@@ -669,8 +576,6 @@ void Storm3D_Mesh::ReBuild()
 					int bones_found = 0;
 					for(int k = 0; k < weight_index; ++k)
 					{
-						bool found = false;
-						
 						for(unsigned int l = 0; l < chunk.bone_indices.size(); ++l)
 						{
 							if(weights[k] == chunk.bone_indices[l])
@@ -724,16 +629,14 @@ void Storm3D_Mesh::ReBuild()
 
 				// Create index buffer
 				{
-					if(chunk.index_buffer)
-						chunk.index_buffer->Release();
+					if(!glIsBuffer(chunk.index_buffer)) {
+						glGenBuffers(1, &chunk.index_buffer);
+					}
 
-					if(Storm3D_ShaderManager::GetSingleton()->SoftwareShaders())
-						Storm3D2->D3DDevice->CreateIndexBuffer(sizeof(WORD) * chunk_face_list.size() * 3, D3DUSAGE_WRITEONLY|D3DUSAGE_SOFTWAREPROCESSING,D3DFMT_INDEX16,D3DPOOL_MANAGED, &chunk.index_buffer, 0);
-					else
-						Storm3D2->D3DDevice->CreateIndexBuffer(sizeof(WORD) * chunk_face_list.size() * 3, D3DUSAGE_WRITEONLY,D3DFMT_INDEX16,D3DPOOL_MANAGED, &chunk.index_buffer, 0);
+					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunk.index_buffer);
+					glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort) * chunk_face_list.size() * 3, NULL, GL_DYNAMIC_DRAW);
 
-					WORD *ip = 0;
-					chunk.index_buffer->Lock(0, sizeof(WORD) * chunk_face_list.size() * 3, (void**) &ip, 0);
+					GLushort *ip = reinterpret_cast<unsigned short *> (glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY));
 					if(ip)
 					{
 						for(unsigned int j = 0; j < chunk_face_list.size(); ++j)
@@ -753,28 +656,21 @@ void Storm3D_Mesh::ReBuild()
 						}
 					}
 
-					chunk.index_buffer->Unlock();
+					glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
 					chunk.index_count = chunk_face_list.size();
 				}
 
 				// Create vertex buffer
 				{
-					if(chunk.vertex_buffer)
-						chunk.vertex_buffer->Release();
-
-					if(Storm3D_ShaderManager::GetSingleton()->SoftwareShaders())
-					{
-						Storm3D2->D3DDevice->CreateVertexBuffer(vertex_list.size() * size,D3DUSAGE_SOFTWAREPROCESSING|D3DUSAGE_WRITEONLY,
-							fvf, D3DPOOL_MANAGED, &chunk.vertex_buffer, 0);
-					}
-					else
-					{
-						Storm3D2->D3DDevice->CreateVertexBuffer(vertex_list.size() * size,D3DUSAGE_WRITEONLY,
-							fvf, D3DPOOL_MANAGED, &chunk.vertex_buffer, 0);
+					if(!glIsBuffer(chunk.vertex_buffer)) {
+						glGenBuffers(1, &chunk.vertex_buffer);
 					}
 
-					BYTE *vp = 0;
-					chunk.vertex_buffer->Lock(0, 0, (void**) &vp, 0);
+					glBindBuffer(GL_ARRAY_BUFFER, chunk.vertex_buffer);
+					glBufferData(GL_ARRAY_BUFFER, vertex_list.size() * size, NULL, GL_DYNAMIC_DRAW);
+
+					GLubyte *vp = reinterpret_cast<GLubyte *> (glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+					glVertexPointer(3, GL_FLOAT, size, 0);
 					
 					VXFORMAT_BLEND *p=(VXFORMAT_BLEND*)vp;
 					float weight[4] = { 0 };
@@ -814,428 +710,108 @@ void Storm3D_Mesh::ReBuild()
 
 						weight[0] = float((index1) * 3);
 						weight[0] += Storm3D_ShaderManager::BONE_INDEX_START;
-						//weight[1] = 1;
 						weight[1] = bone_weights[vertex_index].weight1 / 100.f;
 
 						weight[2] = float(Storm3D_ShaderManager::BONE_INDEX_START);
 						weight[3] = 0;
-			
-//weight[1] = fabsf(weight[1]);
 						
 						if(index2 >= 0)
 						{
-							//weight[1] = bone_weights[vertex_index].weight1 / 100.f;
 							weight[2] = float((index2) * 3);
 							weight[2] += Storm3D_ShaderManager::BONE_INDEX_START;
 							weight[3] = bone_weights[vertex_index].weight2 / 100.f;
 						}
 			
-						p[i]=VXFORMAT_BLEND(vertexes[vertex_index].position,vertexes[vertex_index].normal,
-							vertexes[vertex_index].texturecoordinates, vertexes[vertex_index].texturecoordinates2, weight);
+						p[i]=VXFORMAT_BLEND(vertexes[vertex_index].position,vertexes[vertex_index].normal,vertexes[vertex_index].texturecoordinates, vertexes[vertex_index].texturecoordinates2, weight);
 					}
 
-					chunk.vertex_buffer->Unlock();
+					glUnmapBuffer(GL_ARRAY_BUFFER);
 					chunk.vertex_count = vertex_list.size();
 				}
 			}
 		}
 	}
 
-#if 0
-	if((bone_weights) && ((update_vx) || (update_fc)))
-	{
-		vector<char> splittedVertices(vertex_amount);
-
-		for(int l = 0; l < faceIndices; ++l)
-		{
-			bone_chunks[l].clear();
-			
-			// Find all bone indices (which are in use)
-			// Should use a sorted container or something but this is fast enough
-			std::vector<int> bone_indices;
-			int max_index = 0;
-
-			for(int i = 0; i < vertex_amount; ++i)
-			{
-				int index = bone_weights[i].index1;
-				if(index == -1)
-					continue;
-
-				if(std::find(bone_indices.begin(), bone_indices.end(), index) == bone_indices.end())
-					bone_indices.push_back(index);
-				if(index > max_index)
-					max_index = index;
-
-				index = bone_weights[i].index2;
-				if(index == -1)
-					continue;
-
-				if(index > max_index)
-					max_index = index;
-				if(std::find(bone_indices.begin(), bone_indices.end(), index) == bone_indices.end())
-					bone_indices.push_back(index);
-			}
-
-			// Estimate
-			int bone_groups = 1 + (bone_indices.size() / (Storm3D_ShaderManager::BONE_INDICES));
-
-			// We may need to split it to multiple parts (estimate size)
-			bone_chunks[l].clear();
-			bone_chunks[l].resize(bone_groups);
-
-			// Sort indices
-			std::sort(bone_indices.begin(), bone_indices.end());
-
-			// Index buffer info [index] = vbuffer index
-			std::vector<std::vector<int> > index_buffer_indices(vertex_amount);
-
-			// Lookup for real bone index <-> shader bone index
-			std::vector<int> bone_lookup(max_index + 1); 
-
-			// Simplest cases first. Initial bone buffers
-			// -> Actually this always works assuming 1 weight for each vertex
-			for(int j = 0; j < bone_groups; ++j)
-			{
-				int index_start = j * Storm3D_ShaderManager::BONE_INDICES;
-				int index_end = index_start + Storm3D_ShaderManager::BONE_INDICES;
-
-				// Cap
-				if(index_end > int(bone_indices.size()))
-					index_end = bone_indices.size();
-
-				for(int k = index_start; k < index_end; ++k)
-				{
-					//int shader_index = k % Storm3D_ShaderManager::BONE_INDICES;
-					int bone_index = bone_indices[k];
-					int shader_index = bone_index % Storm3D_ShaderManager::BONE_INDICES;
-					
-					bone_chunks[l][j].bone_indices.push_back(std::pair<int, int> (bone_index, shader_index));
-					bone_lookup[bone_index] = shader_index;
-				}
-			}
-
-			// Loop weights and set index buffers
-			for(j = 0; j < vertex_amount; ++j)
-			{
-				int index1 = bone_weights[j].index1;
-				int index2 = bone_weights[j].index2;
-				
-				// Would look _ugly_ otherwise
-				typedef std::vector<int>::iterator int_vector_iterator;
-				typedef std::pair<int_vector_iterator, int_vector_iterator> int_iterator_pair;
-				
-				int_iterator_pair it1 = std::equal_range(bone_indices.begin(), bone_indices.end(), index1);
-				int_iterator_pair it2 = std::equal_range(bone_indices.begin(), bone_indices.end(), index2);
-
-				int group1 = -1;
-				int group2 = -1;
-				
-				index1 = -1;
-				index2 = -1;
-
-				if(it1.first != it1.second)
-				{
-					group1 = (*it1.first) / Storm3D_ShaderManager::BONE_INDICES;
-					index1 = (*it1.first) % Storm3D_ShaderManager::BONE_INDICES;
-				}
-
-				if(it2.first != it2.second)
-				{
-					group2 = (*it2.first) / Storm3D_ShaderManager::BONE_INDICES;
-					index2 = (*it2.first) % Storm3D_ShaderManager::BONE_INDICES;
-				}
-
-				// ToDo: 
-				// Special case -> group1 != group2, should handle if 2 weights used
-				
-				if(group1 != -1)
-					index_buffer_indices[group1].push_back(j);
-			}
-
-			vector<int> discardedFaces;
-			std::vector<std::vector<int> > face_indices(bone_chunks[l].size());
-
-			// Build index buffers
-			for(i = 0; i < int(bone_chunks[l].size()); ++i)
-			{	
-				// Speed up a bit
-				std::sort(index_buffer_indices[i].begin(), index_buffer_indices[i].end());
-
-				// ToDo: currently we just discard faces which would belong to several grou
-				//	-> avoids problems but ...
-				for(int j = 0; j < face_amount[l]; ++j)
-				{
-					std::pair<std::vector<int>::iterator, std::vector<int>::iterator> it = std::equal_range(index_buffer_indices[i].begin(), index_buffer_indices[i].end(), faces[0][j].vertex_index[0]);
-					if(it.first == it.second)
-						continue;
-
-					bool discard = false;
-					for(int k = 1; k < 3; ++k)
-					{
-						std::pair<std::vector<int>::iterator, std::vector<int>::iterator> it = 
-							std::equal_range(index_buffer_indices[i].begin(), index_buffer_indices[i].end(), faces[l][j].vertex_index[k]);
-						
-						if(it.first == it.second)
-							discard = true;
-					}
-
-					if(discard)
-					{
-						discardedFaces.push_back(j);
-
-						const Storm3D_Face &f = faces[l][j];
-						for(int k = 0; k < 3; ++k)
-						{
-							splittedVertices[f.vertex_index[k]] = 1;
-						}
-					}
-					//else
-					face_indices[i].push_back(j);
-				}
-
-				if(Storm3D_ShaderManager::GetSingleton()->SoftwareShaders() == true)
-					Storm3D2->D3DDevice->CreateIndexBuffer(sizeof(WORD)*face_amount[l]*3, D3DUSAGE_WRITEONLY|D3DUSAGE_SOFTWAREPROCESSING,D3DFMT_INDEX16,D3DPOOL_MANAGED, &bone_chunks[l][i].index_buffer, 0);
-				else
-					Storm3D2->D3DDevice->CreateIndexBuffer(sizeof(WORD)*face_amount[l]*3, D3DUSAGE_WRITEONLY,D3DFMT_INDEX16,D3DPOOL_MANAGED, &bone_chunks[l][i].index_buffer, 0);
-
-				// This needs to be done after inserting discarded polys!
-
-				/*
-				WORD *ip = 0;
-				bone_chunks[l][i].index_buffer->Lock(0, sizeof(WORD)*face_amount[l]*3,(void**) &ip, 0);
-				if(ip)
-				{
-					for(unsigned int j = 0; j < face_indices[l].size(); ++j)
-					{
-						*ip++=faces[l][face_indices[l][j]].vertex_index[0];
-						*ip++=faces[l][face_indices[l][j]].vertex_index[1];
-						*ip++=faces[l][face_indices[l][j]].vertex_index[2];
-					}
-				}
-
-				bone_chunks[l][i].index_buffer->Unlock();
-				bone_chunks[l][i].index_count = face_indices[l].size();
-				*/
-			}
-
-			/*
-			int lastChunk = bone_chunks[l].size() - 1;
-			for(i = 0; i < int(discardedFaces.size()); ++i)
-			{
-				int index = discardedFaces[i];
-				const Storm3D_Face &face = faces[l][index];
-
-				for(int j = lastChunk; j <= int(bone_chunks[l].size() + 1); ++j)
-				{
-					if(j >= int(bone_chunks[l].size()))
-						bone_chunks[l].resize(j + 1);
-
-					Storm3D_BoneChunk &chunk = bone_chunks[l][j];
-					//int bones_found = 0;
-					//int bones_needed = 0;
-
-					vector<int> insert_bones;
-					for(int k = 0; k < 3; ++k)
-					{
-						int vindex = face.vertex_index[k];
-						int bone1 = bone_weights[vindex].index1;
-						int bone2 = bone_weights[vindex].index1;
-
-						bool found1 = false;
-						bool found2 = false;
-
-						for(unsigned int h = 0; h < chunk.bone_indices.size(); ++h)
-						{
-							if(chunk.bone_indices[h].first == bone1)
-								found1 = true;
-							if(chunk.bone_indices[h].first == bone2)
-								found2 = true;
-						}
-
-						if(!found1 && bone1 >= 0)
-							insert_bones.push_back(bone1);
-						if(!found2 && bone2 >= 0)
-							insert_bones.push_back(bone2);
-					}
-
-					if(int(chunk.bone_indices.size() + insert_bones.size()) < Storm3D_ShaderManager::BONE_INDICES)
-					{
-						face_indices[j].push_back(index);
-						
-						for(unsigned int k = 0; k < insert_bones.size(); ++k)
-						{
-							int bone_index = insert_bones[k];
-							int shader_index = k % Storm3D_ShaderManager::BONE_INDICES;
-
-							chunk.bone_indices.push_back(std::pair<int, int> (bone_index, shader_index));
-							//bone_lookup[bone_index] = shader_index;
-						}
-
-						//int shader_index = k % Storm3D_ShaderManager::BONE_INDICES;
-						//bone_chunks[l][j].bone_indices.push_back(std::pair<int, int> (bone_indices[k], shader_index));
-						//bone_lookup[bone_indices[k]] = shader_index;
-
-						break;
-					}
-				}
-
-			}
-			*/
-
-			for(i = 0; i < int(bone_chunks[l].size()); ++i)
-			{
-				WORD *ip = 0;
-				bone_chunks[l][i].index_buffer->Lock(0, sizeof(WORD)*face_amount[l]*3,(void**) &ip, 0);
-				if(ip)
-				{
-					for(unsigned int j = 0; j < face_indices[i].size(); ++j)
-					{
-						*ip++=faces[l][face_indices[i][j]].vertex_index[0];
-						*ip++=faces[l][face_indices[i][j]].vertex_index[1];
-						*ip++=faces[l][face_indices[i][j]].vertex_index[2];
-					}
-				}
-
-				bone_chunks[l][i].index_buffer->Unlock();
-				bone_chunks[l][i].index_count = face_indices[i].size();
-			}
-
-			if(l == 0)
-			{
-				// Build vertex buffer
-				BYTE *vp = 0;
-				dx_vbuf->Lock(0, 0, (void**) &vp, 0);
-				
-				VXFORMAT_BLEND *p=(VXFORMAT_BLEND*)vp;
-				float weight[4] = { 0 };
-
-				for(int i = 0; i < vertex_amount; ++i)
-				{
-					int index1 = bone_weights[i].index1; //mesh_index[i].first;
-					int index2 = bone_weights[i].index2; //mesh_index[i].second;
-
-					// Fix: correct indices
-					if(index1 != -1)
-					{
-						index1 = bone_lookup[index1];
-						assert(index1 >= 0 && index1 <= Storm3D_ShaderManager::BONE_INDICES);
-					}
-					if(index2 != -1)
-					{
-						index2 = bone_lookup[index2];
-						assert(index1 >= 0 && index1 <= Storm3D_ShaderManager::BONE_INDICES);
-					}
-
-					//weight[0] = float((index1+1) * 3);
-					weight[0] = float((index1) * 3);
-					weight[0] += Storm3D_ShaderManager::BONE_INDEX_START;
-					weight[1] = 1;
-
-					weight[2] = float(Storm3D_ShaderManager::BONE_INDEX_START);
-					weight[3] = 0;
-		/*
-					if(index2 >= 0 && !splittedVertices[i])
-					{
-						weight[1] = bone_weights[i].weight1 / 100.f;
-						//weight[2] = float((index2+1) * 3);
-						weight[2] = float((index2) * 3);
-						weight[2] += Storm3D_ShaderManager::BONE_INDEX_START;
-						weight[3] = bone_weights[i].weight2 / 100.f;
-					}
-		*/
-					p[i]=VXFORMAT_BLEND(vertexes[i].position,vertexes[i].normal,
-						vertexes[i].texturecoordinates, vertexes[i].texturecoordinates2, weight);
-				}
-
-				dx_vbuf->Unlock();
-			}
-		}
-	}
-#endif
-	
 	for(int i = 0; i < lodLevels; ++i)
-	if(faces[i])
 	{
-		if (update_fc_amount)
+		if(faces[i])
 		{
-			// Create new indexbuffer (and delete old)
-			if (dx_ibuf[i]) dx_ibuf[i]->Release();
-
-			if(Storm3D_ShaderManager::GetSingleton()->SoftwareShaders() == true)
+			if (update_fc_amount)
 			{
-				Storm3D2->D3DDevice->CreateIndexBuffer(sizeof(WORD)*face_amount[i]*3,
-					D3DUSAGE_WRITEONLY|D3DUSAGE_SOFTWAREPROCESSING,D3DFMT_INDEX16,D3DPOOL_MANAGED,&dx_ibuf[i], 0);
-			}
-			else
-			{
-				Storm3D2->D3DDevice->CreateIndexBuffer(sizeof(WORD)*face_amount[i]*3,
-					D3DUSAGE_WRITEONLY,D3DFMT_INDEX16,D3DPOOL_MANAGED,&dx_ibuf[i], 0);
-			}
-		
-			//update_fc_amount = false;
-		}
-
-		if (update_fc)
-		{
-			// Copy data to indexbuffer
-			WORD *ip=NULL;
-			dx_ibuf[i]->Lock(0,sizeof(WORD)*face_amount[i]*3,(void**)&ip,0);
-			if (ip)
-			{
-				for(int j=0;j<face_amount[i];j++)
-				{
-					*ip++=faces[i][j].vertex_index[0];
-					*ip++=faces[i][j].vertex_index[1];
-					*ip++=faces[i][j].vertex_index[2];
+				if (!glIsBuffer(ibuf[i])) {
+					glGenBuffers(1, &ibuf[i]);
 				}
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuf[i]);
+				glBufferData(GL_ELEMENT_ARRAY_BUFFER, face_amount[i] * 3 * sizeof(GLushort), NULL, GL_DYNAMIC_DRAW);
 			}
-			
-			dx_ibuf[i]->Unlock();
-	
-			//update_fc = false;
-			//update_fc_amount = false;
+
+			if (update_fc)
+			{
+				// Copy data to indexbuffer
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuf[i]);
+				GLushort *ip = reinterpret_cast<unsigned short *> (glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY));
+				if (ip)
+				{
+					for(int j=0;j<face_amount[i];j++)
+					{
+						*ip++=faces[i][j].vertex_index[0];
+						*ip++=faces[i][j].vertex_index[1];
+						*ip++=faces[i][j].vertex_index[2];
+					}
+				}
+
+				glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+			}
 		}
 	}
 
 	if((update_vx) && (!bone_weights))
 	{
 		// Copy data to vertexbuffer
-		BYTE *vp;
-		dx_vbuf->Lock(0,0,(void**)&vp,0);
-		if (vp==NULL) return;
+		glErrors();
+		glBindBuffer(GL_ARRAY_BUFFER, vbuf);
+		glErrors();
 
-		// Typecast (to simplify code)
-		VXFORMAT_TC2 *p=(VXFORMAT_TC2*)vp;
-
-		for(int i=0;i<vertex_amount;i++)
+		GLint temp;
+		glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &temp);
+		if (temp < (int)(vertex_amount*sizeof(VXFORMAT_TC2)))
 		{
-			p[i]=VXFORMAT_TC2(vertexes[i].position,vertexes[i].normal,
-				vertexes[i].texturecoordinates,vertexes[i].texturecoordinates2);
+			igios_unimplemented(); // FIXME: this if BUGGY! should not be necessary
+			igiosWarning("vbuf %d %d\n", vbuf, glIsBuffer(vbuf));
+			igiosWarning("size: %d vertex amount: %d %d\n", temp, vertex_amount, vertex_amount*sizeof(VXFORMAT_TC2));
+		} else {
+			// Typecast (to simplify code)
+			VXFORMAT_TC2 *p=(VXFORMAT_TC2*) glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+			if (p == NULL) {
+				igiosWarning("MapBuffer failed\n");
+				glErrors();
+				return;
+			}
+
+			for(int i=0;i<vertex_amount;i++)
+			{
+				p[i]=VXFORMAT_TC2(vertexes[i].position,vertexes[i].normal,
+					vertexes[i].texturecoordinates,vertexes[i].texturecoordinates2);
+			}
 		}
 
-		dx_vbuf->Unlock();
+		glUnmapBuffer(GL_ARRAY_BUFFER);
 	}
 
-	// Crear the markers
+	// Clear the markers
 	update_vx=false;
 	update_vx_amount=false;
 	update_fc=false;
 	update_fc_amount=false;
-/*
-	delete[] vertexes; 
-	delete[] faces[0];
-	face_amount[0] = 0;
-	vertexes = 0;
-*/
+
 	render_face_amount[0] = face_amount[0];
 	render_vertex_amount = vertex_amount;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Mesh::UseMaterial
-//------------------------------------------------------------------
+//! Change mesh material
+/*!
+	\param material material
+*/
 void Storm3D_Mesh::UseMaterial(IStorm3D_Material *_material)
 {
 	if(material)
@@ -1252,28 +828,18 @@ void Storm3D_Mesh::UseMaterial(IStorm3D_Material *_material)
 		resourceManager.addUser(material, this);
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Mesh::GetMaterial
-//------------------------------------------------------------------
+//! Get mesh material
+/*!
+	\return material
+*/
 IStorm3D_Material *Storm3D_Mesh::GetMaterial()
 {
 	return material;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Mesh::DeleteAllFaces
-//------------------------------------------------------------------
+//! Delete all faces of mesh
 void Storm3D_Mesh::DeleteAllFaces()
 {
-	/*
-	if (faces) delete[] faces;
-	faces=NULL;
-	face_amount=0;
-	*/
 	for(int i = 0; i < LOD_AMOUNT; ++i)
 	{
 		delete[] faces[i];
@@ -1288,11 +854,7 @@ void Storm3D_Mesh::DeleteAllFaces()
 	box_ok = false;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Mesh::DeleteAllVertexes
-//------------------------------------------------------------------
+//! Delete all vertices of mesh
 void Storm3D_Mesh::DeleteAllVertexes()
 {
 	if (vertexes) delete[] vertexes;
@@ -1309,11 +871,10 @@ void Storm3D_Mesh::DeleteAllVertexes()
 	box_ok = false;
 }
 
-
-
-//------------------------------------------------------------------
-// Dynamic geometry edit (New in v2.2B)
-//------------------------------------------------------------------
+//! Dynamic geometry edit (New in v2.2B)
+/*!
+	\return face buffer
+*/
 Storm3D_Face *Storm3D_Mesh::GetFaceBuffer()
 {
 	// Set rebuild
@@ -1325,7 +886,10 @@ Storm3D_Face *Storm3D_Mesh::GetFaceBuffer()
 	return faces[0];
 }
 
-
+//! Get vertex buffer
+/*!
+	\return vertex buffer
+*/
 Storm3D_Vertex *Storm3D_Mesh::GetVertexBuffer()
 {
 	// Set rebuild
@@ -1338,12 +902,20 @@ Storm3D_Vertex *Storm3D_Mesh::GetVertexBuffer()
 	return vertexes;
 }
 
-
+//! Get read-only face buffer
+/*!
+	\return face buffer
+*/
 const Storm3D_Face *Storm3D_Mesh::GetFaceBufferReadOnly()
 {
 	return faces[0];
 }
 
+//! Get read-only face buffer from specified index
+/*!
+	\param lodIndex index
+	\return face buffer
+*/
 const Storm3D_Face *Storm3D_Mesh::GetFaceBufferReadOnly(int lodIndex)
 {
 	assert(lodIndex >= 0 && lodIndex < LOD_AMOUNT);
@@ -1354,16 +926,29 @@ const Storm3D_Face *Storm3D_Mesh::GetFaceBufferReadOnly(int lodIndex)
 		return faces[lodIndex];
 }
 
+//! Get read-only vertex buffer
+/*!
+	\return vertex buffer
+*/
 const Storm3D_Vertex *Storm3D_Mesh::GetVertexBufferReadOnly()
 {
 	return vertexes;
 }
 
+//! Get number of faces
+/*!
+	\return face count
+*/
 int Storm3D_Mesh::GetFaceCount()
 {
 	return face_amount[0];
 }
 
+//! Get number of faces from specified index
+/*!
+	\param lodIndex index
+	\return face count
+*/
 int Storm3D_Mesh::GetFaceCount(int lodIndex)
 {
 	assert(lodIndex >= 0 && lodIndex < LOD_AMOUNT);
@@ -1374,12 +959,19 @@ int Storm3D_Mesh::GetFaceCount(int lodIndex)
 		return face_amount[lodIndex];
 }
 
+//! Get number of vertices
+/*!
+	\return vertex count
+*/
 int Storm3D_Mesh::GetVertexCount()
 {
 	return vertex_amount;
 }
 
-
+//! Change number of faces
+/*!
+	\param new_face_count new number of faces
+*/
 void Storm3D_Mesh::ChangeFaceCount(int new_face_count)
 {
 	// Delete old
@@ -1400,7 +992,10 @@ void Storm3D_Mesh::ChangeFaceCount(int new_face_count)
 	box_ok = false;
 }
 
-
+//! Change number of vertices
+/*!
+	\param new_vertex_count new number of vertices
+*/
 void Storm3D_Mesh::ChangeVertexCount(int new_vertex_count)
 {
 	// Delete old
@@ -1421,7 +1016,7 @@ void Storm3D_Mesh::ChangeVertexCount(int new_vertex_count)
 	box_ok = false;
 }
 
-
+//! Update mesh collision table
 void Storm3D_Mesh::UpdateCollisionTable()
 {
 	if (col_rebuild_needed) 
@@ -1429,10 +1024,7 @@ void Storm3D_Mesh::UpdateCollisionTable()
 	col_rebuild_needed=false;
 }
 
-
-//------------------------------------------------------------------
-// Storm3D_Mesh::CalculateRadiusAndBox
-//-----------------------------------------------------------------
+//! Claculate radius and bounding box
 void Storm3D_Mesh::CalculateRadiusAndBox()
 {
 	// Test
@@ -1441,8 +1033,6 @@ void Storm3D_Mesh::CalculateRadiusAndBox()
 		radius=0;
 		radius2d = 0;
 		sq_radius=0;
-		//box.pmax=VC3(0,0,0);
-		//box.pmin=VC3(0,0,0);
 		rb_update_needed=false;
 		return;
 	}
@@ -1450,8 +1040,6 @@ void Storm3D_Mesh::CalculateRadiusAndBox()
 	// Set values to init state
 	sq_radius=0;
 	radius2d = 0;
-	//box.pmax=vertexes[0].position;
-	//box.pmin=vertexes[0].position;
 
 	// Loop through all vertexes
 	for (int vx=0;vx<vertex_amount;vx++)
@@ -1465,19 +1053,6 @@ void Storm3D_Mesh::CalculateRadiusAndBox()
 		float r2 = (pos.x * pos.x) + (pos.z * pos.z);
 		if(r2 > radius2d)
 			radius2d = r2;
-
-
-		// Update box
-		/*
-		if (vertexes[vx].position.x>box.pmax.x) box.pmax.x=vertexes[vx].position.x;
-			else if (vertexes[vx].position.x<box.pmin.x) box.pmin.x=vertexes[vx].position.x;
-
-		if (vertexes[vx].position.y>box.pmax.y) box.pmax.y=vertexes[vx].position.y;
-			else if (vertexes[vx].position.y<box.pmin.y) box.pmin.y=vertexes[vx].position.y;
-		
-		if (vertexes[vx].position.z>box.pmax.z) box.pmax.z=vertexes[vx].position.z;
-			else if (vertexes[vx].position.z<box.pmin.z) box.pmin.z=vertexes[vx].position.z;
-		*/
 	}
 
 	// Calculate radius
@@ -1488,32 +1063,35 @@ void Storm3D_Mesh::CalculateRadiusAndBox()
 	rb_update_needed=false;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Mesh::GetRadius
-//-----------------------------------------------------------------
+//! Get radius of mesh
+/*!
+	\return radius
+*/
 float Storm3D_Mesh::GetRadius()
 {
 	if (rb_update_needed) CalculateRadiusAndBox();
 	return radius;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Mesh::GetSquareRadius
-//-----------------------------------------------------------------
+//! Get square radius of mesh
+/*!
+	\return radius
+*/
 float Storm3D_Mesh::GetSquareRadius()
 {
 	if (rb_update_needed) CalculateRadiusAndBox();
 	return sq_radius;
 }
 
-
-//------------------------------------------------------------------
-// Storm3D_Mesh::RayTrace
-//------------------------------------------------------------------
+//! Raytrace mesh
+/*!
+	\param position
+	\param direction_normalized
+	\param ray_length
+	\param rti
+	\param accurate
+	\return true if success
+*/
 bool Storm3D_Mesh::RayTrace(const VC3 &position,const VC3 &direction_normalized,float ray_length,Storm3D_CollisionInfo &rti, bool accurate)
 {
 	// No collision table! (do not test collision)
@@ -1523,11 +1101,14 @@ bool Storm3D_Mesh::RayTrace(const VC3 &position,const VC3 &direction_normalized,
 	return collision.RayTrace(position,direction_normalized,ray_length,rti, accurate);
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Mesh::SphereCollision
-//------------------------------------------------------------------
+//! Test if mesh collides with given sphere
+/*!
+	\param position center of sphere
+	\param radius radius of sphere
+	\param cinf collision info
+	\param accurate
+	\return 
+*/
 bool Storm3D_Mesh::SphereCollision(const VC3 &position,float radius,Storm3D_CollisionInfo &cinf, bool accurate)
 {
 	// No collision table! (do not test collision)
@@ -1537,6 +1118,10 @@ bool Storm3D_Mesh::SphereCollision(const VC3 &position,float radius,Storm3D_Coll
 	return collision.SphereCollision(position,radius,cinf, accurate);
 }
 
+//! Do bones have weights?
+/*!
+	\return true if they have weights
+*/
 bool Storm3D_Mesh::HasWeights() const
 {
 	if(bone_weights)
@@ -1548,26 +1133,24 @@ bool Storm3D_Mesh::HasWeights() const
 #define VectorToRGBA(x,y,z) \
 (( ((UINT)((UINT)((x)*127)+127)) << 16 ) | ( ((UINT)((UINT)((y)*127)+127)) << 8 ) | ( ((UINT)((UINT)((z)*127)+127)) ))
 
+//! Apply vertex buffer
 void Storm3D_Mesh::applyBuffers()
 {
-	assert(dx_vbuf);
+	assert(vbuf);
 	assert(vbuf_vsize);
 
-	Storm3D2->D3DDevice->SetStreamSource(0, dx_vbuf, 0, vbuf_vsize);
+	setStreamSource(0, vbuf, 0, vbuf_vsize);
 }
 
+//! Render primitives
 int Storm3D_Mesh::renderPrimitives(float range)
 {
-	/*
-	int lod = object->parent_model->lodLevel;
-	if(!hasLods)
-		lod = 0;
-	*/
 	int lod = 0;
 
-	Storm3D2->D3DDevice->SetIndices(dx_ibuf[lod]);
-	Storm3D2->D3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0,
-		0,vertex_amount,0,face_amount[lod]);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuf[lod]);
+
+	glVertexPointer(3, GL_FLOAT, 0, 0);
+	glDrawRangeElements(GL_TRIANGLES, 0, vertex_amount, face_amount[lod]*3, GL_UNSIGNED_INT, NULL);
 
 	++storm3d_dip_calls;
 	return face_amount[lod];

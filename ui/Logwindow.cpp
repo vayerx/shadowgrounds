@@ -15,7 +15,7 @@
 #include "../game/scripting/GameScripting.h"
 #include "../ui/uidefaults.h"
 
-#include "../system/logger.h"
+#include "../system/Logger.h"
 
 #include <vector>
 #include <string>
@@ -28,8 +28,8 @@ namespace ui {
 ///////////////////////////////////////////////////////////////////////////////
 
 namespace {
-	static const int FADE_IN_TIME = 500;
-	static const int FADE_OUT_TIME = 500;
+	static const int LOG_FADE_IN_TIME = 500;
+	static const int LOG_FADE_OUT_TIME = 500;
 
 	static const std::string NEW_LOG_VARIABLE_NAME = "new_log_entry";
 	static const std::string LOG_HEADER_BEGIN = "<header>";
@@ -43,18 +43,18 @@ public:
 	///////////////////////////////////////////////////////////////////////////
 
 	LogWindowImpl( Game& game, Ogui& ogui, LogManager& manager ) :
-		game( game ),
-		ogui( ogui ),
-		manager( manager ),
-		effectWindow( NULL ),
 		window( NULL ),
 		selectList( NULL ),
 		formattedText( NULL ),
+		effectWindow( NULL ),
 		textAreaBackground( NULL ),
 		selectListBackground( NULL ),
 		exitButton( NULL ),
 		shown( false ),
-		visible( true )
+		visible( true ),
+		game( game ),
+		ogui( ogui ),
+		manager( manager )
 	{
 		window = ogui.CreateSimpleWindow( 0, 0, 1024, 768, NULL, 0 );
 		window->Hide();
@@ -115,9 +115,7 @@ public:
 	{
 		if( e->eventType == OguiEffectEvent::EVENT_TYPE_FADEDOUT )
 		{
-#ifdef GUI_BUILD_LOG_WINDOW
 			game.gameUI->closeLogWindow();
-#endif
 			// window->Hide();
 			// game.gameUI->closeLogWindow();
 			// window->Hide();
@@ -140,11 +138,9 @@ public:
 
 	void fadeOut()
 	{
-		window->StartEffect( OGUI_WINDOW_EFFECT_FADEOUT, FADE_OUT_TIME );
-		effectWindow->fadeOut( FADE_OUT_TIME );
-#ifdef GUI_BUILD_LOG_WINDOW
+		window->StartEffect( OGUI_WINDOW_EFFECT_FADEOUT, LOG_FADE_OUT_TIME );
+		effectWindow->fadeOut( LOG_FADE_OUT_TIME );
 		game.gameUI->prepareCloseLogWindow();
-#endif
 		visible = false;
 		// game.gameUI->prepareCloseLogWindow();
 	}
@@ -152,10 +148,10 @@ public:
 	void fadeIn()
 	{
 		effectWindow->raise();
-		effectWindow->fadeIn( FADE_IN_TIME );
+		effectWindow->fadeIn( LOG_FADE_IN_TIME );
 
 		window->Raise();
-		window->StartEffect( OGUI_WINDOW_EFFECT_FADEIN, FADE_IN_TIME );
+		window->StartEffect( OGUI_WINDOW_EFFECT_FADEIN, LOG_FADE_IN_TIME );
 		window->Show();
 		shown = true;
 	}

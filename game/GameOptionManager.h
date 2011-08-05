@@ -5,8 +5,9 @@
 
 // NOTE: option id defines moved under game/options/ directory.
 
-#define DH_OPT_AMOUNT 380
+#define DH_OPT_AMOUNT 370
 #include <string>
+#include <memory>
 
 #include "GameConfigs.h"
 #include "GameOption.h"
@@ -41,7 +42,7 @@ namespace game
 		const char *getOptionNameForId(int id);
 
 	private:
-		static GameOptionManager *instance;
+		static std::auto_ptr<GameOptionManager> instance;
 
 		GameConfigs *gameConf;
 

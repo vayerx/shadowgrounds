@@ -2,13 +2,15 @@
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifndef __GNUC__
 #pragma warning(disable:4103)
 #pragma warning(disable:4786)
+#endif
 
 #include "LinkedList.h"
 
 #include <assert.h>
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 
 #ifndef LINKEDLIST_USE_NODE_POOL

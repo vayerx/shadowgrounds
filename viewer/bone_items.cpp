@@ -81,11 +81,7 @@ struct BoneItemsData
 
 			if(command == IDC_ITEM_INSERT)
 			{
-#ifdef LEGACY_FILES
 				std::string fileName = editor::getOpenFileName("s3d", "Data\\Models");
-#else
-				std::string fileName = editor::getOpenFileName("s3d", "data\\model");
-#endif
 				if(!fileName.empty())
 				{
 					std::string &helper = data->helpers[listIndex];

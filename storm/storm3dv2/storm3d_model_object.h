@@ -7,7 +7,7 @@
 // Includes
 //------------------------------------------------------------------
 #include "storm3d_common_imp.h"
-#include "istorm3d_model.h"
+#include "IStorm3D_Model.h"
 #include "storm3d_animation.h"
 #include "storm3d.h"
 #include "storm3d_resourcemanager.h"
@@ -124,9 +124,9 @@ public:
 	MAT &GetMXG();
 
 	// Set position/rotation/scale
-	void SetPosition(VC3 &_position);
-	void SetRotation(QUAT &_rotation);
-	void SetScale(VC3 &_scale);
+	void SetPosition(const VC3 &_position);
+	void SetRotation(const QUAT &_rotation);
+	void SetScale(const VC3 &_scale);
 
 	// Get position/rotation/scale
 	VC3 &GetPosition();

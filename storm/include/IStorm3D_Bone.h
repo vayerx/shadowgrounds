@@ -2,7 +2,7 @@
 
 // Storm3D includes 
 #include "Storm3D_Common.h"
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 
 /*
 Bone stuff

@@ -2,16 +2,12 @@
 
 #pragma once
 
-
-//------------------------------------------------------------------
-// Includes
-//------------------------------------------------------------------
-// CHANGED: was empty
 #include <list>
-#include "storm3d_common_imp.h"
-#include "istorm3d_scene.h"
-#include "storm3d_camera.h"
 #include <vector>
+#include "storm3d_common_imp.h"
+#include "IStorm3D_Scene.h"
+#include "storm3d.h"
+#include "storm3d_camera.h"
 #include "storm3d_terrain_utils.h"
 
 class Storm3D_Line;
@@ -57,7 +53,7 @@ class Storm3D_Scene : public IStorm3D_Scene
 
 	// Time in seconds (0.0 at start)
 	float time;	
-	
+
 	// Polygon counter (v3)
 	int poly_counter;
 
@@ -95,6 +91,13 @@ class Storm3D_Scene : public IStorm3D_Scene
 	std::vector<Debug2> debugLines;
 	std::vector<Debug1> debugPoints;
 
+	// Scene's particlesystem
+	Storm3D_ParticleSystem *particlesystem;
+
+	void renderRealScene(bool flip, bool render_mirrored, Storm3D_Texture *target = NULL);
+#ifdef NVPERFSDK
+	int bottlenecks[9];
+#endif
 public:
 
 	inline IStorm3D * getStorm() { return (IStorm3D*) Storm3D2; };
@@ -106,19 +109,11 @@ public:
 	float GetTime() {return time;}
 	bool IsFogEnabled() {return fog_active;}
 
-	// DX buffer handling (for lost devices)
-	// For particlesystem vbuffer
-	void ReleaseDynamicDXBuffers();
-	void ReCreateDynamicDXBuffers();
-
 	// Used on rendering (particles/animation/videos)
 	int time_dif;
 
 	// Camera
 	Storm3D_Camera camera;
-
-	// Scene's particlesystem
-	Storm3D_ParticleSystem *particlesystem;
 
 	// Get camera/particlesystem
 	IStorm3D_Camera *GetCamera();
@@ -126,7 +121,7 @@ public:
 
 	// Rendering (returns polygon count)
 	int RenderScene(bool present);
-	void RenderSceneWithParams(bool flip=true,bool disable_hsr=false, bool update_time=true, bool render_mirrored=false);
+	void RenderSceneWithParams(bool flip=true,bool disable_hsr=false, bool update_time=true, bool render_mirrored=false, IStorm3D_Texture *target = NULL);
 	void RenderVideo(const char *fileName, IStorm3D_StreamBuilder *streamBuilder);
 
 	// Rendering (to dynamic textures)
@@ -194,6 +189,3 @@ public:
 	friend class Storm3D_Material;		// fogging for shaders
 	friend class Storm3D_Model_Object;
 };
-
-
-

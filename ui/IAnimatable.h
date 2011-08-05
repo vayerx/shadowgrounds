@@ -18,19 +18,19 @@ namespace ui
   public:
 	  virtual ~IAnimatable() {}
 
-    virtual VisualObject *getVisualObject() = 0;
+    virtual VisualObject *getVisualObject() const = 0;
 
     virtual void setAnimation(int animation) = 0;
 
-    virtual int getAnimation() = 0;
+	virtual int getAnimation() const = 0;
 
-    virtual void setBlendAnimation(int num, int animation) = 0;
+    virtual void setBlendAnimation(unsigned int num, int animation) = 0;
 
-    virtual int getBlendAnimation(int num) = 0;
+	virtual int getBlendAnimation(unsigned int num) const = 0;
 
 		virtual void setAnimationSpeedFactor(float speedFactor) = 0;
 
-		virtual float getAnimationSpeedFactor() = 0;
+		virtual float getAnimationSpeedFactor() const = 0;
 
   };
 

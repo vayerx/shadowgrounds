@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <cassert>
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 // Loose quadtree, extended to 3d space
 // Stores pointers, does not delete them
@@ -177,7 +177,7 @@ struct QuadtreeNode
 	{
 		Sphere sphere(position, radius);
 
-		QuadtreeEntity<T>::EntityImp *imp = new QuadtreeEntity<T>::EntityImp(sphere, instance);
+		typename QuadtreeEntity<T>::EntityImp *imp = new typename QuadtreeEntity<T>::EntityImp(sphere, instance);
 		insert(*imp);
 
 		QuadtreeEntity<T> *e = new QuadtreeEntity<T> (*imp);
@@ -365,7 +365,7 @@ class QuadtreeRaytraceCollision
 
 		// Childs
 		{
-			int childNodes = 0;
+			unsigned int childNodes = 0;
 			QuadtreeNode<T> *childs[4] = { 0 };
 
 			for(int i = 0; i < 4; ++i)
@@ -382,7 +382,7 @@ class QuadtreeRaytraceCollision
 			if(childNodes)
 			{
 				std::sort(&childs[0], &childs[childNodes], RaySorter());
-				for(int j = 0; j < childNodes; ++j)
+				for(unsigned int j = 0; j < childNodes; ++j)
 				{
 					QuadtreeNode<T> *child = childs[j];
 					
@@ -420,7 +420,7 @@ class QuadtreeRaytraceCollision
 		{
 			for(unsigned int i = 0; i < node->entities.size(); ++i)
 			{
-				QuadtreeEntity<T>::EntityImp *imp = node->entities[i];
+				typename QuadtreeEntity<T>::EntityImp *imp = node->entities[i];
 				if(!collision(ray, imp->sphere))
 					continue;
 
@@ -503,7 +503,7 @@ class QuadtreeSphereCollision
 		{
 			for(unsigned int i = 0; i < node->entities.size(); ++i)
 			{
-				QuadtreeEntity<T>::EntityImp *imp = node->entities[i];
+				typename QuadtreeEntity<T>::EntityImp *imp = node->entities[i];
 				if(!collision(sphere, imp->sphere))
 					continue;
 
@@ -557,7 +557,7 @@ public:
 		while(!end())
 		{
 			const Node &node = stack.top();
-			const std::vector<QuadtreeEntity<T>::EntityImp *> &entities = node.node->entities;
+			const std::vector<typename QuadtreeEntity<T>::EntityImp *> &entities = node.node->entities;
 
 			++entityIndex;
 			if(entityIndex >= int(entities.size()))
@@ -589,7 +589,7 @@ public:
 				continue;
 			}
 
-			QuadtreeEntity<T>::EntityImp *imp = entities[entityIndex];
+			typename QuadtreeEntity<T>::EntityImp *imp = entities[entityIndex];
 			assert(imp->sphere.radius >= 0);
 
 			bool visible = true;
@@ -653,11 +653,11 @@ public:
 	void erase(typename Quadtree<T>::Entity *entity);
 
 	void RayTrace(Ray &ray, Storm3D_CollisionInfo &info, bool accurate);
-	void SphereCollision(Sphere &sphere, Storm3D_CollisionInfo &info, bool accurate);
+	void SphereCollision(const Sphere &sphere, Storm3D_CollisionInfo &info, bool accurate);
 
 	void collectSphere(Node *node, std::vector<T *> &list, const VC3 &position, float radius)
 	{
-		std::vector<QuadtreeEntity<T>::EntityImp *>::iterator it = node->entities.begin();
+		typename std::vector<typename QuadtreeEntity<T>::EntityImp *>::iterator it = node->entities.begin();
 		for(; it != node->entities.end(); ++it)
 		{
 			Storm3D_CollisionInfo info;
@@ -711,7 +711,7 @@ Quadtree<T>::Quadtree(const VC2 &min_, const VC2 &max_)
 	AABB looseArea;
 
 	Quadtree<T>::Node::calculateLooseArea(area, looseArea);	
-	root = new Quadtree<T>::Node(area, looseArea, 0);
+	root = new typename Quadtree<T>::Node(area, looseArea, 0);
 }
 
 template<class T>
@@ -743,7 +743,7 @@ void Quadtree<T>::RayTrace(Ray &ray, Storm3D_CollisionInfo &info, bool accurate)
 }
 
 template<class T>
-void Quadtree<T>::SphereCollision(Sphere &sphere, Storm3D_CollisionInfo &info, bool accurate)
+void Quadtree<T>::SphereCollision(const Sphere &sphere, Storm3D_CollisionInfo &info, bool accurate)
 {
 	QuadtreeSphereCollision<T> sphereCollision(*this, sphere, info, accurate);
 }

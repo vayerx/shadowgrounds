@@ -6,7 +6,7 @@
 // (don't include elsewhere to keep compile times reasonable)
 
 // (was 1016 before change to new system.)
-#define GS_CMD_AMOUNT 2400
+#define GS_CMD_AMOUNT 2300
 
 // cmd id ranges...
 
@@ -33,8 +33,6 @@
 // 2050-2099 DecorScripting (50)
 // 2100-2199 SyncScripting
 // 2200-2299 DirectControlScripting
-// 2300-2349 PhysicsScripting (50)
-// 2350-2399 PhysicsScripting (50)
 
 #endif
 

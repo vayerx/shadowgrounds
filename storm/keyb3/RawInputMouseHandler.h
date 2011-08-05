@@ -3,8 +3,6 @@
 #define __MOUSE_HANDLER
 
 #include <string>
-#include <windows.h>
-#include "WinUser_RawInput.h"
 
 #define MOUSEHANDLER_DEFAULT_MOUSE_ID -1
 #define MOUSEHANDLER_ALL_MOUSES_ID -2
@@ -15,7 +13,6 @@
 #define MAX_KEYBOARDS 5
 #define MAX_KEYS 256
 
-typedef LRESULT (WINAPI *wndproc_ptr)(HWND ,UINT ,WPARAM , LPARAM);
 
 class RawInputDeviceHandler
 {
@@ -47,38 +44,29 @@ class RawInputDeviceHandler
 public:
 	struct MouseInfo
 	{
-		HANDLE mouseHandle;
-		LONG X, Y;
-		LONG dX, dY;
+		int X, Y;
+		int dX, dY;
 
 		bool leftButton, middleButton, rightButton;
 		bool button1, button2, button3, button4, button5;
 		int wheel, dwheel;
 
 		// Do not use these manually.
-		LONG oldX, oldY;
+		int oldX, oldY;
 		int oldWheel;
 	};
 	struct KeyboardInfo
 	{
-		HANDLE keyboardHandle;
 		bool keyDown[ MAX_KEYS ];
 	};
 
 	static int lm;
 
-	static RegisterRawInputDevices_ptr RegisterRawInputDevices_c;
-	static GetRawInputData_ptr GetRawInputData_c;
-	static GetRawInputDeviceList_ptr GetRawInputDeviceList_c;
-	static GetRawInputDeviceInfoA_ptr GetRawInputDeviceInfoA_c;
-	static SendInput_ptr SendInput_c;
-	static wndproc_ptr Eventhandler;
-
 	static unsigned int numMice, numKeyboards;
 	static bool initialized;
 	static bool mouseInitialized, keyboardInitialized;
 
-	static bool init( HWND, bool initMice = true, bool initKeyboards = false );
+	static bool init( bool initMice = true, bool initKeyboards = false );
 	static void free();
 	static MouseInfo * getMouseInfo ( int mouseID = MOUSEHANDLER_ALL_MOUSES_ID );
 	static KeyboardInfo * getKeyboardInfo ( int keybID = MOUSEHANDLER_ALL_KEYBOARDS_ID );

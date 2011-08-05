@@ -16,9 +16,9 @@ FROZENBYTE RETAINS THE RIGHT TO ALTER THESE LICENSE TERMS AT ANY TIME FOR ANY RE
 
 SOURCE CODE README AND FURTHER LICENSE NOTES
 -------------------------------------------------
-Last update to this file: 21st of April 2011 (v1)
+Last update to this file: 6th of June 2011 (v1)
 
-This source code package allows you to compile the game and develop it further if you wish (for non-commercial purposes). All other files, including the art assets and the level editor, remain the sole property and copyright of Frozenbyte. You may not distribute any of the files not included in the source code package. Should the source code include any 3rd party files or software, the copyright remains with the original owner and you are not allowed to distribute or modify such files or software. It is also forbidden to distribute Shadowgrounds or Shadowgrounds Survivor, or any direct derivative, in any way (e.g. not even for free), in any "app stores" such as the Mac App Store or similar, or in any distribution channel that has authorization control by a third party. 
+This source code package allows you to compile the games develop them further if you wish (for non-commercial purposes). All other files, including the art assets and the level editor, remain the sole property and copyright of Frozenbyte. You may not distribute any of the files not included in the source code package. Should the source code include any 3rd party files or software, the copyright remains with the original owner and you are not allowed to distribute or modify such files or software. It is also forbidden to distribute Shadowgrounds or Shadowgrounds Survivor, or any direct derivative, in any way (e.g. not even for free), in any "app stores" such as the Mac App Store or similar, or in any distribution channel that has authorization control by a third party. 
 
 If you have a question about the license or a specific file, please don't hesitate to contact us. We're mostly just covering our legal base with this stuff. 
 
@@ -26,25 +26,12 @@ Please note that we cannot provide any official support for this source code rel
 
 
 
-WHAT YOU NEED
+NOTES
 -------------
 
-The source code as it is packaged will not compile properly. The following libraries have been deleted from the source code:
-
-Boost 1.39.0
-zlib 1.2.3
-FMOD 3.75
-DirectX SDK
-PhysX SDK
-Windows Media Format 9 Series SDK
-
-Some of these are required in order to build the executables. If/when you encounter errors, they should be reasonably easy to fix. 
+The source code as it is packaged may not compile properly. This package includes both the Windows and Linux/Mac source code. However, it might be better to use the separately packaged SG/SGS source code archive for Windows purposes, because it differs slightly from this. At the very least run a diff comparison tool and see for yourself. 
 
 Shadowgrounds specific code is under /shadowgrounds, and Shadowgrounds Survivor under /survivor . 
-
-The Shadowgrounds games use FMOD 3.7.5.0 for sound and the dll is distributed with the game files. No source code for FMOD can be distributed. If you require low-level access to the sound libraries, it's recommended you obtain a license to FMOD ( http://www.fmod.org ), or integrate OpenAL or other free sound library. 
-
-DirectX SDK And Windows Media Format 9 Series SDK can be obtained from Microsoft.
 
 Shadowgrounds does not use PhysX, but Shadowgrounds Survivor does.
 
@@ -78,7 +65,10 @@ THANKS
 
 Thanks to all of the Frozenbyte / Shadowgrounds / Shadowgrounds Survivor team(s).
 
+Thanks to Alternative Games for the Linux/Mac versions
+
 Thanks to Parallax Software for license inspiration.
+
 
 
 

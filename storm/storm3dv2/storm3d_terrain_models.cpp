@@ -1,6 +1,16 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
+
+#include <GL/glew.h>
+#include <queue>
+#include <vector>
+#include <boost/scoped_ptr.hpp>
+#include <c2_common.h>
+#include <c2_qtree.h>
+#include <c2_oobb.h>
 
 #include "storm3d_terrain_models.h"
 #include "storm3d_terrain_utils.h"
@@ -14,14 +24,11 @@
 #include "storm3d_mesh.h"
 #include "storm3d_material.h"
 #include "storm3d_texture.h"
-#include "storm3d_shadermanager.h"
 #include "storm3d.h"
-#include <c2_qtree.h>
-#include <c2_oobb.h>
-#include <boost/scoped_ptr.hpp>
+#include "Storm3D_ShaderManager.h"
 #include <boost/lexical_cast.hpp>
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 
 
@@ -41,8 +48,6 @@ using namespace frozenbyte::storm;
 static const int MAX_VISIBILITY_STRUCTURES = 2;
 int active_visibility = 0;
 
-namespace {
-
 	const int MODEL_UPDATE_RATE = 2;
 	const int OBJECT_UPDATE_RATE = 2;
 	const int OBJECT_CULL_RATE = 4;
@@ -51,7 +56,10 @@ namespace {
 	{
 		virtual void update(Storm3D_Model_Object *object) = 0;
 		virtual void erase(const Storm3D_Model_Object *object) = 0;
+		virtual ~DataBase() {};
 	};
+
+namespace {
 
 	struct ModelObserver: public IModelObserver
 	{
@@ -63,7 +71,6 @@ namespace {
 		ModelObserver(Quadtree<Storm3D_Model> *tree_, Quadtree<Storm3D_Model>::Entity *entity_, std::vector<Storm3D_Model *> *visibleModels_, DataBase *data_)
 		:	tree(tree_),
 			entity(entity_),
-			//visibleModels(visibleModels_),
 			data(data_)
 		{
 			for(int i = 0; i < MAX_VISIBILITY_STRUCTURES; ++i)
@@ -116,7 +123,7 @@ namespace {
 		}
 	};
 
-	typedef std::vector<Storm3D_Model_Object *> ObjectList;
+	typedef std::vector<Storm3D_Model_Object *> ModelObjectList;
 
 	enum RenderType
 	{
@@ -175,7 +182,6 @@ namespace {
 				return at1 < bt1;
 
 			return a->sort_data < b->sort_data;
-			//return false;
 		}
 	};
 
@@ -201,14 +207,6 @@ namespace {
 
 			// Seems to work if we dont calculate actual distance here
 			return a->sort_data > b->sort_data;
-
-			/*
-			VC3 apos = a->GetGlobalPosition();
-			VC3 bpos = b->GetGlobalPosition();
-			float asq = apos.GetSquareRangeTo(camera);
-			float bsq = bpos.GetSquareRangeTo(camera);
-			return asq > bsq;
-			*/
 		}
 	};
 
@@ -242,7 +240,7 @@ struct Storm3D_TerrainModelsData : public DataBase
 	boost::scoped_ptr<Quadtree<Storm3D_Model> > tree;
 	std::map<Storm3D_Model *, boost::shared_ptr<IModelObserver> > observers;
 
-	std::vector<Light> lights;
+	std::vector<TerrainLight> lights;
 
 	PixelShader lightingPixelShader_lightmap;
 	PixelShader lightingPixelShader_lightmap_reflection;
@@ -259,8 +257,8 @@ struct Storm3D_TerrainModelsData : public DataBase
 		DepthObjects = 1
 	};
 
-	ObjectList solidObjects[MAX_VISIBILITY_STRUCTURES][2];
-	ObjectList alphaObjects[MAX_VISIBILITY_STRUCTURES][2];
+	ModelObjectList solidObjects[MAX_VISIBILITY_STRUCTURES][2];
+	ModelObjectList alphaObjects[MAX_VISIBILITY_STRUCTURES][2];
 
 	Storm3D_TerrainModels::FillMode fillMode;
 	bool filterLightmap;
@@ -276,7 +274,6 @@ struct Storm3D_TerrainModelsData : public DataBase
 	bool skyModelGlowAllowed;
 
 	std::vector<Storm3D_Model *> visibleModels[MAX_VISIBILITY_STRUCTURES];
-	//boost::shared_ptr<Storm3D_Texture> white;
 
 	COL terrainObjectColorFactorBuilding;
 	COL terrainObjectColorFactorOutside;
@@ -297,39 +294,42 @@ struct Storm3D_TerrainModelsData : public DataBase
 	float forcedDirectionalLightStrength;
 
 	std::vector<Storm3D_Model *> disabledCullingModels;
+	
+	// Mac black reflection textures hack
+	bool blendenabled;
 
 	Storm3D_TerrainModelsData(Storm3D &storm_)
 	:	storm(storm_),
-		lightingPixelShader_lightmap(*storm.GetD3DDevice()),
-		lightingPixelShader_lightmap_reflection(*storm.GetD3DDevice()),
-		lightingPixelShader_lightmap_localreflection(*storm.GetD3DDevice()),
-		lightingPixelShader_lightmap_notexture(*storm.GetD3DDevice()),
-		lightingPixelShader_noLightmap(*storm.GetD3DDevice()),
-		lightingPixelShader_noLightmap_reflection(*storm.GetD3DDevice()),
-		lightingPixelShader_noLightmap_localreflection(*storm.GetD3DDevice()),
-		lightingPixelShader_noLightmap_notexture(*storm.GetD3DDevice()),
+		lightingPixelShader_lightmap(),
+		lightingPixelShader_lightmap_reflection(),
+		lightingPixelShader_lightmap_localreflection(),
+		lightingPixelShader_lightmap_notexture(),
+		lightingPixelShader_noLightmap(),
+		lightingPixelShader_noLightmap_reflection(),
+		lightingPixelShader_noLightmap_localreflection(),
+		lightingPixelShader_noLightmap_notexture(),
+		fillMode(Storm3D_TerrainModels::Solid),
 		filterLightmap(false),
 		renderCollision(false),
 		enableAlphaTest(true),
-		enableMaterialAmbient(true),
 		renderBoned(true),
+		enableMaterialAmbient(true),
 		forceWhiteBase(false),
 		enableGlow(true),
 		enableDistortion(false),
 		enableReflection(false),
-		skyModelGlowAllowed(true),
 		additionalAlphaTestPassAllowed(false),
+		skyModelGlowAllowed(true),
 		terrainObjectColorFactorBuilding(1.f, 1.f, 1.f),
 		terrainObjectColorFactorOutside(1.f, 1.f, 1.f),
 		frustumsEnabled(false),
-		//object_counter(0),
-		//model_counter(1),
 		foundLocalReflection(false),
 		localReflectionHeight(0.f),
 
 		forcedDirectionalLightEnabled(false),
 		forcedDirectionalLightDirection(0, 1.f, 0),
-		forcedDirectionalLightStrength(0.f)
+		forcedDirectionalLightStrength(0.f),
+		blendenabled(false)
 	{
 		for(int i = 0; i < MAX_VISIBILITY_STRUCTURES; ++i)
 		{
@@ -345,13 +345,6 @@ struct Storm3D_TerrainModelsData : public DataBase
 		lightingPixelShader_noLightmap_reflection.createLightingPixelShader_NoLightmap_Reflection();
 		lightingPixelShader_noLightmap_localreflection.createLightingPixelShader_NoLightmap_LocalReflection();
 		lightingPixelShader_noLightmap_notexture.createLightingPixelShader_NoLightmapNoTexture();
-
-		/*
-		IStorm3D_Texture *t = storm.CreateNewTexture(1, 1, IStorm3D_Texture::TEXTYPE_BASIC);
-		DWORD value = 0xFFFFFFFF;
-		t->Copy32BitSysMembufferToTexture(&value);
-		white.reset(reinterpret_cast<Storm3D_Texture *> (t), std::mem_fun(&IStorm3D_Texture::Release));
-		*/
 	}
 
 	~Storm3D_TerrainModelsData()
@@ -376,7 +369,6 @@ struct Storm3D_TerrainModelsData : public DataBase
 		if(!tree)
 			return;
 
-		//std::vector<Storm3D_Model *> *visibleModels_ = &visibleModels[0];
 		Quadtree<Storm3D_Model>::Entity *entity = tree->insert(model, model->GetPosition(), model->bounding_radius);
 		boost::shared_ptr<ModelObserver> observer(new ModelObserver(tree.get(), entity, &visibleModels[0], this));
 		observers[model] = observer;
@@ -431,10 +423,7 @@ struct Storm3D_TerrainModelsData : public DataBase
 					}
 					
 					if(!hasAlpha)
-					{
-						if (!model->skyModel)
-							solidObjects[i][DepthObjects].push_back(o);
-					}
+						solidObjects[i][DepthObjects].push_back(o);
 				}
 			}
 		}
@@ -485,10 +474,7 @@ struct Storm3D_TerrainModelsData : public DataBase
 			}
 			
 			if(!hasAlpha)
-			{
-				if (!m->skyModel)
-					solidObjects[i][DepthObjects].push_back(o);
-			}
+				solidObjects[i][DepthObjects].push_back(o);
 		}
 	}
 
@@ -498,10 +484,10 @@ struct Storm3D_TerrainModelsData : public DataBase
 		for(int i = 0; i < 2; ++i)
 		{
 			{
-				ObjectList &solidList = solidObjects[j][i];
+				ModelObjectList &solidList = solidObjects[j][i];
 				if(!solidList.empty())
 				{
-					ObjectList::iterator it = solidList.begin();
+					ModelObjectList::iterator it = solidList.begin();
 					for(; it != solidList.end(); ++it)
 					{
 						if(*it == object)
@@ -511,10 +497,10 @@ struct Storm3D_TerrainModelsData : public DataBase
 			}
 
 			{
-				ObjectList &alphaList = alphaObjects[j][i];
+				ModelObjectList &alphaList = alphaObjects[j][i];
 				if(!alphaList.empty())
 				{
-					ObjectList::iterator it = alphaList.begin();
+					ModelObjectList::iterator it = alphaList.begin();
 					for(; it != alphaList.end(); ++it)
 					{
 						if(*it == object)
@@ -544,10 +530,10 @@ struct Storm3D_TerrainModelsData : public DataBase
 				for(int i = 0; i < 2; ++i)
 				{
 					{
-						ObjectList &solidList = solidObjects[j][i];
+						ModelObjectList &solidList = solidObjects[j][i];
 						if(!solidList.empty())
 						{
-							ObjectList::iterator it = solidList.begin();
+							ModelObjectList::iterator it = solidList.begin();
 							for(; it != solidList.end(); ++it)
 							{
 								Storm3D_Model_Object *o = *it;
@@ -561,10 +547,10 @@ struct Storm3D_TerrainModelsData : public DataBase
 					}
 
 					{
-						ObjectList &alphaList = alphaObjects[j][i];
+						ModelObjectList &alphaList = alphaObjects[j][i];
 						if(!alphaList.empty())
 						{
-							ObjectList::iterator it = alphaList.begin();
+							ModelObjectList::iterator it = alphaList.begin();
 							for(; it != alphaList.end(); ++it)
 							{
 								Storm3D_Model_Object *o = *it;
@@ -627,7 +613,6 @@ struct Storm3D_TerrainModelsData : public DataBase
 			OOBB oobb = o.GetObjectBoundingBox();
 			if(o.ObjectBoundingBoxOk())
 			{
-				//const MAT &modelTM = model.GetMX();
 				const MAT &modelTM = o.GetMXG();
 				modelTM.TransformVector(oobb.center);
 				modelTM.RotateVector(oobb.axes[0]);
@@ -732,21 +717,6 @@ struct Storm3D_TerrainModelsData : public DataBase
 				alphaObjects[active_visibility][NormalObjects].clear();
 			}
 
-			/*
-			// hax hax animation
-			static const int ANIMATION_UPDATE_INTERVAL = 1000 / 30;
-			static int animation_time = 0;
-			animation_time += timeDelta_;
-			bool apply_animation = false;
-			int animation_step = 0;
-			if(animation_time > ANIMATION_UPDATE_INTERVAL)
-			{
-				animation_step = (animation_time / ANIMATION_UPDATE_INTERVAL) * ANIMATION_UPDATE_INTERVAL;
-				apply_animation = true;
-				animation_time -= animation_step;
-			}
-			*/
-
 			std::vector<Storm3D_Model *>::iterator it = visibleModels[active_visibility].begin();
 			std::vector<Storm3D_Model *>::iterator end = visibleModels[active_visibility].end();
 			for(; it != end; ++it)
@@ -757,15 +727,11 @@ struct Storm3D_TerrainModelsData : public DataBase
 
 				// Animate
 				{
-					//if(apply_animation)
-					//	m->AdvanceAnimation(animation_step);
 					m->AdvanceAnimation(timeDelta_);
 				}
 
 				if(updateCulling)
 				{
-					//std::set<IStorm3D_Model_Object *>::iterator it = m->objects.begin();
-					//std::set<IStorm3D_Model_Object *>::iterator end = m->objects.end();
 					std::vector<Storm3D_Model_Object *>::iterator it = m->objects_array.begin();
 					std::vector<Storm3D_Model_Object *>::iterator end = m->objects_array.end();
 					for(; it != end; ++it)
@@ -795,8 +761,6 @@ struct Storm3D_TerrainModelsData : public DataBase
 
 						if(!passedRoughTesting)
 							continue;
-						//if(!testVisibility(*o, *mesh, *m, frustum))
-						//	continue;
 
 						++storm3d_model_objects_rough_passed;
 						Storm3D_Material *material = static_cast<Storm3D_Material *> (mesh->GetMaterial());
@@ -896,9 +860,7 @@ struct Storm3D_TerrainModelsData : public DataBase
 						if(!hasAlpha)
 						{
 							if (!m->skyModel)
-							{
 								solidObjects[active_visibility][DepthObjects].push_back(o);
-							}
 						}
 					}
 				}
@@ -913,11 +875,11 @@ struct Storm3D_TerrainModelsData : public DataBase
 
 				for(int i = 0; i < 2; ++i)
 				{
-					ObjectList &solidList = solidObjects[active_visibility][i];
+					ModelObjectList &solidList = solidObjects[active_visibility][i];
 					if(!solidList.empty())
 						sort(solidList.begin(), solidList.end(), solidSorter);
 
-					ObjectList &alphaList = alphaObjects[active_visibility][i];
+					ModelObjectList &alphaList = alphaObjects[active_visibility][i];
 					if(!alphaList.empty())
 						sort(alphaList.begin(), alphaList.end(), alphaSorter);
 				}
@@ -929,10 +891,10 @@ struct Storm3D_TerrainModelsData : public DataBase
 		if(!updateCulling)
 		{
 			{
-				ObjectList &solidList = solidObjects[active_visibility][0];
+				ModelObjectList &solidList = solidObjects[active_visibility][0];
 				if(!solidList.empty())
 				{
-					ObjectList::iterator it = solidList.begin();
+					ModelObjectList::iterator it = solidList.begin();
 					for(; it != solidList.end(); ++it)
 					{
 						Storm3D_Model_Object *o = *it;
@@ -951,10 +913,10 @@ struct Storm3D_TerrainModelsData : public DataBase
 			}
 
 			{
-				ObjectList &alphaList = alphaObjects[active_visibility][0];
+				ModelObjectList &alphaList = alphaObjects[active_visibility][0];
 				if(!alphaList.empty())
 				{
-					ObjectList::iterator it = alphaList.begin();
+					ModelObjectList::iterator it = alphaList.begin();
 					for(; it != alphaList.end(); ++it)
 					{
 						Storm3D_Model_Object *o = *it;
@@ -982,8 +944,9 @@ struct Storm3D_TerrainModelsData : public DataBase
 		}
 	}
 
-	bool shouldRender(RenderType renderType, Storm3D_Model_Object *object, const Frustum *frustum, const Frustum *frustum2, const IStorm3D_Model *skipModel, RenderFlags flags, const VC2 &minplane, const VC2 &maxplane, const AABB &fakeArea, int activeVisibility) const
+	bool shouldRender(RenderType renderType, Storm3D_Model_Object *object, const Frustum *frustum, const Frustum *frustum2, const IStorm3D_Model *skipModel, RenderFlags flags, const VC2 &minplane, const VC2 &maxplane, int activeVisibility) const
 	{
+
 		if(object->parent_model == skipModel)
 			return false;
 
@@ -1021,7 +984,6 @@ struct Storm3D_TerrainModelsData : public DataBase
 
 		if(renderType == FakeDepth)
 		{
-			// HAX
 			if(object->parent_model->bones.empty())
 			{
 				if(object->parent_model->objects.size() > 5)
@@ -1034,19 +996,6 @@ struct Storm3D_TerrainModelsData : public DataBase
 				float radius2 = mesh->GetRadius();
 				if(!contains2d(pos2, radius2, minplane, maxplane))
 					return false;
-
-				OOBB oobb = object->GetObjectBoundingBox();
-				if(object->ObjectBoundingBoxOk())
-				{
-					const MAT &modelTM = object->GetMXG();
-					modelTM.TransformVector(oobb.center);
-					modelTM.RotateVector(oobb.axes[0]);
-					modelTM.RotateVector(oobb.axes[1]);
-					modelTM.RotateVector(oobb.axes[2]);
-
-					if(!collision(fakeArea, oobb))
-						return false;
-				}
 			}
 			else
 			{
@@ -1121,7 +1070,7 @@ struct Storm3D_TerrainModelsData : public DataBase
 		return true;
 	}
 
-	bool applyTexture(IDirect3DDevice9 &device, IStorm3D_Texture *texture, int stage) const
+	bool applyTexture(IStorm3D_Texture *texture, int stage) const
 	{
 		Storm3D_Texture *t = static_cast<Storm3D_Texture *> (texture);
 		if(t)
@@ -1131,19 +1080,22 @@ struct Storm3D_TerrainModelsData : public DataBase
 			return true;
 		}
 
-		device.SetTexture(stage, 0);
+		glActiveTexture(GL_TEXTURE0 + stage);
+		glDisable(GL_TEXTURE_2D);
+		glDisable(GL_TEXTURE_3D);
+		glDisable(GL_TEXTURE_CUBE_MAP);
+		glBindTexture(GL_TEXTURE_2D, 0);
 		return false;
 	}
 
 	void applyGeneralMaterial(RenderType renderType, Storm3D_Material &material, Storm3D_Model &model, Storm3D_Model_Object &object)
 	{
 		Storm3D_ShaderManager *shaderManager = Storm3D_ShaderManager::GetSingleton();
-		IDirect3DDevice9 &device = *storm.GetD3DDevice();
 
 		if(renderType == BaseTextures)
 		{
 			if(material.getEffectTextureName().empty())
-				applyTexture(device, material.GetBaseTexture(), 0);
+				applyTexture(material.GetBaseTexture(), 0);
 			else
 				storm.getProceduralManagerImp().apply(0);
 
@@ -1152,7 +1104,7 @@ struct Storm3D_TerrainModelsData : public DataBase
 		else if(renderType == BaseLighting)
 		{
 			if(material.getEffectTextureName().empty())
-				applyTexture(device, material.GetBaseTexture(), 0);
+				applyTexture(material.GetBaseTexture(), 0);
 			else
 				storm.getProceduralManagerImp().apply(0);
 
@@ -1188,31 +1140,38 @@ struct Storm3D_TerrainModelsData : public DataBase
 				localReflectionHeight = sphere.position.y;
 #endif
 
-
-				if(applyTexture(device, storm.getReflectionTexture(), 3))
+				if(applyTexture(storm.getReflectionTexture(), 3))
 				{
 					localReflection = true;
+					
+					// Hacky fix on Mac
+					material.SetTransparency(0.7f);
+
+					//glEnable(GL_BLEND);
+					//blendenabled = true;
+					
+					//glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
 
 					float ref = material.getReflectionBlendFactor();
 					float factor[4] = { ref, ref, ref, ref };
-					device.SetPixelShaderConstantF(1, factor, 1);
+					glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 1, factor);
 				}
 			}
-			else if(applyTexture(device, material.GetReflectionTexture(), 3))
+			else if(applyTexture(material.GetReflectionTexture(), 3))
 			{
 				float ref = material.GetReflectionFactor();
 				reflection = true;
 
 				float factor[4] = { ref, ref, ref, ref };
-				device.SetPixelShaderConstantF(1, factor, 1);
+				glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 1, factor);
 			}
-
+/*  // done in shader
 			if(localReflection)
 				device.SetTextureStageState(3, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_PROJECTED);
 			else
 				device.SetTextureStageState(3, D3DTSS_TEXTURETRANSFORMFLAGS, 0);
-
-			if(applyTexture(device, material.GetBaseTexture2(), 1))
+*/
+			if(applyTexture(material.GetBaseTexture2(), 1))
 			{
 				if(baseTex)
 				{
@@ -1280,7 +1239,7 @@ struct Storm3D_TerrainModelsData : public DataBase
 					}
 					else
 					{
-						Light &l = lights[index];
+						TerrainLight &l = lights[index];
 
 						COL lightColor = l.color * colorFactor;
 						shaderManager->SetLight(i, l.position, lightColor, l.radius);
@@ -1301,7 +1260,7 @@ struct Storm3D_TerrainModelsData : public DataBase
 					}
 					else
 					{
-						Light &l = lights[index];
+						TerrainLight &l = lights[index];
 
 						COL lightColor = l.color * colorFactor;
 						shaderManager->SetLight(i, l.position, lightColor, l.radius);
@@ -1312,39 +1271,7 @@ struct Storm3D_TerrainModelsData : public DataBase
 				}
 			}
 
-			/*
-			if(object.light_index1 == -1)
-			{
-				shaderManager->SetLight(0, model.light_position1, model.light_color1 * colorFactor, model.light_range1);
-				shaderManager->SetLight(1, model.light_position2, model.light_color2 * colorFactor, model.light_range2);
-
-				if(model.light_color1.r > 0.001f || model.light_color1.g > 0.001f || model.light_color1.b > 0.001f)
-					light_amount = 1;
-				if(model.light_color2.r > 0.001f || model.light_color2.g > 0.001f || model.light_color2.b > 0.001f)
-					light_amount = 2;
-			}
-			else
-			{
-				Storm3D_Model::Light &l1 = model.object_lights[object.light_index1];
-				shaderManager->SetLight(0, l1.position, l1.color * colorFactor, l1.range);
-
-				if(l1.color.r > 0.001f || l1.color.g > 0.001f || l1.color.b > 0.001f)
-					light_amount = 1;
-
-				if(object.light_index2 != -1)
-				{
-					Storm3D_Model::Light &l2 = model.object_lights[object.light_index2];
-					shaderManager->SetLight(1, l2.position, l2.color * colorFactor, l2.range);
-
-					if(l2.color.r > 0.001f || l2.color.g > 0.001f || l2.color.b > 0.001f)
-						light_amount = 2;
-				}
-			}
-			*/
-
 			shaderManager->setLightingParameters(reflection, localReflection, light_amount);
-			//shaderManager->setLightingParameters(reflection | localReflection, light_amount);
-			//shaderManager->setLightingParameters(localReflection, localReflection, light_amount);
 
 			if(forcedDirectionalLightEnabled)
 				shaderManager->SetSun(forcedDirectionalLightDirection, forcedDirectionalLightStrength);
@@ -1362,21 +1289,21 @@ struct Storm3D_TerrainModelsData : public DataBase
 		else if(renderType == Depth)
 		{
 			if(material.getEffectTextureName().empty())
-				applyTexture(device, material.GetBaseTexture(), 0);
+				applyTexture(material.GetBaseTexture(), 0);
 			else
 				storm.getProceduralManagerImp().apply(0);
 		}
 		else if(renderType == FakeDepth)
 		{
 			if(material.getEffectTextureName().empty())
-				applyTexture(device, material.GetBaseTexture(), 0);
+				applyTexture(material.GetBaseTexture(), 0);
 			else
 				storm.getProceduralManagerImp().apply(0);
 		}
 		else if(renderType == SpotProjection)
 		{
 			if(material.getEffectTextureName().empty())
-				applyTexture(device, material.GetBaseTexture(), 2);
+				applyTexture(material.GetBaseTexture(), 2);
 			else
 				storm.getProceduralManagerImp().apply(2);
 
@@ -1388,7 +1315,7 @@ struct Storm3D_TerrainModelsData : public DataBase
 		else if(renderType == Glow)
 		{
 			if(material.getEffectTextureName().empty())
-				applyTexture(device, material.GetBaseTexture(), 0);
+				applyTexture(material.GetBaseTexture(), 0);
 			else
 				storm.getProceduralManagerImp().apply(0);
 
@@ -1404,9 +1331,15 @@ struct Storm3D_TerrainModelsData : public DataBase
 		else if(renderType == Distortion)
 		{
 			if(material.getEffectTextureName().empty())
-				applyTexture(device, material.GetDistortionTexture(), 0);
-			else
+			{
+				applyTexture(material.GetDistortionTexture(), 0);
+			} else {
 				storm.getProceduralManagerImp().applyOffset(0);
+
+				// FIXME: hack...
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+			}
 		}
 
 		shaderManager->SetTextureOffset(material.getScrollOffset1());
@@ -1421,69 +1354,43 @@ struct Storm3D_TerrainModelsData : public DataBase
 				wireFrame = true;
 
 			if(wireFrame)
-				device.SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
+				glPolygonMode(GL_FRONT, GL_LINE);
 			else
-				device.SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+				glPolygonMode(GL_FRONT, GL_FILL);
 		}
 	}
 
 	void applySolidMaterial(RenderType renderType, Storm3D_Material &material, Storm3D_Model &model, Storm3D_Model_Object &object, Storm3D_Spotlight *spot)
 	{
-		Storm3D_ShaderManager *shaderManager = Storm3D_ShaderManager::GetSingleton();
-		IDirect3DDevice9 &device = *storm.GetD3DDevice();
-
 		applyGeneralMaterial(renderType, material, model, object);
 
 		// Alpha
 		{
 			int alphaType = material.GetAlphaType();
 			if(alphaType == IStorm3D_Material::ATYPE_NONE)
-				device.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+				glDisable(GL_ALPHA_TEST);
 //#ifdef PROJECT_AOV
 			// I don't want to break anything, so this is inside ifdef (although it should be ok for others as well)
 			else if(enableAlphaTest && alphaType != IStorm3D_Material::ATYPE_NONE && renderType != FakeProjection)
 //#else
 			//else if(enableAlphaTest && alphaType == IStorm3D_Material::ATYPE_USE_ALPHATEST && renderType != FakeProjection)
 //#endif
-				device.SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
+				glEnable(GL_ALPHA_TEST);
 		}
 
 		if(renderType == Depth)
-			device.SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
+			glEnable(GL_ALPHA_TEST);
 	}
 
 	void applyAlphaMaterial(RenderType renderType, Storm3D_Material &material, Storm3D_Model &model, Storm3D_Model_Object &object, Storm3D_Spotlight *spot)
 	{
 		Storm3D_ShaderManager *shaderManager = Storm3D_ShaderManager::GetSingleton();
-		IDirect3DDevice9 &device = *storm.GetD3DDevice();
 
 		applyGeneralMaterial(renderType, material, model, object);
 		int alphaType = material.GetAlphaType();
 
 		if(renderType == SpotProjection)
 			shaderManager->SetTransparencyFactor(object.spot_transparency_factor);
-		
-
-		/*
-		if(renderType == SpotProjection)
-		{
-			if(strstr(object.GetName(), "Decal"))
-			{
-				device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-				device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-			}
-			else
-			{
-				device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-				device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
-				//device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-			}
-
-			//shaderManager->SetTransparencyFactor(0.4f);
-			shaderManager->SetTransparencyFactor(1.f);
-			return;
-		}
-		*/
 
 		if(renderType == Distortion)
 			return;
@@ -1492,64 +1399,63 @@ struct Storm3D_TerrainModelsData : public DataBase
 		{
 			if(alphaType == IStorm3D_Material::ATYPE_ADD)
 			{
-				device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);				
-				device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 			}
 			else if(alphaType == IStorm3D_Material::ATYPE_MUL)
 			{
-				device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ZERO);
 				if(spot)
-					device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+					glBlendFunc(GL_ZERO, GL_ONE);
 				else
-					device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_SRCCOLOR);
+					glBlendFunc(GL_ZERO, GL_SRC_COLOR);
 			}
 			else if(alphaType == IStorm3D_Material::ATYPE_USE_TRANSPARENCY || (renderType == SpotProjection && object.force_lighting_alpha_enable))
 			{
-				device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
 				if(spot)
-					device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+					glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 				else
-					device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+					glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			}
 			else if(alphaType == IStorm3D_Material::ATYPE_USE_TEXTRANSPARENCY || object.force_alpha > 0.0001f)
 			{
-				device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
 				if(spot)
-					device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+					glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 				else
-					device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+					glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			}
 		}
 
 		if(renderType == BaseLighting)
 		{
-			if(alphaType == IStorm3D_Material::ATYPE_ADD)
-				device.SetRenderState(D3DRS_FOGENABLE, FALSE);
-			else
-				device.SetRenderState(D3DRS_FOGENABLE, TRUE);
+			if(alphaType == IStorm3D_Material::ATYPE_ADD) {
+				glDisable(GL_FOG);
+				GLfloat c[4] = { 0, 0, 0, 0 };
+				glFogfv(GL_FOG_COLOR, c);
+			} else {
+				glEnable(GL_FOG);
+				COL cfog = Storm3D_ShaderManager::GetSingleton()->fogColor;
+				GLfloat c[4] = { cfog.r, cfog.g, cfog.b, 1 };
+				glFogfv(GL_FOG_COLOR, c);
+			}
 		}
 	}
 
 	bool renderSolid(RenderType renderType, Storm3D_Scene &scene, Storm3D_Spotlight *spot, Storm3D_FakeSpotlight *fakeSpot, const IStorm3D_Model *skipModel, RenderFlags flags)
 	{
 		Storm3D_ShaderManager::GetSingleton()->ClearCache();
-		IDirect3DDevice9 &device = *storm.GetD3DDevice();
 
 //#ifdef PROJECT_AOV
 		static int atp_alpharef = NORMAL_ALPHA_TEST_VALUE;
 //#endif
-		device.SetRenderState(D3DRS_ALPHAREF, NORMAL_ALPHA_TEST_VALUE);
-		device.SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
+		frozenbyte::storm::setCulling(CULL_CCW);
+		glAlphaFunc(GL_GREATER, ((float) NORMAL_ALPHA_TEST_VALUE)/255.0f);
 
 		if(renderType == BaseTextures || renderType == BaseLighting)
 		{
-			device.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-			device.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+			glDisable(GL_ALPHA_TEST);
+			glDisable(GL_BLEND);
 		}
 
 		int objectType = NormalObjects;
-		//if(renderType != BaseTextures && renderType != Glow)
-		//	objectType = LightObjects;
 		if(renderType == Depth || renderType == FakeDepth)
 			objectType = DepthObjects;
 
@@ -1572,37 +1478,27 @@ struct Storm3D_TerrainModelsData : public DataBase
 		}
 		else if(fakeSpot)
 		{
-			//Storm3D_Camera &camera = fakeSpot->getCamera();
-			//realFrustum = camera.getFrustum();
-			//frustum = &realFrustum;
-		}
-		else
-		{
-			//Storm3D_Camera &camera = static_cast<Storm3D_Camera &> (*scene.GetCamera());
-			//realFrustum = camera.getFrustum();
-			//frustum = &realFrustum;
+			Storm3D_Camera &camera = fakeSpot->getCamera();
+			realFrustum = camera.getFrustum();
+			frustum = &realFrustum;
 		}
 
 		bool renderedObjects = false;
 
 		VC2 minPlane;
 		VC2 maxPlane;
-		AABB fakeArea;
 
 		if(fakeSpot)
-		{
 			fakeSpot->getPlane(minPlane, maxPlane);
-			fakeSpot->getArea(fakeArea);
-		}
 
-		ObjectList::iterator it = solidObjects[active_visibility][objectType].begin();
+		ModelObjectList::iterator it = solidObjects[active_visibility][objectType].begin();
 		for(; it != solidObjects[active_visibility][objectType].end(); ++it)
 		{
 			Storm3D_Model_Object *object = *it;
 			if(!object)
 				continue;
 
-			if(!shouldRender(renderType, object, frustum, frustum2, skipModel, flags, minPlane, maxPlane, fakeArea, active_visibility))
+			if(!shouldRender(renderType, object, frustum, frustum2, skipModel, flags, minPlane, maxPlane, active_visibility))
 				continue;
 
 			Storm3D_Mesh *mesh = static_cast<Storm3D_Mesh *> (object->GetMesh());
@@ -1624,27 +1520,33 @@ struct Storm3D_TerrainModelsData : public DataBase
 				if (atp_alpharef != object->alphaTestValue)
 				{
 					atp_alpharef = object->alphaTestValue;
-					device.SetRenderState(D3DRS_ALPHAREF, object->alphaTestValue);
+					glAlphaFunc(GL_GREATER, float(object->alphaTestValue) / 255.0f);
 				}
 			} else {
 				if (atp_alpharef != NORMAL_ALPHA_TEST_VALUE)
 				{
 					atp_alpharef = NORMAL_ALPHA_TEST_VALUE;
-					device.SetRenderState(D3DRS_ALPHAREF, NORMAL_ALPHA_TEST_VALUE);
+					glAlphaFunc(GL_GREATER, float(NORMAL_ALPHA_TEST_VALUE) / 255.0f);
 				}
 			}
 //#endif
 
 			applySolidMaterial(renderType, *material, *model, *object, spot);
 			renderObject(&scene, object);
-
+			/*
+			if (blendenabled)
+			{
+				glDisable(GL_BLEND);
+				blendenabled = false;
+			}
+			*/
 			renderedObjects = true;
 		}
 
 		if(fillMode == Storm3D_TerrainModels::Wireframe)
-			device.SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
+			glPolygonMode(GL_FRONT, GL_LINE);
 		else
-			device.SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+			glPolygonMode(GL_FRONT, GL_FILL);
 
 		return renderedObjects;
 	}
@@ -1653,17 +1555,12 @@ struct Storm3D_TerrainModelsData : public DataBase
 	{
 		Storm3D_ShaderManager::GetSingleton()->ClearCache();
 
-		IDirect3DDevice9 &device = *storm.GetD3DDevice();
-
-		device.SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
-		device.SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-		device.SetRenderState(D3DRS_ALPHAREF, 0x01);
-		device.SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
-		device.SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
+		glEnable(GL_ALPHA_TEST);
+		glEnable(GL_BLEND);
+		glAlphaFunc(GL_GREATER, 1.0f/255.0f);
+		glDepthMask(GL_FALSE);
 
 		int objectType = NormalObjects;
-		//if(renderType != BaseTextures && renderType != Glow)
-		//	objectType = LightObjects;
 
 		Frustum *frustum = 0;
 		Frustum realFrustum;
@@ -1684,13 +1581,9 @@ struct Storm3D_TerrainModelsData : public DataBase
 		}
 		else if(fakeSpot)
 		{
-			//Storm3D_Camera &camera = fakeSpot->getCamera();
-			//realFrustum = camera.getFrustum();
-			//frustum = &realFrustum;
-
-			//Storm3D_Camera &camera = static_cast<Storm3D_Camera &> (*scene.GetCamera());
-			//realFrustum = camera.getFrustum();
-			//frustum = &realFrustum;
+			Storm3D_Camera &camera = fakeSpot->getCamera();
+			realFrustum = camera.getFrustum();
+			frustum = &realFrustum;
 		}
 		else
 		{
@@ -1701,24 +1594,19 @@ struct Storm3D_TerrainModelsData : public DataBase
 
 		VC2 minPlane;
 		VC2 maxPlane;
-		AABB fakeArea;
-
 		if(fakeSpot)
-		{
 			fakeSpot->getPlane(minPlane, maxPlane);
-			fakeSpot->getArea(fakeArea);
-		}
 
 		std::vector<Storm3D_Model_Object *> special_render_pass_objects[RENDER_PASS_BITS_AMOUNT];
 
-		ObjectList::iterator it = alphaObjects[active_visibility][objectType].begin();
+		ModelObjectList::iterator it = alphaObjects[active_visibility][objectType].begin();
 		for(; it != alphaObjects[active_visibility][objectType].end(); ++it)
 		{
 			Storm3D_Model_Object *object = *it;
 			if(!object)
 				continue;
 
-			if(!shouldRender(renderType, object, frustum, frustum2, skipModel, flags, minPlane, maxPlane, fakeArea, active_visibility))
+			if(!shouldRender(renderType, object, frustum, frustum2, skipModel, flags, minPlane, maxPlane, active_visibility))
 				continue;
 
 			Storm3D_Mesh *mesh = static_cast<Storm3D_Mesh *> (object->GetMesh());
@@ -1770,13 +1658,11 @@ struct Storm3D_TerrainModelsData : public DataBase
 
 					Storm3D_ShaderManager::GetSingleton()->ClearCache();
 
-					device.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-					device.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-					device.SetRenderState(D3DRS_ALPHAREF, 0x50);
-					device.SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
-					device.SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
-
-					device.SetRenderState(D3DRS_COLORWRITEENABLE, 0x0);
+					glDisable(GL_ALPHA_TEST);
+					glDisable(GL_BLEND);
+					glAlphaFunc(GL_GREATER, float(NORMAL_ALPHA_TEST_VALUE)/ 255.0f);
+					glDepthMask(GL_TRUE);
+					glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 				}
 			}
 			else if (i == RENDER_PASS_BIT_CAREFLECTION_REFLECTED)
@@ -1787,17 +1673,15 @@ struct Storm3D_TerrainModelsData : public DataBase
 
 					Storm3D_ShaderManager::GetSingleton()->ClearCache();
 
-					device.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-					device.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-					device.SetRenderState(D3DRS_ALPHAREF, 0x50);
-					device.SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
-					device.SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
-
-					device.SetRenderState(D3DRS_COLORWRITEENABLE, 0xffffffff);
+					glDisable(GL_ALPHA_TEST);
+					glDisable(GL_BLEND);
+					glAlphaFunc(GL_GREATER, float(NORMAL_ALPHA_TEST_VALUE)/ 255.0f);
+					glDepthMask(GL_TRUE);
+					glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 					// NOTE: this is necessary at least when reflected along single axis (a single axis scale is negative)
 					// as that changes CCW <-> CW
-					frozenbyte::storm::setCulling(device, D3DCULL_CW);
+					frozenbyte::storm::setCulling(CULL_CW);
 				}
 			}
 			else if (i == RENDER_PASS_BIT_CAMOTIONBLUR1)
@@ -1813,11 +1697,10 @@ struct Storm3D_TerrainModelsData : public DataBase
 
 					Storm3D_ShaderManager::GetSingleton()->ClearCache();
 
-					device.SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
-					device.SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-					device.SetRenderState(D3DRS_ALPHAREF, 0x01);
-					device.SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
-					device.SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
+					glEnable(GL_ALPHA_TEST);
+					glEnable(GL_BLEND);
+					glAlphaFunc(GL_GREATER, float(0x01)/ 255.0f);
+					glDepthMask(GL_FALSE);
 				}
 			}
 			else if (i == RENDER_PASS_BIT_DELAYED_ALPHA)
@@ -1827,17 +1710,15 @@ struct Storm3D_TerrainModelsData : public DataBase
 				{
 					Storm3D_ShaderManager::GetSingleton()->ClearCache();
 
-					device.SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
-					device.SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-					device.SetRenderState(D3DRS_ALPHAREF, 0x01);
-					device.SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
-					device.SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
-
-					device.SetRenderState(D3DRS_COLORWRITEENABLE, 0xffffffff);
+					glEnable(GL_ALPHA_TEST);
+					glEnable(GL_BLEND);
+					glAlphaFunc(GL_GREATER, float(0x01)/ 255.0f);
+					glDepthMask(GL_FALSE);
+					glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 					// restoring this in case of the reflection / depth masks have been screwing it up.
 					// or should it be NONE for alpha objects?
-					frozenbyte::storm::setCulling(device, D3DCULL_CCW);
+					frozenbyte::storm::setCulling(CULL_CCW);
 				}
 			}
 			else if (i == RENDER_PASS_BIT_EARLY_ALPHA
@@ -1916,55 +1797,45 @@ struct Storm3D_TerrainModelsData : public DataBase
 
 		if (specialPassesDone)
 		{
-			device.SetRenderState(D3DRS_COLORWRITEENABLE, 0xffffffff);
+			glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 			// TODO: restore the full original state? if that is necessary...
 		}
 
 		Storm3D_ShaderManager::GetSingleton()->SetTransparencyFactor(1.f);
 
-		//if(fillMode == Storm3D_TerrainModels::Wireframe)
-		//	device.SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
-		//else
-		//	device.SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
 
 	}
 
 	void renderObject(Storm3D_Scene *scene, Storm3D_Model_Object *object)
 	{
-		IDirect3DDevice9 &device = *storm.GetD3DDevice();
-
 		Storm3D_Mesh *mesh = static_cast<Storm3D_Mesh *> (object->GetMesh());
 		mesh->ReBuild();
 
-//frozenbyte::storm::setCulling(device, D3DCULL_NONE);
-
-// for blackedge...
-//device.SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_BORDER);
-//device.SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
-//DWORD blackCol = 0xff000000; // ARGB
-//device.SetSamplerState(0, D3DSAMP_BORDERCOLOR, blackCol);
-
-		Storm3D_ShaderManager::GetSingleton()->SetShader(&device, object);
+		Storm3D_ShaderManager::GetSingleton()->SetShader(object);
 		mesh->RenderBuffers(object);
-
-//frozenbyte::storm::setCulling(device, D3DCULL_CCW);
 
 		if(scene)
 			scene->AddPolyCounter(mesh->GetRenderFaceCount());
 	}
 };
 
+//! Constructor
 Storm3D_TerrainModels::Storm3D_TerrainModels(Storm3D &storm)
 {
 	boost::scoped_ptr<Storm3D_TerrainModelsData> tempData(new Storm3D_TerrainModelsData(storm));
 	data.swap(tempData);
 }
 
+//! Destructor
 Storm3D_TerrainModels::~Storm3D_TerrainModels()
 {
 }
 
+//! Add terrain model
+/*!
+	\param model_ model to add
+*/
 void Storm3D_TerrainModels::addModel(IStorm3D_Model &model_)
 {
 	Storm3D_Model *model = static_cast<Storm3D_Model *> (&model_); 
@@ -1976,6 +1847,10 @@ void Storm3D_TerrainModels::addModel(IStorm3D_Model &model_)
 	}
 }
 
+//! Remove terrain model
+/*!
+	\param model_ model to remove
+*/
 void Storm3D_TerrainModels::removeModel(IStorm3D_Model &model_)
 {
 	Storm3D_Model *model = static_cast<Storm3D_Model *> (&model_); 
@@ -2022,6 +1897,10 @@ void Storm3D_TerrainModels::enableCulling(Storm3D_Model &model, bool enable)
 	}
 }
 
+//! Pop terrain model from stack
+/*!
+	\return model
+*/
 IStorm3D_Model *Storm3D_TerrainModels::popModel()
 {
 	if(data->models.empty())
@@ -2037,16 +1916,32 @@ IStorm3D_Model *Storm3D_TerrainModels::popModel()
 	return model;
 }
 
+//! Build model tree of given size
+/*!
+	\param size tree size
+*/
 void Storm3D_TerrainModels::buildTree(const VC3 &size)
 {
 	data->buildTree(size);
 }
 
+//! Does the model tree exist?
+/*!
+	\return true if tree exists
+*/
 bool Storm3D_TerrainModels::hasTree() const
 {
 	return data->tree;
 }
 
+//! Raytrace
+/*!
+	\param position ray start position
+	\param direction ray direction
+	\param rayLength ray length
+	\param info reference to collision info structure
+	\param accurate true to use accurate collision detection
+*/
 void Storm3D_TerrainModels::RayTrace(const VC3 &position, const VC3 &direction, float rayLength, Storm3D_CollisionInfo &info, bool accurate) const
 {
 	assert(data->tree);
@@ -2055,6 +1950,13 @@ void Storm3D_TerrainModels::RayTrace(const VC3 &position, const VC3 &direction, 
 	data->tree->RayTrace(ray, info, accurate);
 }
 
+//! Check sphere collisions
+/*!
+	\param position collision sphere position
+	\param radius collision sphere radius
+	\param info reference to collision info structure
+	\param accurate true to use accurate collision detection
+*/
 void Storm3D_TerrainModels::SphereCollision(const VC3 &position, float radius, Storm3D_CollisionInfo &info, bool accurate) const
 {
 	assert(data->tree);
@@ -2063,6 +1965,11 @@ void Storm3D_TerrainModels::SphereCollision(const VC3 &position, float radius, S
 	data->tree->SphereCollision(sphere, info, accurate);
 }
 
+//! Calculate visibility
+/*!
+	\param scene scene
+	\param timeDelta time difference
+*/
 void Storm3D_TerrainModels::calculateVisibility(Storm3D_Scene &scene, int timeDelta)
 {
 	Storm3D_Camera camera = static_cast<Storm3D_Camera &> (*scene.GetCamera());
@@ -2075,17 +1982,27 @@ void Storm3D_TerrainModels::calculateVisibility(Storm3D_Scene &scene, int timeDe
 	data->findVisibleModels(camera, haxCamera, timeDelta);
 }
 
+//! Render textures
+/*!
+	\param materialType material type
+	\param scene scene
+*/
 void Storm3D_TerrainModels::renderTextures(MaterialType materialType, Storm3D_Scene &scene)
 {
-	IDirect3DDevice9 &device = *data->storm.GetD3DDevice();
+	glActiveTexture(GL_TEXTURE0);
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SRC1_RGB, GL_PRIMARY_COLOR);
+	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SRC1_ALPHA, GL_PRIMARY_COLOR);
+	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_MODULATE);
+	for (unsigned int i = 1; i < 8; i++) {
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glDisable(GL_TEXTURE_2D);
+	}
 
-	device.SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-	device.SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
-	device.SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
-	device.SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
-	device.SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
-	device.SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
-	device.SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
 
 	if(materialType == SolidOnly)
 		data->renderSolid(BaseTextures, scene, 0, 0, 0, None);
@@ -2093,33 +2010,50 @@ void Storm3D_TerrainModels::renderTextures(MaterialType materialType, Storm3D_Sc
 	{
 		data->renderAlpha(BaseTextures, scene, 0, 0, 0, None);
 
-		device.SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
-		device.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-		device.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+		glDepthMask(GL_TRUE);
+		glDisable(GL_BLEND);
+		glDisable(GL_ALPHA_TEST);
 	}
 }
 
+//! Render lighting
+/*!
+	\param materialType material type
+	\param scene scene
+*/
 void Storm3D_TerrainModels::renderLighting(MaterialType materialType, Storm3D_Scene &scene)
 {
-	IDirect3DDevice9 &device = *data->storm.GetD3DDevice();
-
 	if(materialType == SolidOnly)
 		data->renderSolid(BaseLighting, scene, 0, 0, 0, None);
 	else if(materialType == AlphaOnly)
 	{
 		data->renderAlpha(BaseLighting, scene, 0, 0, 0, None);
 
-		device.SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
-		device.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-		device.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+		glDepthMask(GL_TRUE);
+		glDisable(GL_BLEND);
+		glDisable(GL_ALPHA_TEST);
 	}
 }
 
+//! Render depth
+/*!
+	\param scene scene
+	\param camera camera
+	\param spot spotlight
+	\param skipModel
+*/
 void Storm3D_TerrainModels::renderDepth(Storm3D_Scene &scene, Storm3D_Camera &camera, Storm3D_Spotlight &spot, const IStorm3D_Model *skipModel)
 {
 	data->renderSolid(Depth, scene, &spot, 0, skipModel, None);
 }
 
+//! Render depth
+/*!
+	\param scene scene
+	\param camera camera
+	\param spot fake spotlight
+	\return
+*/
 bool Storm3D_TerrainModels::renderDepth(Storm3D_Scene &scene, Storm3D_Camera &camera, Storm3D_FakeSpotlight &spot)
 {
 	RenderFlags flag = None;
@@ -2129,6 +2063,12 @@ bool Storm3D_TerrainModels::renderDepth(Storm3D_Scene &scene, Storm3D_Camera &ca
 	return data->renderSolid(FakeDepth, scene, 0, &spot, 0, flag);
 }
 
+//! Render projection
+/*!
+	\param materialType material type
+	\param scene scene
+	\param spot spotlight
+*/
 void Storm3D_TerrainModels::renderProjection(MaterialType materialType, Storm3D_Scene &scene, Storm3D_Spotlight &spot)
 {
 	if(materialType == SolidOnly)
@@ -2137,96 +2077,141 @@ void Storm3D_TerrainModels::renderProjection(MaterialType materialType, Storm3D_
 	{
 		data->renderAlpha(SpotProjection, scene, &spot, 0, 0, None);
 
-		IDirect3DDevice9 &device = *data->storm.GetD3DDevice();
-		device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
-		device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+		glBlendFunc(GL_ONE, GL_ONE);
 	}
 }
 
+//! Render projection
+/*!
+	\param scene scene
+	\param spot fake spotlight
+*/
 void Storm3D_TerrainModels::renderProjection(Storm3D_Scene &scene, Storm3D_FakeSpotlight &spot)
 {
 	data->renderSolid(FakeProjection, scene, 0, &spot, 0, None);
-	//data->renderAlpha(FakeProjection, scene, 0, &spot, 0, None);
 
-	IDirect3DDevice9 &device = *data->storm.GetD3DDevice();
-	device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ZERO);
-	device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_SRCCOLOR);
+	glBlendFunc(GL_ZERO, GL_SRC_COLOR);
 }
 
+//! Render glow textures
+/*!
+	\param scene scene
+*/
 void Storm3D_TerrainModels::renderGlows(Storm3D_Scene &scene)
 {
-	IDirect3DDevice9 &device = *data->storm.GetD3DDevice();
-
-	device.SetPixelShader(0);
-	device.SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-	device.SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
-	device.SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
-	device.SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
-	device.SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
-	device.SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
-	device.SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+	frozenbyte::storm::PixelShader::disable();
+	glActiveTexture(GL_TEXTURE0);
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SRC1_RGB, GL_PRIMARY_COLOR);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SRC1_ALPHA, GL_PRIMARY_COLOR);
+	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_MODULATE);
+	for (unsigned int i = 1; i < 8; i++) {
+		glActiveTexture(GL_TEXTURE0 + i);
+		glDisable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
 
 	data->renderSolid(Glow, scene, 0, 0, 0, None);
 	data->renderAlpha(Glow, scene, 0, 0, 0, None);
 
-	device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
-	device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+	glBlendFunc(GL_ONE, GL_ONE);
 }
 
+//! Render distortion textures
+/*!
+	\param scene scene
+*/
 void Storm3D_TerrainModels::renderDistortion(Storm3D_Scene &scene)
 {
-	IDirect3DDevice9 &device = *data->storm.GetD3DDevice();
-
-	device.SetPixelShader(0);
-	device.SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-	device.SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
-	device.SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
-	device.SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
-	device.SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
-	device.SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
-	device.SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
-
-	device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
-	device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
+	frozenbyte::storm::PixelShader::disable();
+	glActiveTexture(GL_TEXTURE0);
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SRC1_RGB, GL_PRIMARY_COLOR);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SRC1_ALPHA, GL_PRIMARY_COLOR);
+	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_MODULATE);
+	for (unsigned int i = 1; i < 8; i++) {
+		glActiveTexture(GL_TEXTURE0 + i);
+		glDisable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	data->renderAlpha(Distortion, scene, 0, 0, 0, None);
 }
 
+//! Set fill mode
+/*!
+	\param mode fill mode
+*/
 void Storm3D_TerrainModels::setFillMode(FillMode mode)
 {
 	data->fillMode = mode;
 }
 
+//! Set lightmap filtering
+/*!
+	\param filter true to filter lightmaps
+*/
 void Storm3D_TerrainModels::filterLightmap(bool filter)
 {
 	data->filterLightmap = filter;
 }
 
+//! Set collision rendering
+/*!
+	\param enable true to enable collision rendering
+*/
 void Storm3D_TerrainModels::setCollisionRendering(bool enable)
 {
 	data->renderCollision = enable;
 }
 
+//! Enable or disable alpha testing
+/*!
+	\param enable true to enable alpha testing
+*/
 void Storm3D_TerrainModels::enableAlphaTest(bool enable)
 {
 	data->enableAlphaTest = enable;
 }
 
+//! Enable or disable boned rendering
+/*!
+	\param enable true to enable boned rendering
+*/
 void Storm3D_TerrainModels::renderBoned(bool enable)
 {
 	data->renderBoned = enable;
 }
 
+//! Enable or disable ambient material
+/*!
+	\param enable true to enable ambient material
+*/
 void Storm3D_TerrainModels::enableMaterialAmbient(bool enable)
 {
 	data->enableMaterialAmbient = enable;
 }
 
+//! Force a white base texture
+/*!
+	\param force true to force white base texture
+*/
 void Storm3D_TerrainModels::forceWhiteBaseTexture(bool force)
 {
 	data->forceWhiteBase = force;
 }
 
+//! Enable or disable glow
+/*!
+	\param enable true to enable glow
+*/
 void Storm3D_TerrainModels::enableGlow(bool enable)
 {
 	data->enableGlow = enable;
@@ -2242,22 +2227,32 @@ void Storm3D_TerrainModels::enableSkyModelGlow(bool enable)
 	data->skyModelGlowAllowed = enable;
 }
 
+//! Enable or disable distortion
+/*!
+	\param enable true to enable distortion
+*/
 void Storm3D_TerrainModels::enableDistortion(bool enable)
 {
 	data->enableDistortion = enable;
 }
 
+//! Enable or disable reflection
+/*!
+	\param enable true to enable reflection
+*/
 void Storm3D_TerrainModels::enableReflection(bool enable)
 {
 	data->enableReflection = enable;
 }
 
+//! Render background
+/*!
+	\param model model object
+*/
 void Storm3D_TerrainModels::renderBackground(Storm3D_Model *model)
 {
 	if(!model)
 		return;
-
-	IDirect3DDevice9 &device = *data->storm.GetD3DDevice();
 
 	Storm3D_ShaderManager *shaderManager = Storm3D_ShaderManager::GetSingleton();
 	shaderManager->SetTextureOffset(VC2());
@@ -2273,23 +2268,28 @@ void Storm3D_TerrainModels::renderBackground(Storm3D_Model *model)
 		if(!material)
 			continue;
 
-		data->applyTexture(device, material->GetBaseTexture(), 0);
+		data->applyTexture(material->GetBaseTexture(), 0);
 		shaderManager->SetObjectDiffuse(material->GetColor());
 
 		mesh->ReBuild();
 	
-		shaderManager->SetShader(&device, object);
-		shaderManager->BackgroundShader(&device);
+		shaderManager->SetShader(object);
+		shaderManager->BackgroundShader();
 		mesh->RenderBuffers(object);
 
-		//if(scene)
-		//	scene->AddPolyCounter(mesh->GetFaceCount());
 	}
 }
 
+//! Add light
+/*!
+	\param position light position
+	\param radius light radius
+	\param color light color
+	\return number of lights
+*/
 int Storm3D_TerrainModels::addLight(const VC3 &position, float radius, const COL &color)
 {
-	Light light;
+	TerrainLight light;
 	light.position = position;
 	light.radius = radius;
 	light.color = color;
@@ -2298,53 +2298,86 @@ int Storm3D_TerrainModels::addLight(const VC3 &position, float radius, const COL
 	return data->lights.size() - 1;
 }
 
+//! Set position of light
+/*!
+	\param index index of light to manipulate
+	\param position position
+*/
 void Storm3D_TerrainModels::setLightPosition(int index, const VC3 &position)
 {
 	if(index >= 0 && index < int(data->lights.size()))
 		data->lights[index].position = position;
 }
 
+//! Set radius of light
+/*!
+	\param index index of light to manipulate
+	\param radius radius
+*/
 void Storm3D_TerrainModels::setLightRadius(int index, float radius)
 {
 	if(index >= 0 && index < int(data->lights.size()))
 		data->lights[index].radius = radius;
 }
 
+//! Set color of light
+/*!
+	\param index index of light to manipulate
+	\param color color
+*/
 void Storm3D_TerrainModels::setLightColor(int index, const COL &color)
 {
 	if(index >= 0 && index < int(data->lights.size()))
 		data->lights[index].color = color;
 }
 
-const Light &Storm3D_TerrainModels::getLight(int index) const
+//! Get light at given index
+/*!
+	\param index index of light to retrieve
+	\return light
+*/
+const TerrainLight &Storm3D_TerrainModels::getLight(int index) const
 {
 	if(index < 0 || index >= int(data->lights.size()))
 	{
 		assert(!"Light index out of bounds.");
 
-		static Light empty;
+		static TerrainLight empty;
 		return empty;
 	}
 
 	return data->lights[index];
 }
 
+//! Remove light from given index
+/*!
+	\param index index of light to remove
+*/
 void Storm3D_TerrainModels::removeLight(int index)
 {
 	if(index >= 0 && index < int(data->lights.size()))
 		data->lights.erase(data->lights.begin() + index);
 }
 
+//! Clear all lights
 void Storm3D_TerrainModels::clearLights()
 {
 	data->lights.clear();
 }
 
+//! Set terrain object color factor in buildings
+/*!
+	\param factor color factor
+*/
 void Storm3D_TerrainModels::setTerrainObjectColorFactorBuilding(const COL &factor)
 {
 	data->terrainObjectColorFactorBuilding = factor;
 }
 
+//! Set terrain object color factor outside
+/*!
+	\param factor color factor
+*/
 void Storm3D_TerrainModels::setTerrainObjectColorFactorOutside(const COL &factor)
 {
 	data->terrainObjectColorFactorOutside = factor;

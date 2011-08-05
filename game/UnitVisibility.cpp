@@ -79,7 +79,7 @@ namespace game
 
 
 
-  bool UnitVisibility::isSeenByPlayer(int player)
+  bool UnitVisibility::isSeenByPlayer(int player) const
   {
     #ifdef _DEBUG
       if (player < 0 || player >= ABS_MAX_PLAYERS)

@@ -1,6 +1,10 @@
 
 #include "precompiled.h"
 
+#include <string>
+#include <stdio.h>
+#include <boost/lexical_cast.hpp>
+
 #include "GameStats.h"
 #include "Game.h"
 #include "GameUI.h"
@@ -14,11 +18,11 @@
 #include "options/options_game.h"
 #include "../system/Timer.h"
 #include "../util/fb_assert.h"
-#include <string>
-#include <stdio.h>
-#include <boost/lexical_cast.hpp>
 #include "GameProfiles.h"
 #include "../game/scripting/GameScripting.h"
+#include "userdata.h"
+
+#include "igios.h"
 
 // sample every 15 seconds 
 #define GAMESTATS_RATE 15
@@ -269,7 +273,7 @@ namespace game
 					return;
 
 #ifdef LEGACY_FILES
-				std::string filename = std::string("Stats/stats_");
+				std::string filename = igios_mapUserDataPrefix("Stats/stats_");
 #else
 				std::string filename = std::string("stats/stats_");
 #endif
@@ -501,7 +505,7 @@ namespace game
 				totalScore = scoreTime + scoreKills;
 			}
 
-			void updateScoreList(std::vector<GameStats::ScoreData> &scores, int &myPosition, const std::string &myName)
+			void updateScoreList(std::vector<GameStats::ScoreData> &scores, unsigned int &myPosition, const std::string &myName)
 			{
 				int time, kills, scoreTime, scoreKills, totalScore;
 				getScoreValues(time, kills, scoreTime, scoreKills, totalScore);
@@ -548,6 +552,10 @@ namespace game
 
 		impl->game = game;
 		impl->playerNum = playerClientNumber;
+
+		impl->currentEntry = 0;
+		impl->lastCollectTime = 0;
+		impl->timeOfDeath = 0;
 	}
 
 	GameStats::~GameStats()
@@ -752,7 +760,7 @@ namespace game
 		this->impl->getScoreValues(time, kills, scoreTime, scoreKills, totalScore);
 	}
 
-	void GameStats::updateScoreList(std::vector<ScoreData> &scores, int &myPosition, const std::string &myName)
+	void GameStats::updateScoreList(std::vector<ScoreData> &scores, unsigned int &myPosition, const std::string &myName)
 	{
 		this->impl->updateScoreList(scores, myPosition, myName);
 	}

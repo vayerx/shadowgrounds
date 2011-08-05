@@ -1,18 +1,22 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
+#include <string>
+#include <vector>
+
+#include <GL/glew.h>
 #include "storm3d_fakespotlight.h"
 #include "storm3d_spotlight_shared.h"
-#include "storm3d_shadermanager.h"
+#include "Storm3D_ShaderManager.h"
 #include "storm3d_camera.h"
 #include "storm3d_terrain_utils.h"
 #include "storm3d.h"
-#include <istorm3d_logger.h>
-#include <atlbase.h>
-#include <d3d9.h>
+#include <IStorm3D_Logger.h>
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 using namespace boost;
 
@@ -20,50 +24,56 @@ using namespace boost;
 // - SetViewport
 // - Scale texcoords for reading
 
-namespace {
 
 	int BUFFER_WIDTH = 512;
 	int BUFFER_HEIGHT = 512;
 	static const bool SHARE_BUFFERS = true;
 
-	bool targetActive = false;
+	static bool fakeTargetActive = false;
 
 	struct RenderTarget
 	{
-		CComPtr<IDirect3DTexture9> color;
-		CComPtr<IDirect3DSurface9> depth;
+		boost::shared_ptr<glTexWrapper> color;
+		boost::shared_ptr<glTexWrapper> depth;
 
-		IDirect3DDevice9 &device;
 		VC2I pos;
+
+		Framebuffer *fbo;
+
 
 		bool hasInitialized() const
 		{
 			return color && depth;
 		}
 
-		RenderTarget(IDirect3D9 &d3d, IDirect3DDevice9 &device_, CComPtr<IDirect3DTexture9> sharedColor, CComPtr<IDirect3DSurface9> sharedDepth)
-		:	device(device_)
+		RenderTarget(boost::shared_ptr<glTexWrapper> sharedColor, boost::shared_ptr<glTexWrapper> sharedDepth)
 		{
 			color = sharedColor;
 			if(!color)
 			{
-				HRESULT hr = device.CreateTexture(BUFFER_WIDTH * 2, BUFFER_HEIGHT * 2, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R5G6B5, D3DPOOL_DEFAULT, &color, 0);
-				if(FAILED(hr))
-				{
-					hr = device.CreateTexture(BUFFER_WIDTH * 2, BUFFER_HEIGHT * 2, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &color, 0);
-					if(FAILED(hr))
-						return;
-				}
+				color = glTexWrapper::rgbaTexture(BUFFER_WIDTH * 2, BUFFER_HEIGHT * 2);
 			}
 
 			depth = sharedDepth;
 			if(!depth)
-				device.CreateDepthStencilSurface(BUFFER_WIDTH * 2, BUFFER_HEIGHT * 2, D3DFMT_D24S8, D3DMULTISAMPLE_NONE, D3DMULTISAMPLE_NONE, FALSE, &depth, 0);
+				depth = glTexWrapper::depthStencilTexture(BUFFER_WIDTH * 2, BUFFER_HEIGHT * 2);
+
+			// TODO: cache
+			fbo = new Framebuffer();
+			fbo->setRenderTarget(color, depth);
+			fbo->disable();
 
 			if(!hasInitialized())
 			{
-				color.Release();
-				depth.Release();
+				color.reset();
+				depth.reset();
+			}
+		}
+
+		~RenderTarget() {
+			// TODO: put back in cache
+			if (fbo != NULL) {
+				delete fbo; fbo = NULL;
 			}
 		}
 
@@ -72,24 +82,32 @@ namespace {
 			if(!color || !depth)
 				return false;
 
-			if(!targetActive || !SHARE_BUFFERS)
+			if(!fakeTargetActive || !SHARE_BUFFERS)
 			{
-				targetActive = true;
+				fakeTargetActive = true;
 
-				CComPtr<IDirect3DSurface9> colorSurface;
-				color->GetSurfaceLevel(0, &colorSurface);
-
-				HRESULT hr = device.SetRenderTarget(0, colorSurface);
-				if(FAILED(hr))
+				// FIXME?
+				fbo->activate();
+				if(!fbo->validate())
+				{
+					fbo->disable();
 					return false;
+				}
 
-				hr = device.SetDepthStencilSurface(depth);
-				if(FAILED(hr))
-					return false;
-
+				/*  not required because opengl can't clear just part of buffer
+				 // unless using scissor
+				 // which is a horrible hack
 				D3DRECT rc = { 0 };
 				rc.x2 = BUFFER_WIDTH * 2;
 				rc.y2 = BUFFER_HEIGHT * 2;
+				*/
+
+				// because on opengl scissor test affects clear
+				// but on direct3d not
+				glDisable(GL_SCISSOR_TEST);
+
+				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+				glDepthMask(GL_TRUE);
 
 				// Black, no alpha test
 				//hr = device.Clear(1, &rc, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, 0xFF000000, 1.0f, 0);
@@ -98,26 +116,21 @@ namespace {
 				// White, no alpha test
 				//hr = device.Clear(1, &rc, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, 0xFFFFFFFF, 1.0f, 0);
 				// White, alpha tested (Normal)
-				hr = device.Clear(1, &rc, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, 0x00FFFFFF, 1.0f, 0);
-				if(FAILED(hr))
-					return false;
+				glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+				glClearDepth(1.0f);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			}
 
-			D3DVIEWPORT9 vp;
-			vp.X = pos.x * BUFFER_WIDTH;
-			vp.Y = pos.y * BUFFER_HEIGHT;
-			vp.Width = BUFFER_WIDTH;
-			vp.Height = BUFFER_HEIGHT;
-			vp.MinZ = 0.f;
-			vp.MaxZ = 1.f;
-			device.SetViewport(&vp);
+			glViewport(pos.x * BUFFER_WIDTH, pos.y * BUFFER_HEIGHT, BUFFER_WIDTH, BUFFER_HEIGHT);
+
 
 			return true;
 		}
 
 		void applyColor(int stage)
 		{
-			device.SetTexture(stage, color);
+			glActiveTexture(GL_TEXTURE0 + stage);
+			color->bind();
 		}
 	};
 
@@ -127,8 +140,8 @@ namespace {
 		RenderTarget *targets[BUFFER_LIMIT];
 		bool used[BUFFER_LIMIT];
 
-		CComPtr<IDirect3DTexture9> sharedColor;
-		CComPtr<IDirect3DSurface9> sharedDepth;
+		boost::shared_ptr<glTexWrapper> sharedColor;
+		boost::shared_ptr<glTexWrapper> sharedDepth;
 
 		float usedWidth;
 		float usedHeight;
@@ -173,7 +186,7 @@ namespace {
 		{
 		}
 
-		bool createAll(Storm3D &storm, IDirect3D9 &d3d, IDirect3DDevice9 &device, int quality)
+		bool createAll(Storm3D &storm, int quality)
 		{
 			freeAll();
 			if(SHARE_BUFFERS)
@@ -184,7 +197,7 @@ namespace {
 
 			for(unsigned int i = 0; i < BUFFER_LIMIT; ++i)
 			{
-				targets[i] = new RenderTarget(d3d, device, sharedColor, sharedDepth);
+				targets[i] = new RenderTarget(sharedColor, sharedDepth);
 				if(SHARE_BUFFERS)
 				{
 					if(i == 0)
@@ -210,13 +223,8 @@ namespace {
 
 			if(targets[0]->color)
 			{
-				CComPtr<IDirect3DSurface9> colorSurface;
-				targets[0]->color->GetSurfaceLevel(0, &colorSurface);
-
-				D3DSURFACE_DESC desc;
-				colorSurface->GetDesc(&desc);
-				usedWidth = float(BUFFER_WIDTH * 2) / (desc.Width);
-				usedHeight = float(BUFFER_HEIGHT * 2) / (desc.Height);
+				usedWidth = float(BUFFER_WIDTH * 2) / (targets[0]->color->getWidth());
+				usedHeight = float(BUFFER_HEIGHT * 2) / (targets[0]->color->getHeight());
 
 				soffsetX = usedWidth * .5f * .5f;
 				soffsetY = usedHeight * .5f * .5f;
@@ -241,9 +249,9 @@ namespace {
 			}
 
 			if(sharedColor)
-				sharedColor.Release();
+				sharedColor.reset();
 			if(sharedDepth)
-				sharedDepth.Release();
+				sharedDepth.reset();
 			//if(filterTexture)
 			//	filterTexture.Release();
 		}
@@ -275,8 +283,9 @@ namespace {
 			}
 		}
 
-		void filter(Storm3D &storm, IDirect3DDevice9 &device)
+		void filter(Storm3D &storm)
 		{
+			/*
 			CComPtr<IDirect3DTexture9> filterTexture = storm.getColorSecondaryTarget();
 			if(!filterTexture || !sharedColor)
 				return;
@@ -295,6 +304,7 @@ namespace {
 
 			device.StretchRect(colorSurface, &colorRect, filterSurface, &filterRect, D3DTEXF_LINEAR);
 			device.StretchRect(filterSurface, &filterRect, colorSurface, &colorRect, D3DTEXF_LINEAR);
+			*/
 		}
 	};
 
@@ -313,13 +323,10 @@ namespace {
 		}
 	};
 
-} // unnamed
 
 struct Storm3D_FakeSpotlight::Data
 {
 	Storm3D &storm; 
-	IDirect3D9 &d3d; 
-	IDirect3DDevice9 &device;
 
 	shared_ptr<RenderTarget> renderTarget;
 	Storm3D_SpotlightShared properties;
@@ -340,11 +347,8 @@ struct Storm3D_FakeSpotlight::Data
 	static frozenbyte::storm::IndexBuffer *indexBuffer;
 	frozenbyte::storm::VertexBuffer vertexBuffer;
 
-	Data(Storm3D &storm_, IDirect3D9 &d3d_, IDirect3DDevice9 &device_)
+	Data(Storm3D &storm_)
 	:	storm(storm_),
-		d3d(d3d_),
-		device(device_),
-		properties(device),
 		camera(&storm),
 		fadeFactor(0),
 		fogFactor(0.f),
@@ -356,15 +360,15 @@ struct Storm3D_FakeSpotlight::Data
 			return;
 
 		properties.color = COL(.5f, .5f, .5f);
-		createVertexBuffer();	
+		createVertexBuffer();
 	}
 
 	void createVertexBuffer()
 	{
-		vertexBuffer.create(device, 5, 5 * sizeof(float), true);
+		vertexBuffer.create(5, 7 * sizeof(float), true);
 	}
 
-	void updateMatrices(const float *cameraView)
+	void updateMatrices(const D3DXMATRIX &cameraView)
 	{
 		if(renderTarget)
 			properties.targetPos = renderTarget->pos;
@@ -389,16 +393,22 @@ frozenbyte::storm::VertexShader *Storm3D_FakeSpotlight::Data::shadowVertexShader
 frozenbyte::storm::PixelShader *Storm3D_FakeSpotlight::Data::depthPixelShader = 0;
 frozenbyte::storm::PixelShader *Storm3D_FakeSpotlight::Data::shadowPixelShader = 0;
 
-Storm3D_FakeSpotlight::Storm3D_FakeSpotlight(Storm3D &storm, IDirect3D9 &d3d, IDirect3DDevice9 &device)
+//! Constructor
+Storm3D_FakeSpotlight::Storm3D_FakeSpotlight(Storm3D &storm)
 {
-	scoped_ptr<Data> tempData(new Data(storm, d3d, device));
+	scoped_ptr<Data> tempData(new Data(storm));
 	data.swap(tempData);
 }
 
+//! Destructor
 Storm3D_FakeSpotlight::~Storm3D_FakeSpotlight()
 {
 }
 
+//! Test visibility of fake spotlight
+/*!
+	\param camera camera to which test visibility
+*/
 void Storm3D_FakeSpotlight::testVisibility(Storm3D_Camera &camera)
 {
 //	data->visible = camera.TestSphereVisibility(data->properties.position, data->properties.range);
@@ -413,11 +423,16 @@ void Storm3D_FakeSpotlight::testVisibility(Storm3D_Camera &camera)
 
 }
 
+//! Disable visibility
 void Storm3D_FakeSpotlight::disableVisibility()
 {
 	data->visible = false;
 }
 
+//! Enable of disable fake spotlight
+/*!
+	\param enable true to enable
+*/
 void Storm3D_FakeSpotlight::enable(bool enable)
 {
 	if(BUFFER_WIDTH <= 0 || BUFFER_HEIGHT <= 0)
@@ -431,37 +446,68 @@ void Storm3D_FakeSpotlight::enable(bool enable)
 		data->renderTarget.reset();
 }
 
+//! Is fake spotlight enabled?
+/*!
+	\return true if enabled
+*/
 bool Storm3D_FakeSpotlight::enabled() const
 {
 	return data->enabled && data->visible;
 }
 
+//! Set position of fake spotlight
+/*!
+	\param position position
+*/
 void Storm3D_FakeSpotlight::setPosition(const VC3 &position)
 {
 	data->properties.position = position;
 }
 
+//! Set direction of fake spotlight
+/*!
+	\param direction direction
+*/
 void Storm3D_FakeSpotlight::setDirection(const VC3 &direction)
 {
 	data->properties.direction = direction;
 }
 
+//! Set field of view of fake spotlight
+/*!
+	\param fov field of view
+*/
 void Storm3D_FakeSpotlight::setFov(float fov)
 {
 	data->properties.fov = fov;
 }
 
+//! Set range of fake spotlight
+/*!
+	\param range range
+*/
 void Storm3D_FakeSpotlight::setRange(float range)
 {
 	data->properties.range = range;
 }
 
+//! Set color of fake spotlight
+/*!
+	\param color color
+	\param fadeFactor fade factor
+*/
 void Storm3D_FakeSpotlight::setColor(const COL &color, float fadeFactor)
 {
 	data->properties.color = color;
 	data->fadeFactor = fadeFactor;
 }
 
+//! Set plane of fake spotlight
+/*!
+	\param height plane height
+	\param minCorner
+	\param maxCorner
+*/
 void Storm3D_FakeSpotlight::setPlane(float height, const VC2 &minCorner, const VC2 &maxCorner)
 {
 	data->plane.height = height;
@@ -469,16 +515,29 @@ void Storm3D_FakeSpotlight::setPlane(float height, const VC2 &minCorner, const V
 	data->plane.max = maxCorner;
 }
 
+//! Set rendering of object shadows
+/*!
+	\param render true to enable rendering
+*/
 void Storm3D_FakeSpotlight::renderObjectShadows(bool render)
 {
 	data->renderObjects = render;
 }
 
+//! Set fog factor of fake spotlight
+/*!
+	\param factor fog factor
+*/
 void Storm3D_FakeSpotlight::setFogFactor(float factor)
 {
 	data->fogFactor = factor;
 }
 
+//! Get plane min and max
+/*!
+	\param min reference to a vector taking the min position
+	\param max reference to a vector taking the max position
+*/
 void Storm3D_FakeSpotlight::getPlane(VC2 &min, VC2 &max) const
 {
 	min = data->plane.min;
@@ -490,41 +549,37 @@ void Storm3D_FakeSpotlight::getPlane(VC2 &min, VC2 &max) const
 	max.y += data->properties.position.z;
 }
 
+//! Get plane height
+/*!
+	\return height
+*/
 float Storm3D_FakeSpotlight::getPlaneHeight() const
 {
 	return data->properties.position.y - data->plane.height;
 }
 
-void Storm3D_FakeSpotlight::getArea(AABB &area) const
-{
-	/*
-	min = data->plane.min;
-	min.x += data->properties.position.x;
-	min.y += data->properties.position.z;
-
-	max = data->plane.max;
-	max.x += data->properties.position.x;
-	max.y += data->properties.position.z;
-	*/
-
-	area.mmin.x = data->plane.min.x + data->properties.position.x;
-	area.mmin.z = data->plane.min.y + data->properties.position.z;
-	area.mmax.x = data->plane.max.x + data->properties.position.x;
-	area.mmax.z = data->plane.max.y + data->properties.position.z;
-	area.mmin.y = data->properties.position.y - data->plane.height;
-	area.mmax.y = data->properties.position.y;
-}
-
+//! Should object shadows be rendered?
+/*!
+	\return true if rendered
+*/
 bool Storm3D_FakeSpotlight::shouldRenderObjectShadows() const
 {
 	return data->renderObjects;
 }
 
+//! Get camera
+/*!
+	\return camera
+*/
 Storm3D_Camera &Storm3D_FakeSpotlight::getCamera()
 {
 	return data->camera;
 }
 
+//! Set up clip planes
+/*!
+	\param cameraView
+*/
 void Storm3D_FakeSpotlight::setClipPlanes(const float *cameraView)
 {
 	if(BUFFER_WIDTH <= 0 || BUFFER_HEIGHT <= 0)
@@ -533,6 +588,11 @@ void Storm3D_FakeSpotlight::setClipPlanes(const float *cameraView)
 	data->properties.setClipPlanes(cameraView);
 }
 
+//! Set up scissor rectangle
+/*!
+	\param camera camera
+	\param screenSize screen size
+*/
 void Storm3D_FakeSpotlight::setScissorRect(Storm3D_Camera &camera, const VC2I &screenSize)
 {
 	if(BUFFER_WIDTH <= 0 || BUFFER_HEIGHT <= 0)
@@ -541,7 +601,12 @@ void Storm3D_FakeSpotlight::setScissorRect(Storm3D_Camera &camera, const VC2I &s
 	data->properties.setScissorRect(camera, screenSize);
 }
 
-bool Storm3D_FakeSpotlight::setAsRenderTarget(const float *cameraView)
+//! Set as render target
+/*!
+	\param cameraView
+	\return true if success
+*/
+bool Storm3D_FakeSpotlight::setAsRenderTarget(const D3DXMATRIX &cameraView)
 {
 	if(BUFFER_WIDTH <= 0 || BUFFER_HEIGHT <= 0)
 		return false;
@@ -551,7 +616,9 @@ bool Storm3D_FakeSpotlight::setAsRenderTarget(const float *cameraView)
 	{
 		Storm3D_ShaderManager::GetSingleton()->setTextureTm(data->properties.shaderProjection[0]);
 		Storm3D_ShaderManager::GetSingleton()->setSpot(COL(), data->properties.position, data->properties.direction, data->properties.range, .1f);
-		Storm3D_ShaderManager::GetSingleton()->SetViewProjectionMatrix(data->properties.lightViewProjection[1], data->properties.lightViewProjection[1]);
+		// Storm3D_ShaderManager::GetSingleton()->SetViewProjectionMatrix(data->properties.lightViewProjection[1], data->properties.lightViewProjection[1]);
+		Storm3D_ShaderManager::GetSingleton()->SetViewMatrix(data->properties.lightView[1]);
+		Storm3D_ShaderManager::GetSingleton()->SetProjectionMatrix(data->properties.lightProjection);
 	}
 
 	COL c = data->properties.color;
@@ -562,7 +629,7 @@ bool Storm3D_FakeSpotlight::setAsRenderTarget(const float *cameraView)
 	*/
 
 	float colorData[4] = { c.r, c.g, c.b, 0 };
-	data->device.SetVertexShaderConstantF(10, colorData, 1);
+	glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, 10, colorData);
 	data->renderedColor = c;
 
 	Storm3D_ShaderManager::GetSingleton()->setFakeProperties(data->properties.position.y - data->plane.height, .1f, .3137f);
@@ -571,7 +638,11 @@ bool Storm3D_FakeSpotlight::setAsRenderTarget(const float *cameraView)
 	return true;
 }
 
-void Storm3D_FakeSpotlight::applyTextures(const float *cameraView)
+//! Apply textures
+/*!
+	\param cameraView
+*/
+void Storm3D_FakeSpotlight::applyTextures(const D3DXMATRIX &cameraView)
 {
 	if(BUFFER_WIDTH <= 0 || BUFFER_HEIGHT <= 0)
 		return;
@@ -599,6 +670,7 @@ void Storm3D_FakeSpotlight::applyTextures(const float *cameraView)
 	data->shadowPixelShader->apply();
 }
 
+//! Render projection
 void Storm3D_FakeSpotlight::renderProjection()
 {
 	if(BUFFER_WIDTH <= 0 || BUFFER_HEIGHT <= 0)
@@ -637,30 +709,29 @@ void Storm3D_FakeSpotlight::renderProjection()
 
 	float buffer[] = 
 	{
-		a.x, a.y, a.z,  ad, .5f,
-		b.x, b.y, b.z,  bd, .5f,
-		c.x, c.y, c.z,  cd, .5f,
-		d.x, d.y, d.z,  dd, .5f,
-		e.x, e.y, e.z,  ed, .5f
+		a.x, a.y, a.z,  ad, ad,  ad, 1.0f,
+		b.x, b.y, b.z,  bd, bd,  bd, 1.0f,
+		c.x, c.y, c.z,  cd, cd,  cd, 1.0f,
+		d.x, d.y, d.z,  dd, dd,  dd, 1.0f,
+		e.x, e.y, e.z,  ed, ed,  ed, 1.0f
 	};
 
-	memcpy(data->vertexBuffer.lock(), buffer, 5 * 5 * sizeof(float));
+	memcpy(data->vertexBuffer.lock(), buffer, 5 * 7 * sizeof(float));
 	data->vertexBuffer.unlock();
-	data->vertexBuffer.apply(data->device, 0);
+	data->vertexBuffer.apply(0);
 
 	Storm3D_ShaderManager *manager = Storm3D_ShaderManager::GetSingleton();
 	manager->setTextureTm(data->properties.shaderProjection[0]);
 	manager->setSpot(COL(), data->properties.position, data->properties.direction, data->properties.range, .1f);
 
 	D3DXMATRIX identity;
-	D3DXMatrixIdentity(&identity);
+	D3DXMatrixIdentity(identity);
 
 	manager->setSpotTarget(data->properties.targetProjection);
-	manager->SetWorldTransform(data->device, identity);
+	manager->SetWorldTransform(identity);
 
-	data->device.SetRenderState(D3DRS_ALPHATESTENABLE, TRUE);
-	data->device.SetRenderState(D3DRS_ALPHAREF, 0x01);
-	data->device.SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
+	glEnable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GREATER, 1.0f/255.0f);
 
 	{
 		//float factor = data->fadeFactor + data->fogFactor * (1.f - data->fadeFactor);
@@ -668,21 +739,16 @@ void Storm3D_FakeSpotlight::renderProjection()
 		//float factor = data->fadeFactor;
 		float factor = (1.f - data->fadeFactor) + data->fogFactor * (data->fadeFactor);
 		float c0[4] = { factor, factor, factor, 1.f };
-		data->device.SetPixelShaderConstantF(0, c0, 1);
+		glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0, c0);
 
 		float fogFactor = data->fogFactor;
 		float c2[4] = { fogFactor, fogFactor, fogFactor, 1.f };
-		data->device.SetPixelShaderConstantF(2, c2, 1);
+		glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 2, c2);
 	}
 
 	{
-		CComPtr<IDirect3DSurface9> colorSurface;
-		data->renderTarget->color->GetSurfaceLevel(0, &colorSurface);
-
-		D3DSURFACE_DESC sourceDesc;
-		colorSurface->GetDesc(&sourceDesc);
-		float xd = 1.f / float(sourceDesc.Width);
-		float yd = 1.f / float(sourceDesc.Height);
+		float xd = 1.f / float(data->renderTarget->color->getWidth());
+		float yd = 1.f / float(data->renderTarget->color->getHeight());
 		float xd1 = xd * 1.5f;
 		float yd1 = yd * 1.5f;
 		float xd2 = xd * 2.5f;
@@ -702,14 +768,14 @@ void Storm3D_FakeSpotlight::renderProjection()
 		float deltas3[4] = {  xd1, -yd1, 0, 0 };
 		float deltas4[4] = {  xd2,  yd1, 0, 0 };
 
-		data->device.SetVertexShaderConstantF(5, deltas1, 1);
-		data->device.SetVertexShaderConstantF(6, deltas2, 1);
-		data->device.SetVertexShaderConstantF(7, deltas3, 1);
-		data->device.SetVertexShaderConstantF(8, deltas4, 1);
+		glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, 5, deltas1);
+		glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, 6, deltas2);
+		glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, 7, deltas3);
+		glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, 8, deltas4);
 	}
 
-	data->shadowVertexShader->apply();
-	data->indexBuffer->render(data->device, 4, 5);
+	data->shadowVertexShader->apply(); // fake_shadow_plane_vertex_shader.txt
+	data->indexBuffer->render(4, 5);
 }
 
 void Storm3D_FakeSpotlight::debugRender()
@@ -725,12 +791,22 @@ void Storm3D_FakeSpotlight::debugRender()
 		300.f, 0.f, 0.f, 1.f, 1.f, 0.f
 	};
 
-	data->device.SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-	data->device.SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
-	data->device.SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
-	data->device.SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
-	data->device.SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
-	data->device.SetPixelShader(0);
+	glDisable(GL_ALPHA_TEST);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+	glActiveTexture(GL_TEXTURE0);
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_TEXTURE);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDisable(GL_TEXTURE_2D);
+
+	frozenbyte::storm::PixelShader::disable();
 
 	if(data->renderTarget)
 		data->renderTarget->applyColor(0);
@@ -739,16 +815,16 @@ void Storm3D_FakeSpotlight::debugRender()
 	//data->device.SetRenderState(D3DRS_ALPHAREF, 0x50);
 	//data->device.SetRenderState(D3DRS_ALPHAFUNC, D3DCMP_GREATER);
 
-	data->device.SetPixelShader(0);
-	data->device.SetVertexShader(0);
-	data->device.SetFVF(D3DFVF_XYZRHW|D3DFVF_TEX1);
+	frozenbyte::storm::PixelShader::disable();
+	frozenbyte::storm::VertexShader::disable();
+	applyFVF(D3DFVF_XYZRHW|D3DFVF_TEX1, sizeof(float) * 6);
 
-	frozenbyte::storm::validateDevice(data->device, data->storm.getLogger());
-	data->device.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, buffer, sizeof(float) *  6);
+	renderUP(D3DFVF_XYZRHW|D3DFVF_TEX1, GL_TRIANGLE_STRIP, 2, sizeof(float) * 6, (char *) buffer);
 
 	//data->device.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
 }
 
+//! Release dynamic resources
 void Storm3D_FakeSpotlight::releaseDynamicResources()
 {
 	if(BUFFER_WIDTH <= 0 || BUFFER_HEIGHT <= 0)
@@ -758,6 +834,7 @@ void Storm3D_FakeSpotlight::releaseDynamicResources()
 	data->renderTarget.reset();
 }
 
+//! Recreate dynamic resources
 void Storm3D_FakeSpotlight::recreateDynamicResources()
 {
 	if(BUFFER_WIDTH <= 0 || BUFFER_HEIGHT <= 0)
@@ -767,38 +844,45 @@ void Storm3D_FakeSpotlight::recreateDynamicResources()
 	data->renderTarget = renderTargets.getTarget();
 }
 
-void Storm3D_FakeSpotlight::filterBuffers(Storm3D &storm, IDirect3DDevice9 &device)
+//! Filter buffers
+/*!
+	\param storm Storm3D
+*/
+void Storm3D_FakeSpotlight::filterBuffers(Storm3D &storm)
 {
 	if(BUFFER_WIDTH <= 0 || BUFFER_HEIGHT <= 0)
 		return;
 
-	renderTargets.filter(storm, device);
+	renderTargets.filter(storm);
 }
 
+//! Set up buffer sizes
+/*!
+	\param storm Storm3D
+	\param shadowQuality shadow quality
+*/
 void Storm3D_FakeSpotlight::querySizes(Storm3D &storm, int shadowQuality)
 {
 	if(shadowQuality >= 100)
 	{
-		//BUFFER_WIDTH = 1024;
-		//BUFFER_HEIGHT = 1024;
-		BUFFER_WIDTH = 2048;
-		BUFFER_HEIGHT = 2048;
+		BUFFER_WIDTH = 1024;
+		BUFFER_HEIGHT = 1024;
 	}
-	else if(shadowQuality >= 75)
+	/*else if(shadowQuality >= 75)
 	{
 		BUFFER_WIDTH = 768;
 		BUFFER_HEIGHT = 768;
-	}
+	}*/
 	else if(shadowQuality >= 50)
 	{
 		BUFFER_WIDTH = 512;
 		BUFFER_HEIGHT = 512;
 	}
-	else if(shadowQuality >= 25)
+	/*else if(shadowQuality >= 25)
 	{
 		BUFFER_WIDTH = 384;
 		BUFFER_HEIGHT = 384;
-	}
+	}*/
 	else if(shadowQuality >= 0)
 	{
 		BUFFER_WIDTH = 256;
@@ -817,12 +901,17 @@ void Storm3D_FakeSpotlight::querySizes(Storm3D &storm, int shadowQuality)
 	}
 }
 
-void Storm3D_FakeSpotlight::createBuffers(Storm3D &storm, IDirect3D9 &d3d, IDirect3DDevice9 &device, int shadowQuality)
+//! Create buffers
+/*!
+	\param storm Storm3D
+	\param shadowQuality shadow quality
+*/
+void Storm3D_FakeSpotlight::createBuffers(Storm3D &storm, int shadowQuality)
 {
 	if(BUFFER_WIDTH <= 0 || BUFFER_HEIGHT <= 0)
 		return;
 
-	bool status = renderTargets.createAll(storm, d3d, device, shadowQuality);
+	bool status = renderTargets.createAll(storm, shadowQuality);
 	while(!status && shadowQuality >= 0)
 	{
 		IStorm3D_Logger *logger = storm.getLogger();
@@ -831,7 +920,7 @@ void Storm3D_FakeSpotlight::createBuffers(Storm3D &storm, IDirect3D9 &d3d, IDire
 
 		shadowQuality -= 50;
 		querySizes(storm, shadowQuality);
-		status = renderTargets.createAll(storm, d3d, device, shadowQuality);
+		status = renderTargets.createAll(storm, shadowQuality);
 	}
 
 	IStorm3D_Logger *logger = storm.getLogger();
@@ -840,7 +929,7 @@ void Storm3D_FakeSpotlight::createBuffers(Storm3D &storm, IDirect3D9 &d3d, IDire
 
 	Storm3D_FakeSpotlight::Data::indexBuffer = new frozenbyte::storm::IndexBuffer();
 	{
-		Storm3D_FakeSpotlight::Data::indexBuffer->create(device, 4, false);
+		Storm3D_FakeSpotlight::Data::indexBuffer->create(4, false);
 		WORD *pointer = Storm3D_FakeSpotlight::Data::indexBuffer->lock();
 		
 		*pointer++ = 4;
@@ -862,15 +951,16 @@ void Storm3D_FakeSpotlight::createBuffers(Storm3D &storm, IDirect3D9 &d3d, IDire
 		Storm3D_FakeSpotlight::Data::indexBuffer->unlock();
 	}
 
-	Storm3D_FakeSpotlight::Data::shadowVertexShader = new frozenbyte::storm::VertexShader(device);
+	Storm3D_FakeSpotlight::Data::shadowVertexShader = new frozenbyte::storm::VertexShader();
 	Storm3D_FakeSpotlight::Data::shadowVertexShader->createFakePlaneShadowShader();
 
-	Storm3D_FakeSpotlight::Data::depthPixelShader = new frozenbyte::storm::PixelShader(device);
+	Storm3D_FakeSpotlight::Data::depthPixelShader = new frozenbyte::storm::PixelShader();
 	Storm3D_FakeSpotlight::Data::depthPixelShader->createFakeDepthPixelShader();
-	Storm3D_FakeSpotlight::Data::shadowPixelShader = new frozenbyte::storm::PixelShader(device);
+	Storm3D_FakeSpotlight::Data::shadowPixelShader = new frozenbyte::storm::PixelShader();
 	Storm3D_FakeSpotlight::Data::shadowPixelShader->createFakeShadowPixelShader();
 }
 
+//! Free buffers
 void Storm3D_FakeSpotlight::freeBuffers()
 {
 	if(BUFFER_WIDTH <= 0 || BUFFER_HEIGHT <= 0)
@@ -886,5 +976,5 @@ void Storm3D_FakeSpotlight::freeBuffers()
 
 void Storm3D_FakeSpotlight::clearCache()
 {
-	targetActive = false;
+	fakeTargetActive = false;
 }

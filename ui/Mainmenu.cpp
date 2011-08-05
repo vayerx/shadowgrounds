@@ -1,5 +1,7 @@
-
 #include "precompiled.h"
+
+#include <boost/lexical_cast.hpp>
+#include <assert.h>
 
 #include "Mainmenu.h"
 
@@ -8,23 +10,19 @@
 #include "../game/GameUI.h"
 #include "../game/scripting/GameScripting.h"
 #include "../game/savegamevars.h"
-#include "gameController.h"
 #include "MenuCollection.h"
 #include "../game/DHLocaleManager.h"
-#include "../system/logger.h"
 #include "../ogui/OguiFormattedText.h"
 #include "../ogui/OguiTypeEffectListener.h"
+#include "../game/options/options_game.h"
 // #include "../ogui/OguiFormatedText.h"
 
-#include <boost/lexical_cast.hpp>
-#include <assert.h>
-
+#include "LoadGameMenu.h"
 #ifdef PROJECT_SURVIVOR
 	#include "NewGameMenu.h"
 	#include "CoopMenu.h"
-	#include "LoadGameMenu.h"
 	#include "SurvivalMenu.h"
-	#include "../game/gameProfiles.h"
+	#include "../game/GameProfiles.h"
 	#include "../filesystem/input_stream_wrapper.h"
 #endif
 
@@ -32,10 +30,14 @@ using namespace game;
 
 namespace ui {
 namespace {
-const int mission_max = 11;
 
 bool DoWeHaveAnySaveGames( Game* game )
 {
+	if (mission_max == 0)
+	{
+		mission_max = SimpleOptions::getInt(DH_OPT_I_SAVEGAME_SLOT_AMOUNT);
+	}
+
 	int i = 0;
 	std::string temp = boost::lexical_cast< std::string >( char( 0 ) );
 	for( i = 1; i <= mission_max; i++ )
@@ -56,21 +58,21 @@ bool DoWeHaveAnySaveGames( Game* game )
 MainMenu::MainMenu( MenuCollection* menu, MenuCollection::Fonts* fonts, Ogui* o_gui, Game* g, bool from_game ) :
   MenuBaseImpl( NULL ),
   menuCollection( menu ),
+  fonts( fonts ),
   abortGame( NULL ),
   abortGameYes( NULL ),
   abortGameNo( NULL ),
   captureAllEvents( NULL ),
-  fonts( fonts ),
-  fromGame( from_game ),
-  quitPressed( false ),
-  playerName( "Pertti" ),
+  continueButton( NULL ),
   currentActive( NULL ),
 #ifdef PROJECT_SURVIVOR
   numberOfButtons( 9 ),
 #else
 	numberOfButtons( 7 ),
 #endif
-  continueButton( NULL )
+  fromGame( from_game ),
+  quitPressed( false ),
+  playerName( "Pertti" )
 {
 	assert( o_gui );
 	assert( menu );
@@ -655,7 +657,7 @@ OguiButton* MainMenu::addButton( const std::string& text, int command, IOguiFont
 
 	std::string preHeader = "gui_mainmenu_button_pos_";
 
-	{
+	if (!text.empty()) {
 		OguiButton* b;
 		
 		int x = getLocaleGuiInt( ( preHeader + "x_" + boost::lexical_cast< std::string >( count ) ).c_str(), buttonX );
@@ -686,12 +688,13 @@ OguiButton* MainMenu::addButton( const std::string& text, int command, IOguiFont
 		buttonY += buttonAddY;
 
 		buttons.push_back( b );
-
 		count++;
 		if( count > numberOfButtons ) count = 1;
 
 		return b;
 	}
+	count++;
+	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

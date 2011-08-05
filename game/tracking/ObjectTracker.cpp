@@ -894,22 +894,6 @@ namespace tracking
 		return ret;
 	}
 
-	std::vector<ITrackerObject *> ObjectTracker::getAllTrackersOfType(ITrackerObjectType *trackerType)
-	{
-		std::vector<ITrackerObject *> ret;
-
-		for (int i = 0; i < impl->lastTracker + 1; i++)
-		{
-			if (impl->trackers[i] != NULL
-				&& impl->trackers[i]->getType() == trackerType)
-			{
-				ret.push_back(impl->trackers[i]);
-			}
-		}
-
-		return ret;
-	}
-
 	void ObjectTracker::attachTrackerToTrackable(UnifiedHandle tracker, ITrackableObject *trackableObject)
 	{
 		int i = tracker - UNIFIED_HANDLE_FIRST_TRACKER;

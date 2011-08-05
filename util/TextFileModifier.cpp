@@ -1,7 +1,7 @@
 
 #include "precompiled.h"
 
-#include "TextfileModifier.h"
+#include "TextFileModifier.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -318,6 +318,7 @@ namespace util
 
 	bool TextFileModifier::saveFile()
 	{
+#ifndef __APPLE__
 		if (impl->filename == NULL)
 		{
 			assert(0);
@@ -345,7 +346,7 @@ namespace util
 				return true;
 			}
 		}
-
+#endif
 		return false;
 	}
 	

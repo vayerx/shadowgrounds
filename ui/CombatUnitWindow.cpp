@@ -1050,7 +1050,7 @@ namespace ui
 							}
 
 							// is this the part we want to show?
-              if (j == 1 && rootp->getType()->getSlotPosition(k) == SLOT_POSITION_HEAD 
+              if ((j == 1 && rootp->getType()->getSlotPosition(k) == SLOT_POSITION_HEAD) 
                 || (j == 2 && rootp->getType()->getSlotPosition(k) == SLOT_POSITION_RIGHT_ARM)
                 || (j == 3 && rootp->getType()->getSlotPosition(k) == SLOT_POSITION_LEFT_ARM)
                 || (j == 4 && rootp->getType()->getSlotPosition(k) == SLOT_POSITION_RIGHT_LEG)
@@ -1072,8 +1072,8 @@ namespace ui
 
         if (p != NULL)
         {
-          int newhp = p->getDamage();
 					/*
+          int newhp = p->getDamage();
           if (newhp != lastUnitPartHP[j])
           {
             if (lastUnitPartHP[j] != -1)
@@ -1083,8 +1083,8 @@ namespace ui
 					*/
         }
 
-        int imgtype = j;
-        //if (imgtype >= 4) imgtype = 3 - (imgtype - 4);
+        /*int imgtype = j;
+        if (imgtype >= 4) imgtype = 3 - (imgtype - 4);*/
         int maxhp = 0;
         if (p != NULL)
           maxhp = p->getType()->getMaxDamage();
@@ -1107,7 +1107,7 @@ namespace ui
 					hp = highestAllowedLevel;
         if (hp >= COMBATUNITWINDOW_PART_HP_IMAGES) 
           hp = COMBATUNITWINDOW_PART_HP_IMAGES - 1;
-        int hpimg = hp; //hp * COMBATUW_HP_IMAGES / 24;
+        //int hpimg = hp; //hp * COMBATUW_HP_IMAGES / 24;
         //if (hpimg < 0) hpimg = 0;
         //if (hpimg >= COMBATUW_PART_HP_IMAGES) hpimg = COMBATUW_PART_HP_IMAGES - 1;
 				/*
@@ -1322,9 +1322,9 @@ namespace ui
       }
       if (eve->triggerButton->GetId() >= COMBATUW_UNITMODE)
       {
-        bool changeMultiple = false;
+        // bool changeMultiple = false;
         Unit *u = unit;
-        int unitNum = unitNumber;
+        // int unitNum = unitNumber;
         if (u == NULL)
         {
           // button assigned for null unit? (should never happen)
@@ -1368,8 +1368,8 @@ namespace ui
           && game->unitSelections[unit->getOwner()]->getUnitsSelected() > 1)
         {
           // change multiple unit modes
-          changeMultiple = true;
-          unitNum = 0;
+          // changeMultiple = true;
+          // unitNum = 0;
         }
 
         // go thru all selected units or the one unit and apply new mode.

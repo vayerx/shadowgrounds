@@ -6,8 +6,10 @@
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
+#include <SDL.h>
+
 #include "storm3d_common_imp.h"
-#include "storm3d_datatypes.h"
+#include "Storm3D_Datatypes.h"
 
 
 
@@ -47,7 +49,7 @@ class Storm3D_Adapter
 	int max_anisotropy;		// Max anisotropy level
 	int multitex_layers;		// Simultaneous texturelayers (multitexturing)
 
-	D3DDISPLAYMODE *display_modes;
+	SDL_Rect *display_modes;
 	int display_mode_amount;
 	int active_display_mode;
 

@@ -21,7 +21,7 @@
 #include "../game/GameUI.h"
 #include "../game/Unit.h"
 
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 // button ids...
 // unit (armor) selection
@@ -779,7 +779,7 @@ namespace ui
     if (p != NULL)
     {
       b->SetDisabled(true);
-      char *pricetext = "";
+      const char *pricetext = "";
       if (p->isPurchasePending())
       {
         priceval = p->getType()->getPrice();
@@ -1007,7 +1007,7 @@ namespace ui
       Unit *u = (Unit *)ownu->iterateNext();
 
       // character name assigned to this unit (armor)
-      char *cname = NULL;
+      const char *cname = NULL;
       char *cnamebuf = NULL;
       if (u->getCharacter() != NULL)
       {
@@ -1195,8 +1195,8 @@ namespace ui
     }
     if (unit != NULL)
     {
-      char *charname = NULL;
-      char *charbio = NULL;
+      const char *charname = NULL;
+      const char *charbio = NULL;
       Character *c = unit->getCharacter();
       if (c != NULL)
       {

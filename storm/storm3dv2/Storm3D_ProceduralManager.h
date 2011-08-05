@@ -5,11 +5,11 @@
 
 #pragma once
 
-#include <istorm3d_proceduralmanager.h>
+#include <IStorm3D_ProceduralManager.h>
 #include <boost/scoped_ptr.hpp>
-#include <atlbase.h>
+#include <GL/glew.h>
+#include "igios3D.h"
 
-struct IDirect3DTexture9;
 class Storm3D;
 class IStorm3D_Logger;
 
@@ -23,7 +23,7 @@ public:
 	~Storm3D_ProceduralManager();
 
 	void setLogger(IStorm3D_Logger *logger);
-	void setTarget(CComPtr<IDirect3DTexture9> &target, CComPtr<IDirect3DTexture9> &offsetTarget);
+	void setTarget(boost::shared_ptr<glTexWrapper> target, boost::shared_ptr<glTexWrapper> offsetTarget);
 	void addEffect(const std::string &name, const Effect &effect);
 	void enableDistortionMode(bool enable);
 	void useFallback(bool fallback);

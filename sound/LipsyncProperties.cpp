@@ -13,7 +13,9 @@
 #include <vector>
 #include <map>
 
+#ifdef _MSC_VER
 #pragma warning(disable: 4786)
+#endif
 
 using namespace boost;
 using namespace std;
@@ -83,12 +85,13 @@ struct LipsyncProperties::Data
 
 	void load()
 	{
-		Parser parser(false, true);
+		EditorParser parser(false, true);
 #ifdef LEGACY_FILES
-		filesystem::FilePackageManager::getInstance().getFile("Data/Animations/lipsync.txt") >> parser;
+		filesystem::InputStream lipsyncFile = filesystem::FilePackageManager::getInstance().getFile("Data/Animations/lipsync.txt");
 #else
-		filesystem::FilePackageManager::getInstance().getFile("data/animation/lipsync.txt") >> parser;
+		filesystem::InputStream lipsyncFile = filesystem::FilePackageManager::getInstance().getFile("data/animation/lipsync.txt");
 #endif
+		lipsyncFile >> parser;
 
 		ParserGroup &globals = parser.getGlobals();
 		loadMap(idles, globals.getSubGroup("IdleAnimations"));

@@ -285,12 +285,7 @@ int Connection::send(char *buf, int len)
 
   int ret = ::send(sock, buf, len, 0);
   unsigned long foo;
-
-// FIXME: documentation claims that this "discards" the data... that's not wanted?
-// probably intended to indicate that the packet should be sent without waiting for more buffered data, 
-// not that the packed should be discarded.
   WSAIoctl(sock, SIO_FLUSH, NULL, 0, NULL, 0, &foo, NULL, NULL);
-
   if (ret == SOCKET_ERROR)
   {
     if (WSAGetLastError() == WSAEWOULDBLOCK) return NONBLOCKING_EAGAIN;

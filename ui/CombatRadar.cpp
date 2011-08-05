@@ -338,12 +338,14 @@ namespace ui
 
   void CombatRadar::drawImpl()
   {
-		int gt = (game->gameTimer % RADAR_SWEEP_TICK_INTERVAL);
-		float ratio = (float)gt / RADAR_SWEEP_TICK_DURATION;
+	int gt = (game->gameTimer % RADAR_SWEEP_TICK_INTERVAL);
+	float ratio = (float)gt / RADAR_SWEEP_TICK_DURATION;
 
-		// no clip to 100% here.
-		//if (ratio > 1.0f) ratio = 1.0f;
-		int perc = (int)(ratio * 100.0f);
+	// no clip to 100% here.
+	//if (ratio > 1.0f) ratio = 1.0f;
+#if (defined LEGACY_FILES && !defined PROJECT_SURVIVOR) || !defined LEGACY_FILES
+	int perc = (int)(ratio * 100.0f);
+#endif
 
     for (int i = 0; i < radarUnitsAmount; i++)
     { 

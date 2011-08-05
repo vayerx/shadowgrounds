@@ -165,11 +165,10 @@ namespace ui
 				}
 				playerEnabledButton[i]->SetText(txt);
 			}
-
 			if (playerControllerButton[i] != NULL)
 			{
 				const char *txt = getLocaleGuiString("gui_options_none");//" None";
-				char *keybinds = "";
+				const char *keybinds = "";
 				if (i == 0) keybinds = game::SimpleOptions::getString(DH_OPT_S_1ST_PLAYER_KEYBINDS);
 				if (i == 1) keybinds = game::SimpleOptions::getString(DH_OPT_S_2ND_PLAYER_KEYBINDS);
 				if (i == 2) keybinds = game::SimpleOptions::getString(DH_OPT_S_3RD_PLAYER_KEYBINDS);

@@ -1,0 +1,43 @@
+!!ARBvp1.0
+PARAM mvp[4] = { state.matrix.mvp };
+PARAM tm2[4] = { state.matrix.texture[2] };
+#fromList ["c"]
+TEMP r0, r1;
+ADDRESS a0;
+PARAM c[100] = { program.env[0..99] };
+OUTPUT oD0 = result.color.primary;
+OUTPUT oD1 = result.color.secondary;
+OUTPUT oFog = result.fogcoord;
+OUTPUT oPos = result.position;
+OUTPUT oT0 = result.texcoord[0];
+OUTPUT oT1 = result.texcoord[1];
+# Constant declarations:
+#   -> c[0..3] -> World x View x Projection matrix
+# Vertex data:
+#   -> v0 -> position
+#   -> v1 -> texture coordinates
+#   -> v3 -> vertex color
+ATTRIB v0 = vertex.position;
+ATTRIB v1 = vertex.texcoord[0];
+ATTRIB v2 = vertex.texcoord[1];
+ATTRIB v5 = vertex.color.primary;
+DP4 r0.x, v0, mvp[0];
+DP4 r0.y, v0, mvp[1];
+DP4 r0.z, v0, mvp[2];
+DP4 r0.w, v0, mvp[3];
+
+MOV oPos, r0;
+ARL a0.x, v2.x;
+MUL oD0, v5, c[a0.x + 0];
+MOV oD1, c[7];
+DP4 r1.x, r0, tm2[0];
+DP4 r1.y, r0, tm2[1];
+DP4 r1.z, r0, tm2[2];
+DP4 r1.w, r0, tm2[3];
+
+MOV oT0, r1;
+MOV oT1.xy, v1.xyyy;
+# Fog
+SUB r0, v0.y, c[19].x;
+MUL oFog, r0.xxxx, c[19].y;
+END

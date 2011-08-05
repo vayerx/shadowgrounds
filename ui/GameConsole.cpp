@@ -15,6 +15,8 @@
 #include "../util/fb_assert.h"
 #include "../util/Debug_MemoryManager.h"
 
+#include "../game/userdata.h"
+
 extern bool apply_options_request;
 using namespace frozenbyte;
 
@@ -42,7 +44,7 @@ namespace ui
 
 		if (game::SimpleOptions::getBool(DH_OPT_B_CONSOLE_HISTORY_SAVE))
 		{
-			loadHistory("Config/console_history.txt");
+			loadHistory(igios_mapUserDataPrefix("Config/console_history.txt").c_str());
 		}
 	}
 
@@ -50,7 +52,7 @@ namespace ui
 	{
 		if (game::SimpleOptions::getBool(DH_OPT_B_CONSOLE_HISTORY_SAVE))
 		{
-			saveHistory("Config/console_history.txt");
+			saveHistory(igios_mapUserDataPrefix("Config/console_history.txt").c_str());
 		}
 
 		for (int i = 0; i < GAMECONSOLE_HISTORY; i++)
@@ -210,7 +212,7 @@ namespace ui
 					Logger::getInstance()->setListenerLogLevel(LOGGER_LEVEL_DEBUG);
 				}
 
-				char *fileName = "memory/console";
+				const char *fileName = "memory/console";
 
 				char *databuf = new char[inpLen + 256];
 
@@ -392,7 +394,7 @@ namespace ui
 					}
 					else if (opt->getVariableType() == game::IScriptVariable::VARTYPE_BOOLEAN)
 					{
-						char *val;
+						const char *val;
 						if (opt->getBooleanValue())
 							val = "1";
 						else
@@ -433,7 +435,7 @@ namespace ui
 	bool GameConsole::autocompleteCommand()
 	{
 		// HACK!!!
-		char *fileName = "memory/console";
+		const char *fileName = "memory/console";
 		if (util::ScriptManager::getInstance()->getScript(fileName) == NULL)
 		{
 			char *databuf = new char[256];

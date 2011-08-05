@@ -3,7 +3,7 @@
 
 #include <string>
 #include "OguiButtonStyle.h"
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 OguiButtonStyle::OguiButtonStyle(
   IOguiImage *image, IOguiImage *imageDown,

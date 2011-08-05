@@ -7,7 +7,7 @@
 // Includes
 //------------------------------------------------------------------
 #include "storm3d_common_imp.h"
-#include "storm3d_datatypes.h"
+#include "Storm3D_Datatypes.h"
 
 // Common datatype includes
 #include "DatatypeDef.h"

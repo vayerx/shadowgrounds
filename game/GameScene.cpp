@@ -24,6 +24,8 @@
 #include "../system/Logger.h"
 #include "../convert/str2int.h"
 
+#include "../ui/LoadingMessage.h"
+
 // HACK: Just to get horrible unit conditional blocking count hack...
 #include "UnitActor.h"
 
@@ -477,11 +479,13 @@ namespace game
 			*/
 
 			// convert storm model back to visual object and then to unit...
-			if (sceneColl.model && sceneColl.model->GetCustomData() != NULL)
+			IStorm3D_Model_Data *d = sceneColl.model->GetCustomData();
+			if (d != NULL)
 			{
-				IStorm3D_Model_Data *d = sceneColl.model->GetCustomData();
+#ifndef NDEBUG
 				void *id = d->GetID();
 				assert(id == (void *)&ui::visualObjectID);
+#endif
 
 				VisualObject *hitvo = (VisualObject *)d;
 				IVisualObjectData *d2 = hitvo->getDataObject();
@@ -638,10 +642,7 @@ namespace game
 		if (SimpleOptions::getBool(DH_OPT_B_SHOW_DEBUG_RAYTRACES))
 		{
 			int mask = SimpleOptions::getInt(DH_OPT_I_DEBUG_RAYTRACES_TYPE_MASK);
-			if ((mask & 1) != 0 && !loscheck
-				|| (mask & 2) != 0 && loscheck
-				|| (mask & 4) != 0 && accurate
-				|| (mask & 8) != 0 && !accurate)
+			if (((mask & 1) != 0 && !loscheck) || ((mask & 2) != 0 && loscheck) || ((mask & 4) != 0 && accurate) || ((mask & 8) != 0 && !accurate))
 			{
 				next_raytrace_debug_line++;
 				if (next_raytrace_debug_line >= MAX_RAYTRACE_DEBUG_LINES)
@@ -758,10 +759,12 @@ namespace game
 		int startTime = Timer::getTime();
 #endif
 
+#ifndef NDEBUG
 		bool startOk = gameMap->isInScaledBoundaries(startX, startY);
 		bool endOk = gameMap->isInScaledBoundaries(endX, endY);
 		fb_assert(startOk);
 		fb_assert(endOk);
+#endif
 
 		assert(pathFinder != NULL);
 		int sx = gameMap->scaledToPathfindX(startX);
@@ -790,7 +793,7 @@ namespace game
 			if (coverBlockDistance < 2)
 				pathFinder->setCoverBlockDistance(2);
 
-			frozenbyte::ai::Path *simpl = PathSimplifier::getSimplifiedPath(pathFinder, tmp, 3, maxdiff);
+			frozenbyte::ai::Path *simpl = frozenbyte::ai::PathSimplifier::getSimplifiedPath(pathFinder, tmp, 3, maxdiff);
 			if (simpl != NULL)
 			{
 				for (int i = simpl->getSize() - 1; i >= 0; i--)
@@ -1054,8 +1057,8 @@ namespace game
 				if (!to->material.empty() || SimpleOptions::getBool(DH_OPT_B_MATERIAL_MISSING_WARNING))
 				{
 // TODO: restore this as warning.
-					Logger::getInstance()->warning("GameScene::modifyTerrainObstaclesImpl - Terrain object material name unknown or not selected in current material palette.");
-//					Logger::getInstance()->debug("GameScene::modifyTerrainObstaclesImpl - Terrain object material name unknown or not selected in current material palette.");
+//					Logger::getInstance()->warning("GameScene::modifyTerrainObstaclesImpl - Terrain object material name unknown or not selected in current material palette.");
+					Logger::getInstance()->debug("GameScene::modifyTerrainObstaclesImpl - Terrain object material name unknown or not selected in current material palette.");
 					Logger::getInstance()->debug(to->modelFilename.c_str());
 					Logger::getInstance()->debug(to->material.c_str());
 				}
@@ -1135,15 +1138,15 @@ namespace game
 			{
 				boxAmount++;
 
-				float radfloat;
+				// float radfloat;
 				int radhalved;
 				int toRadInt = (int)(to->radius*2.0f * gameMap->getObstacleSizeX() / gameMap->getScaledSizeX());
 				if (toRadInt == 1)
 				{
-					radfloat = 0.5f;
+					// radfloat = 0.5f;
 					radhalved = 0;
 				} else {
-					radfloat = ((float)toRadInt) / 2.0f;
+					// radfloat = ((float)toRadInt) / 2.0f;
 					// area checked is twice as large as needed (notice radius / 2).
 					// but inaccuracy of int causes that
 					radhalved = toRadInt / 2;
@@ -1261,8 +1264,6 @@ namespace game
 
 				int startMapX = - static_cast<int> (heightMap.size() / 2);
 				int startMapY = - static_cast<int> (heightMap[0].size() / 2); // ysize is constant
-				int endMapX = startMapX + heightMap.size() - 1;
-				int endMapY = startMapX + heightMap[0].size() - 1;
 
 				int startTargX = gameMap->scaledToObstacleX(x + ((startMapX + 0) * lastBuildingMap->getMapResolution()));
 				int startTargY = gameMap->scaledToObstacleY(y + ((startMapY + 0) * lastBuildingMap->getMapResolution()));
@@ -1423,68 +1424,6 @@ namespace game
 						}
 					}
 				}
-
-				/*
-
-				int startMapX = - static_cast<int> (heightMap.size() / 2);
-				int startMapY = - static_cast<int> (heightMap[0].size() / 2); // ysize is constant
-				//int endMapX = startMapX + collisionMap.size() - 1;
-				//int endMapY = startMapX + collisionMap[0].size() - 1;
-
-				// We have to do this for every obstacle map 'pixel' on maps area
-				// FIXME: currently done for each collision map pixel
-
-				for(int i = 0; i < static_cast<int> (heightMap.size()); ++i)
-				for(int j = 0; j < static_cast<int> (heightMap[0].size()); ++j)
-				{ 		
-					// This is blocked
-					if(collisionMap[i][j] > 0 && heightMap[i][j] > 0)
-					{
-						// Model's origo is in center of this map
-						// Resolution is 0.5 units
-
-						// scaled to terrain models' scale.
-						// however, this this is VERY VERY SLOW if terrain scale is
-						// something like 0.02 - as the buildingmap is way too accurate
-
-						// NOTE: now, terrain model scale must be 1, cos we cannot
-						// access Terrain from here. (don't know the model scale)
-//						float xPosition = x + ((startMapX + i) * 0.5f);
-//						float yPosition = y + ((startMapY + j) * 0.5f);
-						float xPosition = x + ((startMapX + i) * lastBuildingMap->getMapResolution());
-						float yPosition = y + ((startMapY + j) * lastBuildingMap->getMapResolution());
-
-						//float xPosition = x + ((startMapX + i) * 0.5f) 
-							//* terrain->getModelScale();
-						//float yPosition = y + ((startMapY + j) * 0.5f) 
-							//* terrain->getModelScale();
-
-						int ox = gameMap->scaledToObstacleX(xPosition);
-						int oy = gameMap->scaledToObstacleY(yPosition);
-						if (gameMap->isWellInScaledBoundaries(xPosition, yPosition))
-						{
-							if (!pathFinder->isBlocked(ox, oy))
-							{
-								if (add)
-								{
-									pathFinder->addObstacle(ox, oy);
-									if (lastModelIsFirethru)
-										gameMap->addMovingObstacleHeight(ox, oy, (int)((float)heightMap[i][j] * lastBuildingMap->getHeightScale() / gameMap->getScaleHeight()));
-									else
-										gameMap->addObstacleHeight(ox, oy, (int)((float)heightMap[i][j] * lastBuildingMap->getHeightScale() / gameMap->getScaleHeight()));
-								} else {
-									pathFinder->removeObstacle(ox, oy);
-									if (lastModelIsFirethru)
-										gameMap->removeMovingObstacleHeight(ox, oy, (int)((float)heightMap[i][j] * lastBuildingMap->getHeightScale() / gameMap->getScaleHeight()));
-									else
-										gameMap->removeObstacleHeight(ox, oy, (int)((float)heightMap[i][j] * lastBuildingMap->getHeightScale() / gameMap->getScaleHeight()));
-								}
-							}
-						}
-					}
-				}
-				*/
-
 
 			} // end if type MAPPED
 
@@ -2095,6 +2034,8 @@ namespace game
 
 			}
 		}
+
+		SHOW_LOADING_BAR(59);
 
 		stormTerrain->setClipMap(buf);
 

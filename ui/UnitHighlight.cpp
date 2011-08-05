@@ -19,8 +19,8 @@ namespace ui
 		this->storm3D = storm3D;
 		this->stormScene = stormScene;
 		highlightUnit = NULL;
-		bool highlightTerrain = false;
-		VC3 highlightTerrainPosition = VC3(0,0,0);
+		highlightTerrain = false;
+		// VC3 highlightTerrainPosition = VC3(0,0,0);
 
 #ifdef LEGACY_FILES
 		visualObjectModel = new VisualObjectModel("Data/Models/Pointers/highlight.s3d");
@@ -130,7 +130,7 @@ namespace ui
 	}
 
 
-	void UnitHighlight::setHighlightedUnit(game::Unit *unit)
+	void UnitHighlight::setHighlightedUnit(const game::Unit *unit)
 	{		
 		// DISABLED!
 		return;

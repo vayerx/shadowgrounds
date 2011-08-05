@@ -236,7 +236,7 @@ void EditorState::tick()
 	if(data->storm.lightManager)
 	{
 		VC3 pos = data->camera.getPosition();
-		data->storm.lightManager->update(pos, pos, ms, NULL);
+		data->storm.lightManager->update(pos, pos, ms);
 	}
 
 	data->decoratorMode.guiTick();

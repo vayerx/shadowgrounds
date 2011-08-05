@@ -13,8 +13,8 @@
 // Includes
 //------------------------------------------------------------------
 #include "storm3d_common_imp.h"
-#include "istorm3d_light.h"
-#include "istorm3d_helper.h"
+#include "IStorm3D_Light.h"
+#include "IStorm3D_Helper.h"
 
 
 

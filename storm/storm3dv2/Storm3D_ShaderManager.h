@@ -1,13 +1,15 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
 #pragma once
+
+#ifdef _MSC_VER
 #pragma warning(disable: 4786)
+#endif
 
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
 #include <cassert>
-#include <d3dx9math.h>
 #include "Storm3D_Datatypes.h"
 #include <vector>
 #include "storm3d_terrain_utils.h"
@@ -30,12 +32,12 @@ public:
 
 		// Some pointer magic from 'Gems
 		//	-> Cast dump pointer to both types and store relative address
-		int pointer_super = (int) (T*) 1;
-		int pointer_derived = (int) (Singleton<T>*)(T*) 1;
-		int offset = pointer_super - pointer_derived;
+		intptr_t pointer_super = (intptr_t) (T*) 1;
+		intptr_t pointer_derived = (intptr_t) (Singleton<T>*)(T*) 1;
+		intptr_t offset = pointer_super - pointer_derived;
 		
 		// Use offset to get our instance address
-		instance = (T*) (int)(this) + offset;
+		instance = (T*) (intptr_t)(this) + offset;
 	}
 	
 	~Singleton()
@@ -63,18 +65,25 @@ template<class T> T* Singleton<T>::instance = 0;
 //------------------------------------------------------------------
 class Storm3D_ShaderManager: public Singleton<Storm3D_ShaderManager>
 {
+ public:
+	// HACK:
+	COL fogColor;
+ private:
 	// View matrix
 	D3DXMATRIX view_projection_tm;
 	D3DXMATRIX view_tm;
 	D3DXMATRIX texture_matrix;
-	D3DXVECTOR4 view_position;
+	D3DXMATRIX projection_tm;
+	D3DXMATRIX world_tm;
+
+	VC4 view_position;
 
 	// Lighting
-	D3DXVECTOR4 ambient_color;
-	D3DXVECTOR4 ambient_force_color;
-	D3DXVECTOR4 fog;
-	D3DXVECTOR4 textureOffset;
-	D3DXVECTOR4 fake_properties;
+	VC4 ambient_color;
+	VC4 ambient_force_color;
+	VC4 fog;
+	VC4 textureOffset;
+	VC4 fake_properties;
 
 	/*
 	D3DXVECTOR4 light_position1;
@@ -82,19 +91,19 @@ class Storm3D_ShaderManager: public Singleton<Storm3D_ShaderManager>
 	D3DXVECTOR4 light_position2;
 	D3DXVECTOR4 light_color2;
 	*/
-	D3DXVECTOR4 light_position[LIGHT_MAX_AMOUNT];
-	D3DXVECTOR4 light_color[LIGHT_MAX_AMOUNT];
+	VC4 light_position[LIGHT_MAX_AMOUNT];
+	VC4 light_color[LIGHT_MAX_AMOUNT];
 
-	D3DXVECTOR4 sun_properties;
-	D3DXVECTOR4 spot_position;
-	D3DXVECTOR4 spot_properties;
-	D3DXVECTOR4 spot_color;
+	VC4 sun_properties;
+	VC4 spot_position;
+	VC4 spot_properties;
+	VC4 spot_color;
 	D3DXMATRIX target_matrix;
 
-	D3DXVECTOR4 model_ambient_color;	
-	D3DXVECTOR4 object_ambient_color;	
-	D3DXVECTOR4 object_diffuse_color;
-	D3DXVECTOR4 lightmap_factor;
+	VC4 model_ambient_color;	
+	VC4 object_ambient_color;	
+	VC4 object_diffuse_color;
+	VC4 lightmap_factor;
 
 	// For lazy updating
 	bool update_values;
@@ -158,7 +167,7 @@ class Storm3D_ShaderManager: public Singleton<Storm3D_ShaderManager>
 	frozenbyte::storm::VertexShader fake_depth_bone_shader;
 	frozenbyte::storm::VertexShader fake_shadow_bone_shader;	
 
-	DWORD current_shader;
+	int current_shader;
 
 	bool software_shaders;
 	bool lighting_shaders;
@@ -181,25 +190,27 @@ class Storm3D_ShaderManager: public Singleton<Storm3D_ShaderManager>
 	int light_count;
 	bool light_params_changed;
 
+	void updatematrices();
 public:
-	Storm3D_ShaderManager(IDirect3DDevice9 &device);
+	Storm3D_ShaderManager();
 	~Storm3D_ShaderManager();
 	
 	// Create shaders
-	void CreateShaders(IDirect3DDevice9 *device, bool hw_shader);
-	void CreateAtiShaders(IDirect3DDevice9 *device);
+	void CreateShaders();
 
 	void setLightingParameters(bool reflection_, bool local_reflection_, int light_count_);
 
 	// Set properties
+	void SetViewMatrix(const D3DXMATRIX &view);
+	void SetProjectionMatrix(const D3DXMATRIX &proj);
+	void SetViewProjectionMatrix(const D3DXMATRIX &proj, const D3DXMATRIX &view);
 	void SetTransparencyFactor(float factor);
-	void SetViewProjectionMatrix(const D3DXMATRIX &vp, const D3DXMATRIX &view);
-	void SetViewPosition(const D3DXVECTOR4 &p);
+	void SetViewPosition(const VC4 &p);
 	void SetAmbient(const Color &color);
 	void SetForceAmbient(const Color &color);
-	void SetLight(int index, Vector &position, const Color &color, float range);
+	void SetLight(int index, const Vector &position, const Color &color, float range);
 	void SetSun(const VC3 &direction, float strength);
-	void SetFog(float start, float range);
+	void SetFog(float start, float range, const COL &color);
 	void SetTextureOffset(const VC2 &offset);
 	void setFakeProperties(float plane, float factor, float add);
 
@@ -228,24 +239,23 @@ public:
 
 	void setSpotType(SpotType type);
 
-	bool SoftwareShaders();
 	bool BoneShader();
 
 	// Do the magic ;-)
-	void SetShader(IDirect3DDevice9 *device, Storm3D_Model_Object *object);
-	void SetShader(IDirect3DDevice9 *device, const std::vector<int> &bone_indices); // not including first identity
+	void SetShader(Storm3D_Model_Object *object);
+	void SetShader(const std::vector<int> &bone_indices); // not including first identity
 	void ResetShader();
 	void ClearCache();
-	void BackgroundShader(IDirect3DDevice9 *device);
+	void BackgroundShader();
 
-	void SetShaderDefaultValues(IDirect3DDevice9 *device);
-	void SetShaderAmbient(IDirect3DDevice9 *device, const COL &color);
-	void SetShaderDiffuse(IDirect3DDevice9 *device, const COL &color);
+	void SetShaderDefaultValues();
+	void SetShaderAmbient(const COL &color);
+	void SetShaderDiffuse(const COL &color);
 	void SetLightmapFactor(float xf, float yf);
 
-	void ApplyDeclaration(IDirect3DDevice9 &device);
-	void ApplyForceAmbient(IDirect3DDevice9 &device);
-	void SetWorldTransform(IDirect3DDevice9 &device, const D3DXMATRIX &tm, bool forceTextureTm = false, bool terrain = false);
+	void ApplyDeclaration();
+	void ApplyForceAmbient();
+	void SetWorldTransform(const D3DXMATRIX &tm, bool forceTextureTm = false, bool terrain = false);
 
 	// Public constants
 	static const int BONE_INDEX_START; // First is identity

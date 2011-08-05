@@ -1,5 +1,10 @@
 #include "precompiled.h"
 
+#include <map>
+#include <list>
+#include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
+
 #include "SurvivorUpgradeWindow.h"
 
 #include "../game/Unit.h"
@@ -23,23 +28,17 @@
 #include "../ogui/OguiSlider.h"
 
 #include "../util/TextureCache.h"
-#include "../util/parser.h"
+#include "../util/Parser.h"
 
 #include "../util/fb_assert.h"
 #include "../util/StringUtil.h"
 
 #include "../game/DHLocaleManager.h"
 
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
-#include <map>
-#include <list>
-
 using namespace game;
 
 namespace ui {
 
-namespace {
 	static const int FADE_IN_TIME = 500;
 	static const int FADE_OUT_TIME = 500;
 	
@@ -50,13 +49,13 @@ namespace {
 	{
 		UpgradeButtonThingie() : 
 			button( NULL ),
+			selected_button( NULL ),
 			text( NULL ),
 			textFontNormal( NULL ),
 			textFontDisabled( NULL ),
 			hintMessage( "" ),
 			upgradeId( -1 ),
 			selected( false ),
-			selected_button( NULL ),
 			icon(0)
 		{
 		}
@@ -155,9 +154,9 @@ namespace {
 
 		SurvivorItem( const std::string& variable, Type type, const std::string& locale, bool showCount ) :
 			varName( variable ),
+			varType( type ),
 			localeName( locale ),
 			createCountText( showCount ),
-			varType( type ),
 			button( NULL ),
 			count_text( NULL )
 		{ 
@@ -179,7 +178,6 @@ namespace {
 
 		std::string use_text;
 	};
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -263,11 +261,11 @@ public:
 
 		decorationList(),
 		buttonMap(),
+		maxHealthDeco( NULL ),
+		healthDeco( NULL ),
 		visible( 1 ),
 		idCount( 100 ),
 		mouseOverHintButtonId( 0 ),
-		maxHealthDeco( NULL ),
-		healthDeco( NULL ),
 
 		upgradesPending(),
 		upgradesPendingCost( 0 ),
@@ -866,12 +864,12 @@ public:
 
 	void loadWeaponUpgradesForUnit()
 	{
-		const int UPGRADEWINDOW_MAX_WEAPONS = 3;
-		const int UPGRADEWINDOW_MAX_UPGRADES_PER_WEAPON = 3;
+		const int SURVIVOR_UPGRADEWINDOW_MAX_WEAPONS = 3;
+		const size_t SURVIVOR_UPGRADEWINDOW_MAX_UPGRADES_PER_WEAPON = 3;
 
 		int weapon_count = 0;
 
-		for (int i = 0; i < UPGRADEWINDOW_MAX_WEAPONS; i++ )
+		for (int i = 0; i < SURVIVOR_UPGRADEWINDOW_MAX_WEAPONS; i++ )
 		{
 			// NOTE: this is actually not an ok part type id!
 			// (thus, should not use this value like this)
@@ -933,7 +931,7 @@ public:
 					std::vector< int > upgIds;
 					game->upgradeManager->getUpgradesForPart( weapName.c_str(), upgIds );
 
-					if( upgIds.size() > UPGRADEWINDOW_MAX_UPGRADES_PER_WEAPON )
+					if( upgIds.size() > SURVIVOR_UPGRADEWINDOW_MAX_UPGRADES_PER_WEAPON )
 					{
 						Logger::getInstance()->error( "SurvivorUpgradeWindow - Weapon has too many upgrades." );
 						Logger::getInstance()->debug( weapName.c_str() );
@@ -1190,8 +1188,9 @@ public:
 				{
 					// hack: make max health large enough so that
 					// medikits give health after upgrading the
-					// max hp
-					unit->setMaxHP(1000);
+					// max hp (changed to use max_hp initialized above)
+					unit->setMaxHP(max_hp);
+					// unit->setMaxHP(1000);
 
 					game->gameScripting->runOtherScript(items[i].script_use.first.c_str(), items[i].script_use.second.c_str(), unit, VC3(0,0,0));
 
@@ -1342,8 +1341,6 @@ public:
 			{
 				bool isCharacterUpgrade = game->upgradeManager->isCharacterUpgrade(upgid);
 				int &pendingCost = isCharacterUpgrade ? characterUpgradesPendingCost : upgradesPendingCost;
-
-				int tmp = pendingCost;
 
 				i->second->setSelected( false );
 
@@ -1596,6 +1593,8 @@ public:
 				break;
 			}
 
+			break;
+		default:
 			break;
 		}
 	}

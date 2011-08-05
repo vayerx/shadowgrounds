@@ -1,6 +1,6 @@
 
 #ifndef OGUITEXTLABEL_H
-#define OGUITEXTLABLE_H
+#define OGUITEXTLABEL_H
 
 //
 // Just wraps a disabled ogui text button -> giving us a simple text label

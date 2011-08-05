@@ -1,0 +1,25 @@
+!!ARBfp1.0
+PARAM c2 = program.env[2];
+OUTPUT outColor = result.color;
+TEMP r0, r2;
+#OUTPUT oC0 = result.color;
+PARAM c1 = {0.5, 0.5, 0.5, 0.5};
+ATTRIB t0 = fragment.texcoord[0];
+ATTRIB t2 = fragment.texcoord[2];
+#FIXME: unknown statement: Dcl2D (BaseReg "s0");
+#FIXME: unknown statement: Dcl2D (BaseReg "s2");
+TEX r0, t0, texture[0], 2D;
+# Offset1
+TEX r2, t2, texture[2], 2D;
+# Offset2
+LRP r0.rgb, c1, r0, r2;
+SUB r0, r0, c1;
+
+MOV r0.a, c1.a;
+MAD r0, r0, c2, r0.a;
+
+#ADD r0, r0, c1;
+
+#MOV oC0, r0;
+MOV outColor, r0;
+END

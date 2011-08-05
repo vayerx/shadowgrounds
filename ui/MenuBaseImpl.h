@@ -2,8 +2,8 @@
 #define INC_MENUBASEIMPL_H
 
 #include "IMenuBase.h"
-#include "../ogui/ioguibuttonlistener.h"
-#include "../ogui/oguibutton.h"
+#include "../ogui/IOguiButtonListener.h"
+#include "../ogui/OguiButton.h"
 #include "IGameControllerKeyreader.h"
 
 #include <list>

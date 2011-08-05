@@ -51,7 +51,7 @@ namespace ui
     ~GamePointers();
 
     void addPointer(const VC3 &position, int pointerType, 
-      IPointableObject *lockedTo, IPointableObject *lineFrom,
+      const IPointableObject *lockedTo, const IPointableObject *lineFrom,
 			float maxDistance = -1.0f);
 
     void clearPointers();

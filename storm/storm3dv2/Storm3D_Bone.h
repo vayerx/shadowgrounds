@@ -1,13 +1,17 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
-#pragma once
+#ifndef STORM3D_BONE_H
+#define STORM3D_BONE_H
+
+#ifdef _MSC_VER
 #pragma warning(disable: 4786) // debug info truncate
+#endif
 
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
 #include "storm3d_common_imp.h"
-#include "istorm3d_bone.h"
+#include "IStorm3D_Bone.h"
 
 #include "Storm3D_Datatypes.h"
 #include <vector>
@@ -67,7 +71,6 @@ public:
 	bool GetPosition(int bone_index, int time, Vector *result) const;
 };
 
-
 //------------------------------------------------------------------
 // SnowStorm_Bone
 //------------------------------------------------------------------
@@ -101,9 +104,6 @@ class Storm3D_Bone: public IStorm3D_Bone
 	// State
 	int parent_index;
 
-	// the new "no collision" flag for kind-of removed bones
-	bool noCollision;
-
 	// Childs
 	std::set<Storm3D_Model_Object *> objects;
 	std::set<Storm3D_Helper_AInterface *> helpers;
@@ -135,19 +135,6 @@ public:
 
 	const Matrix &GetTM() const
 	{
-		/*
-		if(global_tm_ok)
-			return global_tm;
-		else
-		{
-			global_tm = model_tm;
-			global_tm.Multiply(parent_tm);
-		
-			global_tm_ok = true;
-			return global_tm;
-		}
-		*/
-
 		if(!global_tm_ok)
 		{
 			global_tm = model_tm;
@@ -162,14 +149,11 @@ public:
 	{
 		return model_tm;
 	}
-	
+
 	// Set properties
 	void SetOriginalProperties(const Vector &position, const Rotation &rotation, const Vector &model_position, const Rotation &model_rotation);
 	void SetSpecialProperties(float length, float thickness);
 	void SetParentIndex(int index);
-
-	void SetNoCollision(bool noCollision);
-	bool HasNoCollision() { return noCollision; }
 
 	// Get properties
 	float GetLenght() const
@@ -206,11 +190,11 @@ public:
 	void SetName(const char *name);
 	const char *GetName() const;
 
-	// Child fuctions 
+	// Child fuctions
 	void ParentMoved(const Matrix &parent_tm_);
 	void ParentPositionMoved(const VC3 &pos);
 	void InformChangeToChilds();
-	
+
 	// All types can be attached to this
 	// Passed as interfaces, needs casting on implementation. Ugh
 	void AddChild(IStorm3D_Model_Object *object);
@@ -228,3 +212,5 @@ public:
 	static void TransformBones(std::vector<Storm3D_Bone*> *bones);
 	friend class Storm3D_Model;
 };
+
+#endif // STORM3D_BONE_H

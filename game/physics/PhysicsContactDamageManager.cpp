@@ -10,7 +10,7 @@
 #include "../Projectile.h"
 #include "../ProjectileList.h"
 #include "../ProjectileActor.h"
-#include "../ClawController.h"
+//#include "../ClawController.h"
 #include "CarPhysicsObject.h"
 
 #include "../../ui/animdefs.h"
@@ -22,7 +22,6 @@
 #include "../physics/GamePhysics.h"
 #include "../SimpleOptions.h"
 #include "../options/options_game.h"
-#include "../options/options_physics.h"
 #include "../../ui/VisualEffect.h"
 #include "../../ui/VisualEffectManager.h"
 #include "../../util/ObjectDurabilityParser.h"
@@ -97,8 +96,6 @@ namespace game
 		AbstractPhysicsObject *o1 = (AbstractPhysicsObject *)contact.obj1;
 		AbstractPhysicsObject *o2 = (AbstractPhysicsObject *)contact.obj2;
 
-		float contactForceLen = contact.contactForceLen;
-
 		/*if( contact.contactForceLen > 4000.0f )
 		{
 			char buf[256];
@@ -169,25 +166,10 @@ Logger::getInstance()->error(buffoo2);
 			reqForce = SimpleOptions::getFloat(DH_OPT_F_GAME_CONTACT_DAMAGE_REQUIRED_FORCE_OTHER);
 		}
 		*/
-#ifdef PROJECT_CLAW_PROTO
-		// pass thrown-by-claw flag forward
-		if(o1 && o1->isDynamic() && o1->wasThrownByClaw())
-		{
-			if(o2 && o2->isDynamic())
-				o2->setThrownByClaw(true);
-		}
-		if(o2 && o2->isDynamic() && o2->wasThrownByClaw())
-		{
-			if(o1 && o1->isDynamic())
-				o1->setThrownByClaw(true);
-		}
-#endif
 
 		// NEW UNOPTIMAL CRAP: ...
 		// TODO: optimize somehow???
 
-		int forceDamageNumber = -1;
-		bool forceSmallDamage = false;
 		int unitCollisionNumber = -1;
 
 		Unit *some_unit = NULL;
@@ -216,52 +198,6 @@ Logger::getInstance()->error(buffoo2);
 						//reqAngAccel = 0.0f;
 						unitCollisionNumber = i;
 						some_unit = unit;
-
-#ifdef PROJECT_CLAW_PROTO
-						{
-							float other_vel = 0.0f;
-							AbstractPhysicsObject *other_o = i == 0 ? o2 : o1;
-							if(other_o)
-							{
-								VC3 vel = other_o->getExactPreviousVelocity() - o->getExactPreviousVelocity();
-								other_vel = vel.GetLength();
-							}
-
-							// vertical fall on flat ground
-							/*float gravForce = fabsf(SimpleOptions::getFloat(DH_OPT_F_PHYSICS_GRAVITY) * o->getMass()) + 70.0f;
-							if(contactForceLen > gravForce && contact.contactNormal.y > 0.9f && (other_o == NULL || !other_o->isDynamic()))
-							{
-								// always make unconscious
-								if(unit->getHP() > 0)
-								{
-									forceDamageNumber = i;
-									forceSmallDamage = true;
-								}
-								else
-								{
-									// already unconscious - don't do any damage
-									contactForceLen = 0;
-								}
-							}*/
-
-							// unit itself was thrown by claw
-							if(o->wasThrownByClaw())
-							{
-								// always make unconscious
-								if(unit->getHP() > 0)
-								{
-									forceDamageNumber = i;
-									forceSmallDamage = true;
-								}
-							}
-							// unit hit a dynamic object not thrown by claw
-							else if(other_o && other_o->isDynamic() && !other_o->wasThrownByClaw())
-							{
-								// give no damage
-								contactForceLen = 0;
-							}
-						}
-#endif
 					}
 				}
 			}
@@ -321,7 +257,7 @@ Logger::getInstance()->error(buffoo1);
 	}
 #endif
 
-		if(contactForceLen >= minReqForce || unitCollisionNumber != -1)
+		if(contact.contactForceLen >= minReqForce || unitCollisionNumber != -1)
 		{
 			bool velocityThresholdOk = true;
 
@@ -351,9 +287,7 @@ Logger::getInstance()->error(buffoo1);
 							if (!o->isDynamic())
 							{
 								if (some_unit != NULL && !some_unit->isPhysicsObjectLock())
-								{
 									velocityThresholdOk = false;
-								}
 							} else {
 								float threshold = SimpleOptions::getFloat(DH_OPT_F_GAME_CONTACT_DAMAGE_REQUIRED_UNIT_DAMAGE_VELOCITY);
 								if (o->getVelocity().GetSquareLength() < threshold*threshold)
@@ -363,17 +297,17 @@ Logger::getInstance()->error(buffoo1);
 							}
 						}
 					}
-					if (contactForceLen >= durforce1)
+					if (contact.contactForceLen >= durforce1)
 						makeDamage[0] = true;
-					if (contactForceLen >= durforce2)
+					if (contact.contactForceLen >= durforce2)
 						makeDamage[1] = true;
 					/*
 					}
 					*/
 				} else {
-					if (contactForceLen >= durforce1)
+					if (contact.contactForceLen >= durforce1)
 						makeDamage[0] = true;
-					if (contactForceLen >= durforce2)
+					if (contact.contactForceLen >= durforce2)
 						makeDamage[1] = true;
 				}
 			}
@@ -397,7 +331,7 @@ Logger::getInstance()->error(buf);
 				// make damage!
 				int destroyedObject = -1;
 
-				if(makeDamage[i] || forceDamageNumber == i)
+				if(makeDamage[i])
 				{
 					float damageFactor = 1.0f;
 					bool impactDamage = false;
@@ -406,13 +340,13 @@ Logger::getInstance()->error(buf);
 					if (i == 1)
 						reqForce = durforce2;
 
-					if (reqForce > 0 || forceDamageNumber == i)
+					if (reqForce > 0)
 					{
 						// 25% - 100% damage factor (100% required force - 200% required force)
-						damageFactor = (contactForceLen / reqForce) - 1.0f;
+						damageFactor = (contact.contactForceLen / reqForce) - 1.0f;
 						damageFactor *= 0.75f;
 						damageFactor += 0.25f;
-						if (!forceSmallDamage && (damageFactor > 1.5f || forceDamageNumber == i))
+						if (damageFactor > 1.5f)
 						{
 							impactDamage = true;
 						}
@@ -551,7 +485,7 @@ Logger::getInstance()->error(buf);
 								VC3 dampos = contact.contactPosition;
 								VC3 startpos = dampos - (othervel / 10.0f);
 
-								VC3 diff = dampos - startpos;
+								// VC3 diff = dampos - startpos;
 								// HACK: change bullet push value to match the velocity...
 								int pushValue = (int)(othervel.GetLength());
 								char valbuf[16];

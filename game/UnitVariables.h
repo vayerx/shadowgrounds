@@ -31,9 +31,6 @@ namespace game
     int getVariable(const char *varName) const;
 		void clearVariables();
 
-		int getCustomVariable(const std::string &varName);
-		void setCustomVariable(const std::string &varName, int value);
-
   private:
     int allocedVariables;
     int *variable;
@@ -41,8 +38,6 @@ namespace game
     static char *unitVariableNames[MAX_UNIT_VARIABLES];
     static bool inited;
 
-		class CustomVariables;
-		CustomVariables *customVariables;
   };
 }
 

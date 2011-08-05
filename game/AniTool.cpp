@@ -566,6 +566,7 @@ namespace game
 
 	void AniTool::saveFileAs(const char *filename)
 	{
+#ifndef __APPLE__
 		fb_assert(filename != NULL);
 
 		FILE *f = fopen(filename, "wb");
@@ -580,6 +581,7 @@ namespace game
 		} else {
 			Logger::getInstance()->error("AniTool::saveFileAs - Failed to open file for writing.");
 		}
+#endif
 	}
 
 	void AniTool::close()

@@ -2,14 +2,13 @@
 #include "precompiled.h"
 
 #include "CreditsMenu.h"
-#include "../ogui/ogui.h"
+#include "../ogui/Ogui.h"
 #include "../ogui/OguiFormattedText.h"
 #include "../game/DHLocaleManager.h"
 #include "../game/SimpleOptions.h"
-#include "../system/timer.h"
-#include "../game/game.h"
-#include "../game/gameui.h"
-#include "../ui/gamecontroller.h"
+#include "../game/Game.h"
+#include "../game/GameUI.h"
+#include "../ui/GameController.h"
 
 #include "../util/Debug_MemoryManager.h"
 
@@ -300,7 +299,48 @@ std::string G_UiCredits =
 "Music co-mixing\n"
 "<b>Antti \"Wilhelm\" Paajanen</b>\n"
 "\n\n"
-"\n\n\n"
+#ifdef __APPLE__
+"<b>SHADOWGROUNDS for Mac</b>\n\nby Alternative Games\n"
+"\n"
+"<b>Tuomas Närväinen</b>\n"
+"Programming\n"
+"\n"
+"<b>Turo Lamminen</b>\n"
+"Programming\n"
+"\n"
+#else
+"<b>SHADOWGROUNDS for Linux</b>\n\nby IGIOS\n"
+"\n"
+"<b>Tuomas Närväinen</b>\n"
+"Programming, Testing\n"
+"\n"
+"<b>Turo Lamminen</b>\n"
+"Programming, Testing\n"
+"\n"
+"<b>Tero Ojanperä</b>\n"
+"Art\n"
+"\n"
+#endif
+"<b>based on SHADOWGROUNDS SURVIVOR for Linux</b>\n\nby\n"
+"\n"
+"<b>Tapio Honkonen</b>\n"
+"Company Management\n"
+"\n"
+"<b>Mikko Tiusanen</b>\n"
+"Project Management, Programming\n"
+"\n"
+"<b>Turo Lamminen</b>\n"
+"Programming, Testing\n"
+"\n"
+"<b>Tuomas Närväinen</b>\n"
+"Programming, Testing\n"
+"\n"
+"<b>Markus Behm</b>\n"
+"Programming, Testing\n"
+"\n"
+"<b>Tero Ojanperä</b>\n"
+"Launcher Programming, Art\n"
+"\n"
 "Frozenbyte thanks\n"
 "\n"
 "<b>Sebastian Aaltonen</b>\n"
@@ -328,12 +368,27 @@ std::string G_UiCredits =
 "<b>Thanks to all our families and friends!</b>\n"
 "\n\n"
 "\n\n"
-"\n\n"
 "Shadowgrounds, Copyright (c) 2005 Frozenbyte, Inc.\n"
 "\n\n"
+#ifdef __APPLE__
+"Shadowgrounds for Mac, Copyright (c) 2011 Alternative Games Ltd.\n"
+"\n\n"
+#else
+"Shadowgrounds for Linux, Copyright (c) 2009 IGIOS Ltd.\n"
+"\n\n"
+#endif
+#ifdef WIN32
 "FMOD Sound System, copyright (c) Firelight Technologies Pty, Ltd., 1994-2005.\n"
-"Portions utilize Microsoft Windows Media Technologies. Copyright (c) 1999-2002 Microsoft Corporation. All Rights Reserved.\n"
-"\n\n\n"
+"\n\n"
+#endif
+"PhysX™ technology provided under license from AGEIA Technologies, Inc."
+"Copyright (c) 2002, 2003, 2004, 2005, 2006 AGEIA Technologies, Inc., USA. \n"
+"All rights reserved. http://www.ageia.com.\n"
+"\n\n"
+"Alternative Games logo video uses sounds from Freesound.org:\n"
+"DJ_Chronos__Loop_2; DJ_Chronos__Metal_Atmosphere_001; Flick3r__Phat_bass_line;\n"
+"HerbertBoland_CinematicBoomNorm; plagasul__rarexport_05\n"
+"\n\n"
 		;
 
 #endif
@@ -386,27 +441,17 @@ CreditsMenu::CreditsMenu( MenuCollection* menu, MenuCollection::Fonts* fonts, Og
 
 	const std::string& credits = G_UiCredits;
 
-	theText = new OguiFormattedText( win, ogui, 0, 400, 1024, 3548 );
+	theText = new OguiFormattedText( win, ogui, 162, 400, 700, 4300 );
 	theText->setTextHAlign( OguiButton::TEXT_H_ALIGN_CENTER );
-	
-#ifdef PROJECT_SURVIVOR
 
-	  credits_fonts.resize(3);
-		credits_fonts[0] = ogui->LoadFont(getLocaleGuiString( "gui_creditsmenu_font_normal" ));
-		credits_fonts[1] = ogui->LoadFont(getLocaleGuiString( "gui_creditsmenu_font_bold" ));
-		credits_fonts[2] = ogui->LoadFont(getLocaleGuiString( "gui_creditsmenu_font_h1" ));
-		theText->setFont( credits_fonts[0] );
-		theText->registerFont( "b", credits_fonts[1] );
-		theText->registerFont( "h1", credits_fonts[2] );
-		theText->setLineHeight( (float)atof(getLocaleGuiString("gui_creditsmenu_line_height")) );
-
-#else
-		theText->setFont( fonts->little.normal );
-		theText->registerFont( "b", fonts->medium.normal );
-		theText->registerFont( "h1", fonts->little.normal );
-		theText->setLineHeight( 1.5f );
-#endif
-	
+	credits_fonts.resize(3);
+	credits_fonts[0] = ogui->LoadFont(getLocaleGuiString( "gui_creditsmenu_font_normal" ));
+	credits_fonts[1] = ogui->LoadFont(getLocaleGuiString( "gui_creditsmenu_font_bold" ));
+	credits_fonts[2] = ogui->LoadFont(getLocaleGuiString( "gui_creditsmenu_font_h1" ));
+	theText->setFont( credits_fonts[0] );
+	theText->registerFont( "b", credits_fonts[1] );
+	theText->registerFont( "h1", credits_fonts[2] );
+	theText->setLineHeight( (float)atof(getLocaleGuiString("gui_creditsmenu_line_height")) );
 
 	theText->setText( credits );
 	
@@ -535,7 +580,7 @@ void CreditsMenu::update()
 	if( yPosition < -10000 ) { yPosition = 2000; hack = 2000; /*speed += speed;*/ }
 
 	// Timer::getTime();
-	
+
 	yPosition -= ( Timer::getTime() - lastUpdate ) * speed;
 	lastUpdate = Timer::getTime();
 	

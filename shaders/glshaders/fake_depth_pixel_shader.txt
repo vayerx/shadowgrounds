@@ -1,0 +1,15 @@
+!!ARBfp1.0
+OPTION ARB_precision_hint_fastest;
+ATTRIB v0 = fragment.color.primary;
+OUTPUT outColor = result.color;
+TEMP r0; #, t0;
+PARAM c0 = {0.0, 0.0, 0.0, 0.0};
+PARAM c1 = {1.0, 0.0, 0.0, 0.0};
+# Base texture (alpha)
+TEX r0.a, fragment.texcoord[0], texture[0], 2D;
+# v0 - fake color
+#texkill t1
+MOV r0.rgb, v0;
+#MOV r0.a, t0.a;
+MOV outColor, r0;
+END

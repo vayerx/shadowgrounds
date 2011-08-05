@@ -1,19 +1,18 @@
 #pragma once
 
+#include <GL/glew.h>
 #include <IStorm3D_Line.h>
-#include <d3d9.h>
 #include <vector>
-#include <atlbase.h>
 
 class Storm3D;
 
 class Storm3D_Line: public IStorm3D_Line
 {
 	Storm3D *storm;
-	IDirect3DVertexBuffer9 *vertex_buffer;
-	IDirect3DIndexBuffer9 *index_buffer;
+	GLuint index_buffer;
+	GLuint vertex_buffer;
 
-	IDirect3DVertexBuffer9 *vertex_buffer2;
+	GLuint vertex_buffer2;
 	bool pixel_line;
 
 	std::vector<Vector> points;
@@ -37,7 +36,7 @@ public:
 	void SetColor(int color);
 
 	// Storm-stuff (expose this and remove that cast?)
-	void Render(IDirect3DDevice9 *device);
+	void Render();
 
 	void releaseDynamicResources();
 	void recreateDynamicResources();

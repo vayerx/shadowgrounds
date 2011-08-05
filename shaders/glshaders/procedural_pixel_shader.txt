@@ -1,0 +1,37 @@
+!!ARBfp1.0
+OPTION ARB_precision_hint_fastest;
+
+PARAM c1 = program.env[0];
+PARAM c2 = program.env[1];
+PARAM c3 = program.env[3];
+PARAM c4 = program.env[4];
+
+PARAM c0 = { 0.5, 0.5, 0.5, 0.5 };
+OUTPUT outColor = result.color;
+TEMP r0, r1, t0, t1, t2, t3;
+
+# Offset1
+TEX t0, fragment.texcoord[0], texture[0], 2D;
+SUB t0, t0, c0;
+
+
+# Source1
+# texbem t1, t0;
+DP4 r0.x, t0, c1;
+DP4 r0.y, t0, c2;
+ADD r0, r0, fragment.texcoord[1];
+TEX t1, r0, texture[1], 2D;
+
+# Offset2
+TEX t2, fragment.texcoord[2], texture[2], 2D;
+SUB t2, t2, c0;
+
+# Source2
+# texbem t3, t2;
+DP4 r1.x, t2, c3;
+DP4 r1.y, t2, c4;
+ADD r1, r1, fragment.texcoord[3];
+TEX t3, r1, texture[3], 2D;
+MUL outColor, t1, t3;
+#MOV outColor, r0;
+END

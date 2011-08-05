@@ -7,8 +7,10 @@
 #pragma warning(disable: 373) // inaccessible constructor (remark)
 #endif
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
 #pragma warning(disable:4786)
+#endif
 
 #include "output_file_stream.h"
 #include <fstream>

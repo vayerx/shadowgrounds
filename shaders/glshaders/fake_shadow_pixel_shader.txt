@@ -1,0 +1,23 @@
+!!ARBfp1.0
+OPTION ARB_precision_hint_fastest;
+PARAM c0 = program.env[0];
+PARAM c1 = {0.25, 0.25, 0.25, 0.25};
+PARAM one = {1, 1, 1, 1};
+ATTRIB v0 = fragment.color.primary;
+OUTPUT outColor = result.color;
+TEMP r0, r1, t0, t1, t2, t3, v01, r01;
+# Shadow samples
+TXP t0, fragment.texcoord[0], texture[0], 2D;
+TXP t1, fragment.texcoord[1], texture[1], 2D;
+TXP t2, fragment.texcoord[2], texture[2], 2D;
+TXP t3, fragment.texcoord[3], texture[3], 2D;
+MUL r0, t0, c1;
+MAD r0, t1, c1, r0;
+MAD r0, t2, c1, r0;
+MAD r0, t3, c1, r0;
+SUB v01, one, v0;
+MAD_SAT r1, c0, v01, v0;
+SUB r01, one, r0;
+MAD r0.rgb, r1, r01, r0;
+MOV outColor, r0;
+END

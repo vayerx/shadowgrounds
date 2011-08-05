@@ -5,8 +5,8 @@
 #include "PositionsDirectionCalculator.h"
 #include "AngleRotationCalculator.h"
 #include "../game/scaledefs.h"
-#include <istorm3d_terrain.h>
-#include <storm3d_datatypes.h>
+#include <IStorm3D_Terrain.h>
+#include <Storm3D_Datatypes.h>
 
 namespace util {
 namespace {

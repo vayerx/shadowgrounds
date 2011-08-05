@@ -1,3 +1,7 @@
+#include <boost/scoped_ptr.hpp>
+#include <assert.h>
+#include <vector>
+#include <map>
 
 #include "precompiled.h"
 
@@ -14,11 +18,6 @@
 #include "../options/options_physics.h"
 #include "../options/options_game.h"
 
-#include <boost/scoped_ptr.hpp>
-#include <hash_map>
-#include <assert.h>
-#include <vector>
-
 // oh ffs...
 #include <Storm3D_UI.h>
 #include "../editor/parser.h"
@@ -28,8 +27,9 @@
 #ifdef PHYSICS_PHYSX
 #include "ConvexPhysicsObject.h"
 #include "../physics/joint_base.h"
-#include "../physics/actor_base.h"
+#if !defined PROJECT_SURVIVOR && !defined PROJECT_SHADOWGROUNDS
 #include "../physics/d6_joint.h"
+#endif
 #endif
 
 #ifdef PHYSICS_FEEDBACK
@@ -44,14 +44,7 @@
 
 #ifdef USE_CLAW_CONTROLLER
 #include "../ClawController.h"
-#include "../Game.h"
-#include "../GameUI.h"
-#include "../ui/VisualEffectManager.h"
-#include "../ui/Terrain.h"
-#include "PhysicsContactUtils.h"
-#include "../physics/actor_base.h"
 game::ClawController *gamephysics_clawController = NULL;
-game::Game *gamephysics_game = NULL;
 #endif
 
 
@@ -78,24 +71,24 @@ namespace {
 
 #ifdef PHYSICS_PHYSX
 
+#if !defined PROJECT_SURVIVOR && !defined PROJECT_SHADOWGROUNDS
 	struct JointCreationInfo
 	{
 		boost::shared_ptr<AbstractPhysicsObject> objectA;
 		boost::shared_ptr<AbstractPhysicsObject> objectB;
 		std::string id;
 
-		boost::shared_ptr<frozenbyte::physics::JointDeformingInfo> deforming;
-
 		frozenbyte::physics::PhysicsJoint joint;
 	};
 
 	typedef std::vector<JointCreationInfo> JointCreationList;
 	typedef std::vector<boost::shared_ptr<frozenbyte::physics::JointBase> > JointList;
+#endif
 
 #endif
 } // unnamed
 
-class GamePhysicsObjectImpl
+	class GamePhysicsObjectImpl
 	{
 	public:
 		explicit GamePhysicsObjectImpl(PHYSICS_ACTOR &implObject, int handle, IGamePhysicsObject *interfaceObject)
@@ -150,7 +143,7 @@ class GamePhysicsObjectImpl
 
 	typedef std::map<int, int> PhysicsHandleHash;
 
-	class GamePhysicsImpl : public frozenbyte::physics::JointDeformingListener
+	class GamePhysicsImpl
 	{	
 	private:
 #ifdef PHYSICS_PHYSX
@@ -163,9 +156,10 @@ class GamePhysicsObjectImpl
 		int fluidPushEndTime;
 		int fluidPushCurrentTime;
 
+#if !defined PROJECT_SURVIVOR && !defined PROJECT_SHADOWGROUNDS
 		JointCreationList jointCreationList;
-		JointCreationList jointReconnectList;
 		JointList jointList;
+#endif
 #endif
 		bool running;
 
@@ -242,7 +236,7 @@ class GamePhysicsObjectImpl
 		}
 
 
-		void GamePhysicsImpl::createPhysics(IGamePhysicsScriptRunner *scriptRunner)
+		void createPhysics(IGamePhysicsScriptRunner *scriptRunner)
 		{
 #ifdef PHYSICS_PHYSX
 			assert(physicsLib == NULL);
@@ -269,6 +263,10 @@ class GamePhysicsObjectImpl
 				SimpleOptions::getBool(DH_OPT_B_PHYSICS_USE_HARDWARE_FULLY),
 				SimpleOptions::getBool(DH_OPT_B_PHYSICS_USE_MULTITHREADING),
 				&physicsParams);
+			if (!physicsLib->getSDK()) {
+				fprintf(stderr, "Unable to load physics, please make sure PhysX is installed correctly.\n");
+				exit(0);
+			}
 
 			int timeStep = SimpleOptions::getInt(DH_OPT_I_PHYSICS_TIME_STEP);
 			if (timeStep < 1)
@@ -326,7 +324,9 @@ class GamePhysicsObjectImpl
 
 #ifdef PHYSICS_PHYSX
 			ConvexPhysicsObject::clearImplementationResources();
+#if !defined PROJECT_SURVIVOR && !defined PROJECT_SHADOWGROUNDS
 			jointList.clear();
+#endif
 #endif
 			StaticPhysicsObject::clearImplementationResources();
 			// TODO: other mesh, etc. resources too
@@ -413,7 +413,8 @@ class GamePhysicsObjectImpl
 				//char foo[256];
 				//sprintf(foo, "implementing %p", o);
 				//Logger::getInstance()->error(foo);
-				addNewObjectToList(o, o->createImplementationObject());
+				PHYSICS_ACTOR actor = o->createImplementationObject();
+				addNewObjectToList(o, actor);
 			}
 			interfaceObjectsToAdd.clear();
 
@@ -425,7 +426,7 @@ class GamePhysicsObjectImpl
 				void *udata = activeList[i]->getUserData();
 				assert(udata != NULL);
 				// WARNING: int to void * cast!
-				int handle = (int)udata;
+				intptr_t handle = (intptr_t)udata;
 
 				PhysicsHandleHash::iterator iter = physicsObjectsHash.find(handle);
 				if (iter != physicsObjectsHash.end())
@@ -441,10 +442,10 @@ class GamePhysicsObjectImpl
 					assert(!"GamePhysicsImpl::runPhysics - active actors list referred to a handle that was not found.");
 				}
 			}
-#endif
 
 			float water_height = SimpleOptions::getFloat(DH_OPT_F_PHYSICS_WATER_HEIGHT);
 			float water_damping = 0.0001f * SimpleOptions::getFloat(DH_OPT_F_PHYSICS_WATER_DAMPING);
+#endif
 
 			// sync or delete existing objects...
 			std::vector<int> deleteList;
@@ -494,11 +495,7 @@ class GamePhysicsObjectImpl
 							// because these are virtual calls, the syncing is assumed to be costly...
 							// therefore, accessing some major flags directly here... --jpk
 							AbstractPhysicsObject *apo = (AbstractPhysicsObject *)physicsObjects[i].interfaceObject;
-#ifdef LEGACY_FILES
 							if (apo->dynamicActor && apo->dirty)
-#else
-							if (apo->dirty)
-#endif
 							{
 								physicsObjects[i].interfaceObject->syncInactiveImplementationObject(physicsObjects[i].implObject);
 							}
@@ -522,27 +519,6 @@ class GamePhysicsObjectImpl
 						gamephysics_clawController->removeActor(actor);
 				}
 #endif
-
-/*#ifdef PROJECT_CLAW_PROTO
-				// joint removal (unoptimal)
-				if(physicsObjects[deleteList[i]].implObject.get() != NULL)
-				{
-					frozenbyte::physics::ActorBase *actorBase = physicsObjects[deleteList[i]].implObject.get();
-					
-					// remove from main list
-					for(unsigned int i = 0; i < jointList.size(); i++)
-					{
-						frozenbyte::physics::JointBase *joint = jointList[i].get();
-						if(joint->getActor1() == actorBase || joint->getActor2() == actorBase)
-						{
-							int lastJoint = jointList.size() - 1;
-							if(lastJoint != i)
-								jointList[i] = jointList[lastJoint];
-							jointList.pop_back();
-						}
-					}
-				}
-#endif*/
 
 				// don't actually delete, just mark deleted...
 				//physicsObjects.erase(physicsObjects.begin() + deleteList[i]);
@@ -641,17 +617,7 @@ class GamePhysicsObjectImpl
 #endif
 
 #ifdef PHYSICS_PHYSX
-
-			// Handle deformable joints
-			NxScene *scene = physicsLib->getScene();
-			for(unsigned int i = 0; i < jointList.size(); i++)
-			{
-				if(!jointList[i])
-					continue;
-
-				jointList[i]->handleDeforming(*scene);
-			}
-
+#if !defined PROJECT_SURVIVOR && !defined PROJECT_SHADOWGROUNDS
 			// Create joints
 			for(JointCreationList::iterator it = jointCreationList.begin(); it != jointCreationList.end(); ++it)
 			{
@@ -664,60 +630,12 @@ class GamePhysicsObjectImpl
 				if(info.objectB)
 					b = getImplementingBaseObject(info.objectB.get());
 
-				boost::shared_ptr<frozenbyte::physics::D6Joint> joint = physicsLib->createGeneralJoint(a, b, info.joint);
-				if(joint)
-				{
-					// I guess this could be a map with id as a key or something
-					jointList.push_back(boost::static_pointer_cast<frozenbyte::physics::JointBase> (joint));
-
-					if(info.deforming)
-					{
-						joint->setJointDeforming(info.deforming.get());
-						joint->setJointDeformingListener(this);
-					}
-				}
+				// I guess this could be a map with id as a key or something
+				jointList.push_back(boost::static_pointer_cast<frozenbyte::physics::JointBase> (physicsLib->createGeneralJoint(a, b, info.joint)));
 			}
 
 			jointCreationList.clear();
-
-
-			// Reconnect joints
-			for(JointCreationList::iterator it = jointReconnectList.begin(); it != jointReconnectList.end(); ++it)
-			{
-				JointCreationInfo &info = *it;
-
-				boost::shared_ptr<frozenbyte::physics::ActorBase> a;
-				if(info.objectA)
-					a = getImplementingBaseObject(info.objectA.get());
-				boost::shared_ptr<frozenbyte::physics::ActorBase> b;
-				if(info.objectB)
-					b = getImplementingBaseObject(info.objectB.get());
-
-				if(!a)
-					continue;
-
-				for(unsigned int i = 0; i < jointList.size(); i++)
-				{
-					if(!jointList[i])
-						continue;
-
-					if(jointList[i]->getActor1() == a)
-					{
-						boost::shared_ptr<frozenbyte::physics::ActorBase> c;
-						c = jointList[i]->getActor2();
-
-						jointList[i]->reconnect(b, c);
-					}
-					else if(jointList[i]->getActor2() == a)
-					{
-						boost::shared_ptr<frozenbyte::physics::ActorBase> c;
-						c = jointList[i]->getActor1();
-
-						jointList[i]->reconnect(c, b);
-					}
-				}
-			}
-			jointReconnectList.clear();
+#endif
 #endif
 
 			if (SimpleOptions::getBool(DH_OPT_B_PHYSICS_UPDATE))
@@ -734,7 +652,7 @@ class GamePhysicsObjectImpl
 		{
 			if(!implObject) return;
 
-			int vecpos = physicsObjects.size();
+			size_t vecpos = physicsObjects.size();
 
 			// TODO: should optimize this... O(n) insert algo is not very good for this case
 			for (int i = 0; i < (int)physicsObjects.size(); i++)
@@ -813,19 +731,19 @@ class GamePhysicsObjectImpl
 							PhysicsContact pc;
 
 							// WARNING: void * to int casts ahead!
-							int handle1 = 0;
+							intptr_t handle1 = 0;
 							if (contacts[i].actor1 != NULL)
 							{
-								handle1 = (int)contacts[i].actor1->getUserData();
+								handle1 = (intptr_t)contacts[i].actor1->getUserData();
 								if (handle1 != 0)
 								{
 									pc.obj1 = this->getInterfaceObjectForHandle(handle1);
 								}
 							}
-							int handle2 = 0;
+							intptr_t handle2 = 0;
 							if (contacts[i].actor2 != NULL)
 							{
-								handle2 = (int)contacts[i].actor2->getUserData();
+								handle2 = (intptr_t)contacts[i].actor2->getUserData();
 								if (handle2 != 0)
 								{
 									pc.obj2 = this->getInterfaceObjectForHandle(handle2);
@@ -854,7 +772,7 @@ class GamePhysicsObjectImpl
 								bool po2isunit = false;
 								// WARNING: unsafe cast!
 								AbstractPhysicsObject *apo2 = (AbstractPhysicsObject *)pc.obj2;
-								int id = (int)(apo2->getCustomData());
+								intptr_t id = (intptr_t)(apo2->getCustomData());
 								if (id != 0)
 								{
 									// bit 32 tells us if this is unit or terr.object
@@ -873,15 +791,11 @@ class GamePhysicsObjectImpl
 										pc.contactNormal = -pc.contactNormal;
 									}
 								}
-							}
 
-// moved earlier...
-//						if (pc.physicsObject1 != NULL && pc.physicsObject2 != NULL)
-//						{
-
-							for (int j = 0; j < (int)physicsContactListeners.size(); j++)
-							{
-								physicsContactListeners[j]->physicsContact(pc);
+								for (int j = 0; j < (int)physicsContactListeners.size(); j++)
+								{
+									physicsContactListeners[j]->physicsContact(pc);
+								}
 							}
 						}
 					}
@@ -949,21 +863,21 @@ class GamePhysicsObjectImpl
 			}
 		}
 
-		boost::shared_ptr<frozenbyte::physics::ActorBase> getImplementingBaseObject(IGamePhysicsObject *interfaceObject)
+		PHYSICS_ACTOR getImplementingBaseObject(IGamePhysicsObject *interfaceObject)
 		{
 			if(!interfaceObject)
-				return boost::shared_ptr<frozenbyte::physics::ActorBase> ();
+				return PHYSICS_ACTOR();
 
 			int handle = interfaceObject->getHandle();
 			if (handle == 0)
-				return boost::shared_ptr<frozenbyte::physics::ActorBase> ();
+				return PHYSICS_ACTOR();
 
 			PhysicsHandleHash::iterator iter = physicsObjectsHash.find(handle);
 			if (iter != physicsObjectsHash.end())
 			{
 				int arraypos = (*iter).second;
 				if(physicsObjects[arraypos].deleteRequestFlag)
-					return boost::shared_ptr<frozenbyte::physics::ActorBase> ();
+					return PHYSICS_ACTOR();
 
 				assert((int)physicsObjects.size() > arraypos);
 				assert(!physicsObjects[arraypos].deleted);
@@ -973,80 +887,14 @@ class GamePhysicsObjectImpl
 				if(physicsObjects[arraypos].deleted)
 				{
 					Logger::getInstance()->error("GamePhysics::getImplementingObject - Requested an object by handle which maps to a deleted object.");
-					return boost::shared_ptr<frozenbyte::physics::ActorBase> ();
+					return PHYSICS_ACTOR();
 				}
 
-				return physicsObjects[arraypos].implObject;
+				return PHYSICS_ACTOR(physicsObjects[arraypos].implObject);
 			} else {
-				return boost::shared_ptr<frozenbyte::physics::ActorBase> ();
+				return PHYSICS_ACTOR();
 			}
 
-		}
-
-		void onJointBreak(frozenbyte::physics::D6Joint *jointBase, const VC3 &position)
-		{
-#ifdef PROJECT_CLAW_PROTO
-			if(gamephysics_game == NULL || gamephysics_game->gameUI == NULL)
-				return;
-
-			Terrain *terrain = gamephysics_game->gameUI->getTerrain();
-			if(terrain == NULL)
-				return;
-
-
-			frozenbyte::physics::ActorBase *dynActor = jointBase->getActor1() && jointBase->getActor1()->isDynamic() ? jointBase->getActor1().get() : jointBase->getActor2().get();
-			AbstractPhysicsObject *dynObj = static_cast<AbstractPhysicsObject *> (getInterfaceObjectForHandle(reinterpret_cast<int> (dynActor->getUserData())));
-			if(dynObj)
-			{
-				Unit *unit = NULL;
-				int terrObjModelId = -1;
-				int terrObjInstanceId = -1;
-				PhysicsContactUtils::mapPhysicsObjectToUnitOrTerrainObject(gamephysics_game, dynObj, &unit, &terrObjModelId, &terrObjInstanceId);
-
-				// if this joint is for streetlamp
-				static int streetLampId = terrain->getModelIdForFilename("Data\\Models\\Terrain_objects\\Lamps\\StreetLamp_01\\StreetLamp_01Physic.s3d");
-				if(terrObjModelId == streetLampId)
-				{
-					//UnifiedHandle uh = terrain->getUnifiedHandle(terrObjModelId, terrObjInstanceId);
-
-					// hack: spawn model
-					//
-					static int id = terrain->getModelIdForFilename("Data\\Models\\Terrain_objects\\Lamps\\StreetLamp_01\\Streetlamp_01stump.s3d");
-					if(id != -1)
-					{
-						QUAT rot; // identity
-						VC3 vel; // zero
-						VC3 pos(position.x, position.y + 0.125f, position.z);
-						terrain->createTerrainObject(id, 0, pos, rot, vel);
-					}
-				}
-			}
-
-			// hack: just spawn some fx
-			//
-			ui::VisualEffectManager *vefman = gamephysics_game->gameUI->getVisualEffectManager();
-			if(vefman == NULL)
-				return;
-
-			for(int i = 0; i < 2; i++)
-			{
-				const char *effname = i == 0 ? "mat_concrete" : "electric_spark";
-				int visualEffId = vefman->getVisualEffectIdByName(effname);
-				if (visualEffId != -1)
-				{
-					{
-						VC3 effectpos(position.x,
-							position.y + 0.4f,
-							position.z);
-
-						// TODO: proper lifetime
-						int lifetime = i == 0 ? GAME_TICKS_PER_SECOND / 2 : GAME_TICKS_PER_SECOND * 2;
-						VisualEffect *vef = vefman->createNewManagedVisualEffect(visualEffId, lifetime, NULL, NULL,
-							effectpos, effectpos, VC3(0,0,0), VC3(0,0,0), gamephysics_game);
-					}
-				}
-			}
-#endif
 		}
 
 
@@ -1159,6 +1007,7 @@ class GamePhysicsObjectImpl
 	}
 
 #ifdef PHYSICS_PHYSX
+#if !defined PROJECT_SURVIVOR && !defined PROJECT_SHADOWGROUNDS
 	void GamePhysics::addJoint(boost::shared_ptr<AbstractPhysicsObject> &objectA, boost::shared_ptr<AbstractPhysicsObject> &objectB, const frozenbyte::physics::PhysicsJoint &joint, const std::string &id)
 	{
 		JointCreationInfo info;
@@ -1170,42 +1019,12 @@ class GamePhysicsObjectImpl
 		impl->jointCreationList.push_back(info);
 	}
 
-	void GamePhysics::addDeformingToPreviousJoint(const frozenbyte::physics::JointDeformingInfo *info)
-	{
-		if(impl->jointCreationList.empty())
-			return;
-
-		impl->jointCreationList.back().deforming.reset(new frozenbyte::physics::JointDeformingInfo(*info));
-	}
-
-	void GamePhysics::reconnectJoints(boost::shared_ptr<AbstractPhysicsObject> &oldObject, boost::shared_ptr<AbstractPhysicsObject> &newObject)
-	{
-		JointCreationInfo info;
-		info.objectA = oldObject;
-		info.objectB = newObject;
-		impl->jointReconnectList.push_back(info);
-	}
-
 	void GamePhysics::deleteJoints()
 	{
 		impl->jointCreationList.clear();
 		impl->jointList.clear();
 	}
-
-	bool GamePhysics::hasJointAttachedToWorld(frozenbyte::physics::ActorBase *actor)
-	{
-		for(unsigned int i = 0; i < impl->jointList.size(); i++)
-		{
-			if(impl->jointList[i] && impl->jointList[i]->isValid())
-			{
-				if(  (impl->jointList[i]->getActor1().get() == actor && impl->jointList[i]->getActor2().get() == NULL)
-					|| (impl->jointList[i]->getActor2().get() == actor && impl->jointList[i]->getActor1().get() == NULL))
-					return true;
-			}
-		}
-		return false;
-	}
-
+#endif
 #endif
 
 #ifdef PROJECT_CLAW_PROTO

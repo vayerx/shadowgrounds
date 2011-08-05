@@ -1,0 +1,103 @@
+!!ARBvp1.0
+PARAM object[4] = { state.matrix.program[0] };
+PARAM lightProjSpace[4] = { state.matrix.program[2] };
+PARAM proj[4] = { state.matrix.program[1] };
+PARAM mvp[4] = { state.matrix.mvp };
+#fromList ["c"]
+TEMP r0, r1, r2;
+PARAM c[100] = { program.env[0..99] };
+OUTPUT oD0 = result.color.primary;
+OUTPUT oPos = result.position;
+OUTPUT oT0 = result.texcoord[0];
+OUTPUT oT1 = result.texcoord[1];
+OUTPUT oT2 = result.texcoord[2];
+OUTPUT oT3 = result.texcoord[3];
+# Default shader:
+#   -> Transform vertex
+#   -> Apply ambient color
+#   -> Apply surface color
+#   -> Apply directional light
+#   -> Apply base texturing 
+# Light direction could be transformed to 
+# model space and avoid rotating normal.
+# Constant declarations:
+#   -> c[0..3]   -> World x View x Projection matrix
+#   -> c[4..7]  -> Texture matrix
+#   -> c[8..10] -> World
+#   -> c[11] -> spot direction, range
+# Vertex data:
+#   -> v0 -> position
+#   -> v1,2 -> texture coordinates
+#   -> v3 -> normal
+ATTRIB v0 = vertex.position;
+ATTRIB v3 = vertex.normal;
+ATTRIB v1 = vertex.texcoord[0];
+ATTRIB v2 = vertex.texcoord[1];
+# ** POSITION **
+# Transform position to clip space
+#dp4 oPos.x, v0, mvp[0]
+#dp4 oPos.y, v0, mvp[1]
+#dp4 oPos.z, v0, mvp[2]
+#dp4 oPos.w, v0, mvp[3]
+DP4 r0.x, v0, mvp[0];
+DP4 r0.y, v0, mvp[1];
+DP4 r0.z, v0, mvp[2];
+DP4 r0.w, v0, mvp[3];
+
+MOV oPos, r0;
+# ** TEXTURING **
+#OLD
+#DP4 r1.x, v0, object[0];
+#DP4 r1.y, v0, object[1];
+#DP4 r1.z, v0, object[2];
+#DP4 r1.w, v0, c[7];
+#DP4 r2.x, v0, c[12];
+#DP4 r2.y, v0, c[13];
+#DP4 r2.z, v0, c[14];
+#DP4 r2.w, v0, c[15];
+#MOV oT0, r1;
+#MOV oT1, r2;
+#end of OLD
+
+
+DP4 r1.x, v0, proj[0];
+DP4 r1.y, v0, proj[1];
+DP4 r1.z, v0, proj[2];
+DP4 r1.w, v0, proj[3];
+MOV oT1, r1;
+
+DP4 r1.x, v0, lightProjSpace[0];
+DP4 r1.y, v0, lightProjSpace[1];
+DP4 r1.z, v0, lightProjSpace[2];
+DP4 r1.w, v0, lightProjSpace[3];
+MOV oT0, r1;
+
+ADD oT2.xy, v1, c[16];
+# Spot depth
+MUL r1.z, r1.zzzz, c[11].w;
+#mov oT3.xy, r1.z
+# r0 -> vertex normal
+DP3 r0.x, v3, object[0];
+DP3 r0.y, v3, object[1];
+DP3 r0.z, v3, object[2];
+# r1 -> vertex position
+DP4 r1.x, v0, object[0];
+DP4 r1.y, v0, object[1];
+DP4 r1.z, v0, object[2];
+# r1 -> (light position - vertex position)
+SUB r1.xyz, c[11].xyzz, r1.xyzz;
+# r2.x -> squared r1 length
+DP3 r2.x, r1.xyzz, r1.xyzz;
+# r2.x -> 1/r1 length
+RSQ r2, r2.x;
+# r1 -> normalized (light position - vertex position)
+MUL r1, r1, r2.xxxx;
+# normalize
+# r0 vertex normal dot r1
+DP3 r0.x, r0.xyzz, r1.xyzz;
+MAX r0.x, r0.xxxx, c[11].w;
+MUL oD0.xyz, r0.xxxx, c[17];
+MOV oD0.w, c[17].w;
+RCP r2, r2.x;
+MUL oT3.xy, r2.xxxx, c[11].w;
+END

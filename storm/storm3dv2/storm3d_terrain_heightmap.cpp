@@ -1,20 +1,22 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
+
+#include <string>
+#include <vector>
+#include <fstream>
+#include <boost/scoped_array.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include "storm3d_terrain_heightmap.h"
 #include "storm3d_terrain_lod.h"
 #include "storm3d_terrain_utils.h"
-#include "storm3d_shadermanager.h"
+#include "Storm3D_ShaderManager.h"
 #include "storm3d_spotlight.h"
 #include <c2_oobb.h>
 #include <c2_frustum.h>
-
-#include <boost/scoped_array.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <string>
-#include <vector>
-#include <fstream>
 
 #include <cassert>
 #include "storm3d.h"
@@ -22,16 +24,11 @@
 #include "storm3d_texture.h"
 
 #include "Storm3D_ObstacleMapDefs.h"
-#include "..\..\util\AreaMap.h"
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/AreaMap.h"
+#include "../../util/Debug_MemoryManager.h"
 
-#include <d3dx9core.h>
-#include <d3dx9math.h>
-#include <atlbase.h>
-
-namespace {
-	static const int BLOCK_SIZE = IStorm3D_Terrain::BLOCK_SIZE;
-	static const int VERTEX_COUNT = BLOCK_SIZE + 1;
+	static const int HEIGHTMAP_BLOCK_SIZE = IStorm3D_Terrain::BLOCK_SIZE;
+	static const int VERTEX_COUNT = HEIGHTMAP_BLOCK_SIZE + 1;
 
 	static const int STREAM_0_SIZE = 6 * sizeof(float);
 	static const int STREAM_1_SIZE = 6 * sizeof(float);
@@ -58,7 +55,7 @@ namespace {
 	};
 
 	// Sort passes for better coherency
-	bool operator < (const TexturePass &a, const TexturePass &b)
+	static bool operator < (const TexturePass &a, const TexturePass &b)
 	{
 		if(a.textureA < b.textureA)
 			return true;
@@ -70,7 +67,7 @@ namespace {
 		return false;
 	}
 
-	void getPosition(VC3 &result, int xIndex, int yIndex, const unsigned short *buffer, const VC3 &size, const VC2I &resolution, const VC3 &scale)
+	static void getPosition(VC3 &result, int xIndex, int yIndex, const unsigned short *buffer, const VC3 &size, const VC2I &resolution, const VC3 &scale)
 	{
 		int index = yIndex * resolution.x + xIndex;
 		result.x = xIndex * scale.x - size.x/2;
@@ -78,7 +75,7 @@ namespace {
 		result.z = yIndex * scale.z - size.z/2;
 	}
 
-	void getFaceNormalImp(VC3 &result, const VC3 &v1, const VC3 &v2, const VC3 &v3)
+	static void getFaceNormalImp(VC3 &result, const VC3 &v1, const VC3 &v2, const VC3 &v3)
 	{
 		Vector a = v2 - v1;
 		Vector b = v3 - v1;
@@ -110,9 +107,9 @@ namespace {
 		{
 		}
 
-		void createBuffer(IDirect3DDevice9 &device)
+		void createBuffer()
 		{
-			heightBuffer.create(device, VERTEX_COUNT * VERTEX_COUNT, STREAM_0_SIZE, DYNAMIC_POSITION);
+			heightBuffer.create(VERTEX_COUNT * VERTEX_COUNT, STREAM_0_SIZE, DYNAMIC_POSITION);
 		}
 
 		void fillBuffer(const VC2I &start, const VC2I &end, boost::scoped_array<unsigned short> &buffer, int blockX, int blockY, const VC2I &resolution, const VC3 &scale, const VC3 &size)
@@ -146,10 +143,9 @@ namespace {
 			for(int j = start.y; j < end.y; ++j)
 			for(int i = start.x; i < end.x; ++i)
 			{
-				int yPosition = j + blockY * BLOCK_SIZE;
-				int xPosition = i + blockX * BLOCK_SIZE;
-				int index = yPosition * resolution.x + xPosition;
-				
+				int yPosition = j + blockY * HEIGHTMAP_BLOCK_SIZE;
+				int xPosition = i + blockX * HEIGHTMAP_BLOCK_SIZE;
+
 				getPosition(position, xPosition, yPosition, buffer.get(), size, resolution, scale);
 				if(position.y < minHeight)
 					minHeight = position.y;
@@ -240,16 +236,16 @@ namespace {
 		}
 	};
 
-	bool operator < (const RenderBlock &a, const RenderBlock &b)
+    /*
+	static bool operator < (const RenderBlock &a, const RenderBlock &b)
 	{
 		return a.range < b.range;
 	}
-}
+    */
 
 struct Storm3D_TerrainHeightmapData
 {
 	Storm3D &storm;
-	IDirect3DDevice9 &device;
 
 	boost::scoped_array<unsigned short> heightMap;
 	boost::scoped_array<unsigned short> collisionHeightMap;
@@ -264,14 +260,6 @@ struct Storm3D_TerrainHeightmapData
 	frozenbyte::storm::PixelShader pixelShader;
 	frozenbyte::storm::PixelShader lightPixelShader;
 
-	frozenbyte::storm::VertexShader atiDefaultShader;
-	frozenbyte::storm::VertexShader atiLightingShader;
-	frozenbyte::storm::VertexShader atiShadowShaderDirectional;
-	frozenbyte::storm::VertexShader atiShadowShaderPoint;
-	frozenbyte::storm::VertexShader atiShadowShaderFlat;
-	frozenbyte::storm::VertexShader atiShadowTerrainShaderDirectional;
-	frozenbyte::storm::VertexShader atiShadowTerrainShaderPoint;
-	frozenbyte::storm::VertexShader atiShadowTerrainShaderFlat;
 	frozenbyte::storm::VertexShader atiDepthShader;
 	frozenbyte::storm::VertexShader nvDefaultShader;
 	frozenbyte::storm::VertexShader nvLightingShader;
@@ -298,66 +286,44 @@ struct Storm3D_TerrainHeightmapData
 	int heightmapShiftMult;
 
 	float radius;
-	bool ps13;
 
-	Storm3D_TerrainHeightmapData(Storm3D &storm_, bool ps13_)
+	Storm3D_TerrainHeightmapData(Storm3D &storm_)
 	:	storm(storm_),
-		device(*storm.GetD3DDevice()),
 		textureDetail(0),
+
+		pixelShader(),
+		lightPixelShader(),
+		atiDepthShader(),
+		nvDefaultShader(),
+		nvLightingShader(),
+		nvShadowShaderDirectional(),
+		nvShadowShaderPoint(),
+		nvShadowShaderFlat(),
+
 		indexBuffer(new Storm3D_TerrainLod(storm)),
 		obstacleHeightmap(0),
 		areaMap(0),
-		radius(0),
 		obstaclemapMultiplier(1),
 		obstaclemapShiftMult(0),
 		heightmapMultiplier(1),
 		heightmapShiftMult(0),
-		ps13(ps13_),
-
-		pixelShader(device),
-		lightPixelShader(device),
-		atiDefaultShader(device),
-		atiLightingShader(device),
-		atiShadowShaderDirectional(device),
-		atiShadowShaderPoint(device),
-		atiShadowShaderFlat(device),
-		atiShadowTerrainShaderDirectional(device),
-		atiShadowTerrainShaderPoint(device),
-		atiShadowTerrainShaderFlat(device),
-		atiDepthShader(device),
-		nvDefaultShader(device),
-		nvLightingShader(device),
-		nvShadowShaderDirectional(device),
-		nvShadowShaderPoint(device),
-		nvShadowShaderFlat(device)
+		radius(0)
 	{
 		lightPixelShader.createTerrainLightShader();
 
-		if(ps13)
-		{
-			pixelShader.createTerrainShader();
-			
-			atiDefaultShader.createAtiTerrainShader();
-			atiLightingShader.createAtiLightingShader();
-			atiShadowShaderDirectional.createAtiTerrainShadowShaderDirectional();
-			atiShadowShaderPoint.createAtiTerrainShadowShaderPoint();
-			atiShadowShaderFlat.createAtiTerrainShadowShaderFlat();
-			atiShadowTerrainShaderDirectional.createAtiTerrainShadowShaderDirectional();
-			atiShadowTerrainShaderPoint.createAtiTerrainShadowShaderPoint();
-			atiShadowTerrainShaderFlat.createAtiTerrainShadowShaderFlat();
-			atiDepthShader.createAtiDepthTerrainShader();
+		pixelShader.createTerrainShader();
 
-			nvDefaultShader.createNvTerrainShader();
-			nvLightingShader.createNvLightingShader();
-			nvShadowShaderDirectional.createNvTerrainShadowShaderDirectional();
-			nvShadowShaderPoint.createNvTerrainShadowShaderPoint();
-			nvShadowShaderFlat.createNvTerrainShadowShaderFlat();
-		}
+		atiDepthShader.createAtiDepthTerrainShader();
+		nvDefaultShader.createNvTerrainShader();
+		nvLightingShader.createNvLightingShader();
+		nvShadowShaderDirectional.createNvTerrainShadowShaderDirectional();
+		nvShadowShaderPoint.createNvTerrainShadowShaderPoint();
+		nvShadowShaderFlat.createNvTerrainShadowShaderFlat();
 	}
 
 	void createVertexBuffer(float textureDetail)
 	{
-		vertexBuffer.create(device, VERTEX_COUNT * VERTEX_COUNT, STREAM_1_SIZE, false);
+		vertexBuffer.create(VERTEX_COUNT * VERTEX_COUNT, STREAM_1_SIZE, false);
 		float *pointer = static_cast<float *> (vertexBuffer.lock());
 
 		if(!pointer)
@@ -386,7 +352,6 @@ struct Storm3D_TerrainHeightmapData
 	{
 		std::vector<TerrainBlock> tempBlocks(blockAmount.x * blockAmount.y);
 		VC3 scale(size.x / (resolution.x - 1), size.y / 65535.f, size.z / (resolution.y - 1));
-		//VC3 scale(size.x / (resolution.x), size.y / 65535.f, size.z / (resolution.y));
 
 		VC2I start(0, 0);
 		VC2I end(VERTEX_COUNT, VERTEX_COUNT);
@@ -394,7 +359,7 @@ struct Storm3D_TerrainHeightmapData
 		for(int j = 0; j < blockAmount.y; ++j)
 		for(int i = 0; i < blockAmount.x; ++i)
 		{
-			tempBlocks[j * blockAmount.x + i].createBuffer(*storm.GetD3DDevice());
+			tempBlocks[j * blockAmount.x + i].createBuffer();
 			tempBlocks[j * blockAmount.x + i].fillBuffer(start, end, heightMap, i, j, resolution, scale, size);
 		}
 
@@ -405,23 +370,23 @@ struct Storm3D_TerrainHeightmapData
 	{
 		VC3 scale(size.x / (resolution.x - 1), size.y / 65535.f, size.z / (resolution.y - 1));
 
-		VC2I startBlock = start / (BLOCK_SIZE);
-		VC2I endBlock = end / (BLOCK_SIZE);
+		VC2I startBlock = start / (HEIGHTMAP_BLOCK_SIZE);
+		VC2I endBlock = end / (HEIGHTMAP_BLOCK_SIZE);
 
 		for(int j = startBlock.y; j < endBlock.y; ++j)
 		for(int i = startBlock.x; i < endBlock.x; ++i)
 		{
 			TerrainBlock &block = blocks[j * blockAmount.x + i];
 
-			block.createBuffer(*storm.GetD3DDevice());
+			block.createBuffer();
 			block.fillBuffer(VC2I(), VC2I(VERTEX_COUNT, VERTEX_COUNT), heightMap, i, j, resolution, scale, size);
 		}
 	}
 
 	void createBuffers()
 	{
-		blockAmount.x = resolution.x / BLOCK_SIZE;
-		blockAmount.y = resolution.y / BLOCK_SIZE;
+		blockAmount.x = resolution.x / HEIGHTMAP_BLOCK_SIZE;
+		blockAmount.y = resolution.y / HEIGHTMAP_BLOCK_SIZE;
 
 		positionDelta.x = size.x / blockAmount.x;
 		positionDelta.y = size.z / blockAmount.y;
@@ -497,7 +462,6 @@ struct Storm3D_TerrainHeightmapData
 			else if(hasClippedVertex && hasVisibleVertex)
 			{
 				// ToDo: Create clipped buffer!!!
-				//block.indexBuffer.reset();
 				block.indexBuffer.reset(new Storm3D_TerrainLod(storm));
 				block.indexBuffer->generate(VERTEX_COUNT, clipArray);
 			}
@@ -557,8 +521,6 @@ struct Storm3D_TerrainHeightmapData
 			float sphereRadius = radius;
 			if(block.heightRadius > sphereRadius)
 				sphereRadius = block.heightRadius;
-			//if(!scene.GetCamera()->TestSphereVisibility(position, sphereRadius))
-			//	continue;
 			sphere.position = position;
 			sphere.radius = sphereRadius;
 			if(!frustum.visibility(sphere, true))
@@ -577,31 +539,6 @@ struct Storm3D_TerrainHeightmapData
 			float range = getRange(scene, i, j);
 			visibleBlocks.push_back(RenderBlock(range, i, j, oobb));
 		}
-
-		/*
-		for(int j = 0; j < blockAmount.y; ++j)
-		for(int i = 0; i < blockAmount.x; ++i)
-		{
-			VC3 position(-size.x/2 + positionDelta.x/2, 0, -size.z/2 + positionDelta.y/2);
-			position.x += positionDelta.x * i;
-			position.z += positionDelta.y * j;
-
-			const TerrainBlock &block = blocks[j * blockAmount.x + i];
-			position.y = blocks[j * blockAmount.x + i].height;
-
-			float sphereRadius = radius;
-			if(block.heightRadius > sphereRadius)
-				sphereRadius = block.heightRadius;
-
-			if(!scene.GetCamera()->TestSphereVisibility(position, sphereRadius))
-				continue;
-
-			float range = getRange(scene, i, j);
-			visibleBlocks.push_back(RenderBlock(range, i, j));
-		}
-		*/
-
-		//std::sort(visibleBlocks.begin(), visibleBlocks.end());
 	}
 
 	VC3 getNormal(const VC2I &position) const
@@ -672,8 +609,6 @@ struct Storm3D_TerrainHeightmapData
 
 	VC2I convertWorldToCollisionMap(const VC2 &position) const
 	{
-		//int x = int((position.x + size.x / 2) / size.x * (collResolution.x-1));
-		//int y = int((position.y + size.z / 2) / size.z * (collResolution.y-1));
 		int x = int((position.x + size.x / 2) / size.x * (collResolution.x));
 		int y = int((position.y + size.z / 2) / size.z * (collResolution.y));
 
@@ -704,20 +639,36 @@ struct Storm3D_TerrainHeightmapData
 
 };
 
-Storm3D_TerrainHeightmap::Storm3D_TerrainHeightmap(Storm3D &storm, bool ps13)
+//! Constructor
+/*!
+	\param storm Storm3D
+	\param ps13 true to use pixel shader 1.3
+*/
+Storm3D_TerrainHeightmap::Storm3D_TerrainHeightmap(Storm3D &storm)
 {
-	boost::scoped_ptr<Storm3D_TerrainHeightmapData> tempData(new Storm3D_TerrainHeightmapData(storm, ps13));
+	boost::scoped_ptr<Storm3D_TerrainHeightmapData> tempData(new Storm3D_TerrainHeightmapData(storm));
 	data.swap(tempData);
 }
 
+//! Destructor
 Storm3D_TerrainHeightmap::~Storm3D_TerrainHeightmap()
 {
 }
 
+//! Set height map
+/*!
+	\param buffer buffer to use as height map
+	\param resolution height map resolution
+	\param size height map size
+	\param textureDetail texture detail level
+	\param forceMap force map
+	\param heightmapMultiplier height map multiplier
+	\param obstaclemapMultiplier obstacle map multiplier
+*/
 void Storm3D_TerrainHeightmap::setHeightMap(const unsigned short *buffer, const VC2I &resolution, const VC3 &size, int textureDetail, unsigned short *forceMap, int heightmapMultiplier, int obstaclemapMultiplier)
 {
-	assert(resolution.x % BLOCK_SIZE == 0);
-	assert(resolution.y % BLOCK_SIZE == 0);
+	assert(resolution.x % HEIGHTMAP_BLOCK_SIZE == 0);
+	assert(resolution.y % HEIGHTMAP_BLOCK_SIZE == 0);
 
 	assert(obstaclemapMultiplier >= heightmapMultiplier);
 	assert(obstaclemapMultiplier >= 1 && obstaclemapMultiplier < 256);
@@ -811,30 +762,8 @@ void Storm3D_TerrainHeightmap::setHeightMap(const unsigned short *buffer, const 
 					float lerped_x2 = sourcevals[2] + (sourcevals[3] - sourcevals[2]) * ipX;
 					float value = lerped_x1 + (lerped_x2 - lerped_x1) * ipY;
 
-					// this is a weird and buggy alternative
-					/*
-					float px = float(sourceBuffer[sourceIndex + 1]);
-					float py = float(sourceBuffer[sourceIndex + sourceRes.x]);
-					float value = 0;
-
-					int comp = (x + y) - (heightmapMultiplier - 1);
-					if(comp < 0) // upper part
-					{
-						float p0 = float(sourceBuffer[sourceIndex]);
-						value = p0 + (px - p0) * ipX + (py - p0) * ipY;
-					}
-					//else if(comp == 0) // diagonal
-					//{
-					//	value = py + ((x - py) * (factorDelta * (COLLISION_HEIGHTMAP_MULT - 1 - x)));
-					//}
-					else // lower part
-					{
-						float pxy = float(sourceBuffer[sourceIndex + sourceRes.x + 1]);
-						value = pxy + (py - pxy) * (1.0f - ipX) + (px - pxy) * (1.0f - ipY);
-					}*/
-
 					int destIndex = ((j * heightmapMultiplier) + y) * destRes.x + ((i * heightmapMultiplier) + x);
-					destBuffer[destIndex] = unsigned short(value);
+					destBuffer[destIndex] = (unsigned short)(value);
 
 					ipX += factorDelta;
 				}
@@ -846,101 +775,6 @@ void Storm3D_TerrainHeightmap::setHeightMap(const unsigned short *buffer, const 
 		data->collisionHeightMap.swap(tempBuffer);
 	}
 
-/*
-	int bufferSize2 = data->collResolution.x * (data->collResolution.y + 1);
-	boost::scoped_array<unsigned short> tempBuffer2(new unsigned short [bufferSize2]);
-
-	// HACK: iterated scale up (by always creating a doubled map..)
-	int bufferSize3 = data->collResolution.x * (data->collResolution.y + 1);
-	boost::scoped_array<unsigned short> tempBuffer3(new unsigned short [bufferSize3]);
-
-	//for(j = 0 ; j < resolution.y; ++j)
-	//{
-	//	for(i = 0 ; i < resolution.x; ++i)
-	//	{
-	//		tempBuffer2[j * 2 * (resolution.x * 2) + i * 2] = buffer[j * resolution.x + i];
-	//		tempBuffer2[j * 2 * (resolution.x * 2) + (i * 2 + 1)] = buffer[j * resolution.x + i];
-	//		tempBuffer2[(j * 2 + 1) * (resolution.x * 2) + i * 2] = buffer[j * resolution.x + i];
-	//		tempBuffer2[(j * 2 + 1) * (resolution.x * 2) + (i * 2 + 1)] = buffer[j * resolution.x + i];
-	//	}
-	//}
-
-	for(j = 0 ; j < resolution.y; ++j)
-	{
-		for(i = 0 ; i < resolution.x; ++i)
-			tempBuffer3[j * resolution.x + i] = buffer[j * resolution.x + i];
-	}
-
-	int atSource = 1;
-	int atDoubled = 2;
-	while (atDoubled <= COLLISION_HEIGHTMAP_MULT)
-	{
-		int sResX = resolution.x * atSource;
-		int sResY = resolution.y * atSource;
-		int dResX = resolution.x * atDoubled;
-		int dResY = resolution.y * atDoubled;
-
-		for(j = 0 ; j < dResY; j += 2)
-		{
-			for(i = 0 ; i < dResX; i += 2)
-			{
-				int val = tempBuffer3[(j / 2) * sResX + (i / 2)];
-				tempBuffer2[j * dResX + i] = (unsigned short)val;
-			}
-		}
-		for(j = 0 ; j < dResY; j += 2)
-		{
-			for(i = 1 ; i < dResX; i += 2)
-			{
-				int val = tempBuffer3[(j / 2) * sResX + (i / 2)];
-				val += tempBuffer3[(j / 2) * sResX + ((i + 1) / 2)];
-				val /= 2;
-				tempBuffer2[j * dResX + i] = (unsigned short)val;
-			}
-		}
-		for(j = 1 ; j < dResY-1; j += 2)
-		{
-			for(i = 0 ; i < dResX; i += 2)
-			{
-				int val = tempBuffer3[(j / 2) * sResX + (i / 2)];
-				val += tempBuffer3[((j + 1) / 2) * sResX + (i / 2)];
-				val /= 2;
-				tempBuffer2[j * dResX + i] = (unsigned short)val;
-			}
-		}
-		for(j = 1 ; j < dResY; j += 2)
-		{
-			for(i = 1 ; i < dResX-1; i += 2)
-			{
-				int val = tempBuffer3[(j / 2) * sResX + (i / 2)];
-				val += tempBuffer3[((j + 1) / 2) * sResX + ((i+1) / 2)];
-				val /= 2;
-				tempBuffer2[j * dResX + i] = (unsigned short)val;
-			}
-		}
-		for(i = 0; i < dResX; ++i)
-		{
-			tempBuffer2[dResY * dResX + i] = 0;
-			tempBuffer2[(dResY - 1) * dResX + i] = 0;
-		}
-		for(j = 0; j < dResY; ++j)
-		{
-			tempBuffer2[j * dResX + dResX - 1] = 0;
-		}
-
-		for(j = 0 ; j < dResY; ++j)
-		{
-			for(i = 0 ; i < dResX; ++i)
-				tempBuffer3[j * dResX + i] = tempBuffer2[j * dResX + i];
-		}	
-
-		atDoubled *= 2;
-		atSource *= 2;
-	}
-
-	data->collisionHeightMap.swap(tempBuffer2);
-*/
-
 	data->resolution = resolution + VC2I(1, 1);
 	data->size = size;
 	data->heightMap.swap(tempBuffer);
@@ -950,6 +784,10 @@ void Storm3D_TerrainHeightmap::setHeightMap(const unsigned short *buffer, const 
 	data->createBuffers();
 }
 
+//! Set clip map
+/*!
+	\param buffer buffer to use as clip map
+*/
 void Storm3D_TerrainHeightmap::setClipMap(const unsigned char *buffer)
 {
 	if(!buffer)
@@ -961,10 +799,14 @@ void Storm3D_TerrainHeightmap::setClipMap(const unsigned char *buffer)
 	data->setClipMap(buffer);
 }
 
+//! Update heightmap
+/*!
+	\param buffer source heightmap
+	\param start updating start position
+	\param end updating end position
+*/
 void Storm3D_TerrainHeightmap::updateHeightMap(const unsigned short *buffer, const VC2I &start, const VC2I &end)
 {
-	VC2I &resolution = data->resolution;
-
 	for(int y = start.y; y < end.y; ++y)
 	for(int x = start.x; x < end.x; ++x)
 	{
@@ -979,27 +821,43 @@ void Storm3D_TerrainHeightmap::updateHeightMap(const unsigned short *buffer, con
 	data->updateHeightBuffers(start, end);
 }
 
+//! Set obstacle heightmap
+/*!
+	\param obstacleHeightmap obstacle heightmap
+	\param areaMap area map
+*/
 void Storm3D_TerrainHeightmap::setObstacleHeightmap(const unsigned short *obstacleHeightmap, const util::AreaMap *areaMap)
 {
 	data->obstacleHeightmap = obstacleHeightmap;
 	data->areaMap = areaMap;
 }
 
+//! Recreate collision map
 void Storm3D_TerrainHeightmap::recreateCollisionMap()
 {
 }
 
+//! Get collision heightmap
+/*!
+	\return pointer to collision heightmap
+*/
 unsigned short *Storm3D_TerrainHeightmap::getCollisionHeightmap()
 {
 	return data->collisionHeightMap.get();
 }
 
+//! Force map height
+/*!
+	\param position
+	\param radius
+	\param above
+	\param below
+*/
 void Storm3D_TerrainHeightmap::forcemapHeight(const VC2 &position, float radius, bool above, bool below)
 {
 	if(!data->forcemap) 
 		return;
 
-	//VC2I pint=data->convertWorldToMap(position) * COLLISION_HEIGHTMAP_MULT;
 	VC2I pint=data->convertWorldToCollisionMap(position);
 	int bint=int(radius*(float)data->collResolution.x/data->size.x);
 
@@ -1040,8 +898,6 @@ void Storm3D_TerrainHeightmap::forcemapHeight(const VC2 &position, float radius,
 	}
 	assert(hmapsh != 0);
 
-	//bool affected = false;
-
 	for (int y=ymin;y<=ymax;y++)
 	for (int x=xmin;x<=xmax;x++)
 	{
@@ -1060,9 +916,6 @@ void Storm3D_TerrainHeightmap::forcemapHeight(const VC2 &position, float radius,
 			int newval=data->collisionHeightMap[(y<<hmapsh) + x];
 			if (newval<0) newval=0; else if (newval>65535) newval=65535;
 
-			// TEMP!!!!
-			//WORD forceval = forcemap[((y>>1)<<(hmapsh-1))+(x>>1)];
-			//int forceval = forcemap[((y>>1)<<(hmapsh-1))+(x>>1)];
 			int forceval = forcemap[(y<<hmapsh)+x];
 
 			if (forceval != 0)
@@ -1078,6 +931,10 @@ void Storm3D_TerrainHeightmap::forcemapHeight(const VC2 &position, float radius,
 	}
 }
 
+//! Calculate visible heightmap blocks
+/*!
+	\param scene scene
+*/
 void Storm3D_TerrainHeightmap::calculateVisibility(Storm3D_Scene &scene)
 {
 	std::vector<RenderBlock> &visibleBlocks = data->visibleBlocks;
@@ -1086,57 +943,25 @@ void Storm3D_TerrainHeightmap::calculateVisibility(Storm3D_Scene &scene)
 	data->collectVisibleBlocks(scene, visibleBlocks);
 }
 
-void Storm3D_TerrainHeightmap::renderTextures(Storm3D_Scene &scene, bool atiShader)
+//! Render heightmap textures
+/*!
+	\param scene scene
+	\param atiShader true to use Ati shader
+*/
+void Storm3D_TerrainHeightmap::renderTextures(Storm3D_Scene &scene)
 {
-	IDirect3DDevice9 &device = data->device;
+	data->nvDefaultShader.apply(); // nv_terrain_vertex_shader
+	data->pixelShader.apply(); // terrain_pixel_shader
 
-	D3DMATRIX dm = { 0 };
-	dm._11 = 1.f;
-	dm._22 = 1.f;
-	dm._33 = 1.f;
-	dm._44 = 1.f;
+	D3DXMATRIX tm;
+	Storm3D_ShaderManager::GetSingleton()->SetWorldTransform(tm);
 
-	D3DXMATRIX tm = dm;
-	Storm3D_ShaderManager::GetSingleton()->SetWorldTransform(device, tm);
-
-	if(atiShader)
-	{
-		data->atiDefaultShader.apply();
-	}
-	else
-		data->nvDefaultShader.apply();
-
-	if(data->ps13)
-		data->pixelShader.apply();
-	else
-	{
-		device.SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-		device.SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE);
-		device.SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
-		device.SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
-
-		device.SetTextureStageState(1, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-		device.SetTextureStageState(1, D3DTSS_COLORARG2, D3DTA_CURRENT);
-		device.SetTextureStageState(1, D3DTSS_ALPHAARG1, D3DTA_CURRENT);
-		device.SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_MODULATE);
-		device.SetTextureStageState(1, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
-
-		device.SetTextureStageState(2, D3DTSS_COLOROP, D3DTOP_DISABLE);
-	}
-
-	data->vertexBuffer.apply(device, 1);
+	data->vertexBuffer.apply(1);
 	std::vector<RenderBlock> &visibleBlocks = data->visibleBlocks;
 
 	// Additive
-	device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
-	device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
-	device.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-
-	for(int j = 0; j < 1; ++j)
-	{
-		device.SetSamplerState(j, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-		device.SetSamplerState(j, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
-	}
+	glBlendFunc(GL_ONE, GL_ONE);
+	glDisable(GL_ALPHA_TEST);
 
 	// Render texture splats
 	for(unsigned int i = 0; i < visibleBlocks.size(); ++i)
@@ -1147,7 +972,7 @@ void Storm3D_TerrainHeightmap::renderTextures(Storm3D_Scene &scene, bool atiShad
 		if(block.passes.empty() || !block.indexBuffer)
 			continue;
 
-		block.heightBuffer.apply(device, 0);
+		block.heightBuffer.apply(0);
 
 		int textureA = -2;
 		int textureB = -2;
@@ -1155,24 +980,36 @@ void Storm3D_TerrainHeightmap::renderTextures(Storm3D_Scene &scene, bool atiShad
 		for(unsigned int pass = 0; pass < block.passes.size(); ++pass)
 		{
 			if(pass == 0)
-				device.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+				glDisable(GL_BLEND);
 			else if(pass == 1)
-				device.SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
+				glEnable(GL_BLEND);
 
 			TexturePass &p = block.passes[pass];
 			p.weights->Apply(0);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 
 			if(p.textureA != textureA)
 			{
 				data->textures[p.textureA].texture->Apply(1);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 				textureA = p.textureA;
 			}
 			if(p.textureB != textureB)
 			{
-				if(p.textureB >= 0)
+				if(p.textureB >= 0) {
 					data->textures[p.textureB].texture->Apply(2);
-				else
-					device.SetTexture(2, 0);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+				} else
+				{
+					glActiveTexture(GL_TEXTURE2);
+					glDisable(GL_TEXTURE_2D);
+					glDisable(GL_TEXTURE_3D);
+					glDisable(GL_TEXTURE_CUBE_MAP);
+					glBindTexture(GL_TEXTURE_2D, 0);
+				}
 
 				textureB = p.textureB;
 			}
@@ -1182,49 +1019,54 @@ void Storm3D_TerrainHeightmap::renderTextures(Storm3D_Scene &scene, bool atiShad
 			float range3 = data->getRange(scene, renderBlock.indexX + 1, renderBlock.indexY);
 			float range4 = data->getRange(scene, renderBlock.indexX, renderBlock.indexY + 1);
 
-			//data->indexBuffer.render(scene, p.subMask, renderBlock.range, range1, range2, range3, range4);
-			block.indexBuffer->render(scene, p.subMask, renderBlock.range, range1, range2, range3, range4);
+			block.indexBuffer->render(scene, p.subMask, renderBlock.range, range1, range2, range3, range4); // comment out to disable terrain rendering
 		}
 	}
 
-	device.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-	device.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-	device.SetPixelShader(0);
+	glDisable(GL_ALPHA_TEST);
+	glDisable(GL_BLEND);
+	frozenbyte::storm::PixelShader::disable();
 
-	device.SetTexture(1, 0);
-	device.SetTexture(2, 0);
+	glActiveTexture(GL_TEXTURE1);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_3D);
+	glDisable(GL_TEXTURE_CUBE_MAP);
+	glBindTexture(GL_TEXTURE_2D, 0);
 
-	for(int k = 0; k < 1; ++k)
-	{
-		device.SetSamplerState(k, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
-		device.SetSamplerState(k, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
-	}
+	glActiveTexture(GL_TEXTURE2);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_3D);
+	glDisable(GL_TEXTURE_CUBE_MAP);
+	glBindTexture(GL_TEXTURE_2D, 0);
 
-	device.SetTexture(0, 0);
-	device.SetStreamSource(1, 0, 0, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_3D);
+	glDisable(GL_TEXTURE_CUBE_MAP);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Storm3D_TerrainHeightmap::renderDepth(Storm3D_Scene &scene, Storm3D_Camera *camera, RenderMode mode, RenderType type, int spot_type, Storm3D_Spotlight *spot)
+//! Render depth
+/*!
+	\param scene scene
+	\param camera camera
+	\param mode render mode
+	\param type render type
+	\param spot_type spot type
+*/
+void Storm3D_TerrainHeightmap::renderDepth(Storm3D_Scene &scene, Storm3D_Camera *camera, RenderMode mode, IStorm3D_Spotlight::Type spot_type, Storm3D_Spotlight *spot)
 {
-	IDirect3DDevice9 &device = data->device;
 	std::vector<RenderBlock> &visibleBlocks = data->visibleBlocks;
 
-Frustum *frustum1 = 0;
-Frustum realFrustum1;
-Frustum *frustum2 = 0;
-Frustum realFrustum2;
+	Frustum *frustum1 = 0;
+	Frustum realFrustum1;
+	Frustum *frustum2 = 0;
+	Frustum realFrustum2;
 
 	if(mode == Projection)
 	{
-		D3DMATRIX dm = { 0 };
-		dm._11 = 1.f;
-		dm._22 = 1.f;
-		dm._33 = 1.f;
-		dm._44 = 1.f;
-
-		D3DXMATRIX tm = dm;
-		Storm3D_ShaderManager::GetSingleton()->SetWorldTransform(device, tm, false, true);
-
 		if(camera)
 		{
 			realFrustum1 = static_cast<Storm3D_Camera *> (scene.GetCamera())->getFrustum();
@@ -1236,28 +1078,17 @@ Frustum realFrustum2;
 			frustum2 = &realFrustum2;
 		}
 
-		if(type == Ati)
-		{
-			if(spot_type == IStorm3D_Spotlight::Directional)
-				data->atiShadowShaderDirectional.apply();
-			if(spot_type == IStorm3D_Spotlight::Point)
-				data->atiShadowShaderPoint.apply();
-			if(spot_type == IStorm3D_Spotlight::Flat)
-				data->atiShadowShaderFlat.apply();
-			if(spot_type == -1)
-				data->atiDefaultShader.apply();
-		}
-		else if(type == Nv)
-		{
-			if(spot_type == IStorm3D_Spotlight::Directional)
-				data->nvShadowShaderDirectional.apply();
-			if(spot_type == IStorm3D_Spotlight::Point)
-				data->nvShadowShaderPoint.apply();
-			if(spot_type == IStorm3D_Spotlight::Flat)
-				data->nvShadowShaderFlat.apply();
-			if(spot_type == -1)
-				data->nvDefaultShader.apply();
-		}
+		if(spot_type == IStorm3D_Spotlight::Directional)
+			data->nvShadowShaderDirectional.apply();
+		if(spot_type == IStorm3D_Spotlight::Point)
+			data->nvShadowShaderPoint.apply();
+		if(spot_type == IStorm3D_Spotlight::Flat)
+			data->nvShadowShaderFlat.apply();
+		if(spot_type == -1)
+			data->nvDefaultShader.apply();
+
+		D3DXMATRIX tm;
+		Storm3D_ShaderManager::GetSingleton()->SetWorldTransform(tm, false, true);
 	}
 	else if(mode == Lighting)
 	{
@@ -1267,25 +1098,18 @@ Frustum realFrustum2;
 			frustum1 = &realFrustum1;
 		}
 
-		D3DMATRIX dm = { 0 };
-		dm._11 = 1.f;
-		dm._22 = 1.f;
-		dm._33 = 1.f;
-		dm._44 = 1.f;
+		D3DXMATRIX dm;
 
 		D3DXMATRIX tm = dm;
-		Storm3D_ShaderManager::GetSingleton()->SetWorldTransform(device, tm, false, true);
-		Storm3D_ShaderManager::GetSingleton()->ApplyForceAmbient(device);
+		data->nvLightingShader.apply();  // nv_terrain_lighting_vertex_shader
+		data->lightPixelShader.apply();  // terrain_lighting_pixel_shader
 
-		if(type == Ati)
-			data->atiLightingShader.apply();
-		else if(type == Nv)
-			data->nvLightingShader.apply();
+		Storm3D_ShaderManager::GetSingleton()->SetWorldTransform(tm, false, true);
+		Storm3D_ShaderManager::GetSingleton()->ApplyForceAmbient();
 
-		data->lightPixelShader.apply();
-
-		device.SetSamplerState(3, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-		device.SetSamplerState(3, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+		glActiveTexture(GL_TEXTURE3);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	}
 	else
 	{
@@ -1295,26 +1119,16 @@ Frustum realFrustum2;
 			frustum1 = &realFrustum1;
 		}
 
-		D3DMATRIX dm = { 0 };
-		dm._11 = 1.f;
-		dm._22 = 1.f;
-		dm._33 = 1.f;
-		dm._44 = 1.f;
+		data->atiDepthShader.apply();
+
+		D3DXMATRIX dm;
 
 		D3DXMATRIX tm = dm;
-		Storm3D_ShaderManager::GetSingleton()->SetWorldTransform(device, tm, false, true);
-
-		data->atiDepthShader.apply();
+		Storm3D_ShaderManager::GetSingleton()->SetWorldTransform(tm, false, true);
 	}
 
-	if(spot_type == -1)
-	{
-		device.SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-		device.SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
-	}
-
-	data->vertexBuffer.apply(device, 1);
-	device.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+	data->vertexBuffer.apply(1);
+	glDisable(GL_ALPHA_TEST);
 
 	Sphere sphere;
 	for(unsigned int i = 0; i < visibleBlocks.size(); ++i)
@@ -1332,19 +1146,10 @@ Frustum realFrustum2;
 			blockPosition.z += data->positionDelta.y * renderBlock.indexY;
 			blockPosition.y = block.height;
 
-			//if(!camera->TestSphereVisibility(blockPosition, data->radius))
-			//	continue;
 			sphere.position = blockPosition;
 			sphere.radius = data->radius;
 			if(block.heightRadius > sphere.radius)
 				sphere.radius = block.heightRadius;
-
-			/*
-			if(!frustum.visibility(sphere, true))
-				continue;
-			if(!frustum.visibility(renderBlock.oobb))
-				continue;
-			*/
 
 			if(frustum1)
 			{
@@ -1366,16 +1171,21 @@ Frustum realFrustum2;
 		{
 			if(block.lightMap)
 			{
-				//device.SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_ADD);
 				block.lightMap->Apply(0);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			}
 			else
 			{
-				device.SetTexture(0, 0);
+				glActiveTexture(GL_TEXTURE0);
+				glDisable(GL_TEXTURE_2D);
+				glDisable(GL_TEXTURE_3D);
+				glDisable(GL_TEXTURE_CUBE_MAP);
+				glBindTexture(GL_TEXTURE_2D, 0);
 			}
 		}
 
-		block.heightBuffer.apply(device, 0);
+		block.heightBuffer.apply(0);
 		float range1 = data->getRange(scene, renderBlock.indexX - 1, renderBlock.indexY);
 		float range2 = data->getRange(scene, renderBlock.indexX, renderBlock.indexY - 1);
 		float range3 = data->getRange(scene, renderBlock.indexX + 1, renderBlock.indexY);
@@ -1384,33 +1194,44 @@ Frustum realFrustum2;
 		block.indexBuffer->render(scene, -1, renderBlock.range, range1, range2, range3, range4);
 	}
 
-	//if(mode != Projection)
-	//	device.SetPixelShader(0);
-
-	device.SetStreamSource(1, 0, 0, 0);
-	//device.SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	if(spot_type == -1)
 	{
-		device.SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
-		device.SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
+		glActiveTexture(GL_TEXTURE0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-		device.SetSamplerState(3, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
-		device.SetSamplerState(3, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
+		glActiveTexture(GL_TEXTURE3);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	}
 }
 
+//! Add terrain texture
+/*!
+	\param texture texture to add
+	\return number of textures
+*/
 int Storm3D_TerrainHeightmap::addTerrainTexture(Storm3D_Texture &texture)
 {
 	data->textures.push_back(TerrainTexture(frozenbyte::storm::createSharedTexture(&texture)));
 	return data->textures.size() - 1;
 }
 
+//! Remove terrain textures
 void Storm3D_TerrainHeightmap::removeTerrainTextures()
 {
 	data->textures.clear();
 }
 
+//! Set blend map
+/*!
+	\param blockIndex block index
+	\param blend blending texture
+	\param textureA
+	\param textureB
+*/
 void Storm3D_TerrainHeightmap::setBlendMap(int blockIndex, Storm3D_Texture &blend, int textureA, int textureB)
 {
 	assert(!data->blocks.empty());
@@ -1418,15 +1239,20 @@ void Storm3D_TerrainHeightmap::setBlendMap(int blockIndex, Storm3D_Texture &blen
 	assert(textureA >= 0 && textureA < int(data->textures.size()));
 	assert(textureB >= -1 && textureB < int(data->textures.size()));
 
-	if(!data->ps13)
-		assert(textureB == -1);
-
 	std::vector<TexturePass> &passes = data->blocks[blockIndex].passes;
 	
 	passes.push_back(TexturePass(frozenbyte::storm::createSharedTexture(&blend), textureA, textureB));
 	std::sort(passes.begin(), passes.end());	
 }
 
+//! Set partial blend map
+/*!
+	\param blockIndex block index
+	\param subMask submask
+	\param blend blending texture
+	\param textureA
+	\param textureB
+*/
 void Storm3D_TerrainHeightmap::setPartialBlendMap(int blockIndex, int subMask, Storm3D_Texture &blend, int textureA, int textureB)
 {
 	assert(!data->blocks.empty());
@@ -1441,18 +1267,20 @@ void Storm3D_TerrainHeightmap::setPartialBlendMap(int blockIndex, int subMask, S
 	std::sort(passes.begin(), passes.end());	
 }
 
+//! Reset blends of given block index
+/*!
+	\param blockIndex block index
+*/
 void Storm3D_TerrainHeightmap::resetBlends(int blockIndex)
 {
 	data->blocks[blockIndex].passes.clear();
 }
 
-/*
-void Storm3D_TerrainHeightmap::setLightmap(Storm3D_Texture &texture)
-{
-	data->lightmap = frozenbyte::storm::createSharedTexture(&texture);
-}
+//! Set light map texture
+/*!
+	\param blockIndex block index
+	\param texture lightmap texture
 */
-
 void Storm3D_TerrainHeightmap::setLightMap(int blockIndex, Storm3D_Texture &texture)
 {
 	if(blockIndex < 0 || blockIndex >= int(data->blocks.size()))
@@ -1464,11 +1292,21 @@ void Storm3D_TerrainHeightmap::setLightMap(int blockIndex, Storm3D_Texture &text
 	data->blocks[blockIndex].lightMap = frozenbyte::storm::createSharedTexture(&texture);
 }
 
+//! Get heightmap normal at position
+/*!
+	\param position position
+	\return normal
+*/
 VC3 Storm3D_TerrainHeightmap::getNormal(const VC2I &position) const
 {
 	return data->getNormal(position);
 }
 
+//! Get heightmap face normal at position
+/*!
+	\param position position
+	\return normal
+*/
 VC3 Storm3D_TerrainHeightmap::getFaceNormal(const VC2 &position) const
 {
 	VC2I pos = data->convertWorldToCollisionMap(position);
@@ -1490,6 +1328,11 @@ VC3 Storm3D_TerrainHeightmap::getFaceNormal(const VC2 &position) const
 	return result;
 }
 
+//! Get heightmap interpolated normal at position
+/*!
+	\param position position
+	\return normal
+*/
 VC3 Storm3D_TerrainHeightmap::getInterpolatedNormal(const VC2 &position) const
 {
 	VC2I pos = data->convertWorldToCollisionMap(position);
@@ -1499,6 +1342,11 @@ VC3 Storm3D_TerrainHeightmap::getInterpolatedNormal(const VC2 &position) const
 	return VC3(0, 1.f, 0);
 }
 
+//! Get heightmap height at position
+/*!
+	\param position position
+	\return height
+*/
 float Storm3D_TerrainHeightmap::getHeight(const VC2 &position) const
 {
 	float x = (position.x + data->size.x / 2) / data->size.x * data->collResolution.x;
@@ -1532,46 +1380,17 @@ float Storm3D_TerrainHeightmap::getHeight(const VC2 &position) const
 		return pxy + (py - pxy) * (1.0f - ipX) + (px - pxy) * (1.0f - ipY);
 	}
 
-/*
-	float x = (position.x + data->size.x / 2) / data->size.x * (data->resolution.x - 1);
-	float y = (position.y + data->size.z / 2) / data->size.z * (data->resolution.y - 1);
-	int ix = int(x);
-	int iy = int(y);
-
-	if(ix < 0 || iy < 0)
-		return 0.f;
-	if(ix >= data->resolution.x || iy >= data->resolution.y)
-		return 0.f;
-
-	float ipX = x - ix;
-	float ipY = y - iy;
-	float scaleY = data->size.y / 65535.f;
-
-	if(ipX + ipY <= 1)
-	{
-		float p0 = data->heightMap[(iy * data->resolution.x) + ix] * scaleY;
-		float px = data->heightMap[(iy * data->resolution.x) + ix + 1] * scaleY;
-		float py = data->heightMap[((iy + 1) * data->resolution.x) + ix] * scaleY;
-
-		return p0 + (px-p0) * ipX + (py - p0) * ipY;
-	}
-	else
-	{
-		float pxy = data->heightMap[((iy + 1) * data->resolution.x) + ix + 1] * scaleY;
-		float px = data->heightMap[(iy * (data->resolution.x)) + ix + 1] * scaleY;
-		float py = data->heightMap[((iy + 1) * data->resolution.x) + ix] * scaleY;
-
-		return pxy + (py - pxy) * (1.0f - ipX) + (px - pxy) * (1.0f - ipY);
-	}
-*/
 	return 0.f;
 }
 
-
+//! Get heightmap height at position
+/*!
+	Same as getHeight, but does not interpolate steep slopes.
+	\param position position
+	\return height
+*/
 float Storm3D_TerrainHeightmap::getPartiallyInterpolatedHeight(const VC2 &position) const
 {
-	// same as getHeight, but does not interpolate steep slopes.
-
 	float x = (position.x + data->size.x / 2) / data->size.x * data->collResolution.x;
 	float y = (position.y + data->size.z / 2) / data->size.z * data->collResolution.y;
 	int ix = int(x);
@@ -1627,13 +1446,19 @@ float Storm3D_TerrainHeightmap::getPartiallyInterpolatedHeight(const VC2 &positi
 	return 0.f;
 }
 
+//! Solve obstacle normal
+/*!
+	\param obstaclePosition obstacle position
+	\param fromDirection direction from which to get normal
+	\return normal
+*/
 VC3 Storm3D_TerrainHeightmap::solveObstacleNormal(const VC2I &obstaclePosition, const VC3& fromDirection) const
 {
 	int obstacle_map_mult_shift = data->obstaclemapShiftMult;
 	int collision_heightmap_shift = data->heightmapShiftMult;
 
-  int maxx = (data->resolution.x-1)<<obstacle_map_mult_shift;
-  int maxy = (data->resolution.y-1)<<obstacle_map_mult_shift;
+	int maxx = (data->resolution.x-1)<<obstacle_map_mult_shift;
+	int maxy = (data->resolution.y-1)<<obstacle_map_mult_shift;
 
 	VC3 mmult_world_map=VC3((float)data->collResolution.x,65535.0f,(float)data->collResolution.y)/data->size;
 
@@ -1649,7 +1474,7 @@ VC3 Storm3D_TerrainHeightmap::solveObstacleNormal(const VC2I &obstaclePosition, 
 		}
 	}
 	assert(hmapsh != 0);
-  int obstacleShift = hmapsh + obstacle_map_mult_shift - collision_heightmap_shift;
+	int obstacleShift = hmapsh + obstacle_map_mult_shift - collision_heightmap_shift;
 
 	int x = obstaclePosition.x;
 	int y = obstaclePosition.y;
@@ -1661,11 +1486,11 @@ VC3 Storm3D_TerrainHeightmap::solveObstacleNormal(const VC2I &obstaclePosition, 
 		return VC3(0,1,0);
 	}
 
-  int obstacleBlockIndex = (y<<obstacleShift) + x;
-  int obstacleBlockIndexU = (y<<obstacleShift) + (x-1);
-  int obstacleBlockIndexD = (y<<obstacleShift) + (x+1);
-  int obstacleBlockIndexL = ((y-1)<<obstacleShift) + x;
-  int obstacleBlockIndexR = ((y+1)<<obstacleShift) + x;
+	int obstacleBlockIndex = (y<<obstacleShift) + x;
+	int obstacleBlockIndexU = (y<<obstacleShift) + (x-1);
+	int obstacleBlockIndexD = (y<<obstacleShift) + (x+1);
+	int obstacleBlockIndexL = ((y-1)<<obstacleShift) + x;
+	int obstacleBlockIndexR = ((y+1)<<obstacleShift) + x;
 
 	// NOTE: does not contain heightmap (ground) height... just the obstacle
 	// (thus, may give incorrect results near sudden drops / tilted surfaces...
@@ -1724,11 +1549,21 @@ VC3 Storm3D_TerrainHeightmap::solveObstacleNormal(const VC2I &obstaclePosition, 
 
 	// what about thin U-D (or, L-R) lines... (should the result be L or R (or, U or D) normal)
 
-  //return VC3(0,1,0);
+	//return VC3(0,1,0);
 	VC3 unsolved = -fromDirection;
-  return unsolved;
+	return unsolved;
 }
 
+//! Raytrace
+/*!
+	\param position ray start position
+	\param directionNormalized normalized ray direction
+	\param rayLength ray length
+	\param rti reference to collision info structure
+	\param oci reference to obstacle collision info structure
+	\param accurate true to use accurate collision detection
+	\param lineOfSight true to use line of sight
+*/
 void Storm3D_TerrainHeightmap::rayTrace(const VC3 &position, const VC3 &directionNormalized, float rayLength, Storm3D_CollisionInfo &rti, ObstacleCollisionInfo &oci, bool accurate, bool lineOfSight) const
 {
 	if(!data->collisionHeightMap)
@@ -1751,20 +1586,20 @@ void Storm3D_TerrainHeightmap::rayTrace(const VC3 &position, const VC3 &directio
 		//if (collisionMap == NULL)
 		//  RecreateCollisionMap();
 
-    // alternative method for terrain raytrace, more accurate, but slower
-    // not very clear code, quickly transformed from a 2d line drawing
-    // routine. -jpk
+		// alternative method for terrain raytrace, more accurate, but slower
+		// not very clear code, quickly transformed from a 2d line drawing
+		// routine. -jpk
 
-    VC3 epos(position+directionNormalized*rayLength);
+		VC3 epos(position+directionNormalized*rayLength);
 
-    VC2I ispos=data->convertWorldToObstacleMap(VC2(position.x,position.z));
-	  VC2I iepos=data->convertWorldToObstacleMap(VC2(epos.x,epos.z));
+		VC2I ispos=data->convertWorldToObstacleMap(VC2(position.x,position.z));
+		VC2I iepos=data->convertWorldToObstacleMap(VC2(epos.x,epos.z));
 
-    int i;
-    int steep = 0;
-    int sx, sy;
-    int dx, dy;
-    int e;
+		int i;
+		int steep = 0;
+		int sx, sy;
+		int dx, dy;
+		int e;
 
 		// the generic skip mask
 		WORD skipObstacleMask;
@@ -1784,12 +1619,12 @@ void Storm3D_TerrainHeightmap::rayTrace(const VC3 &position, const VC3 &directio
 			skipObstacle2Value = OBSTACLE_AREA_BUILDINGWALL;
 		}
 
-    int x, x2;
-    int y, y2;
-    int h;
-	  int hs = (int)(position.y * mmult_world_map.y);
-	  int he = (int)(epos.y * mmult_world_map.y);
-    int hdiff = he - hs;
+		int x, x2;
+		int y, y2;
+		int h;
+		int hs = (int)(position.y * mmult_world_map.y);
+		int he = (int)(epos.y * mmult_world_map.y);
+		int hdiff = he - hs;
 
 		int hmapsh = 0;
 		{
@@ -1804,65 +1639,47 @@ void Storm3D_TerrainHeightmap::rayTrace(const VC3 &position, const VC3 &directio
 		}
 		assert(hmapsh != 0);
 
-		/*
-		int hmapsh_swapped = 0;
-		{
-			for (int i = 0; i < 32-1; i++)
-			{
-				if ((1<<i) == data->collResolution.y)
-				{
-					hmapsh_swapped = i;
-					break; 
-				}
-			}
-		}
-		assert(hmapsh_swapped != 0);
-		*/
+		int obstacleShift = hmapsh + obstacle_map_mult_shift - collision_heightmap_shift;
 
-    int obstacleShift = hmapsh + obstacle_map_mult_shift - collision_heightmap_shift;
-    //int obstacleShift_swapped = hmapsh_swapped + OBSTACLE_MAP_MULT_SHIFT - COLLISION_HEIGHTMAP_SHIFT;
-    //int collShift = hmapsh - COLLISION_MAP_DIV_SHIFT;
+		x = ispos.x;
+		y = ispos.y;
+		x2 = iepos.x;
+		y2 = iepos.y;
 
-    x = ispos.x;
-    y = ispos.y;
-    x2 = iepos.x;
-    y2 = iepos.y;
-
-    dx = abs(x2 - x);
-    sx = ((x2 - x) > 0) ? 1 : -1;
-    dy = abs(y2 - y);
-    sy = ((y2 - y) > 0) ? 1 : -1;
+		dx = abs(x2 - x);
+		sx = ((x2 - x) > 0) ? 1 : -1;
+		dy = abs(y2 - y);
+		sy = ((y2 - y) > 0) ? 1 : -1;
 
 		int prevObstacleHeight = 0;
 
-    if (dy > dx) 
-    {
-	    steep = 1;
-	    x ^= y;
-	    y ^= x;
-	    x ^= y;
-	    dx ^= dy;
-	    dy ^= dx;
-	    dx ^= dy;
-	    sx ^= sy;
-	    sy ^= sx;
-	    sx ^= sy;
-    }
+		if (dy > dx) 
+		{
+			steep = 1;
+			x ^= y;
+			y ^= x;
+			x ^= y;
+			dx ^= dy;
+			dy ^= dx;
+			dx ^= dy;
+			sx ^= sy;
+			sy ^= sx;
+			sx ^= sy;
+		}
 
-    int maxx = (data->resolution.x-1)<<obstacle_map_mult_shift;
-    int maxy = (data->resolution.y-1)<<obstacle_map_mult_shift;
-    int maxx_minus_one = maxx - (1<<obstacle_map_mult_shift);
-    int maxy_minus_one = maxy - (1<<obstacle_map_mult_shift);
+		int maxx = (data->resolution.x-1)<<obstacle_map_mult_shift;
+		int maxy = (data->resolution.y-1)<<obstacle_map_mult_shift;
+		int maxx_minus_one = maxx - (1<<obstacle_map_mult_shift);
+		int maxy_minus_one = maxy - (1<<obstacle_map_mult_shift);
 
-    e = 2 * dy - dx;
-    for (i = 0; i < dx; i++) 
-    {
-      //h = hs + hdiff * i / dx;
-      // for better accuracy...
-      h = 3 * hs + (3 * hdiff * i) / dx;
+		e = 2 * dy - dx;
+		for (i = 0; i < dx; i++) 
+		{
+			// for better accuracy...
+			h = 3 * hs + (3 * hdiff * i) / dx;
 
-      // interpolation (below) will f*ck up if we don't keep a little
-      // safety distance to map edges...
+			// interpolation (below) will f*ck up if we don't keep a little
+			// safety distance to map edges...
 			//assert(maxx == 2048);
 
 			// wtf were these two?
@@ -1887,59 +1704,43 @@ void Storm3D_TerrainHeightmap::rayTrace(const VC3 &position, const VC3 &directio
 				}
 			}
 
-      int blockIndex;
-      int obstacleBlockIndex;
+			int blockIndex;
+			int obstacleBlockIndex;
 
-      // improve raytrace accuracy with hmap interpolation... slow :(
-      // designed for obstacle/height map multiplier 2 (should work for 
-      // other multiplier values too, but result may be less desirable)
-//    int blockIndexR;
-//    int blockIndexD;
-      //int blockIndexU;
-      //int blockIndexL;
+			// improve raytrace accuracy with hmap interpolation... slow :(
+			// designed for obstacle/height map multiplier 2 (should work for 
+			// other multiplier values too, but result may be less desirable)
 
-      if (steep) 
-      {
-        blockIndex = ((x>>obstacle_minus_heightmap_shift)<<hmapsh) + (y>>obstacle_minus_heightmap_shift);
-// TEMP: heightmap interpolation disabled!
-// TODO: should be enabled, but ONLY for outdoor heightmaps, not inside buildings
-//        blockIndexD = ((x>>(OBSTACLE_MAP_MULT_SHIFT-COLLISION_HEIGHTMAP_SHIFT))<<hmapsh) + ((y+1)>>(OBSTACLE_MAP_MULT_SHIFT-COLLISION_HEIGHTMAP_SHIFT));
-//        blockIndexR = (((x+1)>>(OBSTACLE_MAP_MULT_SHIFT-COLLISION_HEIGHTMAP_SHIFT))<<hmapsh) + (y>>(OBSTACLE_MAP_MULT_SHIFT-COLLISION_HEIGHTMAP_SHIFT));
-				// old
-        //blockIndexU = ((x>>OBSTACLE_MAP_MULT_SHIFT)<<hmapsh_swapped) + ((y-1)>>OBSTACLE_MAP_MULT_SHIFT);
-        //blockIndexL = (((x-1)>>OBSTACLE_MAP_MULT_SHIFT)<<hmapsh_swapped) + (y>>OBSTACLE_MAP_MULT_SHIFT);
-        obstacleBlockIndex = (x<<obstacleShift) + y;
-      } else {
-        blockIndex = ((y>>obstacle_minus_heightmap_shift)<<hmapsh) + (x>>obstacle_minus_heightmap_shift);
-// TEMP: heightmap interpolation disabled!
-// TODO: should be enabled, but ONLY for outdoor heightmaps, not inside buildings
-//        blockIndexD = ((y>>(OBSTACLE_MAP_MULT_SHIFT-COLLISION_HEIGHTMAP_SHIFT))<<hmapsh) + ((x+1)>>(OBSTACLE_MAP_MULT_SHIFT-COLLISION_HEIGHTMAP_SHIFT));
-//        blockIndexR = (((y+1)>>(OBSTACLE_MAP_MULT_SHIFT-COLLISION_HEIGHTMAP_SHIFT))<<hmapsh) + (x>>(OBSTACLE_MAP_MULT_SHIFT-COLLISION_HEIGHTMAP_SHIFT));
-				// old
-        //blockIndexU = ((y>>OBSTACLE_MAP_MULT_SHIFT)<<hmapsh) + ((x-1)>>OBSTACLE_MAP_MULT_SHIFT);
-        //blockIndexL = (((y-1)>>OBSTACLE_MAP_MULT_SHIFT)<<hmapsh) + (x>>OBSTACLE_MAP_MULT_SHIFT);
-        obstacleBlockIndex = (y<<obstacleShift) + x;
-      }
+			if (steep) 
+			{
+				blockIndex = ((x>>obstacle_minus_heightmap_shift)<<hmapsh) + (y>>obstacle_minus_heightmap_shift);
+				// TEMP: heightmap interpolation disabled!
+				// TODO: should be enabled, but ONLY for outdoor heightmaps, not inside buildings
+				obstacleBlockIndex = (x<<obstacleShift) + y;
+			} else {
+				blockIndex = ((y>>obstacle_minus_heightmap_shift)<<hmapsh) + (x>>obstacle_minus_heightmap_shift);
+				// TEMP: heightmap interpolation disabled!
+				// TODO: should be enabled, but ONLY for outdoor heightmaps, not inside buildings
+				obstacleBlockIndex = (y<<obstacleShift) + x;
+			}
 
-		  // Test hit
-// TEMP: heightmap interpolation disabled!
-// TODO: should be enabled, but ONLY for outdoor heightmaps, not inside buildings
-//      int mapHeight = ((int)data->collisionHeightMap[blockIndex] + (int)data->collisionHeightMap[blockIndexR] 
-//        + (int)data->collisionHeightMap[blockIndexD]);
-      int mapHeight = (int)data->collisionHeightMap[blockIndex] * 3;
+			// Test hit
+			// TEMP: heightmap interpolation disabled!
+			// TODO: should be enabled, but ONLY for outdoor heightmaps, not inside buildings
+			int mapHeight = (int)data->collisionHeightMap[blockIndex] * 3;
 
-		  if (mapHeight > h)
-		  {
-			  rti.hit = true;
-			  rti.model = NULL;
-			  rti.object = NULL;
-        VC2 hitpos;
-        if (steep) 
-        {
-          hitpos = data->convertObstacleMapToWorld(VC2I(y,x));
-        } else {
-          hitpos = data->convertObstacleMapToWorld(VC2I(x,y));
-        }
+			if (mapHeight > h)
+			{
+				rti.hit = true;
+				rti.model = NULL;
+				rti.object = NULL;
+				VC2 hitpos;
+				if (steep) 
+				{
+					hitpos = data->convertObstacleMapToWorld(VC2I(y,x));
+				} else {
+					hitpos = data->convertObstacleMapToWorld(VC2I(x,y));
+				}
 
 				VC3 hitvec;
 				if (fabs(directionNormalized.y) > 0.0001f)
@@ -1955,7 +1756,6 @@ void Storm3D_TerrainHeightmap::rayTrace(const VC3 &position, const VC3 &directio
 					VC2 planeHit2D = VC2(planeHitPos.x, planeHitPos.z);
 					float mapHeightAtPlaneHit = getHeight(planeHit2D);
 
-					//float planeHitError = planeHitPos.y - tmp.y;
 					float planeHitError = mapHeightAtPlaneHit - planeHitPos.y;
 				
 					// HACK: if too much height difference, don't calculate position on plane...
@@ -1966,11 +1766,11 @@ void Storm3D_TerrainHeightmap::rayTrace(const VC3 &position, const VC3 &directio
 						hitvec = planeHitPos - position;
 					}
 				} else {
-	        hitvec = VC3(hitpos.x, (mapHeight / 3)*mmult_map_world.y, hitpos.y) - position;
+					hitvec = VC3(hitpos.x, (mapHeight / 3)*mmult_map_world.y, hitpos.y) - position;
 				}
 
-			  rti.range = hitvec.GetLength();
-			  rti.position = position + directionNormalized*rti.range;
+				rti.range = hitvec.GetLength();
+				rti.position = position + directionNormalized*rti.range;
 
 				// FIXME: why exactly does this assert sometimes fail near the edge 
 				// of the map? x and y should be inside boundaries, why does this go outside.
@@ -1983,30 +1783,20 @@ void Storm3D_TerrainHeightmap::rayTrace(const VC3 &position, const VC3 &directio
 					rti.position.z = -(data->collResolution.y * mmult_map_world.z)/2;
 				if (rti.position.z > (data->collResolution.y * mmult_map_world.z)/2)
 					rti.position.z = (data->collResolution.y * mmult_map_world.z)/2;
-				/*
-        assert(!(rti.position.x <= -(data->collResolution.x * mmult_map_world.x)/2 
-          || rti.position.x >= (data->collResolution.x * mmult_map_world.x)/2
-          || rti.position.z <= -(data->collResolution.y * mmult_map_world.z)/2
-          || rti.position.z >= (data->collResolution.y * mmult_map_world.z)/2)
-        );
-				*/
 
 				// TODO: solve heightmap hit plane normal..
 				rti.plane_normal = VC3(0,1,0);
 
-			  return;
-      } else {
-        // hit obstacle?
-        //assert(obstacleHeightmap != NULL);
-				if (data->obstacleHeightmap != NULL
-					&& data->areaMap != NULL)
+				return;
+			} else {
+				// hit obstacle?
+				if (data->obstacleHeightmap != NULL && data->areaMap != NULL)
 				{
 					int obstacleHeight = mapHeight + 3 * ((int)(data->obstacleHeightmap[obstacleBlockIndex] & OBSTACLE_MAP_MASK_HEIGHT));
-  				if (obstacleHeight > h)
+  					if (obstacleHeight > h)
 					{
 						// make sure that the obstacle is something we want to 
 						// hit... (not seethrough or unhittable)
-						//if ((data->obstacleHeightmap[obstacleBlockIndex] & skipObstacleMask) == 0)
 						if (!data->areaMap->isAreaAnyValue(obstacleBlockIndex, skipObstacleMask)
 							&& !data->areaMap->isAreaValue(obstacleBlockIndex, skipObstacle2Mask, skipObstacle2Value))
 						{
@@ -2015,17 +1805,18 @@ void Storm3D_TerrainHeightmap::rayTrace(const VC3 &position, const VC3 &directio
 							if (steep) 
 							{
 								hitpos = data->convertObstacleMapToWorld(VC2I(y,x));
-							} else {
+							}
+							else
+							{
 								hitpos = data->convertObstacleMapToWorld(VC2I(x,y));
 							}
-							//VC3 hitvec = VC3(hitpos.x, hmap[blockIndex]*mmult_map_world.y, hitpos.y) - position;
 							VC3 hitvec = VC3(hitpos.x, (h / 3) *mmult_map_world.y, hitpos.y) - position;
 							float hitveclen = hitvec.GetLength();
 							VC3 realpos = position + directionNormalized*hitveclen;
 							if (oci.hitAmount == 0)
 							{
-  	  					oci.range = hitveclen;
-    						oci.position = realpos;
+  	  							oci.range = hitveclen;
+    							oci.position = realpos;
 							}
 							// did we perhaps hit the obstacle from above?
 							// (the logic is that if previous block was almost as high but did not 
@@ -2035,7 +1826,9 @@ void Storm3D_TerrainHeightmap::rayTrace(const VC3 &position, const VC3 &directio
 							if (fabs(float(obstacleHeight/3 - prevObstacleHeight/3)) * mmult_map_world.y < 0.2f)
 							{
 								hitnormal = VC3(0,1,0);
-							} else {
+							}
+							else
+							{
 								// otherwise, we have probably hit the side of the obstacle...
 								// TODO: solve proper hit normal!!!
 								VC2I opos;
@@ -2057,16 +1850,16 @@ void Storm3D_TerrainHeightmap::rayTrace(const VC3 &position, const VC3 &directio
 						}
 					}
 					prevObstacleHeight = obstacleHeight;
-        }
-      }
+				}
+			}
 
-      while (e >= 0) 
-      {
-	      y += sy;
-	      e -= 2 * dx;
-	    }
-	    x += sx;
-	    e += 2 * dy;
+			while (e >= 0) 
+			{
+				y += sy;
+				e -= 2 * dx;
+			}
+			x += sx;
+			e += 2 * dy;
 
 			// HACK: LOS skips every second "pixel"...
 			if (lineOfSight)
@@ -2084,8 +1877,9 @@ void Storm3D_TerrainHeightmap::rayTrace(const VC3 &position, const VC3 &directio
 				e += 2 * dy;
 			}
 
-    }
-	} else {
+		}
+	}
+	else {
 
 		assert(!"don't use this. :)");
 
@@ -2133,7 +1927,6 @@ void Storm3D_TerrainHeightmap::rayTrace(const VC3 &position, const VC3 &directio
 				rti.range = float(i) / float(length) * rayLength;
 				
 				rti.position = position + directionNormalized * rti.range;
-				//rti.plane_normal = ?;
 				return;
 			}
 
@@ -2141,6 +1934,5 @@ void Storm3D_TerrainHeightmap::rayTrace(const VC3 &position, const VC3 &directio
 			positionY += addY;
 			heightPosition += heightAdd;
 		}
-
 	}
 }

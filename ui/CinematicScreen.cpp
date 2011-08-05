@@ -1,5 +1,11 @@
-
 #include "precompiled.h"
+
+#include <limits.h>
+#include <string>
+#include <vector>
+#include <map>
+#include <list>
+#include <boost/lexical_cast.hpp>
 
 #include "CinematicScreen.h"
 #include "../ogui/Ogui.h"
@@ -20,12 +26,7 @@
 #include "../system/Logger.h"
 
 #include <IStorm3D.h>
-#include <IStorm3D_VideoStreamer.h>
-#include <string>
-#include <vector>
-#include <map>
-#include <list>
-#include <boost/lexical_cast.hpp>
+#include <istorm3d_videostreamer.h>
 
 #include "../util/StringUtil.h"
 
@@ -107,7 +108,7 @@ public:
 
 	struct QueuedText
 	{
-		QueuedText() : time(0), typingEffect(false), textArea(0) {}
+		QueuedText() : textArea(0), time(0), typingEffect(false) {}
 		std::string text;
 		int textArea;
 		int time;
@@ -144,7 +145,7 @@ public:
 
   struct TextFader
   {
-		TextFader() : time_start(INT_MAX), button(NULL), cliprect(false) {}
+		TextFader() : time_start(INT_MAX), cliprect(false), button(NULL) {}
 		int time_start;
 		int time_end;
 		int fade_duration;
@@ -185,24 +186,24 @@ public:
 	CinematicScreenImpl( Ogui* ogui, Game *game, const std::string& cinematic_name, sfx::SoundMixer *mixer, IStorm3D* storm3d ) :
 		initTime( 0 ),
 		timeToDie( 0 ),
-		killMe( 0 ),
 		ogui( ogui ),
+		game(game),
 		window( NULL ),
+		killMe( false ),
+		backgroundVideo( NULL ),
+		scrollEffect( NULL ),
+		imageFadeEffect( NULL ),
+		backgroundVideoStream( NULL ),
+		backgroundImage( NULL ),
+		cinematic_name(cinematic_name),
+		images(),
 		fonts(),
 		textAreas(),
 		textsByTime(),
 		effectsByTime(),
 		pictureFadeByTime(),
-		backgroundVideo( NULL ),
-		backgroundVideoStream( NULL ),
-		scrollEffect( NULL ),
-		imageFadeEffect( NULL ),
-		backgroundImage( NULL ),
-		images(),
 		currentTextQueueEntry(0),
-		game(game),
-		currentSoundEffect(0),
-		cinematic_name(cinematic_name)
+		currentSoundEffect(0)
 	{
 		wideScreenBars[0] = NULL;
 		wideScreenBars[1] = NULL;
@@ -241,6 +242,8 @@ public:
 			// backgroundVideo = ogui->LoadOguiVideo( video.c_str(), builder );
 
 			backgroundVideoStream = storm3d->CreateVideoStreamer( video.c_str(), builder, false );
+			float xm = 0.0f, ym = 0.0f;
+			if (backgroundVideoStream) backgroundVideoStream->getTextureCoords(xm, ym);
 			backgroundVideo = ogui->ConvertVideoToImage( backgroundVideoStream, builder );
 
 			if( backgroundVideo )
@@ -256,13 +259,12 @@ public:
 
 				float video_aspect = (float)atof(video_aspect_str);
 
-				float texcoord_multiplier = video_aspect / normal_aspect;
+				float texcoord_multiplier = (video_aspect / normal_aspect);
 				float texcoord_offset = (1.0f - texcoord_multiplier) * 0.5f;
 
 				if(texcoord_multiplier > 1.0f)
 				{
-
-					window->setBackgroundRepeatFactor(1.0f, texcoord_multiplier);
+					window->setBackgroundRepeatFactor(xm, texcoord_multiplier * ym);
 					window->setBackgroundScroll(0.0f, texcoord_offset);
 
 					int w = window->GetSizeX();
@@ -644,6 +646,7 @@ public:
 				soundEffects[i].volume = getLocaleGuiInt( (pre_fader + "_volume").c_str() , 100 );
 				soundEffects[i].file = game::convertLocaleSpeechString( getLocaleGuiString( (pre_fader + "_file").c_str()) );
 				soundEffects[i].handle = -1;
+				soundEffects[i].speech = false;
 				const char *stream = NULL;
 				if(::DHLocaleManager::getInstance()->getString(::DHLocaleManager::BANK_GUI, (pre_fader + "_stream").c_str(), &stream)
 					&& stream[0] == '1')

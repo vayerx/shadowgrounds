@@ -1,0 +1,23 @@
+!!ARBfp1.0
+OPTION ARB_precision_hint_fastest;
+PARAM c0 = program.env[0];
+PARAM c1 = program.env[1];
+PARAM c2 = program.env[2];
+OUTPUT outColor = result.color;
+TEMP r0, t0, t1, t2, t3, t4, t5;
+TEX t0, fragment.texcoord[0], texture[0], 2D;
+TEX t1, fragment.texcoord[1], texture[1], 2D;
+TEX t2, fragment.texcoord[2], texture[2], 2D;
+TEX t3, fragment.texcoord[3], texture[3], 2D;
+TEX t4, fragment.texcoord[4], texture[4], 2D;
+TEX t5, fragment.texcoord[5], texture[5], 2D;
+# 6 (24) sample filtering
+MUL r0, c0.xxxx, t0;
+MAD r0, c0.yyyy, t1, r0;
+MAD r0, c0.zzzz, t2, r0;
+MAD r0, c0.wwww, t3, r0;
+MAD r0, c1.xxxx, t4, r0;
+MAD r0, c1.yyyy, t5, r0;
+MUL outColor, r0, c2;
+#MOV outColor, r0;
+END

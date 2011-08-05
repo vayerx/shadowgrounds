@@ -1,6 +1,8 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 //------------------------------------------------------------------
 // Includes
@@ -14,8 +16,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include "Storm3D_Bone.h"
-#include "..\..\util\Debug_MemoryManager.h"
-
+#include "../../util/Debug_MemoryManager.h"
 
 #ifdef PROJECT_AOV
 #define DEFAULT_ALPHA_TEST_VALUE 0x70
@@ -23,24 +24,23 @@
 #define DEFAULT_ALPHA_TEST_VALUE 0x50
 #endif
 
-//------------------------------------------------------------------
-// Storm3D_Model_Object::Storm3D_Model_Object
-//------------------------------------------------------------------
+//! Constructor
 Storm3D_Model_Object::Storm3D_Model_Object(Storm3D *s2,const char *name,Storm3D_Model *_parent_model, Storm3D_ResourceManager &resourceManager_) :
 	Storm3D2(s2),
 	resourceManager(resourceManager_),
-	parent_model(_parent_model),
-	parent_bone(0),
-	parent(NULL),
-	mx_update(true),
-	mxg_update(true),
-	no_collision(false),
-	sphere_collision_only(false),
-	no_render(false),
-	light_object(false),
+	name(0),
 	mesh(NULL),
 	gpos_update_needed(true),
 	scale(1,1,1),
+	mx_update(true),
+	mxg_update(true),
+	parent_model(_parent_model),
+	parent(NULL),
+	parent_bone(0),
+	no_collision(false),
+	no_render(false),
+	light_object(false),
+	sphere_collision_only(false),
 	sphere_ok(false),
 	box_ok(false),
 	object_box_ok(false),
@@ -49,12 +49,11 @@ Storm3D_Model_Object::Storm3D_Model_Object(Storm3D *s2,const char *name,Storm3D_
 	force_lighting_alpha_enable(false),
 	force_lighting_alpha(0),
 	spot_transparency_factor(1.f),
-	name(0),
 	distortion_only(false),
-	sort_data(0.f),
 	renderPassMask(RENDER_PASS_MASK_VALUE_NONE),
 	alphaTestPassConditional(false),
-	alphaTestValue(DEFAULT_ALPHA_TEST_VALUE)
+	alphaTestValue(DEFAULT_ALPHA_TEST_VALUE),
+	sort_data(0.f)
 {
 	visibility_id = 0;
 	real_visibility_id = 0;
@@ -76,11 +75,7 @@ Storm3D_Model_Object::Storm3D_Model_Object(Storm3D *s2,const char *name,Storm3D_
 	SetName(name);
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object::~Storm3D_Model_Object
-//------------------------------------------------------------------
+//! Destructor
 Storm3D_Model_Object::~Storm3D_Model_Object()
 {
 	if(parent)
@@ -136,7 +131,6 @@ Storm3D_Model_Object::~Storm3D_Model_Object()
 		}
 	}
 
-
 	// Delete name
 	delete[] name;
 }
@@ -168,13 +162,6 @@ const Sphere &Storm3D_Model_Object::GetBoundingSphere()
 		const Sphere &sphere = mesh->getBoundingSphere();
 		bounding_sphere.position = mx.GetTransformedVector(sphere.position);
 
-		/*
-		VC3 modelScale = this->parent_model->GetScale();
-		float maxScale = modelScale.x;
-		if (modelScale.y > maxScale) maxScale = modelScale.y;
-		if (modelScale.z > maxScale) maxScale = modelScale.z;
-		bounding_sphere.radius = sphere.radius * maxScale;
-		*/
 		bounding_sphere.radius = sphere.radius;
 		sphere_ok = true;
 	}
@@ -195,35 +182,9 @@ const OOBB &Storm3D_Model_Object::GetObjectBoundingBox()
 
 	if(!object_box_ok)
 	{
-		/*
-		if(mx_update)
-		{
-			mx_update=false;
-			MAT ms,mr,mp;
-			ms.CreateScaleMatrix(scale);
-			mr.CreateRotationMatrix(rotation);
-			mp.CreateTranslationMatrix(position);
-			mx=ms*mr*mp;
-		}
-		*/
-
 		const AABB &aabb = mesh->getBoundingBox();
 		object_bounding_box.center = aabb.mmax + aabb.mmin;
 		object_bounding_box.center *= .5f;
-
-		/*
-		mx.TransformVector(object_bounding_box.center);
-
-		object_bounding_box.axes[0].x = mx.Get(0);
-		object_bounding_box.axes[0].y = mx.Get(1);
-		object_bounding_box.axes[0].z = mx.Get(2);
-		object_bounding_box.axes[1].x = mx.Get(4);
-		object_bounding_box.axes[1].y = mx.Get(5);
-		object_bounding_box.axes[1].z = mx.Get(6);
-		object_bounding_box.axes[2].x = mx.Get(8);
-		object_bounding_box.axes[2].y = mx.Get(9);
-		object_bounding_box.axes[2].z = mx.Get(10);
-		*/
 
 		object_bounding_box.axes[0].x = 1.f;
 		object_bounding_box.axes[0].y = 0.f;
@@ -312,19 +273,19 @@ const AABB &Storm3D_Model_Object::GetBoundingBox()
 	return bounding_box;
 }
 
-//------------------------------------------------------------------
-// Storm3D_Model_Object::GetMesh
-//------------------------------------------------------------------
+//! Get mesh of model object
+/*!
+	\return mesh
+*/
 IStorm3D_Mesh *Storm3D_Model_Object::GetMesh()
 {
 	return mesh;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object::SetMesh
-//------------------------------------------------------------------
+//! Set mesh of model object
+/*!
+	\param _mesh mesh
+*/
 void Storm3D_Model_Object::SetMesh(IStorm3D_Mesh *_mesh)
 {
 	if(mesh)
@@ -350,11 +311,10 @@ void Storm3D_Model_Object::SetMesh(IStorm3D_Mesh *_mesh)
 		resourceManager.addUser(mesh, this);
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object::GetMXG
-//------------------------------------------------------------------
+//! Get transformation matrix
+/*!
+	\return transformation matrix
+*/
 MAT &Storm3D_Model_Object::GetMXG()
 {
 	// Rebuild MX if needed
@@ -393,11 +353,10 @@ MAT &Storm3D_Model_Object::GetMXG()
 	return mxg;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object::AddChild
-//------------------------------------------------------------------
+//! Add child to model object
+/*!
+	\param iobject new child
+*/
 void Storm3D_Model_Object::AddChild(IStorm3D_Model_Object *iobject)
 {
 	Storm3D_Model_Object *object=(Storm3D_Model_Object*)iobject;
@@ -410,11 +369,10 @@ void Storm3D_Model_Object::AddChild(IStorm3D_Model_Object *iobject)
 	object->parent=this;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object::RemoveChild
-//------------------------------------------------------------------
+//! Remove child from model object
+/*!
+	\param iobject child to remove
+*/
 void Storm3D_Model_Object::RemoveChild(IStorm3D_Model_Object *iobject)
 {
 	Storm3D_Model_Object *object=(Storm3D_Model_Object*)iobject;
@@ -423,10 +381,10 @@ void Storm3D_Model_Object::RemoveChild(IStorm3D_Model_Object *iobject)
 	object->parent=NULL;
 }
 
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object::AddChild
-//------------------------------------------------------------------
+//! Add helper child to model object
+/*!
+	\param ihelper new helper
+*/
 void Storm3D_Model_Object::AddChild(IStorm3D_Helper *ihelper)
 {
 	switch (ihelper->GetHelperType())
@@ -460,11 +418,10 @@ void Storm3D_Model_Object::AddChild(IStorm3D_Helper *ihelper)
 	child_helpers.insert(ihelper);
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object::RemoveChild
-//------------------------------------------------------------------
+//! Remove child helper from model object
+/*!
+	\param ihelper helper child to remove
+*/
 void Storm3D_Model_Object::RemoveChild(IStorm3D_Helper *ihelper)
 {
 	child_helpers.erase(ihelper);
@@ -493,12 +450,9 @@ void Storm3D_Model_Object::RemoveChild(IStorm3D_Helper *ihelper)
 	}
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object::InformChangeToChilds
-// Called when object is rotated/scaled/moved
-//------------------------------------------------------------------
+//! Inform child objects of changes
+/*! Called when object is rotated/scaled/moved
+*/
 void Storm3D_Model_Object::InformChangeToChilds()
 {
 	// Objects
@@ -544,12 +498,11 @@ void Storm3D_Model_Object::InformChangeToChilds()
 	}
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object::SetPosition
-//------------------------------------------------------------------
-void Storm3D_Model_Object::SetPosition(VC3 &_position)
+//! Set position of model object
+/*!
+	\param _position position
+*/
+void Storm3D_Model_Object::SetPosition(const VC3 &_position)
 {
 	position=_position;
 
@@ -574,12 +527,11 @@ void Storm3D_Model_Object::SetPosition(VC3 &_position)
 	}
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object::SetRotation
-//------------------------------------------------------------------
-void Storm3D_Model_Object::SetRotation(QUAT &_rotation)
+//! Set rotation of model object
+/*!
+	\param _rotation rotation
+*/
+void Storm3D_Model_Object::SetRotation(const QUAT &_rotation)
 {
 	rotation=_rotation;
 
@@ -595,12 +547,11 @@ void Storm3D_Model_Object::SetRotation(QUAT &_rotation)
 	box_ok = false;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object::SetScale
-//------------------------------------------------------------------
-void Storm3D_Model_Object::SetScale(VC3 &_scale)
+//! Set scale of model object
+/*!
+	\param _scale scale
+*/
+void Storm3D_Model_Object::SetScale(const VC3 &_scale)
 {
 	scale=_scale;
 
@@ -614,41 +565,37 @@ void Storm3D_Model_Object::SetScale(VC3 &_scale)
 	gpos_update_needed=true; //v3
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object::GetPosition
-//------------------------------------------------------------------
+//! Get position of model object
+/*!
+	\return position
+*/
 VC3 &Storm3D_Model_Object::GetPosition()
 {
 	return position;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object::GetRotation
-//------------------------------------------------------------------
+//! Get rotation of model object
+/*!
+	\return rotation
+*/
 QUAT &Storm3D_Model_Object::GetRotation()
 {
 	return rotation;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object::GetScale
-//------------------------------------------------------------------
+//! Get scale of model object
+/*!
+	\return scale
+*/
 VC3 &Storm3D_Model_Object::GetScale()
 {
 	return scale;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object::GetGlobalPosition
-//------------------------------------------------------------------
+//! Get global position of model object
+/*!
+	\return position
+*/
 VC3 Storm3D_Model_Object::GetGlobalPosition()
 {
 	// v3 optimization
@@ -665,15 +612,19 @@ VC3 Storm3D_Model_Object::GetGlobalPosition()
 	return gpos;
 }
 
+//! Get parent bone of model object
+/*!
+	\return parent bone
+*/
 IStorm3D_Bone *Storm3D_Model_Object::GetParentBone()
 {
 	return parent_bone;
 }
 
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object::CopyFrom
-//------------------------------------------------------------------
+//! Copy from another model object
+/*!
+	\param iother model object to copy from
+*/
 void Storm3D_Model_Object::CopyFrom(IStorm3D_Model_Object *iother, bool only_render_settings)
 {
 	// Test
@@ -715,11 +666,14 @@ void Storm3D_Model_Object::CopyFrom(IStorm3D_Model_Object *iother, bool only_ren
 	alphaTestValue = other->alphaTestValue;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object::RayTrace
-//------------------------------------------------------------------
+//! Raytrace
+/*!
+	\param position ray start position
+	\param direction_normalized normalized ray direction
+	\param ray_length ray length
+	\param rti structure for collision info
+	\param accurate true to use accurate collision detection
+*/
 void Storm3D_Model_Object::RayTrace(const VC3 &position,const VC3 &direction_normalized,float ray_length,Storm3D_CollisionInfo &rti, bool accurate)
 {
 	if(!mesh) 
@@ -809,11 +763,13 @@ void Storm3D_Model_Object::RayTrace(const VC3 &position,const VC3 &direction_nor
 	}
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object::SphereCollision
-//------------------------------------------------------------------
+//! Test if object collides with given sphere
+/*!
+	\param position sphere position
+	\param radius sphere radius
+	\param cinf structure for collision info
+	\param accurate true to use accurate collision detection
+*/
 void Storm3D_Model_Object::SphereCollision(const VC3 &position,float radius,Storm3D_CollisionInfo &cinf, bool accurate)
 {
 	// Needs a mesh to collide!!
@@ -854,11 +810,10 @@ void Storm3D_Model_Object::SphereCollision(const VC3 &position,float radius,Stor
 	}
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object::SetName
-//------------------------------------------------------------------
+//! Set name of model object
+/*!
+	\param _name name
+*/
 void Storm3D_Model_Object::SetName(const char *_name)
 {
 	distortion_only = false;
@@ -873,20 +828,19 @@ void Storm3D_Model_Object::SetName(const char *_name)
 		distortion_only = true;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object::GetName
-//------------------------------------------------------------------
+//! Get name of model object
+/*!
+	\return name
+*/
 const char *Storm3D_Model_Object::GetName()
 {
 	return name;
 }
 
-
-//------------------------------------------------------------------
-// Storm3D_Model_Object - Change special properties
-//------------------------------------------------------------------
+//! Set model object to collide or not
+/*!
+	\param no_collision_ true to disable collisions
+*/
 void Storm3D_Model_Object::SetNoCollision(bool no_collision_)
 {
 	if(no_collision != no_collision_)
@@ -921,7 +875,10 @@ void Storm3D_Model_Object::UpdateVisibility()
 		parent_model->observer->updateVisibility(this);
 }
 
-// Get special properties
+//! Get model object to colliding status
+/*!
+	\return true if collisions disabled
+*/
 bool Storm3D_Model_Object::GetNoCollision() const
 {
 	return no_collision;

@@ -6,7 +6,7 @@
 #pragma once
 
 #include <string>
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 
 class IStorm3D_ProceduralManager
 {
@@ -19,7 +19,10 @@ public:
 		VC2 scale;
 		VC2 speed;
 
-		Layer()
+		Layer() :
+			texture(""),
+			scale(0.0f),
+			speed(0.0f)
 		{
 		}
 	};
@@ -32,7 +35,11 @@ public:
 		VC2 radius;
 		VC2 linearSpeed;
 
-		Source()
+		Source() :
+			texture(),
+			offset(),
+			radius(0.0f),
+			linearSpeed(0.0f)
 		{
 		}
 	};
@@ -47,8 +54,13 @@ public:
 		std::string fallback;
 		bool enableDistortion;
 
-		Effect()
-		:	enableDistortion(false)
+		Effect() :
+			source1(),
+			source2(),
+			distortion1(),
+			distortion2(),
+			fallback(""),
+			enableDistortion(false)
 		{
 		}
 	};

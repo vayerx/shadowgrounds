@@ -1,6 +1,7 @@
-
 #ifndef CONFIGURATION_POST_CHECK_H
 #define CONFIGURATION_POST_CHECK_H
+
+#ifdef _MSC_VER
 
 #ifdef PROJECT_SHADOWGROUNDS
 	#ifdef VERBOSE_BUILD
@@ -87,6 +88,7 @@
 	#endif
 #endif
 
+#endif
 
 
 #endif

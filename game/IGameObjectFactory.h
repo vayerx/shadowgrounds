@@ -17,6 +17,8 @@ namespace game
 
     // set pointers?
     //virtual setPointers(GameObject *obj, int amount, void **ptrs) = 0;
+
+	virtual ~IGameObjectFactory() {};
   };
 
 }

@@ -2,7 +2,7 @@
 #define INTERSECT_H
 
 /* Could I forward declare this? */
-#include <Storm3D_datatypes.h>
+#include <Storm3D_Datatypes.h>
 
 
 namespace util

@@ -7,7 +7,7 @@
 #include "physics/StaticPhysicsObject.h"
 #include "../util/SoundMaterialParser.h"
 
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 
 using namespace ui;
@@ -59,7 +59,7 @@ namespace game
     return "Building";
   }
 
-  void *Building::getVisualObjectDataId()
+  void *Building::getVisualObjectDataId() const
   { 
     return (void *)&buildingDataId; 
   }

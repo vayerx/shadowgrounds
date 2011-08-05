@@ -1,7 +1,52 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
-#pragma once
+#ifndef VERTEXFORMATS_H
+#define VERTEXFORMATS_H
 
+#include <GL/glew.h>
+#include <SDL_endian.h>
+#include "c2_common.h"
+#include "c2_vectors.h"
+#include "c2_matrix.h"
+
+
+#define D3DFVF_RESERVED0        0x001
+#define D3DFVF_POSITION_MASK    0x400E
+#define D3DFVF_XYZ              0x002
+#define D3DFVF_XYZRHW           0x004
+#define D3DFVF_XYZB1            0x006
+#define D3DFVF_XYZB2            0x008
+#define D3DFVF_XYZB3            0x00a
+#define D3DFVF_XYZB4            0x00c
+#define D3DFVF_XYZB5            0x00e
+#define D3DFVF_XYZW             0x4002
+
+#define D3DFVF_NORMAL           0x010
+#define D3DFVF_PSIZE            0x020
+#define D3DFVF_DIFFUSE          0x040
+#define D3DFVF_SPECULAR         0x080
+
+#define D3DFVF_TEXCOUNT_MASK    0xf00
+#define D3DFVF_TEXCOUNT_SHIFT   8
+#define D3DFVF_TEX0             0x000
+#define D3DFVF_TEX1             0x100
+#define D3DFVF_TEX2             0x200
+#define D3DFVF_TEX3             0x300
+#define D3DFVF_TEX4             0x400
+#define D3DFVF_TEX5             0x500
+#define D3DFVF_TEX6             0x600
+#define D3DFVF_TEX7             0x700
+#define D3DFVF_TEX8             0x800
+
+
+//#define f2int(x) ((int) ((x) * 255.0f))
+#define f2int(x) (x)
+#define mkDWORD(a, b, c, d) ( ((a) << 24) | ((b) << 16) | ((c) << 8) | ((d) << 0))
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+#define COLOR_RGBA(r, g, b, a) (mkDWORD(f2int((a)), f2int((b)), f2int((g)), f2int((r))))
+#else
+#define COLOR_RGBA(r, g, b, a) (mkDWORD(f2int((r)), f2int((g)), f2int((b)), f2int((a))))
+#endif
 
 // Basic - 0 texcoords
 #define FVF_VXFORMAT_TC0 (D3DFVF_XYZ|D3DFVF_NORMAL)
@@ -15,7 +60,9 @@ struct VXFORMAT_TC0
 		position(_position),normal(_normal)
 	{}
 
-	VXFORMAT_TC0() {}
+	VXFORMAT_TC0() :
+		position(0.0f), normal(0.0f)
+	{}
 };
 
 
@@ -33,7 +80,9 @@ struct VXFORMAT_TC1
 		position(_position),normal(_normal),texcoords(_texcoords)
 	{}
 
-	VXFORMAT_TC1() {}
+	VXFORMAT_TC1() :
+		position(0.0f),normal(0.0f),texcoords(0.0f)
+	{}
 };
 
 
@@ -42,8 +91,8 @@ struct VXFORMAT_TC1
 #define FVF_VXFORMAT_TC2 (D3DFVF_XYZ|D3DFVF_NORMAL|D3DFVF_TEX2)
 struct VXFORMAT_TC2
 {
-    VC3 position;
-    VC3 normal;
+	VC3 position;
+	VC3 normal;
 	VC2 texcoords;
 	VC2 texcoords2;
 
@@ -52,7 +101,9 @@ struct VXFORMAT_TC2
 		position(_position),normal(_normal),texcoords(_texcoords),texcoords2(_texcoords2)
 	{}
 
-	VXFORMAT_TC2() {}
+	VXFORMAT_TC2() :
+		position(0.0f), normal(0.0f),texcoords(0.0f),texcoords2(0.0f)
+	{}
 };
 
 
@@ -238,11 +289,11 @@ struct VXFORMAT_TOBJ
 #define FVF_VXFORMAT_PSD (D3DFVF_XYZ|D3DFVF_DIFFUSE)
 struct VXFORMAT_PSD
 {
-    Vector position;
+    VC3 position;
     DWORD color;
 
 	// Constructor
-	VXFORMAT_PSD(Vector _position,DWORD _color) :
+	VXFORMAT_PSD(VC3 _position,DWORD _color) :
 		position(_position),color(_color)
 	{}
 	VXFORMAT_PSD() :
@@ -275,3 +326,8 @@ struct VXFORMAT_BLEND
 
 	//VXFORMAT_BLEND() {}
 };
+
+
+typedef int VxFormat; // FIXME: replace with enum
+
+#endif // VERTEXFORMATS_H

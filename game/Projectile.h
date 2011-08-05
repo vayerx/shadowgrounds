@@ -13,7 +13,6 @@
 #include "tracking/ITrackerObjectType.h"
 #include "tracking/ITrackableObject.h"
 #include "IProjectileTrackerFactory.h"
-#include "unified_handle_type.h"
 
 namespace ui
 {
@@ -69,8 +68,8 @@ namespace game
 		 * Trackable by visual effects. Implements the 
 		 * IPointableObject interface.
 		 */
-		virtual const VC3 &getPointerPosition();
-		virtual const VC3 getPointerMiddleOffset();
+		virtual const VC3 &getPointerPosition() const;
+		virtual const VC3 getPointerMiddleOffset() const;
 
 		/**
 		 * Sets a direct path for the projectile.
@@ -101,8 +100,8 @@ namespace game
 		void setAfterLifeTime(int afterLifeTime);
 		void setParabolicPathHeight(float height);
 
-		void setHitTarget(Unit *unit, Part *part);
-		Unit *getHitUnit() const;
+		void setHitTarget(Unit *unit, Part *part); // first param can't be const
+		Unit *getHitUnit() const; // can't return const
 		Part *getHitPart() const;
 
 		void setOrigin(const VC3 &origin);
@@ -163,8 +162,6 @@ namespace game
 		void setFollowOrigin(bool followOrigin);
 		bool doesFollowOrigin();
 
-		void setOriginUnifiedHandle(UnifiedHandle uh);
-		UnifiedHandle getOriginUnifiedHandle() { return originUnifiedHandle; }
 
 		// implementation for the tracking interface...
 		virtual tracking::ITrackerObjectType *getType();
@@ -228,7 +225,7 @@ namespace game
 
 		int currentSplitPosition;
 
-		Unit *hitUnit;
+		Unit *hitUnit;  // can't be const
 		Part *hitPart;
 
 		//ui::VisualObject *visualObject;
@@ -249,8 +246,6 @@ namespace game
 		IProjectileTrackerFactory *projectileIsPointedBy;
 
 		Unit *forceGoreExplosionUnit;
-
-		UnifiedHandle originUnifiedHandle;
 
 	public:
 		int criticalHitDamageMax;

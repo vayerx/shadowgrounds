@@ -1,0 +1,184 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Finnish resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FIN)
+#ifdef _WIN32
+LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_LAUNCHER DIALOGEX 0, 0, 239, 212
+STYLE DS_SETFONT | WS_CHILD
+FONT 8, "Verdana", 400, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "launcher_launch",IDOK,156,7,76,15,NOT WS_TABSTOP
+    PUSHBUTTON      "launcher_cancel",IDCANCEL,156,22,76,15,NOT WS_TABSTOP
+    COMBOBOX        IDC_COMBOLANGUAGE,7,71,108,55,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBORESOLUTION,125,111,101,93,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "launcher_sounds",IDC_STATICSOUNDS,7,145,225,60
+    GROUPBOX        "launcher_graphics_level",IDC_STATICGRAPHICSLEVEL,7,88,225,55
+    COMBOBOX        IDC_COMBOGFXDETAIL,10,110,105,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "launcher_sounds_enabled",IDC_CHECKSOUND,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,156,105,10
+    CONTROL         "launcher_hardware3d",IDC_CHECKHARDWARE3D,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,156,100,10
+    COMBOBOX        IDC_COMBOSPEAKERTYPE,10,188,105,55,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBOMIXINGRATE,124,188,100,45,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "launcher_advanced",IDC_BUTTONADVANCED,156,38,76,15,NOT WS_VISIBLE | WS_DISABLED | NOT WS_TABSTOP
+    LTEXT           "launcher_language",IDC_CAPTION1,7,61,79,8
+    LTEXT           "launcher_gfx_detail_level",IDC_CAPTION2,10,100,110,8
+    LTEXT           "launcher_resolution",IDC_CAPTION3,125,101,101,8
+    LTEXT           "launcher_speaker_type",IDC_CAPTION4,10,179,110,8
+    LTEXT           "launcher_mixing_rate",IDC_CAPTION5,125,179,100,8
+    CONTROL         109,IDC_STATIC,"Static",SS_BITMAP,5,6,127,34
+    CONTROL         "launcher_eax",IDC_CHECKEAX,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,167,99,10
+    CONTROL         "launcher_vertical_sync",IDC_CHECKENABLEMENUVSYNC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,127,101,10
+    COMBOBOX        IDC_COMBOCONTROLTYPE,124,72,108,55,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "launcher_control_type",IDC_CAPTION6,124,63,83,8
+END
+
+IDD_ADVANCED DIALOGEX 0, 0, 239, 223
+STYLE DS_SETFONT | WS_CHILD
+FONT 8, "Verdana", 0, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "launcher_ok",IDOK,172,7,60,14
+    PUSHBUTTON      "launcher_cancel",IDC_CANCEEL,172,22,60,14
+    COMBOBOX        IDC_COMBOFAKESHADOWSTEXTUREQUALITY,5,49,106,65,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "launcher_fake_shadows_texture_quality",IDC_CAPTIONFAKESHADOWS,5,40,106,8
+    COMBOBOX        IDC_COMBOLIGHTNINGTEXTUREQUALITY,5,98,106,65,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "launcher_lighting_texture_quality",IDC_STATICLIGHTININGTEXTURE,5,90,106,8
+    COMBOBOX        IDC_COMBOPARTICLEEFFECTSLEVEL,5,123,106,65,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "launcher_particle_effects_level",IDC_STATICPARTICLEEFFECTAS,5,115,106,8
+    CONTROL         "launcher_extra_gamme_effects",IDC_CHECKEXTRAGAMMAEFFECTS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,121,145,111,10
+    CONTROL         "launcher_high_quality_lightmap",IDC_CHECKHIGHQUALITYLIGHTMAP,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,121,135,111,10
+    COMBOBOX        IDC_COMBOLIGHTINGLEVEL,5,73,106,65,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "launcher_lighting_level",IDC_STATICLIGHTNINGLEVEL,5,65,106,8
+    CONTROL         "launcher_render_glow",IDC_CHECKRENDERGLOW,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,121,155,111,10
+    COMBOBOX        IDC_COMBOSHADOWSLEVEL,5,148,106,65,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "launcher_shadows_level",IDC_STATICSHADOWLEVELS,5,140,106,8
+    COMBOBOX        IDC_COMBOSHADOWSTEXTUREQUALITY,5,173,106,65,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "launcher_shadows_texture_quality",IDC_STATICSHADOWSTEXTUREQUALITY,5,165,106,8
+    COMBOBOX        IDC_COMBOTEXTUREDETAILLEVEL,121,49,111,65,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "launcher_texture_detail_level",IDC_STATICTEXTUREDETAIL,121,40,111,8
+    CONTROL         "launcher_weather_effects",IDC_CHECKWEATHEREFFECTS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,121,125,111,10
+    CONTROL         "launcher_fullscreen",IDC_CHECKFULLSCREEN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,121,115,111,10
+    CONTROL         "launcher_distortion_effects",IDC_CHECKDISTORTIONEFFECTS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,121,165,111,10
+    CONTROL         "launcher_disapearing_corpses",IDC_CHECKDISAPEARINGCORPSES,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,121,175,111,10
+    COMBOBOX        IDC_COMBOANISOTROPIC,121,73,111,65,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "launcher_anisotrophic_filtering",IDC_CAPTIONANISOTROPIC,121,65,111,8
+    COMBOBOX        IDC_COMBOANTIALIAS,121,98,111,65,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "launcher_antialiasing",IDC_STATICANTIALIASING,121,90,111,8
+    CONTROL         "launcher_high_quality_video",IDC_CHECKHIGHQUALITYVIDEO,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,121,185,111,10
+    COMBOBOX        IDC_COMBOMISC,5,197,106,65,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "launcher_misc",IDC_STATICMISC,5,189,106,8
+    CONTROL         "launcher_reset_renderer_after_load",IDC_CHECKRESETRENDERERAFTERLOAD,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,121,195,111,10
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_LAUNCHER, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 232
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 205
+    END
+
+    IDD_ADVANCED, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 232
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 216
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BITMAP1             BITMAP                  "bitmap1.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON2               ICON                    "icon3.ico"
+#endif    // Finnish resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

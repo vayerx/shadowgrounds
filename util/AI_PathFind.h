@@ -15,8 +15,6 @@
 
 class IStorm3D_Model;
 
-class PathSimplifier;
-
 namespace game {
   class CoverMap;
 }
@@ -28,6 +26,8 @@ namespace util
 
 namespace frozenbyte {
 namespace ai {
+
+class PathSimplifier;
 
 // This should be in general os_types.h or such
 typedef unsigned short int uint16;

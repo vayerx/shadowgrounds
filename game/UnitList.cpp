@@ -582,15 +582,6 @@ for (int i = 0; i < iter->foundUnits.size(); i++)
 
 	}
 
-
-	UnifiedHandle UnitList::findUnifiedHandleByUniqueEditorObjectHandle(UniqueEditorObjectHandle ueoh) const
-	{
-		// TODO: iterate the list, and see if any unit has the given ueoh
-
-		return UNIFIED_HANDLE_NONE;
-	}
-
-
 	UnifiedHandle UnitList::getUnifiedHandle(int unitId) const
 	{
 		// why bother removing the bit, no reason for that... duh.

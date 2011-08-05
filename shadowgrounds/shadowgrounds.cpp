@@ -15,9 +15,10 @@
 #include <time.h>
 #include <stdio.h>
 #include <Storm3D_UI.h>
-#include <keyb.h>
+#include <keyb3.h>
 #include <SDL.h>
 #include "SDL_sound.h"
+#include "igios.h"
 
 #include "version.h"
 #include "configuration.h"
@@ -31,7 +32,7 @@
 #include "../sound/MusicPlaylist.h"
 
 #include "../ogui/Ogui.h"
-#include "../ogui/StormDriver.h"
+#include "../ogui/OguiStormDriver.h"
 
 #include "../ui/uidefaults.h"
 #include "../ui/Visual2D.h"
@@ -83,9 +84,6 @@
 
 #pragma comment(lib, "storm3dv2.lib")
 
-#ifndef USE_DSOUND
-#pragma comment(lib, "fmodvc.lib")
-#endif
 
 #endif
 
@@ -104,13 +102,18 @@
 #include "../game/physics/GamePhysics.h"
 #include "../physics/physics_lib.h"
 
-#include "igios.h"
+#include "../game/userdata.h"
 
+#include "../survivor/ScrambledZipPackage.h"
+
+#include "../util/crc32.h"
 
 using namespace game;
 using namespace ui;
 using namespace sfx;
 using namespace frozenbyte;
+
+
 
 // TEMP!!!
 /*
@@ -167,15 +170,15 @@ void set_mouse_borders()
 
 	if (force_given_boundary)
 	{
-		Keyb3_SetMouseBorders((int)(scr_width / mouse_sensitivity),
+		Keyb3_SetMouseBorders((int)(scr_width / mouse_sensitivity), 
 			(int)(scr_height / mouse_sensitivity));
-		Keyb3_SetMousePos((int)(scr_width / mouse_sensitivity) / 2,
+		Keyb3_SetMousePos((int)(scr_width / mouse_sensitivity) / 2, 
 			(int)(scr_height / mouse_sensitivity) / 2);
 	} else {
 		Storm3D_SurfaceInfo screenInfo = disposable_s3d->GetScreenSize();
-		Keyb3_SetMouseBorders((int)(screenInfo.width / mouse_sensitivity),
+		Keyb3_SetMouseBorders((int)(screenInfo.width / mouse_sensitivity), 
 			(int)(screenInfo.height / mouse_sensitivity));
-		Keyb3_SetMousePos((int)(screenInfo.width / mouse_sensitivity) / 2,
+		Keyb3_SetMousePos((int)(screenInfo.width / mouse_sensitivity) / 2, 
 			(int)(screenInfo.height / mouse_sensitivity) / 2);
 	}
 }
@@ -192,7 +195,7 @@ namespace {
 
 		{
 		}
-
+		
 		void debug(const char *msg)
 		{
 			logger.debug(msg);
@@ -218,11 +221,27 @@ namespace {
 
 /* --------------------------------------------------------- */
 
-void parse_commandline(const char *cmdline, bool *windowed, bool *compile)
+static void print_help()
+{
+  printf("Usage: shadowgrounds [options]\n"												\
+			"\t[-h | --help]         Display this help message\n"	\
+			"\t[-v | --version]      Display the game version\n"		\
+			"\t[-w | --windowed]     Run the game windowed\n"			\
+			"\t[-f | --fullscreen]   Run the game fullscreen\n"			\
+			"\t[-s | --nosound]      Do not access the sound card\n");//
+			//"\t[-g | --withgl] [x]   Use [x] instead of /usr/lib/libGL.so.1 for OpenGL\n");
+}
+
+static void print_version()
+{
+  printf("Shadowgrounds for Linux version 1.5.0\n");
+}
+
+void parse_commandline(const char *cmdline, int *windowed, bool *compile, bool *exit, bool *sound)
 {
 	if (cmdline != NULL)
 	{
-		// TODO: proper command line parsing
+		// TODO: proper command line parsing 
 		// (parse -option=value pairs?)
 		int cmdlineLen = strlen(cmdline);
 		char *parseBuf = new char[cmdlineLen + 1];
@@ -242,14 +261,31 @@ void parse_commandline(const char *cmdline, bool *windowed, bool *compile)
 			if (parseBuf[i] == '-')
 			{
 				i++;
-				if (strcmp(&parseBuf[i], "windowed") == 0)
+				if (strcmp(&parseBuf[i], "nosound") == 0 || strcmp(&parseBuf[i], "s") == 0) {
+				  Logger::getInstance()->info("No sound command line parameter given.");
+				  *sound = false;
+				}
+				else if (strcmp(&parseBuf[i], "help") == 0 || strcmp(&parseBuf[i], "h") == 0) {
+				  print_help();
+				  *exit = true;
+				}
+				else if (strcmp(&parseBuf[i], "version") == 0 || strcmp(&parseBuf[i], "v") == 0) {
+				  print_version();
+				  *exit = true;
+				}
+				else if (strcmp(&parseBuf[i], "windowed") == 0 || strcmp(&parseBuf[i], "w") == 0)
 				{
-					LOG_INFO("Windowed mode command line parameter given.");
+					Logger::getInstance()->info("Windowed mode command line parameter given.");
 					*windowed = true;
 				}
-				if (strcmp(&parseBuf[i], "compileonly") == 0)
+				else if (strcmp(&parseBuf[i], "fullscreen") == 0 || strcmp(&parseBuf[i], "f") == 0)
 				{
-					LOG_INFO("Compileonly command line parameter given.");
+					Logger::getInstance()->info("Fullscreen mode command line parameter given.");
+					*windowed = false;
+				}
+				else if (strcmp(&parseBuf[i], "compileonly") == 0)
+				{
+					Logger::getInstance()->info("Compileonly command line parameter given.");
 					*windowed = true;
 					*compile = true;
 				}
@@ -261,9 +297,9 @@ void parse_commandline(const char *cmdline, bool *windowed, bool *compile)
 					if (j > cmdlineLen)
 						j = cmdlineLen;
 
-					LOG_DEBUG("Option value given at command line.");
-					LOG_DEBUG(&parseBuf[i]);
-					LOG_DEBUG(&parseBuf[j]);
+					Logger::getInstance()->debug("Option value given at command line.");
+					Logger::getInstance()->debug(&parseBuf[i]);
+					Logger::getInstance()->debug(&parseBuf[j]);
 
 					if (opt->getVariableType() == IScriptVariable::VARTYPE_STRING)
 					{
@@ -298,7 +334,14 @@ void error_whine()
 {
 	bool foundErrors = false;
 	FILE *fo = NULL;
-	FILE *f = fopen("log.txt", "rb");
+
+#ifdef LEGACY_FILES
+	std::string path = igios_getUserDataPrefix() + "log.txt";
+#else
+	std::string path = igios_getUserDataPrefix() + "logs/log.txt";
+#endif
+
+	FILE *f = fopen(path.c_str(), "rb");
 	if (f != NULL)
 	{
 		fseek(f, 0, SEEK_END);
@@ -333,17 +376,21 @@ void error_whine()
 					|| strncmp(&buf[i + 1], "WARNING: ", 9) == 0
 					|| stillInError)
 				{
-					if (strncmp(&buf[i + 1], "ERROR: ", 7) == 0)
+					if (strncmp(&buf[i + 1], "ERROR: ", 7) == 0) 
 						skipErr = 7;
-					if (strncmp(&buf[i + 1], "WARNING: ", 9) == 0)
+					if (strncmp(&buf[i + 1], "WARNING: ", 9) == 0) 
 						skipErr = 9;
 					stillInError = true;
 
-					bool hadFileOrLine = false;
+					// bool hadFileOrLine = false;
 					foundErrors = true;
 					if (fo == NULL)
 					{
-						fo = fopen("log_errors.txt", "wb");
+#ifdef LEGACY_FILES
+						fo = fopen(igios_mapUserDataPrefix("log_errors.txt").c_str(), "wb");
+#else
+						fo = fopen(igios_mapUserDataPrefix("logs/log_errors.txt").c_str(), "wb");
+#endif
 						fprintf(fo, "\r\n*** Errors/warnings found - See \"log.txt\" for details. ***\r\n\r\n");
 					}
 					for (int j = i+1; j < flen+1; j++)
@@ -372,7 +419,7 @@ void error_whine()
 											fprintf(fo, "%s:", filename);
 									}
 									j = k;
-									hadFileOrLine = true;
+									// hadFileOrLine = true;
 									break;
 								}
 							}
@@ -393,7 +440,7 @@ void error_whine()
 											fprintf(fo, "%s: ", &buf[j + 5]);
 									}
 									j = k;
-									hadFileOrLine = true;
+									// hadFileOrLine = true;
 									break;
 								}
 							}
@@ -437,14 +484,100 @@ void error_whine()
 
 /* --------------------------------------------------------- */
 
+std::string get_path(const std::string &file)
+{
+  std::string::size_type pos = file.find_last_of('/');
+  if (pos != std::string::npos) return file.substr(0, pos + 1);
+  return "";
+}
+
+#ifdef __GLIBC__
+
+#ifndef __USE_GNU
+#define __USE_GNU
+#endif
+
+#include <execinfo.h>
+#include <ucontext.h>
+
+static void sighandler(int sig, siginfo_t *info, void *secret) {
+	ucontext_t *uc = (ucontext_t *) secret;
+
+	if (sig == SIGSEGV)
+#ifdef __x86_64__
+		printf("Got signal %d at %p from %p\n", sig, info->si_addr, (void *) uc->uc_mcontext.gregs[REG_RIP]);
+#else
+		printf("Got signal %d at %p from %p\n", sig, info->si_addr, (void *) uc->uc_mcontext.gregs[REG_EIP]);
+#endif
+	else
+		printf("Got signal %d\n", sig);
+	
+	exit(0);
+}
+#endif
+
+// need this so we can call exit in the case of segfault
+static void setsighandler(void) {
+#ifdef __GLIBC__
+	struct sigaction sa;
+
+	sa.sa_sigaction = sighandler;
+	sigemptyset (&sa.sa_mask);
+	sa.sa_flags = SA_RESTART | SA_SIGINFO;
+
+	sigaction(SIGSEGV, &sa, NULL);
+	sigaction(SIGUSR1, &sa, NULL);
+#endif
+}
+
+
+#if defined WIN32 && defined COMBINE
+int main(int argc, char *argv[]) __attribute((externally_visible));
+#endif
+
 int main(int argc, char *argv[])
 {
+try {
+
+#ifdef LEGACY_FILES
+	std::string path = igios_getUserDataPrefix() + "log.txt";
+#else
+	std::string path = igios_getUserDataPrefix() + "logs/log.txt";
+#endif
+
+	Logger::createInstanceForLogfile(path.c_str());
+
+	setsighandler();
 	{
+		// change working dir to the directory where the binary is located in
+#ifndef WIN32
+		std::string path = get_path(argv[0]);
+		if (path != "" && path != "./") {
+			char wd[256];
+			if (getcwd(wd, 256) == wd) {
+				std::string cwd = wd + std::string("/") + path;
+				chdir(cwd.c_str());
+			} else {
+				fprintf(stderr, "Couldn't get current working directory.\n");
+				return -1;
+			}
+		}
+#endif
+
+#ifdef DEMOVERSION
+		if (crc32_file("data1.fbz") != 0x4D83C4CE) {
+			fprintf(stderr, "Invalid demo data.\n");
+			exit(1);
+		}
+#endif
+
 		using namespace frozenbyte::filesystem;
 		boost::shared_ptr<IFilePackage> standardPackage(new StandardPackage());
-
+		
+#ifdef DEMOVERSION
+		boost::shared_ptr<IFilePackage> zipPackage1(new ScrambledZipPackage("data1.fbz"));
+#else
 		boost::shared_ptr<IFilePackage> zipPackage1(new ZipPackage("data1.fbz"));
-#ifndef DEMOVERSION
 		boost::shared_ptr<IFilePackage> zipPackage2(new ZipPackage("data2.fbz"));
 		boost::shared_ptr<IFilePackage> zipPackage3(new ZipPackage("data3.fbz"));
 		boost::shared_ptr<IFilePackage> zipPackage4(new ZipPackage("data4.fbz"));
@@ -458,6 +591,19 @@ int main(int argc, char *argv[])
 		manager.addPackage(zipPackage2, 2);
 		manager.addPackage(zipPackage3, 3);
 		manager.addPackage(zipPackage4, 4);
+#endif
+
+#ifdef DEMOVERSION
+		unsigned int crc = FilePackageManager::getInstance().getCrc("Data/Missions/Mission2/mission2.dhm");
+		if (crc) {
+			fprintf(stderr, "Invalid demo data.\n");
+			exit(2);
+		}
+		crc = FilePackageManager::getInstance().getCrc("Data/Missions/Mission10/mission10.dhm");
+		if (crc) {
+			fprintf(stderr, "Invalid demo data.\n");
+			exit(2);
+		}
 #endif
 	}
 
@@ -478,14 +624,15 @@ int main(int argc, char *argv[])
 	//printf(curdir);
 #endif
 
-	bool version_branch_failure = false;
+	// bool version_branch_failure = false;
 
 	bool show_fps = false;
 	bool show_polys = false;
-	bool show_terrain_mem_info = false;
+	// bool show_terrain_mem_info = false;
 
 	if (SDL_Init(SDL_INIT_VIDEO) < 0 || !SDL_GetVideoInfo())
 		return 0;   // FIXME: give error msg
+	atexit(&SDL_Quit);
 
 	if (Sound_Init() == 0)
 	{
@@ -511,7 +658,7 @@ int main(int argc, char *argv[])
 				vbf_buf[vbf_size] = '\0';
 				if (strncmp(vbf_buf, version_branch_name, strlen(version_branch_name)) != 0)
 				{
-					version_branch_failure = true;
+					version_branch_failure = true;					
 				}
 			} else {
 				version_branch_failure = true;
@@ -538,7 +685,8 @@ int main(int argc, char *argv[])
 	}
 	*/
 
-#ifndef DEMOVERSION
+// #ifndef DEMOVERSION
+#if 0
 	// don't allow demo, require actual full game data
 	{
 		char fname_buf[256];
@@ -591,12 +739,13 @@ int main(int argc, char *argv[])
 	configFile >> main_config;
 
 	GameOptionManager::getInstance()->load();
-
+	atexit(&GameConfigs::cleanInstance);
+	atexit(&GameOptionManager::cleanInstance);
 	/*
 	if (checksumfailure)
 	{
-		LOG_ERROR("Checksum mismatch.");
-		MessageBox(0,"Checksum mismatch or required data missing.\nMake sure you have all the application files properly installed.\n\nContact Frozenbyte for more info.","Error",MB_OK);
+		Logger::getInstance()->error("Checksum mismatch.");
+		MessageBox(0,"Checksum mismatch or required data missing.\nMake sure you have all the application files properly installed.\n\nContact Frozenbyte for more info.","Error",MB_OK); 
 		assert(!"Checksum mismatch");
 		return 0;
 	}
@@ -604,8 +753,8 @@ int main(int argc, char *argv[])
 	/*
 	if (version_branch_failure)
 	{
-		LOG_ERROR("Version data incorrect.");
-		MessageBox(0,"Version mismatch or required data missing.\nMake sure you have all the application files properly installed.\n\nSee game website for more info.","Error",MB_OK);
+		Logger::getInstance()->error("Version data incorrect.");
+		MessageBox(0,"Version mismatch or required data missing.\nMake sure you have all the application files properly installed.\n\nSee game website for more info.","Error",MB_OK); 
 		assert(!"Version data incorrect");
 		abort();
 		return 0;
@@ -613,18 +762,26 @@ int main(int argc, char *argv[])
 	*/
 
 
-	bool windowedMode = false;
+	int windowedMode = -1;
 	bool compileOnly = false;
+	bool exit = false;
+	bool soundCmdOn = true;
 
 	std::string cmdline;
 	for (int i = 1; i < argc; i++) {
 		cmdline.append(argv[i]);
 		if (i != argc) cmdline.append(" ");
 	}
-	parse_commandline(cmdline.c_str(), &windowedMode, &compileOnly);
+	parse_commandline(cmdline.c_str(), &windowedMode, &compileOnly, &exit, &soundCmdOn);
+	if (exit) return 0;
 
-	if (SimpleOptions::getBool(DH_OPT_B_WINDOWED))
-		windowedMode = true;
+	if (windowedMode == -1) {
+		if (SimpleOptions::getBool(DH_OPT_B_WINDOWED)) windowedMode = true;
+		else windowedMode = false;
+	} else {
+		SimpleOptions::setBool(DH_OPT_B_WINDOWED, windowedMode);
+		GameOptionManager::getInstance()->save();
+	}
 
 	//if (!windowedMode)
 	//{
@@ -633,7 +790,9 @@ int main(int argc, char *argv[])
 	//}
 
 	StormLogger logger(*Logger::getInstance());
+
 	IStorm3D *s3d = IStorm3D::Create_Storm3D_Interface(true, &filesystem::FilePackageManager::getInstance(), &logger);
+
 
 	disposable_s3d = s3d;
 
@@ -651,17 +810,17 @@ int main(int argc, char *argv[])
 	s3d->SetShadowQuality(SimpleOptions::getInt(DH_OPT_I_SHADOWS_TEXTURE_QUALITY));
 	s3d->SetLightingQuality(SimpleOptions::getInt(DH_OPT_I_LIGHTING_TEXTURE_QUALITY));
 	s3d->EnableGlow(SimpleOptions::getBool(DH_OPT_B_RENDER_GLOW));
-	//s3d->SetReflectionQuality(50);
 
-#ifndef PROJECT_SHADOWGROUNDS
 	if(SimpleOptions::getBool(DH_OPT_B_RENDER_REFLECTION))
 		s3d->SetReflectionQuality(50);
 	else
 		s3d->SetReflectionQuality(0);
-#endif
 
 	if(!SimpleOptions::getBool(DH_OPT_B_HIGH_QUALITY_VIDEO))
+	{
 		s3d->DownscaleVideos(true);
+		s3d->HigherColorRangeVideos(false);
+	}
 
 	// lipsync targets
 	{
@@ -700,8 +859,16 @@ int main(int argc, char *argv[])
 	{
 		no_joystick = true;
 	}
+	/*
+	bool force_given_boundary = false;
+	if (SimpleOptions::getBool(DH_OPT_B_MOUSE_FORCE_GIVEN_BOUNDARY))
+	{
+		force_given_boundary = true;
+	}
+	*/
+	float mouse_sensitivity = 1.0f;
 	mouse_sensitivity = SimpleOptions::getFloat(DH_OPT_F_MOUSE_SENSITIVITY);
-	if (mouse_sensitivity < 0.01f)
+	if (mouse_sensitivity < 0.01f) 
 		mouse_sensitivity = 0.01f;
 
 	// camera stuff
@@ -745,11 +912,6 @@ int main(int argc, char *argv[])
 		} else {
 			if(!s3d->SetWindowedMode(scr_width, scr_height, SimpleOptions::getBool(DH_OPT_B_WINDOW_TITLEBAR)))
 				stormInitSucces = false;
-			if(SimpleOptions::getBool(DH_OPT_B_MAXIMIZE_WINDOW))
-			{
-				//ShowWindow(GetActiveWindow(), SW_MAXIMIZE);
-				igios_unimplemented(); // FIXME: add something like this to storm
-			}
 		}
 	} else {
 		int bpp = SimpleOptions::getInt(DH_OPT_I_SCREEN_BPP);
@@ -765,23 +927,17 @@ int main(int argc, char *argv[])
 	if(!stormInitSucces)
 	{
 		std::string error = s3d->GetErrorString();
+
+		Logger::getInstance()->error("Failed to initialize renderer");
+		Logger::getInstance()->error(error.c_str());
+
+#ifdef LINUX
+        sysFatalError("Renderer initialization failure.\nSee the log for details.");
+#endif  // LINUX
+		// Linux version sometimes blows up here if initialization failed
 		delete s3d;
 		s3d = 0;
 
-		// FIXME: add something like this to storm?
-		igios_unimplemented();
-		/*
-		MSG msg = { 0 };
-		while(PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-		*/
-
-		igiosErrorMessage("Renderer initialization failure.");
-		LOG_ERROR("Failed to initialize renderer");
-		LOG_ERROR(error.c_str());
 		return 0;
 	}
 
@@ -795,19 +951,24 @@ int main(int argc, char *argv[])
 	if (!no_joystick) ctrlinit |= (KEYB3_CAPS_JOYSTICK | KEYB3_CAPS_JOYSTICK2 | KEYB3_CAPS_JOYSTICK3 | KEYB3_CAPS_JOYSTICK4 );
 	if (ctrlinit == 0)
 	{
-		LOG_WARNING("No control devices enabled, forcing mouse enable.");
+		Logger::getInstance()->warning("No control devices enabled, forcing mouse enable.");
 		ctrlinit = KEYB3_CAPS_MOUSE;
 	}
 	Keyb3_Init(ctrlinit);
+#ifdef FINAL_RELEASE_BUILD
 	Keyb3_SetActive(1);
+#else
+	Keyb3_SetActive(0);
+#endif
 
 	set_mouse_borders();
-
+	
 	Keyb3_UpdateDevices();
 
+	/*
 	if (SimpleOptions::getBool(DH_OPT_B_SHOW_TERRAIN_MEMORY_INFO))
 		show_terrain_mem_info = true;
-
+	*/
 	int tex_detail_level = SimpleOptions::getInt(DH_OPT_I_TEXTURE_DETAIL_LEVEL);
 	if (tex_detail_level < 0) tex_detail_level = 0;
 	if (tex_detail_level > 100) tex_detail_level = 100;
@@ -821,7 +982,7 @@ int main(int argc, char *argv[])
 
 	// make a scene
 	COL bgCol = COL(0.0f, 0.0f, 0.0f);
-	COL ambLight = COL(1.0f, 1.0f, 1.0f);
+	// COL ambLight = COL(1.0f, 1.0f, 1.0f);
 
 	disposable_scene = s3d->CreateNewScene();
 	disposable_scene->SetBackgroundColor(bgCol);
@@ -837,11 +998,10 @@ int main(int argc, char *argv[])
 		IStorm3D_Material *m = s3d->CreateNewMaterial("Load screen");
 		m->SetBaseTexture(t);
 
-		Storm3D_SurfaceInfo rc = s3d->GetCurrentDisplayMode();
-
-		disposable_scene->Render2D_Picture(m, Vector2D(0.0f, 0.0f), Vector2D((float) rc.width - 1, (float) rc.height - 1));
+        Storm3D_SurfaceInfo surfinfo = s3d->GetScreenSize();
+	
+		disposable_scene->Render2D_Picture(m, Vector2D(0,0), Vector2D((float)surfinfo.width-1,(float)surfinfo.height-1));
 		disposable_scene->RenderScene();
-
 		delete m;
 	}
 
@@ -854,8 +1014,8 @@ int main(int argc, char *argv[])
 	Ogui *ogui = new Ogui();
 	OguiStormDriver *ogdrv = new OguiStormDriver(s3d, disposable_scene);
 	ogui->SetDriver(ogdrv);
-	ogui->SetScale(OGUI_SCALE_MULTIPLIER * scr_width / 1024,
-		OGUI_SCALE_MULTIPLIER * scr_height / 768);
+	ogui->SetScale(OGUI_SCALE_MULTIPLIER * scr_width / 1024, 
+		OGUI_SCALE_MULTIPLIER * scr_height / 768); 
 	ogui->SetMouseSensitivity(mouse_sensitivity, mouse_sensitivity);
 	ogui->Init();
 
@@ -900,7 +1060,7 @@ int main(int argc, char *argv[])
 	// create cursors
 	if (no_mouse && no_keyboard && no_joystick)
 	{
-		LOG_ERROR("Mouse, keyboard and joystick disabled in config - forced keyboard.");
+		Logger::getInstance()->error("Mouse, keyboard and joystick disabled in config - forced keyboard.");
 	}
 	if (no_mouse)
 	{
@@ -915,17 +1075,17 @@ int main(int argc, char *argv[])
 	}
 
 	// cursors images for controller 0,1,2,3
-	loadDHCursors(ogui, 0);
-	loadDHCursors(ogui, 1);
-	loadDHCursors(ogui, 2);
-	loadDHCursors(ogui, 3);
+	loadDHCursors(ogui, 0); 
+	loadDHCursors(ogui, 1); 
+	loadDHCursors(ogui, 2); 
+	loadDHCursors(ogui, 3); 
 
 	ogui->SetCursorImageState(0, DH_CURSOR_ARROW);
 
 	// sounds
 	SoundLib *soundLib = NULL;
 	SoundMixer *soundMixer = NULL;
-	if(SimpleOptions::getBool(DH_OPT_B_SOUNDS_ENABLED))
+	if(soundCmdOn && SimpleOptions::getBool(DH_OPT_B_SOUNDS_ENABLED))
 	{
 		soundLib = new SoundLib();
 
@@ -938,6 +1098,7 @@ int main(int argc, char *argv[])
 
 		// TODO: speaker_type
 
+		/*
 		SoundLib::SpeakerType speakerType = SoundLib::StereoSpeakers;
 		const char *speakerString = SimpleOptions::getString(DH_OPT_S_SOUND_SPEAKER_TYPE);
 		if(speakerString)
@@ -955,19 +1116,23 @@ int main(int argc, char *argv[])
 			else if(strcmp(speakerString, "dolby") == 0)
 				speakerType = SoundLib::DolbyDigital;
 		}
+		*/
 
 		soundLib->setProperties(s_mixrate, s_softchan);
 		//soundLib->setSpeakers(speakerType);
 		soundLib->setAcceleration(s_use_hardware, s_use_eax, s_req_hardchan, s_max_hardchan);
 
+		// FIXME: should not be needed with OpenAL
+		soundLib->setSoundAPI("dsound");
+
 		if(soundLib->initialize())
 		{
-			LOG_DEBUG("Sound system initialized succesfully");
+			Logger::getInstance()->debug("Sound system initialized succesfully");
 			soundMixer = new SoundMixer(soundLib);
 		}
 		else
 		{
-			LOG_WARNING("Failed to sound system - sounds disabled");
+			Logger::getInstance()->warning("Failed to sound system - sounds disabled");
 
 			delete soundLib;
 			soundLib = 0;
@@ -989,8 +1154,9 @@ int main(int argc, char *argv[])
 		int fxVolume = SimpleOptions::getInt(DH_OPT_I_FX_VOLUME);
 		int musicVolume = SimpleOptions::getInt(DH_OPT_I_MUSIC_VOLUME);
 		int speechVolume = SimpleOptions::getInt(DH_OPT_I_SPEECH_VOLUME);
+		int ambientVolume = SimpleOptions::getInt(DH_OPT_I_AMBIENT_VOLUME);
 
-		soundMixer->setVolume(masterVolume, fxVolume, speechVolume, musicVolume);
+		soundMixer->setVolume(masterVolume, fxVolume, speechVolume, musicVolume, ambientVolume);
 		soundMixer->setMute(fxMute, speechMute, musicMute);
 	}
 
@@ -1006,11 +1172,14 @@ int main(int argc, char *argv[])
 	gameUI->setOguiStormDriver(ogdrv);
 	game->setUI(gameUI);
 	gameUI->setErrorWindow(errorWin);
+	// add keyb3 callback
+	GameController *gc = gameUI->getController(0);
+	Keyb3_AddController(gc);
 
 	msgproc_gameUI = gameUI;
 
 	MusicPlaylist *musicPlaylist = gameUI->getMusicPlaylist(game->singlePlayerNumber);
-
+	
 	if (SimpleOptions::getBool(DH_OPT_B_MUSIC_SHUFFLE))
 	{
 		musicPlaylist->setSuffle(true);
@@ -1042,11 +1211,13 @@ int main(int argc, char *argv[])
 
 	if (!compileOnly)
 	{
+		/*
 		float masterVolume = SimpleOptions::getInt(DH_OPT_I_MASTER_VOLUME) / 100.f;
 		float fxVolume = SimpleOptions::getInt(DH_OPT_I_FX_VOLUME)  / 100.f;
 		float volume = masterVolume * fxVolume;
 		if(!soundMixer || !SimpleOptions::getBool(DH_OPT_B_FX_ENABLED))
 			volume = 0;
+		*/
 
 		//ui::GameVideoPlayer::playVideo(disposable_scene, "Data\\Videos\\frozenbyte_logo.mpg", volume);
 		//ui::GameVideoPlayer::playVideo(disposable_scene, "Data\\Videos\\frozenbyte_logo.wmv", volume);
@@ -1060,14 +1231,14 @@ int main(int argc, char *argv[])
 			builder = soundMixer->getStreamBuilder();
 
 		ui::GameVideoPlayer::playVideo(disposable_scene, "Data\\Videos\\logo.wmv", builder);
-		ui::GameVideoPlayer::playVideo(disposable_scene, "Data\\Videos\\logo_pub.wmv", builder);
+		ui::GameVideoPlayer::playVideo(disposable_scene, "Data\\Videos\\logo_ag.ogg", builder);
 	}
-
+	
 	gameUI->startCommandWindow( 0 );
 	// do the loop...
 
 	Timer::update();
-	DWORD startTime = Timer::getTime();
+	DWORD startTime = Timer::getTime(); 
 	DWORD curTime = startTime;
 	DWORD curUnfactoredTime = startTime;
 	DWORD movementTime = startTime;
@@ -1087,7 +1258,7 @@ int main(int argc, char *argv[])
 
 	Keyb3_UpdateDevices();
 
-
+	
 
 	while (!quitRequested)
 	{
@@ -1121,11 +1292,11 @@ int main(int argc, char *argv[])
 		}
 
 		// read input
-
+		
 		Keyb3_UpdateDevices();
 
 		// can't use curTime here, because game may have just
-		// loaded a map, or something else alike -> curTime
+		// loaded a map, or something else alike -> curTime 
 		// would be badly behind... thus Timer::update and getTime.
 		Timer::update();
 
@@ -1162,7 +1333,7 @@ int main(int argc, char *argv[])
 			// because the game is still alive - thus projectiles may still
 			// refer to visualeffects (which gameui would delete ;)
 			if (game->inCombat)
-				game->endCombat();
+				game->endCombat(); 
 			quitRequested = true;
 			// break; // why break here?
 		}
@@ -1178,7 +1349,7 @@ int main(int argc, char *argv[])
 
 			if (curTime - movementTime > 0)
 			{
-				// VEEERY jerky...
+				// VEEERY jerky... 
 				//doMovement(game->gameMap, curTime - movementTime);
 				// attempt to fix that...
 				float delta;
@@ -1208,7 +1379,7 @@ int main(int argc, char *argv[])
 		// frame/poly counting
 		frames++;
 		{
-			if (Timer::getUnfactoredTime() - frameCountTime >= 100)
+			if (Timer::getUnfactoredTime() - frameCountTime >= 100) 
 			{
 				float seconds = (Timer::getUnfactoredTime() - frameCountTime) / 1000.0f;
 				fps = (int)(frames / seconds);
@@ -1229,9 +1400,9 @@ int main(int argc, char *argv[])
 							physicsStatsLogger->setLogLevel(LOGGER_LEVEL_INFO);
 							physicsStatsLogger->info("fps;frametime;dynamic_actors;active_actors;reported_contacts;fluids_system_count;fluid_particle_count;sim_start;sim_end;");
 						}
-
+						
 						int frametime = 1000;
-						if (fps > 0)
+						if (fps > 0) 
 							frametime = 1000/fps;
 						if (frametime > 500)
 							frametime = 500;
@@ -1324,7 +1495,7 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		// WARNING: assmuing that no thread is accessing storm3d's data structures at this moment
+		// WARNING: assuming that no thread is accessing storm3d's data structures at this moment
 		// (should be true, as physics thread should not do that in any other way, that by calling
 		// the logger, which itself is thread safe)
 		Logger::getInstance()->syncListener();
@@ -1367,10 +1538,10 @@ int main(int argc, char *argv[])
 				if (interface_generation_counter >= SimpleOptions::getInt(DH_OPT_I_CLEANUP_SKIP_RATE))
 				{
 					interface_generation_counter = 0;
-					LOG_DEBUG("About to create next interface generation.");
+					Logger::getInstance()->debug("About to create next interface generation.");
 					gameUI->nextInterfaceGeneration();
 				} else {
-					LOG_DEBUG("Skipping next interface generation due to cleanup skip rate.");
+					Logger::getInstance()->debug("Skipping next interface generation due to cleanup skip rate.");
 				}
 				if (gameUI->getEffects() != NULL)
 				{
@@ -1386,11 +1557,11 @@ int main(int argc, char *argv[])
 
 		if (apply_options_request)
 		{
-			LOG_DEBUG("About to apply game options...");
+			Logger::getInstance()->debug("About to apply game options...");
 			apply_options_request = false;
 			game::GameOptionManager *oman = game::GameOptionManager::getInstance();
 			game::OptionApplier::applyOptions(game, oman, ogui);
-			LOG_DEBUG("Game options applied.");
+			Logger::getInstance()->debug("Game options applied.");
 		}
 
 		if (compileOnly)
@@ -1399,35 +1570,6 @@ int main(int argc, char *argv[])
 //			exit(0);
 		}
 
-		igios_unimplemented(); // FIXME: move to storm
-		/*
-		// wait here if minimized...
-		HWND hWnd = GetActiveWindow();
-		while (quitRequested == false)
-		{
-			// psd -- handle windows messages
-			MSG msg = { 0 };
-			while(PeekMessage(&msg, hWnd, 0, 0, PM_NOREMOVE))
-			{
-				if(GetMessage(&msg, hWnd, 0, 0) <= 0)
-				{
-					gameUI->setQuitRequested();
-					//quitRequested = true;
-				}
-				else
-				{
-					TranslateMessage(&msg);
-					DispatchMessage(&msg);
-				}
-			}
-			if (lostFocusPause)
-			{
-				Sleep(500);
-			} else {
-				break;
-			}
-		}
-		*/
 	}
 
 	// HACK: end splash screen.
@@ -1488,7 +1630,7 @@ int main(int argc, char *argv[])
 
 	msgproc_gameUI = NULL;
 
-	LOG_DEBUG("Starting exit cleanup...");
+	Logger::getInstance()->debug("Starting exit cleanup...");
 
 	(Logger::getInstance())->setListener(NULL);
 
@@ -1496,8 +1638,9 @@ int main(int argc, char *argv[])
 
 	Animator::uninit();
 
-	unloadDHCursors(ogui, 0);
+	unloadDHCursors(ogui, 0); 
 
+	game->setUI(NULL);
 	delete gameUI;
 	delete game;
 
@@ -1526,7 +1669,7 @@ int main(int argc, char *argv[])
 	delete ogdrv;
 
 	Keyb3_Free();
-
+	
 	delete s3d;
 
 	GameOptionManager::cleanInstance();
@@ -1538,7 +1681,7 @@ int main(int argc, char *argv[])
 
 	Timer::uninit();
 
-	LOG_DEBUG("Cleanup done, exiting.");
+	Logger::getInstance()->debug("Cleanup done, exiting.");
 
 	Logger::cleanInstance();
 
@@ -1556,6 +1699,12 @@ int main(int argc, char *argv[])
 	Sound_Quit();
 	SDL_Quit();
 
+	} catch (const std::exception &e) {
+		fprintf(stderr, "Caught std::exception %s.\n", e.what());
+	} catch (...) {
+		fprintf(stderr, "Caught unknown exception.\n");
+	}
+
 	return 0;
 }
-
+ 

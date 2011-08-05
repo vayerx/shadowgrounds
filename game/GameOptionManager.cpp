@@ -2,8 +2,10 @@
 
 #include "precompiled.h"
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
 #pragma warning(disable:4786)
+#endif
 
 #include "GameOptionManager.h"
 
@@ -15,6 +17,7 @@
 #include "../container/LinkedList.h"
 #include "../convert/str2int.h"
 #include "../system/Logger.h"
+#include "../system/Miscellaneous.h"
 //#include "../util/Parser.h"
 #include "../editor/parser.h"
 #include "../editor/string_conversions.h"
@@ -25,6 +28,8 @@
 #include <stdlib.h>
 
 #include "../util/Debug_MemoryManager.h"
+
+#include "userdata.h"
 
 #define GAMEOPTIONS_PARAMS 6
 #define GAMEOPTIONS_PARAM_NAME 0
@@ -42,12 +47,23 @@
 // (need restart "br", "", ... )
 // (need restart / save at quit "br+", "", ... )
 
+/*
+option types:
+b = boolean
+i = integer
+f = float
+s = string
+a = need applying
+r = need restart
++ = save at quit
+*/
+
 using namespace frozenbyte;
 
 namespace {
-namespace Parser
+namespace parser
 {
-	bool HasProperty(const editor::ParserGroup &grp, const char *property)
+	bool hasProperty(const editor::ParserGroup &grp, const char *property)
 	{
 		if(!property)
 			return false;
@@ -59,15 +75,15 @@ namespace Parser
 		return true;
 	}
 
-	std::string GetString(const editor::ParserGroup &grp, const char *property)
+	std::string getString(const editor::ParserGroup &grp, const char *property)
 	{
 		if(!property)
-			return false;
+			return "";
 
 		return grp.getValue(property);
 	}
 
-	int GetInt(const editor::ParserGroup &grp, const char *property)
+	int getInt(const editor::ParserGroup &grp, const char *property)
 	{
 		if(!property)
 			return false;
@@ -76,7 +92,7 @@ namespace Parser
 		return atoi(val.c_str());
 	}
 
-	float GetFloat(const editor::ParserGroup &grp, const char *property)
+	float getFloat(const editor::ParserGroup &grp, const char *property)
 	{
 		if(!property)
 			return false;
@@ -91,7 +107,7 @@ namespace Parser
 namespace game
 {
 	// option, type, group, (default value), (max value), (toggle step)
-	char *gameOptions[(DH_OPT_AMOUNT + 1) * GAMEOPTIONS_PARAMS] =
+	static const char *gameOptions[(DH_OPT_AMOUNT + 1) * GAMEOPTIONS_PARAMS] =
 	{
 		"_reserved_", "b", "Reserved", "-", "-", "-",
 		"force_cover_bin_recreate", "b", "Precalc", "0", "-", "-",
@@ -140,9 +156,9 @@ namespace game
 		"4th_player_enabled", "b", "Players", "0", "-", "-",
 
 #ifdef LEGACY_FILES
-		"1st_player_keybinds", "s", "Players", "Config/keybinds.txt", "-", "-",
+		"1st_player_keybinds", "s", "Players", igios_mapUserDataPrefix("Config/keybinds.txt").c_str(), "-", "-",
 #else
-		"1st_player_keybinds", "s", "Players", "config/keybinds.txt", "-", "-",
+		"1st_player_keybinds", "s", "Players", igios_mapUserDataPrefix("config/keybinds.txt").c_str(), "-", "-",
 #endif
 		"2nd_player_keybinds", "s", "Players", "-", "-", "-",
 		"3rd_player_keybinds", "s", "Players", "-", "-", "-",
@@ -243,14 +259,14 @@ namespace game
 		"autoaim_vertical", "b", "Cheats", "-", "-", "-",
 
 		"sounds_enabled", "b+", "Sounds", "1", "-", "-",
-		"music_shuffle", "b+", "Sounds", "0", "-", "-",
+		"music_shuffle", "b+", "Sounds", "1", "-", "-",
 		"master_volume", "ia+", "Sounds", "100", "-", "-",
 		"music_enabled", "ba+", "Sounds", "1", "-", "-",
-		"music_volume", "ia+", "Sounds", "75", "-", "-",
+		"music_volume", "ia+", "Sounds", "90", "-", "-",
 		"speech_enabled", "ba+", "Sounds", "1", "-", "-",
-		"speech_volume", "ia+", "Sounds", "75", "-", "-",
+		"speech_volume", "ia+", "Sounds", "100", "-", "-",
 		"fx_enabled", "ba+", "Sounds", "1", "-", "-",
-		"fx_volume", "ia+", "Sounds", "75", "-", "-",
+		"fx_volume", "ia+", "Sounds", "90", "-", "-",
 
 		"camera_mode", "i", "Camera", "3", "4", "1",
 		"camera_range", "i", "Camera", "400", "800", "50",
@@ -600,7 +616,7 @@ namespace game
 		"render_sky_bloom", "ba+", "Graphics", "1", "-", "-",
 
 		"debug_visualize_projectiles_extended", "b", "Debug", "0", "-", "-",
-		"ambient_volume", "ia+", "Sounds", "100", "-", "-",
+		"ambient_volume", "ia+", "Sounds", "80", "-", "-",
 		"forcewear_enabled", "b+", "Game", "0", "-", "-",
 
 		"mapview_ambient_lighting", "f", "Graphics", "0.15f", "-", "-",
@@ -626,27 +642,10 @@ namespace game
 		"savegame_allow_overwrite", "b", "Game", "1", "-", "-",
 
 		"show_tutorial_hints", "b+", "Game", "1", "-", "-",
-
-		"debug_visualize_terrainobjects", "b", "Debug", "0", "-", "-",
-		"debug_visualize_terrainobjects_of_name", "s", "Debug", "0", "-", "-",
-		"debug_visualize_terrainobjects_extended", "b", "Debug", "0", "-", "-",
-
-#ifdef PROJECT_CLAW_PROTO
-		"claw_aim_mode", "i+", "Controllers", "1", "-", "-",
-#else
-		"_reserved369", "i", "Reserved", "-", "-", "-",
-#endif
-
-		"_reserved370", "i", "Reserved", "-", "-", "-",
-		"_reserved371", "i", "Reserved", "-", "-", "-",
-		"_reserved372", "i", "Reserved", "-", "-", "-",
-		"_reserved373", "i", "Reserved", "-", "-", "-",
-		"_reserved374", "i", "Reserved", "-", "-", "-",
-		"_reserved375", "i", "Reserved", "-", "-", "-",
-		"_reserved376", "i", "Reserved", "-", "-", "-",
-		"_reserved377", "i", "Reserved", "-", "-", "-",
-		"_reserved378", "i", "Reserved", "-", "-", "-",
-		"_reserved379", "i", "Reserved", "-", "-", "-",
+		"joystick1_deadzone", "i+", "Controllers", "0", "1000", "-",
+		"joystick2_deadzone", "i+", "Controllers", "0", "1000", "-",
+		"joystick3_deadzone", "i+", "Controllers", "0", "1000", "-",
+		"joystick4_deadzone", "i+", "Controllers", "0", "1000", "-",
 
 		// first fill the _reserved_ options with something useful
 		// then add more if necessary..
@@ -654,26 +653,20 @@ namespace game
 		"***", "***", "***", "***", "***", "***",
 	};
 	
-	GameOptionManager *GameOptionManager::instance = NULL;
+	std::auto_ptr<GameOptionManager> GameOptionManager::instance;
 
 
 	GameOptionManager *GameOptionManager::getInstance()
 	{
-		if (instance == NULL)
-		{
-			instance = new GameOptionManager(GameConfigs::getInstance());
-		}
-		return instance;
+		if (!instance.get())
+			instance.reset(new GameOptionManager(GameConfigs::getInstance()));
+		return instance.get();
 	}
 
 
 	void GameOptionManager::cleanInstance()
 	{
-		if (instance != NULL)
-		{
-			delete instance;
-			instance = NULL;
-		}
+		instance.reset();
 	}
 
 
@@ -726,19 +719,29 @@ namespace game
 		//Parser::Parser def_options_config("Data/Misc/default_game_options.txt");
 		//Parser::Parser locked_options_config("Data/Misc/locked_game_options.txt");
 
-		editor::Parser options_config(true, false);
-		editor::Parser def_options_config(true, false);
-		editor::Parser locked_options_config(true, false);
+		editor::EditorParser options_config(true, false);
+		editor::EditorParser def_options_config(true, false);
+		editor::EditorParser locked_options_config(true, false);
 #ifdef LEGACY_FILES
-		filesystem::FilePackageManager::getInstance().getFile("Config/options.txt") >> options_config;
-		filesystem::FilePackageManager::getInstance().getFile("Data/Misc/default_game_options.txt") >> def_options_config;
-		filesystem::FilePackageManager::getInstance().getFile("Data/Misc/locked_game_options.txt") >> locked_options_config;
-#else
-		editor::Parser dev_options_config(true, false);
+		filesystem::InputStream options_file = filesystem::FilePackageManager::getInstance().getFile(igios_mapUserDataPrefix("Config/options.txt"));
+		options_file >> options_config;
 
-		filesystem::FilePackageManager::getInstance().getFile("config/options.txt") >> options_config;
-		filesystem::FilePackageManager::getInstance().getFile("data/misc/default_game_options.txt") >> def_options_config;
-		filesystem::FilePackageManager::getInstance().getFile("data/misc/locked_game_options.txt") >> locked_options_config;
+		filesystem::InputStream def_options_file = filesystem::FilePackageManager::getInstance().getFile("Data/Misc/default_game_options.txt");
+		def_options_file >> def_options_config;
+
+		filesystem::InputStream locked_options_file = filesystem::FilePackageManager::getInstance().getFile("Data/Misc/locked_game_options.txt");
+		locked_options_file >> locked_options_config;
+#else
+		editor::EditorParser dev_options_config(true, false);
+
+		filesystem::InputStream options_file = filesystem::FilePackageManager::getInstance().getFile(igios_mapUserDataPrefix("config/options.txt"));
+		options_file >> options_config;
+
+		filesystem::InputStream def_options_config = filesystem::FilePackageManager::getInstance().getFile("data/misc/default_game_options.txt");
+		def_options_file >> def_options_config;
+
+		filesystem::InputStream locked_options_file = filesystem::FilePackageManager::getInstance().getFile("data/misc/locked_game_options.txt");
+		locked_options_file >> locked_options_config;
 
 		FILE *devf = fopen("config/dev/dev_options.txt", "rb");
 		if (devf != NULL)
@@ -753,7 +756,7 @@ namespace game
 		// TODO: this is not at all effective...
 		for (int i = 0; i < DH_OPT_AMOUNT; i++)
 		{
-			char *grpName = gameOptions[i * GAMEOPTIONS_PARAMS + 2];
+			const char *grpName = gameOptions[i * GAMEOPTIONS_PARAMS + 2];
 			//const Parser::string_map user_props = options_config.FindGroup(grpName).GetProperties();
 			//const Parser::string_map def_props = def_options_config.FindGroup(grpName).GetProperties();
 			//const Parser::string_map locked_props = locked_options_config.FindGroup(grpName).GetProperties();
@@ -777,35 +780,35 @@ namespace game
 			{
 				// nop
 #else
-			if (Parser::HasProperty(dev_props, gameOptions[i * GAMEOPTIONS_PARAMS]))
+			if (parser::hasProperty(dev_props, gameOptions[i * GAMEOPTIONS_PARAMS]))
 			{
 				props = &dev_props;
 				// (get rid of unreferenced warnings...)
 				bool dummy;
-				dummy = Parser::HasProperty(locked_props, gameOptions[i * GAMEOPTIONS_PARAMS]);
-				dummy = Parser::HasProperty(user_props, gameOptions[i * GAMEOPTIONS_PARAMS]);
-				dummy = Parser::HasProperty(def_props, gameOptions[i * GAMEOPTIONS_PARAMS]);
+				dummy = parser::hasProperty(locked_props, gameOptions[i * GAMEOPTIONS_PARAMS]);
+				dummy = parser::hasProperty(user_props, gameOptions[i * GAMEOPTIONS_PARAMS]);
+				dummy = parser::hasProperty(def_props, gameOptions[i * GAMEOPTIONS_PARAMS]);
 #endif
 			} else {
-				if (Parser::HasProperty(locked_props, gameOptions[i * GAMEOPTIONS_PARAMS]))
+				if (parser::hasProperty(locked_props, gameOptions[i * GAMEOPTIONS_PARAMS]))
 				{
 					props = &locked_props;
 					isLocked = true;
 
 					// (get rid of unreferenced warnings...)
-					bool dummy;
-					dummy = Parser::HasProperty(user_props, gameOptions[i * GAMEOPTIONS_PARAMS]);
-					dummy = Parser::HasProperty(def_props, gameOptions[i * GAMEOPTIONS_PARAMS]);
+					bool dummy __attribute__((unused));
+					dummy = parser::hasProperty(user_props, gameOptions[i * GAMEOPTIONS_PARAMS]);
+					dummy = parser::hasProperty(def_props, gameOptions[i * GAMEOPTIONS_PARAMS]);
 				} else {
-					if (Parser::HasProperty(user_props, gameOptions[i * GAMEOPTIONS_PARAMS]))
+					if (parser::hasProperty(user_props, gameOptions[i * GAMEOPTIONS_PARAMS]))
 					{
 						props = &user_props;
 
 						// (get rid of unreferenced warnings...)
-						bool dummy;
-						dummy = Parser::HasProperty(def_props, gameOptions[i * GAMEOPTIONS_PARAMS]);
+						bool dummy __attribute__((unused));
+						dummy = parser::hasProperty(def_props, gameOptions[i * GAMEOPTIONS_PARAMS]);
 					} else {
-						if (Parser::HasProperty(def_props, gameOptions[i * GAMEOPTIONS_PARAMS]))
+						if (parser::hasProperty(def_props, gameOptions[i * GAMEOPTIONS_PARAMS]))
 						{
 							props = &def_props;
 						} else {
@@ -844,7 +847,7 @@ namespace game
 					else
 						value = false;
 				} else {
-					if (Parser::GetInt(*props, gameOptions[i * GAMEOPTIONS_PARAMS]) == 1)
+					if (parser::getInt(*props, gameOptions[i * GAMEOPTIONS_PARAMS]) == 1)
 						value = true;
 				}
 				GameConfigs::getInstance()->addBoolean(gameOptions[i * GAMEOPTIONS_PARAMS], value, i);
@@ -862,7 +865,7 @@ namespace game
 				{
 					value = str2int(gameOptions[i * GAMEOPTIONS_PARAMS + GAMEOPTIONS_PARAM_DEFAULTVALUE]);
 				} else {
-					value = Parser::GetInt(*props, gameOptions[i * GAMEOPTIONS_PARAMS]);
+					value = parser::getInt(*props, gameOptions[i * GAMEOPTIONS_PARAMS]);
 				}
 				GameConfigs::getInstance()->addInt(gameOptions[i * GAMEOPTIONS_PARAMS], value, i);				
 			}
@@ -879,7 +882,7 @@ namespace game
 				{
 					value = (float)atof(gameOptions[i * GAMEOPTIONS_PARAMS + GAMEOPTIONS_PARAM_DEFAULTVALUE]);
 				} else {
-					value = Parser::GetFloat(*props, gameOptions[i * GAMEOPTIONS_PARAMS]);
+					value = parser::getFloat(*props, gameOptions[i * GAMEOPTIONS_PARAMS]);
 				}
 
 				GameConfigs::getInstance()->addFloat(gameOptions[i * GAMEOPTIONS_PARAMS], value, i);				
@@ -902,12 +905,8 @@ namespace game
 						value = "";
 					}
 				} else {
-					valstr = Parser::GetString(*props, gameOptions[i * GAMEOPTIONS_PARAMS]);
+					valstr = parser::getString(*props, gameOptions[i * GAMEOPTIONS_PARAMS]);
 					value = valstr.c_str();
-					if (strcmp(value, "-") == 0)
-					{
-						value = "";
-					}
 				}
 
 				GameConfigs::getInstance()->addString(gameOptions[i * GAMEOPTIONS_PARAMS], value, i);	
@@ -935,7 +934,7 @@ namespace game
 		// NOTE: but should save profile specific options to profile directory though, which
 		//       means those values that were read from the profile directory.
 
-		editor::Parser options_config;//("Config/options.txt");
+		editor::EditorParser options_config;//("Config/options.txt");
 
 		for (int i = 0; i < DH_OPT_AMOUNT; i++)
 		{
@@ -954,9 +953,9 @@ namespace game
 
 		std::fstream o;
 #ifdef LEGACY_FILES
-		o.open( "Config/options.txt", std::ios::out );
+		o.open( igios_mapUserDataPrefix("Config/options.txt").c_str(), std::ios::out );
 #else
-		o.open( "config/options.txt", std::ios::out );
+		o.open( igios_mapUserDataPrefix("config/options.txt").c_str(), std::ios::out );
 #endif
 
 		o << options_config;
@@ -1231,7 +1230,7 @@ namespace game
 
 	bool GameOptionManager::doesOptionNeedApply(int id)
 	{
-		char *typeStr = gameOptions[id * GAMEOPTIONS_PARAMS + GAMEOPTIONS_PARAM_TYPE];
+		const char *typeStr = gameOptions[id * GAMEOPTIONS_PARAMS + GAMEOPTIONS_PARAM_TYPE];
 
 		if (typeStr[1] != '\0')
 		{

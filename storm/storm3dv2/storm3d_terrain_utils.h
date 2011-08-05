@@ -5,39 +5,40 @@
 
 #include <boost/shared_ptr.hpp>
 #include <string>
-#include <d3d9.h>
-#include <atlbase.h>
 #include <vector>
+#include <SDL.h>
+#include <GL/glew.h>
+#include "igios.h"
+#include "igios3D.h"
 
 class Storm3D_Texture;
 class IStorm3D_Logger;
-struct IDirect3DDevice9;
+
+void setTracing(bool tracing_);
+void activeShaderNames();
 
 namespace frozenbyte {
 namespace storm {
 
 class VertexShader
 {
-	CComPtr<IDirect3DVertexShader9> handle;
-	CComPtr<IDirect3DVertexDeclaration9> declaration;
-	
-	IDirect3DDevice9 &device;
-	std::vector<D3DVERTEXELEMENT9> elements;
+private:
+	GLuint handle;
+	std::vector<Element> elements;
+	std::string nm;
+	void createVertexShader(const std::string &name);
 
 public:
-	VertexShader(IDirect3DDevice9 &device);
+	static void disable();
+
+	VertexShader();
 	~VertexShader();
 
-	void create2DShader2Tex();
-
 	void createTerrainShader();
-	void createAtiTerrainShader();
-	void createAtiLightingShader();
 	void createNvTerrainShader();
 	void createNvLightingShader();
 
 	void createDefaultShader();
-	//void createLightingShader();
 	void createLightingShader_0light_noreflection();
 	void createLightingShader_0light_localreflection();
 	void createLightingShader_0light_reflection();
@@ -63,7 +64,6 @@ public:
 	void createDefaultProjectionShaderFlat();
 	void createBoneShader();
 	void createBasicBoneLightingShader();
-	//void createBoneLightingShader();
 	void createBoneLightingShader_0light_noreflection();
 	void createBoneLightingShader_0light_reflection();
 	void createBoneLightingShader_1light_noreflection();
@@ -81,18 +81,7 @@ public:
 	void createBoneProjectionShaderPoint();
 	void createBoneProjectionShaderFlat();
 
-	void createAtiDepthShader();
 	void createAtiDepthTerrainShader();
-	void createAtiBoneDepthShader();
-	void createAtiShadowShaderDirectional();
-	void createAtiShadowShaderPoint();
-	void createAtiShadowShaderFlat();
-	void createAtiBoneShadowShaderDirectional();
-	void createAtiBoneShadowShaderPoint();
-	void createAtiBoneShadowShaderFlat();
-	void createAtiTerrainShadowShaderDirectional();
-	void createAtiTerrainShadowShaderPoint();
-	void createAtiTerrainShadowShaderFlat();
 	void createNvTerrainShadowShaderDirectional();
 	void createNvTerrainShadowShaderPoint();
 	void createNvTerrainShadowShaderFlat();
@@ -117,13 +106,15 @@ public:
 
 class PixelShader
 {
-	CComPtr<IDirect3DPixelShader9> handle;
-	IDirect3DDevice9 &device;
-
-	std::vector<D3DVERTEXELEMENT9> elements;
+private:
+	GLuint handle;
+	std::string nm;
+	void createPixelShader(const std::string &name);
 
 public:
-	PixelShader(IDirect3DDevice9 &device);
+	static void disable();
+
+	PixelShader();
 	~PixelShader();
 
 	void createTerrainShader();
@@ -133,21 +124,6 @@ public:
 	void createGlowPs14Shader();
 	void createGlowFinalShader();
 	void createLightShader();
-	void createAtiLightConeShader_Texture();
-	void createAtiLightConeShader_NoTexture();
-	void createAtiFloatLightConeShader_Texture();
-	void createAtiFloatLightConeShader_NoTexture();
-	void createAtiDepthPixelShader();
-	void createAtiShadowPixelShader();
-	void createAtiShadowSolidPixelShader();
-	void createAtiShadowTerrainPixelShader();
-	void createAtiNoShadowPixelShader();
-	void createAtiNoShadowTerrainPixelShader();
-	void createAtiFloatDepthPixelShader();
-	void createAtiFloatShadowPixelShader();
-	void createAtiFloatShadowTerrainPixelShader();
-	void createAtiFloatNoShadowPixelShader();
-	void createAtiFloatNoShadowTerrainPixelShader();
 	void createNvShadowShader();
 	void createNvSmoothShadowShader();
 	void createNvNoShadowShader();
@@ -176,6 +152,7 @@ public:
 	void createProceduralOffsetBaseShader();
 	void createBlackWhiteShader();
 	void createOffsetBlendShader();
+	void createSkyboxShader();
 
 	void apply() const;
 	bool hasShader() const;
@@ -183,7 +160,7 @@ public:
 
 class VertexBuffer
 {
-	CComPtr<IDirect3DVertexBuffer9> buffer;
+	GLuint buffer;
 	int vertexSize;
 	int vertexAmount;
 	bool dynamic;
@@ -193,18 +170,19 @@ public:
 	~VertexBuffer();
 
 	void release();
-	void create(IDirect3DDevice9 &device, int vertexAmount, int vertexSize, bool dynamic);
+	void create(int vertexAmount, int vertexSize, bool dynamic);
 	void *lock();
 	void *unsafeLock(int offset, int amount);
 	void unlock();
 
-	void apply(IDirect3DDevice9 &device, int stream) const;
+	void apply(int stream) const;
+	void apply(int stream, int offset) const;
 	operator bool() const;
 };
 
 class IndexBuffer
 {
-	CComPtr<IDirect3DIndexBuffer9> buffer;
+	GLuint buffer;
 	int faceAmount;
 	bool dynamic;
 
@@ -217,24 +195,19 @@ public:
 	void setLogger(IStorm3D_Logger *logger);
 
 	void release();
-	void create(IDirect3DDevice9 &device, int faceAmount, bool dynamic);
+	void create(int faceAmount, bool dynamic);
 	unsigned short *lock();
 	void unlock();
 
-	void render(IDirect3DDevice9 &device, int faceAmount, int maxIndex, int vertexOffset = 0, int startIndex = 0) const;
+	void render(int faceAmount, int maxIndex, int vertexOffset = 0, int startIndex = 0) const;
 	operator bool() const;
 };
 
 boost::shared_ptr<Storm3D_Texture> createSharedTexture(Storm3D_Texture *texture);
-void validateDevice(IDirect3DDevice9 &device, IStorm3D_Logger *logger);
-
-void setCurrentAnisotrophy(int max);
-void applyMaxAnisotrophy(IDirect3DDevice9 &device, int stageAmount);
-void enableMinMagFiltering(IDirect3DDevice9 &device, int startStage, int endStage, bool enable);
-void enableMipFiltering(IDirect3DDevice9 &device, int startStage, int endStage, bool enable);
+void validateDevice(IStorm3D_Logger *logger);
 
 void setInverseCulling(bool enable);
-void setCulling(IDirect3DDevice9 &device, DWORD type);
+void setCulling(CULLMODE type);
 
 } // storm
 } // frozenbyte

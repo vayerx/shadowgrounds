@@ -16,7 +16,7 @@
 #ifdef DEBUG_CHECK_FOR_UNINITIALIZED_SCRIPT_VALUE_USE
 typedef CheckedIntValue ScriptLastValueType;
 #else
-typedef int ScriptLastValueType;
+typedef intptr_t ScriptLastValueType;
 #endif
 
 
@@ -37,7 +37,7 @@ namespace util
 #ifdef DEBUG_CHECK_FOR_UNINITIALIZED_SCRIPT_VALUE_USE
 		CheckedIntValue lastValue;
 #else
-		int lastValue;
+		intptr_t lastValue;
 #endif
 		LinkedList *ipStack;	// used to store ip, ifDepth and thenBranch
 		LinkedList *userStack;	// used to store user push- and popValues
@@ -47,11 +47,11 @@ namespace util
 #ifdef DEBUG_CHECK_FOR_UNINITIALIZED_SCRIPT_VALUE_USE
 		CheckedIntValue secondaryValue;
 #else
-		int secondaryValue;
+		intptr_t secondaryValue;
 #endif
 		int misbehaveCounter;
 		
-		int ifDepth;
+		intptr_t ifDepth;
 		bool thenBranch;
 		void *data;
 

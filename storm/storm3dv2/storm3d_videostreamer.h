@@ -20,12 +20,15 @@ public:
 	bool hasEnded() const;
 	int getTime() const;
 	bool isPlaying() const;
-	
+
+	void stop();
+
 	IStorm3D_Material *getMaterial();
 	void setPosition(const VC2 &position, const VC2 &size);
 	void setAlpha(float alpha);
 	void update();
 	void render(IStorm3D_Scene *scene);
+	void getTextureCoords(float &x, float &y);
 };
 
 #endif

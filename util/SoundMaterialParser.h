@@ -30,7 +30,7 @@ public:
 	int getMaterialAmount() const;
 	const std::string &getMaterialName(int index) const;
 
-	const int getMaterialIndexByName(const std::string &name) const;
+	int getMaterialIndexByName(const std::string &name) const;
 
 	struct SoundMaterial
 	{

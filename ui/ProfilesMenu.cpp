@@ -1,6 +1,10 @@
 
 #include "precompiled.h"
 
+#include <sstream>
+#include <assert.h>
+#include <boost/lexical_cast.hpp>
+
 #include "ProfilesMenu.h"
 
 #include "../ogui/Ogui.h"
@@ -14,16 +18,14 @@
 #include "GameController.h"
 #include "MenuCollection.h"
 #include "../game/DHLocaleManager.h"
-#include "../system/timer.h"
 #include "../util/StringUtil.h"
-#include "../game/SaveGameVars.h"
+#include "../game/savegamevars.h"
 #include "../game/options/options_game.h"
 
 #include "../util/Debug_MemoryManager.h"
 
-#include <sstream>
-#include <assert.h>
-#include <boost/lexical_cast.hpp>
+#include "igios.h"
+#include "../game/userdata.h"
 
 using namespace game;
 
@@ -93,7 +95,7 @@ ProfilesMenu::ProfilesMenu( MenuCollection* menu, MenuCollection::Fonts* fonts, 
 		std::string temp = enum1->getNextProfile();
 		if( temp == std::string( gameProfiles->getCurrentProfile( 0 ) ) ) 
 			profilesCurrent = i;
-		
+                                                                             
 		i++;
 
 		profileData.push_back( temp );
@@ -376,7 +378,7 @@ void ProfilesMenu::applyChanges()
 	tmp += "/config/keybinds.txt";
 #endif
 
-	game->gameUI->getController( 0 )->loadConfiguration( tmp.c_str() );
+	game->gameUI->getController( 0 )->loadConfiguration( igios_mapUserDataPrefix(tmp).c_str() );
 	if( game->gameUI->getController( 0 )->controllerTypeHasMouse() )
 	{
 		game::SimpleOptions::setBool( DH_OPT_B_1ST_PLAYER_HAS_CURSOR, true );

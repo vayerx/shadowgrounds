@@ -14,7 +14,11 @@
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
+#include <boost/shared_ptr.hpp>
+#include <string>
+#include <vector>
 #include "storm3d_scene.h"
+#include "Storm3D_SystemSurface.h"
 
 
 

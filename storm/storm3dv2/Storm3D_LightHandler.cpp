@@ -19,7 +19,7 @@
 #include "storm3d.h"
 #include "storm3d_lighthandler.h"
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 
 //------------------------------------------------------------------

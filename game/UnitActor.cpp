@@ -33,7 +33,7 @@
 #include "../sound/SoundLooper.h"
 
 #include "../util/LightAmountManager.h"
-#include "../util/Colormap.h"
+#include "../util/ColorMap.h"
 #include "../util/HelperPositionCalculator.h"
 #include "../ui/Animator.h"
 #include "../ui/AnimationSet.h"
@@ -51,15 +51,6 @@
 #include "DHLocaleManager.h"
 #include "../ui/VisualEffect.h"
 #include "IAIDirectControl.h"
-
-#ifdef PROJECT_CLAW_PROTO
-	#include <istorm3d_model.h>
-	#include <istorm3d_bone.h>
-
-	// debug:
-	#include <Storm3D_UI.h>
-	extern IStorm3D_Scene *disposable_scene;
-#endif
 
 #include <sstream>
 
@@ -114,11 +105,9 @@
 // after that, the roll must be fully completed 
 // (or else the animations would look improperly blended)
 #ifdef PROJECT_AOV
-	#define ROLL_JUMP_ALLOW_STOP_TIME 0
-#elif defined(PROJECT_CLAW_PROTO)
-	#define ROLL_JUMP_ALLOW_STOP_TIME 2500
+#define ROLL_JUMP_ALLOW_STOP_TIME 0
 #else
-	#define ROLL_JUMP_ALLOW_STOP_TIME 200
+#define ROLL_JUMP_ALLOW_STOP_TIME 200
 #endif
 
 #define JUMP_NOT_ALLOWED_TIME 200
@@ -145,22 +134,6 @@ namespace
 		VC3 temp = pos1 - pos2;
 		return ( ( temp.x * temp.x + temp.z * temp.z ) < ( range * range ) );
 	}
-
-#ifdef PROJECT_CLAW_PROTO
-	static bool getCenterBonePosition( Unit *player, VC3 &pos )
-	{
-		if(player && player->getVisualObject() && player->getVisualObject()->getStormModel())
-		{
-			IStorm3D_Bone *bone = player->getVisualObject()->getStormModel()->GetBone(0);
-			if(bone)
-			{
-				pos = bone->GetMXG().GetTranslation();
-				return true;
-			}
-		}
-		return false;
-	}
-#endif
 }
 
 	void UnitActor::act(Unit *unit)
@@ -482,9 +455,11 @@ namespace
 		}
 
 		// eject
+		/*
 		VC3 position = unit->getPosition();
 		VC3 rotation = unit->getRotation();
-		
+		*/
+
 		const char *ejectEffect = w->getEjectEffect();
 		if (ejectEffect != NULL)
 		{
@@ -753,7 +728,6 @@ namespace
 		int handle = unit->getWeaponLoopSoundHandle(weapon);
 		int key;
 		bool looped;
-		bool soundCont = false;
 		if (handle != -1)
 		{
 			// attempt to continue old sound
@@ -1278,7 +1252,6 @@ namespace
 					//{
 						int handle = unit->getWeaponLoopSoundHandle(unit->getSelectedWeapon());
 						int key = unit->getWeaponLoopSoundKey(unit->getSelectedWeapon());
-						bool looped = true;
 						if (handle != -1)
 						{
 							VC3 pos = unit->getPosition();
@@ -1683,7 +1656,7 @@ namespace
 					{
 						Weapon *w = unit->getWeaponType(unit->getSelectedWeapon());
 						std::string locale = "gui_weapon_" + std::string(w->getPartTypeIdString()) + "_inoperable_message";
-						std::transform(locale.begin(),locale.end(),locale.begin(),tolower);
+						std::transform(locale.begin(),locale.end(),locale.begin(),(int(*)(int))tolower);
 
 						const char *message = NULL;
 						if( ::game::DHLocaleManager::getInstance()->getString( ::game::DHLocaleManager::BANK_GUI, locale.c_str(), &message) )
@@ -1891,7 +1864,7 @@ namespace
 					{
 						if (game->gameUI->isControlModeDirect(unit->getOwner()))
 						{
-							bool wasAnyWeaponActivated = false;
+							// bool wasAnyWeaponActivated = false;
 							for (int w = 0; w < UNIT_MAX_WEAPONS; w++)
 							{
 								//if (unit->getWeaponType(w) != NULL
@@ -1899,7 +1872,7 @@ namespace
 								if (w == unit->getSelectedSecondaryWeapon())
 								{
 									unit->setWeaponActive(w, true);
-									wasAnyWeaponActivated = true;
+									// wasAnyWeaponActivated = true;
 								} else {
 									unit->setWeaponActive(w, false);
 								}
@@ -1923,12 +1896,9 @@ namespace
 	{
 		VC3 waypoint = unit->getWaypoint();
 		VC3 position = unit->getPosition();
-		VC3 rotation = unit->getRotation();
+		// VC3 rotation = unit->getRotation();
 
 		UnitType *unitType = unit->getUnitType();
-
-		float turnspeed = unitType->getTurning() / GAME_TICKS_PER_SECOND;
-		float rotacc = turnspeed * unitType->getTurningAccuracy();
 
 		float pathAcc = unitType->getPathAccuracy();
 
@@ -2294,17 +2264,7 @@ if (!unit->isDirectControl())
 		if (doMove)
 		{
 			// move forward (accelerate)
-			bool sticky = unitType->isSticky();
-
-#ifdef PROJECT_CLAW_PROTO
-			if (unit->getUnitType()->getUnitTypeId() == 455611187)
-			{
-				if(unit->getJumpCounter() > 0)
-					sticky = true;
-			}
-#endif
-
-			if (sticky)
+			if (unitType->isSticky())
 			{
 				if (unit->isOnGround() || (unit->isSideways() && unitType->isSidewaysJumpAllowedInAir()))
 				{
@@ -2730,6 +2690,7 @@ if (!unit->isDirectControl())
 				// HACK!
 				// special case, rushers just keep on rushing even when at
 				// destination...
+				/*
 				bool targetClose = false;
 				if (unit->targeting.hasTarget())
 				{
@@ -2744,9 +2705,7 @@ if (!unit->isDirectControl())
 						}
 					}
 				}
-
-				int ox = game->gameMap->scaledToObstacleX(position.x);
-				int oy = game->gameMap->scaledToObstacleY(position.z);
+				*/
 
 				// ???
 				//if (unit->isRushing() && targetClose
@@ -3120,7 +3079,6 @@ if (!unit->isDirectControl())
 							}
 						}
 
-#ifndef PROJECT_CLAW_PROTO
 						if (!unit->isDirectControl())
 						{
 							if (friendsNear && !hostilesNear)
@@ -3135,7 +3093,6 @@ if (!unit->isDirectControl())
 									unit->setHP(hp + unit->getUnitType()->getHPGain());
 							}
 						}
-#endif
 
 					} else {
 #ifdef PROJECT_SURVIVOR
@@ -3147,9 +3104,7 @@ if (!unit->isDirectControl())
 								unit->setHP(hp + unit->getUnitType()->getHPGain());
 						}
 #else
-#ifndef PROJECT_CLAW_PROTO
 						unit->setHP(hp + unit->getUnitType()->getHPGain());
-#endif
 #endif
 					}
 				}
@@ -3528,7 +3483,7 @@ if (!unit->isDirectControl())
 			|| doFire)
 			//&& unit->hasAnyWeaponReady()
 			&& ((unit->getSpeed() != Unit::UNIT_SPEED_SPRINT
-			|| velocity.x == 0 && velocity.z == 0)
+			|| (velocity.x == 0 && velocity.z == 0))
 			|| unitType->doesAllowFireOnSprint()))
 		{
 			// check for line of fire every once a while...
@@ -3563,7 +3518,7 @@ if (!unit->isDirectControl())
 int foo_prone = 1;
 static int proningvarnamenum = -1;
 if (proningvarnamenum == -1) proningvarnamenum = unit->variables.getVariableNumberByName("proning");
-if (unit->variables.getVariable(proningvarnamenum) > 0)
+if (unit->variables.getVariable(proningvarnamenum) == 1)
 {
 	foo_prone = 0;
 	weaponPosition += VC3(0,0.6f,0);
@@ -3593,24 +3548,6 @@ unit->targeting.setLineOfFireToTarget(false, foo_prone * unitType->getLineOfFire
 						target += VC3(0, unit->targeting.getTargetUnit()->
 							getUnitType()->getAimHeightStanding(), 0);
 					}
-
-#ifdef PROJECT_CLAW_PROTO
-// aiming at player
-if(unit->targeting.getTargetUnit() == game->gameUI->getFirstPerson(0))
-{
-	Unit *player = game->gameUI->getFirstPerson(0);
-	IStorm3D_Bone *bone = NULL;
-	if(player && player->getVisualObject() && player->getVisualObject()->getStormModel())
-	{
-		bone = player->getVisualObject()->getStormModel()->GetBone(0);
-		if(bone)
-		{
-			// aim at center bone
-			target = bone->GetMXG().GetTranslation();
-		}
-	}
-}
-#endif
 				} else {
 					target = unit->targeting.getTargetPosition();
 				}
@@ -3665,7 +3602,7 @@ if(unit->targeting.getTargetUnit() == game->gameUI->getFirstPerson(0))
 					unit->getVisualObject()->setCollidable(false);
 
 #ifdef PROJECT_CLAW_PROTO
-					game->getGameScene()->rayTrace(weaponPosition, dir, targdist, cinfo, true, true);
+					game->getGameScene()->rayTrace(weaponPosition, dir, targdist, cinfo, false, false, true, true);
 #else
 					game->getGameScene()->rayTrace(weaponPosition, dir, targdist, cinfo, false, false);
 #endif
@@ -3736,11 +3673,7 @@ if(unit->targeting.getTargetUnit() == game->gameUI->getFirstPerson(0))
 				|| doFire)
 			{
 				VC3 target;
-				bool can_shoot = true;
-#ifdef PROJECT_CLAW_PROTO
-				can_shoot = unitType->doesFireWhileJumping() || unit->getJumpCounter() == 0;
-#endif
-				if (doFire && can_shoot)
+				if (doFire)
 				{
 					// direct control firing
 
@@ -3777,14 +3710,6 @@ if(unit->targeting.getTargetUnit() == game->gameUI->getFirstPerson(0))
 					if (unit->targeting.getTargetUnit() != NULL)
 					{
 						target = unit->targeting.getTargetUnit()->getPosition() + VC3(0,1,0);
-#ifdef PROJECT_CLAW_PROTO
-// aiming at player
-if(unit->targeting.getTargetUnit() == game->gameUI->getFirstPerson(0))
-{
-	// aim at center bone
-	getCenterBonePosition( game->gameUI->getFirstPerson(0), target );
-}
-#endif
 					} else {
 						target = unit->targeting.getTargetPosition();
 					}
@@ -3827,33 +3752,9 @@ if(unit->targeting.getTargetUnit() == game->gameUI->getFirstPerson(0))
 					else
 						fofAngle = unitType->getPreferFOF() / 2;
 
-#ifdef PROJECT_CLAW_PROTO
-					float currentAngle = UNIT_ANGLE_TO_RAD(unit->getRotation().y);
-					float destinationAngle = UNIT_ANGLE_TO_RAD(destAngle);
-					float fofRotate = 0;
-					VC2 currentDir(-sinf(currentAngle), cosf(currentAngle));
-					VC2 destDir(-sinf(destinationAngle), cosf(destinationAngle));
-
-					float dot = currentDir.GetDotWith(destDir);
-					if(dot < cosf(UNIT_ANGLE_TO_RAD(fofAngle)))
-					{
-						fofRotate = 1;
-					}
-
-#else
 					float fofRotate = 0;
 					fofRotate = util::AngleRotationCalculator::getRotationForAngles(rotation.y, destAngle, (float)fofAngle);
-#endif
 
-#ifdef PROJECT_CLAW_PROTO
-				// no shooting while jumping
-				if(!unitType->doesFireWhileJumping() && unit->getJumpCounter() != 0)
-					fofRotate = 1;
-
-				// no shooting while ai disabled
-				if(!UnitLevelAI::isPlayerAIEnabled(unit->getOwner()))
-					fofRotate = 1;
-#endif
 					if (fofRotate == 0)
 					{
 						bool shotok = shoot(unit, target);
@@ -3914,7 +3815,7 @@ if(unit->targeting.getTargetUnit() == game->gameUI->getFirstPerson(0))
 int foo_prone = 1;
 static int proningvarnamenum = -1;
 if (proningvarnamenum == -1) proningvarnamenum = unit->variables.getVariableNumberByName("proning");
-if (unit->variables.getVariable(proningvarnamenum) > 0)
+if (unit->variables.getVariable(proningvarnamenum) == 1)
 {
 	foo_prone = 0;
 }
@@ -4001,17 +3902,17 @@ if (unit->getVelocity().GetSquareLength() > 0.01f * 0.01f
 
 			target = getAimTargetPosition(unit);
 
-			float destAngle = util::PositionDirectionCalculator::calculateDirection(position, target);
+		float destAngle = util::PositionDirectionCalculator::calculateDirection(position, target);
 
-// HACK: fix the aim upward camera "bouncing" back-and-forth...
-// WARNING: quite untested, may result into some incorrect behaviour
-if (unit->getDirectControlType() == Unit::UNIT_DIRECT_CONTROL_TYPE_LOCAL_PLAYER
-	&& SimpleOptions::getBool(DH_OPT_B_GAME_MODE_AIM_UPWARD))
-{
-	destAngle = game->gameUI->getGameCamera()->getAngleY();
-	destAngle = 270 - destAngle;
-	if (destAngle < 0) destAngle += 360;
-}
+		// HACK: fix the aim upward camera "bouncing" back-and-forth...
+		// WARNING: quite untested, may result into some incorrect behaviour
+		if (unit->getDirectControlType() == Unit::UNIT_DIRECT_CONTROL_TYPE_LOCAL_PLAYER
+		&& SimpleOptions::getBool(DH_OPT_B_GAME_MODE_AIM_UPWARD))
+		{
+			destAngle = game->gameUI->getGameCamera()->getAngleY();
+			destAngle = 270 - destAngle;
+			if (destAngle < 0) destAngle += 360;
+		}
 
 			// TODO, nearest camera 45 degree angles.
 			// then strafe/run/... decision.
@@ -4044,12 +3945,14 @@ if (unit->getDirectControlType() == Unit::UNIT_DIRECT_CONTROL_TYPE_LOCAL_PLAYER
 				{
 					int aimstop = unit->getAimStopCounter();
 
+#ifdef PROJECT_SURVIVOR
 					int aimstop_time = GAME_TICKS_PER_SECOND / 10; // 0.1 secs
 					Weapon *w = unit->getSelectedWeapon() != -1 ? unit->getWeaponType(unit->getSelectedWeapon()) : NULL;
 					if(w)
 					{
 						aimstop_time = w->getAimEndDelay() * GAME_TICKS_PER_SECOND / 1000;
 					}
+#endif
 
 					if (
 #ifdef PROJECT_SURVIVOR
@@ -4751,32 +4654,6 @@ if (unit->getDirectControlType() == Unit::UNIT_DIRECT_CONTROL_TYPE_LOCAL_PLAYER
 		// target locker thingy
 		handleTargetLocker(unit);
 
-#ifdef PROJECT_CLAW_PROTO
-		// police hacks
-		if (unit->getUnitType()->getUnitTypeId() == 455611187)
-		{
-			// playing forced animation
-			if(unit->getForcedAnimation() != ANIM_NONE)
-				return;
-
-			// physics object lock
-			if(unit->isPhysicsObjectLock())
-				return;
-
-			// unit is unconscious
-			if(unit->getMoveState() == Unit::UNIT_MOVE_STATE_UNCONSCIOUS || unit->getHP() < 0)
-				return;
-
-			// unit is moving faster than (4/GAME_TICKS_PER_SECOND)^2
-			if(unit->getVelocity().GetSquareLength() > 0.00356f)
-				return;
-
-			// ai disabled
-			if(!UnitLevelAI::isPlayerAIEnabled(unit->getOwner()))
-				return;
-		}
-#endif
-
 		// weapon spread in topdown style (non-rts) game
 		if (SimpleOptions::getBool(DH_OPT_B_GAME_MODE_TOPDOWN_SHOOTER))
 		{
@@ -5056,10 +4933,9 @@ if (unit->getDirectControlType() == Unit::UNIT_DIRECT_CONTROL_TYPE_LOCAL_PLAYER
 				proj->criticalHitDamageMultiplier = unit->getWeaponType(weap)->getCriticalHitDamageMultiplier();
 				proj->criticalHitProbabilityMultiplier = unit->getWeaponType(weap)->getCriticalHitProbabilityMultiplier();
 			
-				float weapRange = unit->getWeaponType(weap)->getRange();
 				VC3 dir;
 				VC3 target;
-				Unit *targUnit = NULL;
+				Unit *targUnit = NULL; // can't be const
 				// we have a weapon position (visualization, that's where the 
 				// bullet comes from) and the weapon ray position (gameplay,
 				// that's where we check the hits from).
@@ -5297,24 +5173,7 @@ if (unit->getDirectControlType() == Unit::UNIT_DIRECT_CONTROL_TYPE_LOCAL_PLAYER
 								}
 							}
 							target = unit->targeting.getSweepTargetPosition() * (1.0f - nonSweepWeight);
-#ifdef PROJECT_CLAW_PROTO
-// aiming at player
-if(unit->targeting.getTargetUnit() == game->gameUI->getFirstPerson(0))
-{
-	// aim at center bone
-	VC3 bonePos;
-	if(getCenterBonePosition( game->gameUI->getFirstPerson(0), bonePos ))
-	{
-		target += bonePos * nonSweepWeight;
-	}
-	else
-	{
-		target += ((targUnit->getPosition() + VC3(0,targUnit->getUnitType()->getAimHeightStanding(),0)) * nonSweepWeight);
-	}
-}
-#else
 							target += ((targUnit->getPosition() + VC3(0,targUnit->getUnitType()->getAimHeightStanding(),0)) * nonSweepWeight);
-#endif
 						} else {
 							target = unit->targeting.getSweepTargetPosition();
 						}
@@ -5322,15 +5181,6 @@ if(unit->targeting.getTargetUnit() == game->gameUI->getFirstPerson(0))
 						targUnit = unit->targeting.getTargetUnit();
 						if (targUnit != NULL)
 						{
-
-#ifdef PROJECT_CLAW_PROTO
-// aiming at player
-if(unit->targeting.getTargetUnit() == game->gameUI->getFirstPerson(0))
-{
-	// aim at center bone
-	getCenterBonePosition( game->gameUI->getFirstPerson(0), target );
-}
-#else
 							// shoot a bit lower if target unconscious
 							// or crawling
 							// adding a little random to it too...
@@ -5359,7 +5209,7 @@ if(unit->targeting.getTargetUnit() == game->gameUI->getFirstPerson(0))
 									}
 								}
 							}
-#endif
+
 							// a crappy check - did we surprise the target?
 							if (game->isHostile(targUnit->getOwner(), unit->getOwner())
 								&& targUnit->getSeeUnit() == NULL
@@ -5985,7 +5835,7 @@ if(unit->targeting.getTargetUnit() == game->gameUI->getFirstPerson(0))
 
 		if (collRadius > 0)
 		{
-			VC3 realMidPosition = unit->getPosition();
+			// VC3 realMidPosition = unit->getPosition();
 			VC3 oldOldPosition = oldPosition;
 
 			//bool midColl = false;
@@ -5997,7 +5847,7 @@ if(unit->targeting.getTargetUnit() == game->gameUI->getFirstPerson(0))
 				collRadius--;
 				// NOTE: assuming pathfind accuracy == obstacle map multiplier
 				VC3 realPosition = unit->getPosition();
-				VC3 realOldPosition = oldPosition;
+				// VC3 realOldPosition = oldPosition;
 				VC3 moveSum = VC3(0,0,0);
 				removeUnitObstacle(unit);
 				//bool isGhost = unit->isGhostOfFuture();
@@ -6922,7 +6772,6 @@ if(unit->targeting.getTargetUnit() == game->gameUI->getFirstPerson(0))
 				{
 					if (unit->doesCollisionCheck())
 					{
-						const VC3 &pos = unit->getPosition();
 						if (unit->isRushing() || unit->isFollowPlayer())
 							unit->setRushDistance(UNITACTOR_RUSH_DISTANCE);
 						if (!unit->isDirectControl())
@@ -7031,7 +6880,7 @@ if(unit->targeting.getTargetUnit() == game->gameUI->getFirstPerson(0))
 int foo_prone = 1;
 static int proningvarnamenum = -1;
 if (proningvarnamenum == -1) proningvarnamenum = unit->variables.getVariableNumberByName("proning");
-if (unit->variables.getVariable(proningvarnamenum) <= 0
+if (unit->variables.getVariable(proningvarnamenum) == 0
 	|| unit->getForcedAnimation() != ANIM_SPECIAL2)
 {
 	Animator::endBlendAnimation(unit, 2, true);
@@ -7865,8 +7714,9 @@ if (unit->variables.getVariable(proningvarnamenum) <= 0
 		}
 	}
 
-
+#ifdef _MSC_VER
 #pragma optimize("", off)
+#endif
 
 	VC3 unit_sorting_distance_to = VC3(0,0,0);
 
@@ -7949,9 +7799,11 @@ if (unit->variables.getVariable(proningvarnamenum) <= 0
 		return didExecute;
 	}
 
+#ifdef _MSC_VER
 #pragma optimize("", on)
+#endif
 
-	bool UnitActor::shoot(Unit *unit, VC3 &target)
+	bool UnitActor::shoot(Unit *unit, const VC3 &target)
 	{
 		bool shot = false;
 
@@ -8062,6 +7914,7 @@ if (unit->variables.getVariable(proningvarnamenum) <= 0
 						if (!unit->isFiringInProgress() || w->isSingleShot()) 
 						{
 							firewait = (w->getFireWaitTime() * ((100 - w->getFireWaitVary()) + game->gameRandom->nextInt() % (w->getFireWaitVary() + 1)) / 100);
+
 							// a small delay to weaps that raytrace from barrel, to allow proper aiming pose...
 							// TODO: should be applied to firefromweaponbarrel too, but maintaining backward compat. for sg
 							if (w->doesRaytraceFromWeaponBarrel())
@@ -8081,20 +7934,6 @@ if (unit->variables.getVariable(proningvarnamenum) <= 0
 						{
 							firereload = (int)(firereload / unit->getCustomTimeFactor());
 						}
-
-#ifdef PROJECT_CLAW_PROTO
-// police fires faster when closer
-if(unit->targeting.getTargetUnit())
-{
-	float dist = (unit->targeting.getTargetUnit()->getPosition() - unit->getPosition()).GetSquareLength();
-	if(dist < 150.0f)
-	{
-		firereload = (int)((firereload * dist) / 150.0f);
-		if(firereload < 1500 / GAME_TICK_MSEC)
-			firereload = 1500 / GAME_TICK_MSEC;
-	}
-}
-#endif
 
 						// HACK: to get player shoot quicker... not so much waiting.
 						if (unit->isDirectControl())
@@ -8781,7 +8620,6 @@ if (unit->getAnimationSet()->isAnimationInSet(ANIM_AIM_TYPE0)
 		if (unit->getUnitType()->isPointedWithAny(UNITTYPE_POINTED_WITH_LIGHT))
 		{
 			util::LightAmountManager *lightman = util::LightAmountManager::getInstance();
-			IStorm3D_Terrain *terrain = game->gameUI->getTerrain()->GetTerrain();
 			
 			VC3 pos = unit->getPosition();
 
@@ -9274,10 +9112,10 @@ if (unit->getAnimationSet()->isAnimationInSet(ANIM_AIM_TYPE0)
 		Weapon *w = unit->getWeaponType(wnum);
 
 		// weapon doesn't have target locker
-		if(w->hasTargetLock() == NULL)
+		if(w->hasTargetLock() == false)
 		{
 			// attached weapon doesn't have target locker either
-			if(w->getAttachedWeaponType() == NULL || w->getAttachedWeaponType()->hasTargetLock() == NULL)
+			if(w->getAttachedWeaponType() == NULL || w->getAttachedWeaponType()->hasTargetLock() == false)
 			{
 				unit->setLastTargetLockUnit(NULL);
 				return;
@@ -9320,13 +9158,15 @@ if (unit->getAnimationSet()->isAnimationInSet(ANIM_AIM_TYPE0)
 		{
 			if(sel.hit)
 			{
-				VC2 pos(sel.scaledMapX, sel.scaledMapY);
-				VC2 pos_last(lastUnit->getPosition().x, lastUnit->getPosition().y);
-				float scaleX = game->gameMap->getScaleX() / GAMEMAP_HEIGHTMAP_MULTIPLIER;
-				float checkRad = (float)(lastUnit->getUnitType()->getCollisionCheckRadius() - 1) * scaleX;
-				if((pos - pos_last).GetLength() < checkRad)
-				{
-					hitUnit = lastUnit;
+				if (lastUnit->getUnitType() != NULL) {
+					VC2 pos(sel.scaledMapX, sel.scaledMapY);
+					VC2 pos_last(lastUnit->getPosition().x, lastUnit->getPosition().y);
+					float scaleX = game->gameMap->getScaleX() / GAMEMAP_HEIGHTMAP_MULTIPLIER;
+					float checkRad = (float)(lastUnit->getUnitType()->getCollisionCheckRadius() - 1) * scaleX;
+					if((pos - pos_last).GetLength() < checkRad)
+					{
+						hitUnit = lastUnit;
+					}
 				}
 			}
 		}

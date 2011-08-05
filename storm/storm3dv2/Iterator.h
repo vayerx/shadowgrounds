@@ -6,11 +6,10 @@
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
-#include <windows.h>
 
 // Storm3D includes 
-#include "storm3d_common.h"
-#include "..\..\util\Debug_MemoryManager.h"
+#include "Storm3D_Common.h"
+#include "../../util/Debug_MemoryManager.h"
 
 
 
@@ -78,7 +77,7 @@ public:
 template <class A> class ST3D_EXP_DLLAPI IteratorIM_PtrList : public Iterator<A>
 {
 
-	PtrList<A> *ptrlist;
+	PtrList<A> *ptrset;
 	PtrListIterator<A> it;
 	
 public:
@@ -125,7 +124,7 @@ public:
 
 	ICreateIM_PtrList(PtrList<A> *_ptrSet)
 	{
-		ptrset=_ptrset;
+		ptrset=_ptrSet;
 	}
 };
 

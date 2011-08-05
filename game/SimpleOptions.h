@@ -11,7 +11,13 @@ namespace game
 		public:
 			inline static bool getBool(int id)
 			{
-				return game::GameOptionManager::getInstance()->getOptionById(id)->getBooleanValue();
+				// EVIL HAX
+				// this whole thing should go away and be replaced with something sane..
+				GameOption *o = game::GameOptionManager::getInstance()->getOptionById(id);
+				if (o)
+					return o->getBooleanValue();
+				else
+					return false;
 			}
 
 			inline static int getInt(int id)

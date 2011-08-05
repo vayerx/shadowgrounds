@@ -6,6 +6,7 @@
 #include "explosion_scripts.h"
 #include "parser.h"
 #include "../filesystem/input_file_stream.h"
+#include "../filesystem/file_package_manager.h"
 #include <vector>
 #include <fstream>
 #include <algorithm>
@@ -114,12 +115,12 @@ struct ExplosionScripts::Data
 		//ifstream("Editor/Materials.fbt") >> mParser;
 		//ifstream("Editor/Animations.fbt") >> aParser;
 
-		filesystem::createInputFileStream("Editor/ExplosionScripts.fbt") >> sParser;
-		filesystem::createInputFileStream("Editor/ExplosionProjectiles.fbt") >> pParser;
-		filesystem::createInputFileStream("Editor/ExplosionEffects.fbt") >> eParser;
-		filesystem::createInputFileStream("Editor/ExplosionSounds.fbt") >> soParser;
-		filesystem::createInputFileStream("Editor/Materials.fbt") >> mParser;
-		filesystem::createInputFileStream("Editor/Animations.fbt") >> aParser;
+		filesystem::FilePackageManager::getInstance().getFile("Editor/ExplosionScripts.fbt") >> sParser;
+		filesystem::FilePackageManager::getInstance().getFile("Editor/ExplosionProjectiles.fbt") >> pParser;
+		filesystem::FilePackageManager::getInstance().getFile("Editor/ExplosionEffects.fbt") >> eParser;
+		filesystem::FilePackageManager::getInstance().getFile("Editor/ExplosionSounds.fbt") >> soParser;
+		filesystem::FilePackageManager::getInstance().getFile("Editor/Materials.fbt") >> mParser;
+		filesystem::FilePackageManager::getInstance().getFile("Editor/Animations.fbt") >> aParser;
 
 		parse(scripts, sParser.getGlobals(), "Script");
 		parse(projectiles, pParser.getGlobals(), "Projectile");

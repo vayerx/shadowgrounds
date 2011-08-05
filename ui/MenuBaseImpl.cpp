@@ -9,8 +9,6 @@
 #include "../game/Game.h"
 #include "../game/GameUI.h"
 #include "GameController.h"
-#include "../system/timer.h"
-#include "../system/logger.h"
 #include "../util/assert.h"
 
 using namespace game;
@@ -25,7 +23,6 @@ const static OguiButton::TEXT_V_ALIGN	verticalAlign = OguiButton::TEXT_V_ALIGN_M
 MenuBaseImpl::MenuBaseImpl( OguiWindow* window ) :
   win( window ),
   ogui( NULL ),
-  game( NULL ),
 
   buttonX( 0 ),
   buttonW( 0 ),
@@ -36,14 +33,17 @@ MenuBaseImpl::MenuBaseImpl( OguiWindow* window ) :
   separatorH( 0 ),
   separatorW( 0 ),
 
+  buttonNormal(),
+  buttonHigh(),
+  buttonDown(),
+  //buttonPaddingString( "|" ),
+  buttonPaddingString( " " ),
+
   smallButtonNormal(),
   smallButtonHigh(),
   smallButtonDown(),
 	smallButtonDisabled(),
 	smallButtonDisabledImage( NULL ),
-
-  //buttonPaddingString( "|" ),
-  buttonPaddingString( " " ),
 
   smallButtonX( 0 ),
   smallButtonY( 0 ),
@@ -65,15 +65,11 @@ MenuBaseImpl::MenuBaseImpl( OguiWindow* window ) :
   closeMeButtonNormal(),
   closeMeButtonHigh(),
   closeMeButtonDown(),
-	
-  buttonNormal(),
-  buttonHigh(),
-  buttonDown(),
 
   buttons(),
   selectButtons(),
-  activeSelection( -1 ),
   numberOfWorkingSelectButtons( 0 ),
+  activeSelection( -1 ),
 
   imageSelectNorm( NULL ),
   imageSelectDown( NULL ),
@@ -100,12 +96,14 @@ MenuBaseImpl::MenuBaseImpl( OguiWindow* window ) :
   editCursorDrawn( false ),
   editCursorDrawnTime( 0 ),
   editCursorBlinkTime( 500 ),
-  closeMenuByEsc( true ),
-  canWeCloseTheMenuNow( true ),
 
   soundClick(),
   soundMouseover(),
-  soundDisabled()
+  soundDisabled(),
+
+  game( NULL ),
+  closeMenuByEsc( true ),
+  canWeCloseTheMenuNow( true )
 
 {
 	buttonW		= getLocaleGuiInt( "gui_menu_common_button_w", 0 );
@@ -113,9 +111,13 @@ MenuBaseImpl::MenuBaseImpl( OguiWindow* window ) :
 	
 	buttonAddX	= getLocaleGuiInt( "gui_menu_common_button_add_x", 0 );
 	buttonAddY	= getLocaleGuiInt( "gui_menu_common_button_add_y", 28 );
-	separatorW		= getLocaleGuiInt( "gui_menu_common_separator_w", 0 );
 	separatorH		= getLocaleGuiInt( "gui_menu_common_separator_h", 35 );
+	separatorW		= getLocaleGuiInt( "gui_menu_common_separator_w", 0 );
 	
+	buttonNormal	= getLocaleGuiString( "gui_menu_common_button_img_normal" );
+	buttonHigh		= getLocaleGuiString( "gui_menu_common_button_img_high" );
+	buttonDown		= getLocaleGuiString( "gui_menu_common_button_img_down" );
+
 	smallButtonNormal = getLocaleGuiString( "gui_menu_common_smallbutton_img_normal" );
 	smallButtonHigh   = getLocaleGuiString( "gui_menu_common_smallbutton_img_high" );
 	smallButtonDown	  = getLocaleGuiString( "gui_menu_common_smallbutton_img_down" );
@@ -137,12 +139,13 @@ MenuBaseImpl::MenuBaseImpl( OguiWindow* window ) :
 	closeMeButtonAddY	= getLocaleGuiInt( "gui_menu_common_closebutton_add_y", 0 );
 
 	closeMeButtonNormal	= getLocaleGuiString( "gui_menu_common_closebutton_img_normal" );
-	closeMeButtonDown	= getLocaleGuiString( "gui_menu_common_closebutton_img_down" );
 	closeMeButtonHigh	= getLocaleGuiString( "gui_menu_common_closebutton_img_high" );
+	closeMeButtonDown	= getLocaleGuiString( "gui_menu_common_closebutton_img_down" );
 
-	buttonNormal	= getLocaleGuiString( "gui_menu_common_button_img_normal" );
-	buttonHigh		= getLocaleGuiString( "gui_menu_common_button_img_high" );
-	buttonDown		= getLocaleGuiString( "gui_menu_common_button_img_down" );
+	buttonFontSelectNormal	= getLocaleGuiString( "gui_menu_common_button_font_normal" );
+	buttonFontSelectDown	= getLocaleGuiString( "gui_menu_common_button_font_down" );
+	buttonFontDescNormal	= getLocaleGuiString( "gui_menu_common_desc_font_normal" );
+	buttonFontDescDown		= getLocaleGuiString( "gui_menu_common_desc_font_down" );
 
 	headerTextX		= getLocaleGuiInt( "gui_menu_common_header_x", 0 );
 	headerTextY		= getLocaleGuiInt( "gui_menu_common_header_y", 0 );
@@ -153,11 +156,6 @@ MenuBaseImpl::MenuBaseImpl( OguiWindow* window ) :
 	soundMouseover  = getLocaleGuiString( "gui_menu_sound_mouseover" );
 	soundDisabled	= getLocaleGuiString( "gui_menu_sound_disabled" );
 
-	buttonFontSelectNormal	= getLocaleGuiString( "gui_menu_common_button_font_normal" );
-	buttonFontSelectDown	= getLocaleGuiString( "gui_menu_common_button_font_down" );
-	buttonFontDescNormal	= getLocaleGuiString( "gui_menu_common_desc_font_normal" );
-	buttonFontDescDown		= getLocaleGuiString( "gui_menu_common_desc_font_down" );
-
 }
 
 MenuBaseImpl::~MenuBaseImpl()
@@ -165,14 +163,12 @@ MenuBaseImpl::~MenuBaseImpl()
 	delete smallButtonDisabledImage;
 	smallButtonDisabledImage = NULL;
 
-	assert( game  );
+/*	assert( game  );
 	assert( game->gameUI ); 
 	assert( game->gameUI->getController(0) );
 	// if( editButtonP )
-/*	if( closeMenuByEsc )
+	if( closeMenuByEsc )
 		game->gameUI->getController(0)->removeKeyreader( editHandle ); */
-
-
 }
 
 void MenuBaseImpl::debugKeyreader( int keyreader, bool release, std::string who )

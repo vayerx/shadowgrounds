@@ -1,0 +1,9 @@
+!!ARBfp1.0
+OUTPUT outColor = result.color;
+
+TEMP t0;
+TEX t0, fragment.texcoord[0], texture[0], 2D;
+
+MOV outColor, t0;
+
+END

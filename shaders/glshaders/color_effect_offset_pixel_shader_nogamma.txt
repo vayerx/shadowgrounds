@@ -1,0 +1,42 @@
+!!ARBfp1.0
+OPTION ARB_precision_hint_fastest;
+PARAM c5 = program.env[5];
+OUTPUT outColor = result.color;
+TEMP r0, r1, r2;
+#OUTPUT oC0 = result.color;
+PARAM c1 = {0.5, 0.5, 0.5, 0.50196};
+PARAM c6 = {0.25, 0.02, 0.25, 0.25};
+ATTRIB t0 = fragment.texcoord[0];
+ATTRIB t1 = fragment.texcoord[1];
+ATTRIB t2 = fragment.texcoord[2];
+#FIXME: unknown statement: Dcl2D (BaseReg "s0");
+#FIXME: unknown statement: Dcl2D (BaseReg "s1");
+#FIXME: unknown statement: Dcl2D (BaseReg "s2");
+# c1 - 0.5f values
+# c2 - Contrast
+# c3 - Brightness
+# c4 - Color factor
+# c5 - Offset scale
+# 0 - offset texture
+# 1 - base texture
+# 2 - Offset fade mask
+TEX r1, t1, texture[1], 2D;
+TEX r2, t2, texture[2], 2D;
+# Offset base texture
+SUB r1.rgb, r1, c1.a;
+MUL r1.a, r2.r, c5.r;
+MUL r1, r1, r1.a;
+ADD r0.xy, t0, r1;
+# Test if offsetted position is on solid (0 offset) area
+# If so, remove offset from current pixel
+#ADD r1.xy, t1, r1;
+#TEX r1, r1, texture[1], 2D;
+#SUB r1, r1, c1.a;
+#ABS r1, r1;
+#ADD r1.x, r1.xxxx, r1.y;
+#SUB r1, r1.xxxx, c6.y;
+#CMP r0.xy, -r1.x, t0, r0;
+TEX r0, r0, texture[0], 2D;
+#MOV oC0, r0;
+MOV outColor, r0;
+END

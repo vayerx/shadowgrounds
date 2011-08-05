@@ -37,6 +37,10 @@
 	#include "SurvivalMenu.h"
 	#include "CoopMenu.h"
 #endif
+#ifdef PROJECT_SHADOWGROUNDS
+#include "../ogui/OguiStormDriver.h"
+#include <istorm3d_videostreamer.h>
+#endif
 
 namespace ui {
 	
@@ -80,6 +84,16 @@ private:
 		IOguiImage *img;
 		int time;
 		int fade;
+		BackgroundAlternative() :
+			img(NULL)
+			,time(0)
+			,fade(0) {}
+		~BackgroundAlternative() {
+			if (img != NULL) {
+				delete img;
+				img = NULL;
+			}
+		}
 	};
 	std::vector<BackgroundAlternative> backgroundAlternatives;
 	OguiButton *backgroundAlternativeFader;
@@ -147,22 +161,22 @@ private:
 
 public:
 	MenuCollectionImpl( MenuCollection* self, Ogui* ogui, Game* game, int player ) :
-	  self( self ),
 	  ogui( ogui ),
 	  game( game ),
-	  activeMenu( NULL ),
-	  backgroundVideo( NULL ),
-	  backgroundButton( NULL ),
-	  backgroundButtonData( NULL ),
-	  logoButton( NULL ),
-	  logoVideo( NULL ),
-	  videoButton( NULL ),
-	  background( NULL ),
-	  foreground( NULL ),
+	  self( self ),
 	  transparency( 100 ),
 	  fadeIn( true ),
-		backgroundAlternativeFader( NULL ),
-		backgroundAlternativeButton( NULL )
+	  logoVideo( NULL ),
+	  backgroundVideo( NULL ),
+	  background( NULL ),
+	  foreground( NULL ),
+	  logoButton( NULL ),
+	  videoButton( NULL ),
+	  backgroundButton( NULL ),
+	  backgroundButtonData( NULL ),
+	  activeMenu( NULL ),
+	  backgroundAlternativeFader( NULL ),
+	  backgroundAlternativeButton( NULL )
 	{
 		background = ogui->CreateSimpleWindow(	getLocaleGuiInt( "gui_menu_background_x", 0 ), 
 												getLocaleGuiInt( "gui_menu_background_y", 0 ), 
@@ -305,6 +319,27 @@ public:
 			backgroundVideo = ogui->LoadOguiImage( getLocaleGuiString( "gui_menu_video_image" ) );
 		}
 
+#ifdef PROJECT_SHADOWGROUNDS
+		float normal_aspect = (background->GetSizeX() * ogui->GetScaleX()) / (float)(background->GetSizeY() * ogui->GetScaleY());
+
+		float video_aspect = (float)atof( getLocaleGuiString("gui_menu_video_video_aspect") );
+
+		float texcoord_multiplier = (video_aspect / normal_aspect);
+		float texcoord_offset = (1.0f - texcoord_multiplier) * 0.5f;
+
+		float xm = 0.0f, ym = 0.0f;
+		OguiStormImage* bv = (OguiStormImage*)backgroundVideo;
+		if (bv->video != NULL)
+		{
+			bv->video->getTextureCoords(xm, ym);
+			if(texcoord_multiplier > 1.0f)
+			{
+				videoButton->SetRepeat(xm, texcoord_multiplier * ym);
+				videoButton->SetScroll(0.0f, texcoord_offset);
+			}
+		}
+#endif
+
 		videoButton->SetDisabledImage( backgroundVideo );
 
 		{
@@ -315,14 +350,32 @@ public:
 													getLocaleGuiInt( "gui_menu_logo_y", 0 ),
 													getLocaleGuiInt( "gui_menu_logo_w", 1 ),
 													getLocaleGuiInt( "gui_menu_logo_h", 1 ), 
-													NULL, NULL, NULL, NULL );
+													NULL, NULL, NULL, 0 );
 
 			if( ( video_enabled || playLogoVideoAlways ) && playLogoVideo )
 				logoVideo = ogui->LoadOguiVideo( getLocaleGuiString( "gui_menu_logo_video" ), builder );
 			
 			if( logoVideo == NULL ) 
 				logoVideo = ogui->LoadOguiImage( getLocaleGuiString( "gui_menu_logo_img" ) );
-			
+
+#ifdef PROJECT_SHADOWGROUNDS
+			normal_aspect = (button->GetSizeX() * ogui->GetScaleX()) / (float)(button->GetSizeY() * ogui->GetScaleY());
+			video_aspect = (float)atof( getLocaleGuiString("gui_menu_logo_video_aspect") );
+
+			texcoord_multiplier = (video_aspect / normal_aspect);
+			texcoord_offset = (1.0f - texcoord_multiplier) * 0.5f;
+
+			OguiStormImage* lv = (OguiStormImage*)logoVideo;
+			if (lv->video != NULL)
+			{
+				lv->video->getTextureCoords(xm, ym);
+				if(texcoord_multiplier > 1.0f)
+				{
+					button->SetRepeat(xm, texcoord_multiplier * ym);
+					button->SetScroll(0.0f, texcoord_offset);
+				}
+			}
+#endif
 
 			button->SetDisabled( true );
 			button->SetDisabledImage( logoVideo );

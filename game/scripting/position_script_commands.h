@@ -53,8 +53,6 @@ GS_CMD_SIMPLE(33, addPositionVariableToPosition, STRING)
 GS_CMD_SIMPLE(34, setAccuratePositionHeight, NONE)
 GS_CMD_SIMPLE(35, getAccuratePositionHeight, NONE)
 
-GS_CMD_SIMPLE(36, rayTraceToSecondaryPosition, STRING)
-
 #undef GS_CMD_BASE
 
 // up to 1749

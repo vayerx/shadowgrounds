@@ -4,6 +4,7 @@
 #include "fluid.h"
 #include "NxPhysics.h"
 
+#ifndef NX_DISABLE_FLUIDS
 namespace frozenbyte {
 namespace physics {
 namespace {
@@ -145,3 +146,4 @@ void Fluid::setAcceleration(const VC3 &force)
 
 } // physics
 } // frozenbyte
+#endif

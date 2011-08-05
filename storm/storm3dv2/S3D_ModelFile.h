@@ -1,7 +1,7 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
 #include "storm3d_material.h"
-#include <istorm3d_helper.h>
+#include <IStorm3D_Helper.h>
 #include <string>
 
 
@@ -170,8 +170,8 @@ struct S3D_OBJECT
 	:	material_index(0),
 		no_collision(false),
 		no_render(false),
-		is_mirror(false),
 		light_object(false),
+		is_mirror(false),
 		shadow_level(0),
 		lod_amount(0),
 		poskey_amount(0),

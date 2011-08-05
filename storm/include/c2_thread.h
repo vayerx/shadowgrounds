@@ -18,6 +18,16 @@
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
+#if defined (WIN32) && !defined(__WINE__)
+#include <windows.h>
+#include <process.h>
+
+#else
+#include <SDL.h>
+#define IGIOS_THREADS
+
+#endif
+
 #include "c2_common.h"
 
 
@@ -28,7 +38,11 @@
 class Thread
 {
 	// Thread handle
+#ifdef IGIOS_THREADS
+	SDL_Thread *thread_handle;
+#else
 	unsigned long thread_handle;
+#endif
 
 	// Is the thread ended?
 	bool finished;		
@@ -55,6 +69,10 @@ public:
 	// Is thead finished (ie thread no longer exists)
 	bool IsThreadFinished();
 
+#ifdef IGIOS_THREADS
+	friend int ThreadFunction(void *pt);
+#else
 	friend void ThreadFunction(void *pt);
+#endif
 };
 

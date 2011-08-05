@@ -55,7 +55,7 @@ class ListNode
 
 class ListNode
 {
-  private:
+  public:
     ListNode(void *ptr);
 
     ListNode *next;

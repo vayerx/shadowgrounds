@@ -1,24 +1,31 @@
-
 #include "precompiled.h"
 
-#include "../convert/str2int.h"
-#include "../system/Logger.h"
-#include "SoundLib.h"
-#include "SoundMixer.h"
-#include "../util/Debug_MemoryManager.h"
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include <string>
 #include <map>
 #include <list>
-#include <istorm3d_streambuffer.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/weak_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 #include <assert.h>
 #include <boost/shared_ptr.hpp>
-#include <fmod.h>
 
+#include "../convert/str2int.h"
+#include "../system/Logger.h"
+#include "../system/Miscellaneous.h"
+#include "SoundLib.h"
+#include "SoundMixer.h"
+#include "../util/Debug_MemoryManager.h"
+#include <istorm3d_streambuffer.h>
+
+
+#ifdef _MSC_VER
 #pragma warning( disable : 4786 )
+#endif
 
 // msecs
 #define MUSIC_FADE_OUT_TIME 3000
@@ -36,225 +43,10 @@ using namespace std;
 using namespace boost;
 
 namespace sfx {
-namespace {
 
 	struct Song;
 	struct Music;
 	struct FadeMusic;
-
-	signed char __stdcall streamcallback(FSOUND_STREAM *stream, void *buff, int len, void *param);
-
-	struct SampleBuffer
-	{
-		unsigned __int64 start;
-		unsigned __int64 duration;
-		std::vector<char> buffer;
-
-		SampleBuffer()
-		:	start(0),
-			duration(0)
-		{
-		}
-	};
-
-	typedef std::list<SampleBuffer> BufferList;
-	static const int BUFFER_SAMPLES = 2000;
-	//static const int BUFFER_SAMPLES = 2500;
-	static const unsigned __int64 BUFFER_TIME_ADD = BUFFER_SAMPLES * 10000 / 2;
-	//static const unsigned __int64 BUFFER_TIME_ADD = BUFFER_SAMPLES * 10000;
-
-	struct StormStream: public IStorm3D_Stream
-	{
-		bool stereo;
-		int frequency;
-		int bits;
-
-		FSOUND_STREAM *stream;
-		int channel;
-
-		BufferList buffers;
-		int position;
-
-		mutable CRITICAL_SECTION lock;
-		int updateTime;
-		int updates;
-		int sampleSize;
-		bool active;
-
-		int time;
-
-		StormStream(bool stereo_, int frequency_, int bits_, float volume)
-		:	stereo(stereo_),
-			frequency(frequency_),
-			bits(bits_),
-			stream(0),
-			position(0),
-			updateTime(0),
-			sampleSize(0),
-			active(false),
-			time(0)
-		{
-			InitializeCriticalSection(&lock);
-			if(stereo)
-				sampleSize = 2 * (bits / 8);
-			else
-				sampleSize = (bits / 8);
-
-			updateTime = int(__int64(BUFFER_SAMPLES * 1000) / frequency);
-
-			int type = FSOUND_2D;
-			if(stereo)
-				type |= FSOUND_STEREO;
-			else
-				type |= FSOUND_MONO;
-
-			if(bits == 16)
-				type |= FSOUND_16BITS;
-			else
-				type |= FSOUND_8BITS;
-
-			//int data = (int) (void *) (this);
-			stream = FSOUND_Stream_Create(&streamcallback, sampleSize * BUFFER_SAMPLES, type, frequency, this);
-			if(stream)
-			{
-				channel = FSOUND_Stream_PlayEx(FSOUND_FREE, stream, 0, TRUE);
-
-				if(channel >= 0)
-				{
-					int vol = int(volume * 255.f);
-					if(vol > 255)
-						vol = 255;
-					else if(vol < 0)
-						vol = 0;
-
-					FSOUND_SetVolume(channel, vol);
-					FSOUND_SetPaused(channel, FALSE);
-				}
-			}
-
-			FSOUND_Update();
-		}
-
-		~StormStream()
-		{
-			if(stream)
-				FSOUND_Stream_Close(stream);
-
-			DeleteCriticalSection(&lock);
-		}
-
-		void activate()
-		{
-			if(!active)
-			{
-				updates = 0;
-				time = timeGetTime();
-				active = true;
-			}
-		}
-
-		void deactivate()
-		{
-			EnterCriticalSection(&lock);
-
-			active = false;
-			buffers.clear();
-			position = 0;
-
-			LeaveCriticalSection(&lock);
-		}
-
-		void addSample(const char *buffer_, int length, unsigned __int64 start, unsigned __int64 duration)
-		{
-			EnterCriticalSection(&lock);
-			buffers.push_back(SampleBuffer());
-
-			SampleBuffer &sample = buffers.back();
-			sample.start = start;
-			sample.duration = duration;
-			sample.buffer.resize(length);
-			
-			memcpy(&sample.buffer[0], buffer_, length);
-			LeaveCriticalSection(&lock);
-		}
-
-		unsigned __int64 getCurrentTime() const
-		{
-			static const __int64 delta = (200 * 10000);
-
-			if(!active)
-				return 0;
-
-			//int ms = (timeGetTime() - time);
-			//__int64 result = __int64(ms) * 10000;
-			//return result;
-
-			__int64 time = __int64(updates * BUFFER_SAMPLES) * 1000 * 10000 / frequency;
-
-			if(time < delta)
-				return 0;
-			return time - delta;
-		}
-	};
-
-	signed char __stdcall streamcallback(FSOUND_STREAM *stream, void *buff, int len, void *param) 
-	{
-		StormStream *ptr = (StormStream *) (param);
-		EnterCriticalSection(&ptr->lock);
-
-		if(ptr->active)
-		{
-			++ptr->updates;
-			int written = 0;
-			while(!ptr->buffers.empty() && written < len)
-			{
-				BufferList::iterator first = ptr->buffers.begin();
-				const std::vector<char> &buffer = first->buffer;
-
-				int size = buffer.size();
-				int start = ptr->position;
-				int end = ptr->position + (len - written);
-				if(end > size)
-					end = size;
-
-				if(start < size - 1 && end <= size)
-				{
-					int amount = end - start;
-					memcpy((char *)buff + written, &buffer[start], amount);
-					written += amount;
-					ptr->position += amount;
-				}
-
-				if(written < len)
-				{
-					ptr->position = 0;
-					ptr->buffers.erase(first);
-				}
-			}
-		}
-
-		/*
-		{
-			static float    t1 = 0, t2 = 0;        // time
-			static float    v1 = 0, v2 = 0;        // velocity
-			signed short   *stereo16bitbuffer = (signed short *) buff;
-
-			for(int count = 0; count < len >> 2; ++count)        // >>2 = 16bit stereo (4 bytes per sample)
-			{
-				*stereo16bitbuffer++ = (signed short)(sin(t1) * 32767.0f);    // left channel
-				*stereo16bitbuffer++ = (signed short)(sin(t2) * 32767.0f);    // right channel
-
-				t1 += 0.01f   + v1;
-				t2 += 0.0142f + v2;
-				v1 += (float)(sin(t1) * 0.002f);
-				v2 += (float)(sin(t2) * 0.002f);
-			}
-		}
-		*/
-
-		LeaveCriticalSection(&ptr->lock);
-		return TRUE;
-	}
 
 	struct SoundInstance
 	{
@@ -310,7 +102,6 @@ namespace {
 	struct Music
 	{
 		shared_ptr<SoundStream> stream;
-		std::string fileName;
 	};
 
 	struct FadeMusic
@@ -337,7 +128,6 @@ namespace {
 		}
 	};
 
-} // unnamed
 
 SoundSample::SoundSample(const char *filename, Sound *data, bool temporaryCache) 
 { 
@@ -441,18 +231,18 @@ struct SoundMixer::Data : public IStorm3D_StreamBuilder
 		music(0),
 		masterVolume(1.f),
 		fxVolume(1.f),
-		ambientVolume(1.f),
 		speechVolume(1.f),
 		musicVolume(1.f),
+		ambientVolume(1.f),
 		fxMute(false),
 		speechMute(false),
 		musicMute(false),
 		loopMusic(false),
 		volumeFade( NULL ),
 		fxVolumeDefault(1.f),
-		ambientVolumeDefault(1.f),
 		speechVolumeDefault(1.f),
-		musicVolumeDefault(1.f)
+		musicVolumeDefault(1.f),
+		ambientVolumeDefault(1.f)
 	{
 
 		stereo = true;
@@ -563,6 +353,8 @@ struct SoundMixer::Data : public IStorm3D_StreamBuilder
 
 	SoundSample *loadSample(string filename, bool temporaryCache)
 	{
+		assert(soundLib != NULL);
+
 		for(unsigned int i = 0; i < filename.size(); ++i)
 		{
 			if(filename[i] == '\\')
@@ -573,10 +365,11 @@ struct SoundMixer::Data : public IStorm3D_StreamBuilder
 
 		SampleList::iterator it = samples.find(filename);
 		if(it != samples.end())
+		{
 			return it->second;
+		}
 
-		Logger::getInstance()->debug("SoundMixer::loadSample - Loading sound sample.");
-		Logger::getInstance()->debug(filename.c_str());
+		LOG_DEBUG(strPrintf("SoundMixer::loadSample - Loading sound sample %s", filename.c_str()).c_str());
 
 		Sound *sound = soundLib->loadSample(filename.c_str());
 		if(!sound)
@@ -630,10 +423,6 @@ struct SoundMixer::Data : public IStorm3D_StreamBuilder
 		instance.sample = sample;
 		instance.originalVolume = volume;
 		instance.range = range / 10.f; // scale !
-#ifdef PROJECT_CLAW_PROTO
-		instance.range = range; // scale !
-#endif
-
 		instance.position = cameraPosition;
 		instance.priority = priority;
 		instance.loop = loop;
@@ -650,7 +439,7 @@ struct SoundMixer::Data : public IStorm3D_StreamBuilder
 		SoundList::iterator it = sounds.find(soundHandle);
 		if(it == sounds.end())
 		{
-			assert(!"Invalid soundhandle");
+			LOG_DEBUG(strPrintf("setInstanceProperties: Invalid soundHandle %d", soundHandle).c_str());
 			return;
 		}
 
@@ -915,14 +704,11 @@ struct SoundMixer::Data : public IStorm3D_StreamBuilder
 
 		if(currentStream.stream && currentStream.stream->hasEnded())
 		{
-			if(loopMusic && nextSong.file.empty())
+			if(loopMusic)
 			{
 				// ToDo: Proper looping!
 				//currentStream.stream->stop();
 				//currentStream.stream->play();
-				nextSong.file = currentStream.fileName;
-				nextSong.fadeTime = 0;
-				currentStream = Music();
 			}
 			else
 				currentStream = Music();
@@ -941,10 +727,7 @@ struct SoundMixer::Data : public IStorm3D_StreamBuilder
 
 				// Set directly if only song
 				if(!currentStream.stream && !fadeInMusic.music.stream)
-				{
 					currentStream = music;
-					currentStream.fileName = nextSong.file;
-				}
 				else
 				{
 					// Current fade in to fade out
@@ -1104,13 +887,12 @@ struct SoundMixer::Data : public IStorm3D_StreamBuilder
 
 	void update()
 	{
-		FSOUND_Update();
+		soundLib->update();
 	}
 
 	boost::shared_ptr<IStorm3D_Stream> getStream()
 	{
-		StormStream *stream = new StormStream(stereo, frequency, bits, fxVolume);
-		return boost::shared_ptr<IStorm3D_Stream> (stream);
+		return soundLib->createStormStream(stereo, frequency, bits, fxVolume);
 	}
 };
 
@@ -2022,3 +1804,4 @@ void SoundMixer::setListenerPosition(
 */
 
 } // sfx
+

@@ -93,7 +93,7 @@ namespace util
      * whenever they encounter a parsing error after getting some data
      * from parser. This way you will get the file and line numbers logged.
      */
-    void error(char *err);
+    void error(const char *err);
 
   private:
     char *buf;

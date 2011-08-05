@@ -3,6 +3,12 @@
 
 #include "GameCamera.h"
 
+#include <cmath>
+
+#ifndef M_PI
+#define M_PI PI
+#endif
+
 #include <assert.h>
 #include <Storm3D_UI.h>
 #include <istorm3D_terrain_renderer.h>
@@ -25,6 +31,8 @@
 #include "../game/options/options_graphics.h"
 #include "../game/options/options_players.h"
 #include "../game/Ani.h"
+
+#include "igios.h"
 
 #define GAMECAMERA_MIN_FOV 1
 #define GAMECAMERA_MAX_FOV 359
@@ -59,7 +67,7 @@ using namespace game;
 namespace ui
 {
 
-  char *cameraMoves[CAMERA_MOVES_AMOUNT] =
+  const char *cameraMoves[CAMERA_MOVES_AMOUNT] =
   {
     "invalid",
     "forward",
@@ -81,7 +89,7 @@ namespace ui
     "fov_out"
   };
 
-  char *cameraModes[CAMERA_MODES_AMOUNT] =
+  const char *cameraModes[CAMERA_MODES_AMOUNT] =
   {
     "invalid",
     "zoom_centric",
@@ -143,7 +151,7 @@ namespace ui
 				this->camerasAdded++;
 			}
 
-		friend GameCamera;
+		friend class GameCamera;
 	};
 
 	float GameCameraImplData::lastFOV = -1;
@@ -423,7 +431,7 @@ namespace ui
   }
 
 
-  void GameCamera::setPosition(VC3 &position)
+  void GameCamera::setPosition(const VC3 &position)
   {
     cameraX = position.x;
     cameraHeight = position.y;
@@ -469,8 +477,6 @@ namespace ui
 
   void GameCamera::setFirstPersonPosition(float personX, float personY, float scrolledX, float scrolledY, float height, float alphaAngle, float betaAngle)
   {
-		float x = personX;
-		float y = personY;
 
     cameraX = scrolledX;
     cameraY = scrolledY;
@@ -973,11 +979,7 @@ namespace ui
         factor += 2 * (zoom - minZoom) / (maxZoom - minZoom);
       if (zoom < maxZoom) 
 			{
-#ifdef LEGACY_FILES
 				zoom += (1.0f * factor * delta) / 20.0f;
-#else
-				zoom += (0.2f * factor * delta) / 20.0f;
-#endif
 				if (zoom > maxZoom) 
 				{
 					zoom = maxZoom;
@@ -991,11 +993,7 @@ namespace ui
         factor += 2 * (zoom - minZoom) / (maxZoom - minZoom);
       if (zoom > minZoom) 
 			{
-#ifdef LEGACY_FILES
 				zoom -= (1.0f * factor * delta) / 20.0f;
-#else
-				zoom -= (0.2f * factor * delta) / 20.0f;
-#endif
 				if (zoom < minZoom) 
 				{
 					zoom = minZoom;
@@ -1074,51 +1072,77 @@ namespace ui
 
 			int mdx = 0;
 			int mdy = 0;
-			gameController->getMouseDelta(&mdx, &mdy);
 
-			if (game::SimpleOptions::getBool(DH_OPT_B_CAMERA_INVERT_LOOK)) 
-				mdy = -mdy;
-
-			if (gameController->isKeyDown(DH_CTRL_CAMERA_POSITION_OFFSET_MODE)) 
+			if (gameController->controllerTypeHasJoystick())
 			{
-				positionOffset.x += (0.5f * mdx) / 20.0f;
-				positionOffset.z -= (0.5f * mdy) / 20.0f;
-				// TODO: clamp to limits?
-			}
-			if (gameController->isKeyDown(DH_CTRL_CAMERA_TARGET_OFFSET_MODE)) 
-			{
-				targetOffset.x += (0.5f * mdx) / 20.0f;
-				targetOffset.z -= (0.5f * mdy) / 20.0f;
-				// TODO: clamp to limits?
-			}
-
-			if (gameController->isKeyDown(DH_CTRL_CAMERA_LOOK_MODE)) 
-			{
-				if (!SimpleOptions::getBool(DH_OPT_B_CAMERA_ALPHA_ANGLE_LOCKED))
+				if (gameController->isKeyDown(DH_CTRL_CAMERA_LOOK_MODE))
 				{
-					alphaAngle += (4.0f * mdx) / 20.0f;
-					if (alphaAngle < 0) alphaAngle += 360;
-					if (alphaAngle > 360) alphaAngle -= 360;
+					// joystick code
+					gameController->getJoystickValues(c, NULL, NULL, &mdx, &mdy);
+
+					if (mdx != 0 || mdy != 0)
+					{
+						VC2 dir(mdx, mdy);
+						dir.Normalize();
+						if (mdx > 0)
+						{
+							//  0 < angle < 180
+							alphaAngle = ((M_PI * 0.5) + asinf(dir.y)) * 180.0 / M_PI;
+						} else {
+							// 180 < angle < 360
+							alphaAngle = (2*M_PI + -(M_PI * 0.5 + asinf(dir.y))) * 180.0 / M_PI;
+						}
+					}
+				}
+			} else {
+				// mouse code
+
+				gameController->getMouseDelta(&mdx, &mdy);
+
+				if (game::SimpleOptions::getBool(DH_OPT_B_CAMERA_INVERT_LOOK))
+					mdy = -mdy;
+
+				if (gameController->isKeyDown(DH_CTRL_CAMERA_POSITION_OFFSET_MODE))
+				{
+					positionOffset.x += (0.5f * mdx) / 20.0f;
+					positionOffset.z -= (0.5f * mdy) / 20.0f;
+					// TODO: clamp to limits?
+				}
+				if (gameController->isKeyDown(DH_CTRL_CAMERA_TARGET_OFFSET_MODE))
+				{
+					targetOffset.x += (0.5f * mdx) / 20.0f;
+					targetOffset.z -= (0.5f * mdy) / 20.0f;
+					// TODO: clamp to limits?
 				}
 
-				if (cameraMode == CAMERA_MODE_ZOOM_CENTRIC)
+				if (gameController->isKeyDown(DH_CTRL_CAMERA_LOOK_MODE)) 
 				{
-					zoom += (2.0f * mdy) / 20.0f;
-					if (zoom < minZoom) zoom = minZoom;
-					if (zoom > maxZoom) zoom = maxZoom;
-				} else {
-					betaAngle += (4.0f * mdy) / 20.0f;
-					if (cameraMode == CAMERA_MODE_TARGET_CENTRIC)
+					if (!SimpleOptions::getBool(DH_OPT_B_CAMERA_ALPHA_ANGLE_LOCKED))
 					{
-						// check for both -10 and min angle here...
-						// must be above both.
-						if (betaAngle < -10) betaAngle = -10;
-						if (betaAngle < minBetaAngle) betaAngle = minBetaAngle;
-					} else {
-						if (betaAngle < minBetaAngle) betaAngle = minBetaAngle;
+						alphaAngle += (4.0f * mdx) / 20.0f;
+						if (alphaAngle < 0) alphaAngle += 360;
+						if (alphaAngle > 360) alphaAngle -= 360;
 					}
-					if (betaAngle > maxBetaAngle) betaAngle = maxBetaAngle;
-				} 
+
+					if (cameraMode == CAMERA_MODE_ZOOM_CENTRIC)
+					{
+						zoom += (2.0f * mdy) / 20.0f;
+						if (zoom < minZoom) zoom = minZoom;
+						if (zoom > maxZoom) zoom = maxZoom;
+					} else {
+						betaAngle += (4.0f * mdy) / 20.0f;
+						if (cameraMode == CAMERA_MODE_TARGET_CENTRIC)
+						{
+							// check for both -10 and min angle here...
+							// must be above both.
+							if (betaAngle < -10) betaAngle = -10;
+							if (betaAngle < minBetaAngle) betaAngle = minBetaAngle;
+						} else {
+							if (betaAngle < minBetaAngle) betaAngle = minBetaAngle;
+						}
+						if (betaAngle > maxBetaAngle) betaAngle = maxBetaAngle;
+					}
+				}
 			}
 		}
 
@@ -1335,6 +1359,9 @@ namespace ui
 
       break;
 
+	case CAMERA_MODE_INVALID:
+		igiosErrorMessage("impossible cameraMode: CAMERA_MODE_INVALID");
+		break;
     }
 
     // if we are jumping to another location
@@ -1655,8 +1682,8 @@ namespace ui
 			if(!old_forceMapView) // Just switched to map view.
 			{
 				old_upVec = scene->GetCamera()->GetUpVec();
-				int dummy1=0, dummy2=0;
-				//game->gameScripting->runSingleSimpleStringCommand( "hideAllUnits", "", &dummy1, &dummy2 );
+				/*int dummy1=0, dummy2=0;
+				game->gameScripting->runSingleSimpleStringCommand( "hideAllUnits", "", &dummy1, &dummy2 );*/
 			}
 
 			gameMap->getTerrain()->getRenderer ().setFloatValue( IStorm3D_TerrainRenderer::ForceAmbient, 

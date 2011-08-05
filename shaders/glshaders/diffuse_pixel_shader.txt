@@ -1,0 +1,14 @@
+!!ARBfp1.0
+OPTION ARB_precision_hint_fastest;
+PARAM c0 = program.env[0];
+OUTPUT outColor = result.color;
+TEMP r0; #, t0;
+#def c0, 0.25f,0.25f,0.25f,0.25f
+# Diffuse texture pass
+TEX r0, fragment.texcoord[0], texture[0], 2D;
+# Diffuse
+# Clamp
+ADD r0, r0, c0;
+SUB outColor, r0, c0;
+#MOV outColor, r0;
+END

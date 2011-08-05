@@ -1,23 +1,30 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
+#ifdef _MSC_VER
+#include <windows.h>
+#endif
+
+#include <GL/glew.h>
 #include "storm3d_camera.h"
 #include "storm3d.h"
-#include <D3dx9math.h>
 #include <c2_frustum.h>
 
 #include "Storm3D_ShaderManager.h"
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 // NOTE: apparently, this was previously 1.0f
 // now that it is 0.3f, has shadowmap quality possibly decreased? (assuming that shadows use
 // the default clip planes - has anyone checked this)? 
 
 const float DEFAULT_ZNEAR = 0.3f;
+
 
 //-----------------------------------------------------------------------------
 // Protos
@@ -29,75 +36,67 @@ void SetAdjustedProjectionMatrix(D3DMATRIX& mat,FLOAT fFOV,FLOAT fAspect,
 	FLOAT fVPHeight);*/
 
 
-
-//------------------------------------------------------------------
-// Get view matrix
-//------------------------------------------------------------------
-float *Storm3D_Camera::GetViewProjection4x4Matrix()
+const float *Storm3D_Camera::GetView4x4Matrix()
 {
 	Apply();
-	return (float*)vp;
-}
-
-float *Storm3D_Camera::GetView4x4Matrix()
-{
-	Apply();
-	return (float*)mv;
+	return (const float *)mv.raw;
 }
 
 
-//------------------------------------------------------------------
-// Storm3D_Camera::SetPosition
-//------------------------------------------------------------------
-void Storm3D_Camera::SetPosition(VC3 &v)
+//! Set the camera position
+/*!
+	\param v camera position
+*/
+void Storm3D_Camera::SetPosition(const VC3 &v)
 {
 	position=v;
 	visplane_update_needed=true;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Camera::SetTarget
-//------------------------------------------------------------------
-void Storm3D_Camera::SetTarget(VC3 &v)
+//! Set the camera target
+/*!
+	\param v target location
+*/
+void Storm3D_Camera::SetTarget(const VC3 &v)
 {
 	target=v;
 	visplane_update_needed=true;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Camera::SetUpVec
-//------------------------------------------------------------------
-void Storm3D_Camera::SetUpVec(VC3 &v)
+//! Set the up vector
+/*!
+	\param v up vector
+*/
+void Storm3D_Camera::SetUpVec(const VC3 &v)
 {
 	upvec=v;
 	visplane_update_needed=true;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Camera::SetFieldOfView
-//------------------------------------------------------------------
+//! Set the Field of View
+/*!
+	\param fov_ang FOV angle, in ?
+*/
 void Storm3D_Camera::SetFieldOfView(float fov_ang)
 {
 	fov=fov_ang;
 	visplane_update_needed=true;
 }
 
+//! Set the Field of View factor
+/*!
+	\param fov_factor_ FOV factor
+*/
 void Storm3D_Camera::SetFieldOfViewFactor(float fov_factor_)
 {
 	fov_factor=fov_factor_;
 	visplane_update_needed=true;
 }
 
-
-//------------------------------------------------------------------
-// Storm3D_Camera::SetVisibilityRange
-//------------------------------------------------------------------
+//! Set visibility range
+/*!
+	\param range visibility range
+*/
 void Storm3D_Camera::SetVisibilityRange(float range)
 {
 	if (range>10000000) range=10000000;
@@ -106,35 +105,43 @@ void Storm3D_Camera::SetVisibilityRange(float range)
 	visplane_update_needed=true;
 }
 
+//! Set the Z near
+/*!
+	\param value
+*/
 void Storm3D_Camera::SetZNear(float value)
 {
 	znear = value;	
 }
 
+//! Set Z near to default
 void Storm3D_Camera::SetZNearDefault()
 {
 	znear = DEFAULT_ZNEAR;
 }
 
-
-//------------------------------------------------------------------
-// Storm3D_Camera::GetFieldOfView
-//------------------------------------------------------------------
+//! Get the field of view
+/*!
+	\return FOV
+*/
 float Storm3D_Camera::GetFieldOfView() const
 {
 	return fov;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Camera::GetVisibilityRange
-//------------------------------------------------------------------
+//! Get visibility range
+/*!
+	\return visibility range
+*/
 float Storm3D_Camera::GetVisibilityRange() const
 {
 	return vis_range;
 }
 
+//! Get the view frustum
+/*!
+	\return frustum
+*/
 Frustum Storm3D_Camera::getFrustum() const
 {
 	if(!forcedOrthogonalProjection)
@@ -155,26 +162,23 @@ Frustum Storm3D_Camera::getFrustum() const
 	}
 }
 
-
-//------------------------------------------------------------------
-// Storm3D_Camera::Storm3D_Camera
-//------------------------------------------------------------------
-Storm3D_Camera::Storm3D_Camera(Storm3D *s2,VC3 &_position,
-		VC3 &_target,float _vis_range,float _fov,VC3 &_upvec) :
+//! Constructor
+Storm3D_Camera::Storm3D_Camera(Storm3D *s2, const VC3 &_position,
+		const VC3 &_target, float _vis_range, float _fov, const VC3 &_upvec) :
 	Storm3D2(s2),
 	position(_position),
 	target(_target),
-	vis_range(_vis_range),
-	sq_vis_range(vis_range*vis_range),
+	upvec(_upvec),
 	fov(_fov),
 	fov_factor(1.f),
-	upvec(_upvec),
+	vis_range(_vis_range),
+	sq_vis_range(vis_range*vis_range),
 	visplane_update_needed(true),
 	shearEffectFactor(0.0f),
+	znear(DEFAULT_ZNEAR),
 	timeMsec(0),
 	forcedViewProjection(false),
-	forcedOrthogonalProjection(false),
-	znear(DEFAULT_ZNEAR)
+	forcedOrthogonalProjection(false)
 {
 	Storm3D_SurfaceInfo ss=Storm3D2->GetScreenSize();
 	aspect_ratio = (float)ss.width/(float)ss.height;
@@ -183,60 +187,41 @@ Storm3D_Camera::Storm3D_Camera(Storm3D *s2,VC3 &_position,
 extern D3DXMATRIX clip_matrix;
 extern D3DXMATRIX reflection_matrix;
 
-//------------------------------------------------------------------
-// Storm3D_Camera::Apply
-//------------------------------------------------------------------
+//! Applies camera settings
 void Storm3D_Camera::Apply()
 {
 	if(!forcedViewProjection)
 	{
 		// Calc direction
-		VC3 dir=target-position;
+		// VC3 dir=target-position;
 
 		// Create View matrix
-		D3DXMatrixLookAtLH(&mv,(D3DXVECTOR3*)&position,
-			(D3DXVECTOR3*)&target,(D3DXVECTOR3*)&upvec);
-		Storm3D2->GetD3DDevice()->SetTransform(D3DTS_VIEW,&mv);
+		D3DXMatrixLookAtLH(mv, position, target, upvec);
 
 		matView = mv;
 
-		// Calc aspect!
-		//Storm3D_SurfaceInfo ss=Storm3D2->GetScreenSize();
-		//float aspect=(float)ss.width/(float)ss.height;
-		//aspect=1;	//BETA!
-
 		float ff = this->timeMsec / 500.f;
-	  //static DWORD time = timeGetTime();
-		//int newTime = timeGetTime();
-		//int delta = time - newTime();
-		//time = newTime;
-
-		// Create Projection matrix
-		//D3DXMATRIX matProj;
 
 		if(!forcedOrthogonalProjection)
 		{
 			if (shearEffectFactor > 0.001f)
 			{
-				D3DXMatrixPerspectiveFovLH(&matProj,(fov * fov_factor) + sinf(ff * .93f) * .1f * shearEffectFactor,aspect_ratio,znear,vis_range);
+				D3DXMatrixPerspectiveFovLH(matProj,(fov * fov_factor) + sinf(ff * .93f) * .1f * shearEffectFactor,aspect_ratio,znear,vis_range);
 			} else {
-				D3DXMatrixPerspectiveFovLH(&matProj,fov * fov_factor,aspect_ratio,znear,vis_range);
+				D3DXMatrixPerspectiveFovLH(matProj,fov * fov_factor,aspect_ratio,znear,vis_range);
 			}
  		}
 
-
-		Storm3D2->GetD3DDevice()->SetTransform(D3DTS_PROJECTION,&matProj);
+		Storm3D_ShaderManager::GetSingleton()->SetProjectionMatrix(matProj);
 		// Multiply matrices to get VP (view-projection) matrix
 		if (shearEffectFactor > 0.001f)
 		{
 			D3DXMATRIX shearMat;
-			D3DXMatrixIdentity(&shearMat);
 			shearMat._12 = sinf(ff) * .1f * shearEffectFactor;
 			shearMat._21 = cosf(ff * 1.3f) * .1f * shearEffectFactor;
-			vp=mv * shearMat * matProj;
-			//vp= shearMat * mv * matProj;
+			vp = mv * shearMat * matProj;
 		} else {
-			vp=mv*matProj;
+			vp = mv * matProj;
 		}
 	}
 
@@ -245,13 +230,12 @@ void Storm3D_Camera::Apply()
 		matProj = matForcedOrtho;
 	}
 
-	Storm3D2->GetD3DDevice()->SetTransform(D3DTS_PROJECTION,&matProj);
 
-//	Storm3D_ShaderManager::GetSingleton()->SetViewMatrix(mv);
-//	Storm3D_ShaderManager::GetSingleton()->SetProjectionMatrix(matProj);
-	Storm3D_ShaderManager::GetSingleton()->SetViewProjectionMatrix(vp, mv);
+	Storm3D_ShaderManager::GetSingleton()->SetViewMatrix(mv);
+	Storm3D_ShaderManager::GetSingleton()->SetProjectionMatrix(matProj);
+	//Storm3D_ShaderManager::GetSingleton()->SetViewProjectionMatrix(vp, mv);
 
-	D3DXVECTOR4 p;
+	VC4 p;
 	p.x = position.x;
 	p.y = position.y;
 	p.z = position.z;
@@ -261,77 +245,48 @@ void Storm3D_Camera::Apply()
 	if(forcedViewProjection && !forcedOrthogonalProjection)
 	{
 		D3DXMATRIX view;
-		D3DXMatrixMultiply(&view, &reflection_matrix, &matView);
+		D3DXMatrixMultiply(view, reflection_matrix, matView);
 		D3DXMATRIX proj;
 		proj = matProj * clip_matrix;
 
-		Storm3D2->GetD3DDevice()->SetTransform(D3DTS_PROJECTION,&proj);
-		Storm3D2->GetD3DDevice()->SetTransform(D3DTS_VIEW,&view);
+		Storm3D_ShaderManager::GetSingleton()->SetProjectionMatrix(proj);
+		Storm3D_ShaderManager::GetSingleton()->SetViewMatrix(view);
 	}
 }
 
-
-const D3DXMATRIX& Storm3D_Camera::GetViewMatrix() 
+//! Get the view matrix
+/*!
+	\return view matrix
+*/
+const D3DXMATRIX& Storm3D_Camera::GetViewMatrix()
 {
-	//return matView;
-
-	/**/
 	static D3DXMATRIX view;
-	D3DXMatrixMultiply(&view, &reflection_matrix, &matView);
+	/* FIXME: reflection_matrix[2][2] is -1 when it should be 1 ?
+	static D3DXMATRIX tempref = reflection_matrix;
+	tempref._22 = 1.0f;
+	D3DXMatrixMultiply(view, tempref, matView);
+	*/
+	D3DXMatrixMultiply(view, reflection_matrix, matView);
 	return view;
-	/**/
 }
-	
 
-const D3DXMATRIX& Storm3D_Camera::GetProjectionMatrix() 
+//! Get the projection matrix
+/*!
+	\return view matrix
+*/
+const D3DXMATRIX& Storm3D_Camera::GetProjectionMatrix()
 {
-	//return matProj;
-
-	/**/
 	static D3DXMATRIX proj;
 	proj = matProj * clip_matrix;
 	return proj;
-	/**/
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Camera::ApplyAdjusted
-//------------------------------------------------------------------
-/*void Storm3D_Camera::ApplyAdjusted(const VC2 &siz)
-{
-	// Create View matrix
-    D3DXMatrixLookAtLH(&mv,(D3DXVECTOR3*)&position,
-		(D3DXVECTOR3*)&target,(D3DXVECTOR3*)&upvec);    
-	Storm3D2->D3DDevice->SetTransform(D3DTS_VIEW,&mv);
-
-	// Calc aspect!
-	Storm3D_SurfaceInfo ss=Storm3D2->GetScreenSize();
-	float aspect=(float)ss.width/(float)ss.height;
-	//aspect=1;	//BETA!
-
-	// Create Projection matrix
-    D3DXMATRIX matProj;
-    //D3DXMatrixPerspectiveFovLH(&matProj,fov,aspect,DEFAULT_ZNEAR,vis_range);
-	SetAdjustedProjectionMatrix(matProj,fov,aspect,1,vis_range,0,0,siz.x,siz.y);
-	Storm3D2->D3DDevice->SetTransform(D3DTS_PROJECTION,&matProj);
-
-	// Multiply matrices to get VP (view-projection) matrix
-	vp=mv*matProj;
-}*/
-
-
-
-//------------------------------------------------------------------
-// Storm3D_Camera::ApplyMirrored
-//------------------------------------------------------------------
+//! Apply mirrored camera settings
 void Storm3D_Camera::ApplyMirrored()
 {
 	// Create View matrix
-    D3DXMatrixLookAtLH(&mv,(D3DXVECTOR3*)&position,
-		(D3DXVECTOR3*)&target,(D3DXVECTOR3*)&upvec);    
-	Storm3D2->GetD3DDevice()->SetTransform(D3DTS_VIEW,&mv);
+    D3DXMatrixLookAtLH(mv, position, target, upvec);
+	Storm3D_ShaderManager::GetSingleton()->SetViewMatrix(mv);
 
 	// Calc aspect!
 	Storm3D_SurfaceInfo ss=Storm3D2->GetScreenSize();
@@ -339,14 +294,17 @@ void Storm3D_Camera::ApplyMirrored()
 
 	// Create Projection matrix
     D3DXMATRIX matProj;
-    //D3DXMatrixPerspectiveFovLH(&matProj,fov,-aspect,1.0f,vis_range);
-    D3DXMatrixPerspectiveFovLH(&matProj,fov,-aspect,znear,vis_range);
-	Storm3D2->GetD3DDevice()->SetTransform(D3DTS_PROJECTION,&matProj);
+	D3DXMatrixPerspectiveFovLH(matProj, fov, -aspect, znear, vis_range);
+	Storm3D_ShaderManager::GetSingleton()->SetProjectionMatrix(matProj);
 
 	// Multiply matrices to get VP (view-projection) matrix
-	vp=mv*matProj;
+	vp = mv * matProj;
 }
 
+//! Force view projection
+/*!
+	\param other
+*/
 void Storm3D_Camera::ForceViewProjection(const Storm3D_Camera *other)
 {
 	if(other)
@@ -362,17 +320,14 @@ void Storm3D_Camera::ForceViewProjection(const Storm3D_Camera *other)
 		forcedViewProjection = false;
 }
 
-
-//------------------------------------------------------------------
-// Storm3D_Camera::UpdateVisPlanes
-//------------------------------------------------------------------
+//! Update the visibility planes
 void Storm3D_Camera::UpdateVisPlanes() const
 {
 	// Create view matrix (without translation)
 	D3DXMATRIX matView;
-	D3DXVECTOR3 zp=D3DXVECTOR3(0,0,0);
-	D3DXMatrixLookAtLH(&matView,&zp,
-		(D3DXVECTOR3*)&(target-position),(D3DXVECTOR3*)&upvec);
+	VC3 zp(0,0,0);
+	VC3 temp = target - position;
+	D3DXMatrixLookAtLH(matView, zp, temp, upvec);
 	viewrot=MAT((float*)matView.m);
 	viewrot=viewrot.GetWithoutTranslation();
 	viewrot.Inverse();
@@ -438,11 +393,12 @@ void Storm3D_Camera::UpdateVisPlanes() const
 	visplane_update_needed=false;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Camera::TestSphereVisibility
-//------------------------------------------------------------------
+//! Test if given sphere is visible
+/*!
+	\param pointpos center of sphere
+	\param radius radius of sphere
+	\return true if visible
+*/
 bool Storm3D_Camera::TestSphereVisibility(const VC3 &pointpos,float radius)
 {
 
@@ -481,6 +437,12 @@ bool Storm3D_Camera::TestSphereVisibility(const VC3 &pointpos,float radius)
 	return true;
 }
 
+//! Test if given box is visible
+/*!
+	\param min
+	\param max
+	\return true if visible
+*/
 bool Storm3D_Camera::TestBoxVisibility(const VC3 &min, const VC3 &max)
 {
 
@@ -539,10 +501,11 @@ bool Storm3D_Camera::TestBoxVisibility(const VC3 &min, const VC3 &max)
 	return true;
 }
 
-
-//------------------------------------------------------------------
-// Storm3D_Camera::TestPointVisibility
-//------------------------------------------------------------------
+//! Test if point is visible
+/*!
+	\param pointpos point position
+	\return true if visible
+*/
 bool Storm3D_Camera::TestPointVisibility(const VC3 &pointpos)
 {
 	if(forcedOrthogonalProjection) // Todo: real check
@@ -579,11 +542,11 @@ bool Storm3D_Camera::TestPointVisibility(const VC3 &pointpos)
 	return true;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Camera::TestPointIsBehind
-//------------------------------------------------------------------
+//! Test if a point is behind camera
+/*!
+	\param pointpos point position
+	\return true if behind
+*/
 bool Storm3D_Camera::TestPointIsBehind(const VC3 &pointpos)
 {
 	// Update vis planes, if needed
@@ -598,41 +561,37 @@ bool Storm3D_Camera::TestPointIsBehind(const VC3 &pointpos)
 	return false;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Camera::GetPosition
-//------------------------------------------------------------------
-VC3 &Storm3D_Camera::GetPosition()
+//! Get camera position vector
+/*!
+	\return position vector
+*/
+const VC3 &Storm3D_Camera::GetPosition() const
 {
 	return position;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Camera::GetTarget
-//------------------------------------------------------------------
-VC3 &Storm3D_Camera::GetTarget()
+//! Get camera target vector
+/*!
+	\return target vector
+*/
+const VC3 &Storm3D_Camera::GetTarget() const
 {
 	return target;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Camera::GetUpVec
-//------------------------------------------------------------------
-VC3 &Storm3D_Camera::GetUpVec()
+//! Get camera up vector
+/*!
+	\return up vector
+*/
+const VC3 &Storm3D_Camera::GetUpVec() const
 {
 	return upvec;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Camera::GetUpVecReal
-//------------------------------------------------------------------
+//! Get camera real up vector
+/*!
+	\return real up vector
+*/
 VC3 Storm3D_Camera::GetUpVecReal() const
 {
 	// Fix up vector
@@ -648,21 +607,19 @@ VC3 Storm3D_Camera::GetUpVecReal() const
 	return upr;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Camera::GetDirection
-//------------------------------------------------------------------
+//! Get camera direction vector
+/*!
+	\return direction vector
+*/
 VC3 Storm3D_Camera::GetDirection() const
 {
 	return target-position;
 }
 
-
-
-//------------------------------------------------------------------
-// Storm3D_Camera::GetDirection
-//------------------------------------------------------------------
+//! Set camera values to those provided by helper
+/*!
+	\param helper helper
+*/
 void Storm3D_Camera::UseCameraHelperValues(IStorm3D_Helper_Camera *helper)
 {
 	position=helper->GetGlobalPosition();
@@ -672,56 +629,14 @@ void Storm3D_Camera::UseCameraHelperValues(IStorm3D_Helper_Camera *helper)
 	visplane_update_needed=true;
 }
 
-
-
-//-----------------------------------------------------------------------------
-// Adjusted matrix stuff
-//-----------------------------------------------------------------------------
-/*void SetFrustumMatrix(D3DMATRIX& mat,FLOAT fLeft,FLOAT fRight,FLOAT fTop,
-	FLOAT fBottom,FLOAT fNearPlane,FLOAT fFarPlane)
-{
-    float Q = fFarPlane / ( fFarPlane - fNearPlane );
-
-    ZeroMemory( &mat, sizeof(D3DMATRIX) );
-    mat._11 = ( 2.0f*fNearPlane )/( fRight - fLeft );
-    mat._22 = ( 2.0f*fNearPlane )/( fTop - fBottom );
-    mat._31 = ( fRight + fLeft )/ (fRight - fLeft );
-    mat._32 = ( fTop + fBottom )/ (fTop - fBottom );
-    mat._33 = Q;
-    mat._34 = 1.0f;
-    mat._43 = -Q*fNearPlane;
-}
-
-
-void SetAdjustedProjectionMatrix(D3DMATRIX& mat,FLOAT fFOV,FLOAT fAspect,
-	FLOAT fNearPlane,FLOAT fFarPlane,FLOAT fPixDx,FLOAT fPixDy,FLOAT fVPWidth, 
-	FLOAT fVPHeight)
-{
-    if(fabs(fFarPlane-fNearPlane)<0.01f) return;
-    if(fabs(sin(fFOV/2))<0.01f) return;
-
-    float h =   1.0f  * ( cosf(fFOV/2)/sinf(fFOV/2) );
-
-    float fTop = fNearPlane/h;
-    float fBottom = -fTop;
-    float fRight = fTop * fAspect;
-    float fLeft = -fRight;
-
-    float fXWSize = fRight - fLeft;
-    float fYWSize = fTop - fBottom;
-
-    float fDx = -( fPixDx*fXWSize/fVPWidth );
-    float fDy = -( fPixDy*fYWSize/fVPHeight );
-    
-    SetFrustumMatrix( mat, fLeft+fDx, fRight+fDx, fTop+fDy, fBottom+fDy, fNearPlane,
-        fFarPlane );
-}*/
-
-
-
-//------------------------------------------------------------------
-// Transform point to screen space (returns true if not behind)
-//------------------------------------------------------------------
+//! Transform point to screen space (returns true if not behind)
+/*!
+	\param source
+	\param result
+	\param rhw
+	\param real_z
+	\return true if point is not behind
+*/
 bool Storm3D_Camera::GetTransformedToScreen(const VC3 &source,VC3 &result,float &rhw,float &real_z)
 {
 	if(visplane_update_needed) 
@@ -731,12 +646,12 @@ bool Storm3D_Camera::GetTransformedToScreen(const VC3 &source,VC3 &result,float 
 	}
 
     const float rx=source.x*vp[0]+source.y*vp[4]+source.z*vp[8]+vp[12];
-    const float ry=source.x*vp[1]+source.y*vp[5]+source.z*vp[9]+vp[13];
+	// on opengl the second column is negated
+	const float ry=-(source.x*vp[1]+source.y*vp[5]+source.z*vp[9]+vp[13]);
     real_z=source.x*vp[2]+source.y*vp[6]+source.z*vp[10]+vp[14];
     rhw=source.x*vp[3]+source.y*vp[7]+source.z*vp[11]+vp[15];
 
 	// Is the point behind the screen
-	//if ((real_z<1)||(fabsf(rhw)<EPSILON)) return false;
 	if(fabsf(rhw) < EPSILON)
 		return false;
 
@@ -753,30 +668,48 @@ bool Storm3D_Camera::GetTransformedToScreen(const VC3 &source,VC3 &result,float 
 	return true;
 }
 
+//! Set aspect ratio
+/*!
+	\param ratio aspect ratio
+*/
 void Storm3D_Camera::SetAspectRatio(float ratio)
 {
 	aspect_ratio = ratio;
 }
 
-
+//! Set shear effect factor
+/*!
+	\param shearEffectFactor shear effect factor
+*/
 void Storm3D_Camera::SetShearEffectFactor(float shearEffectFactor)
 {
 	this->shearEffectFactor = shearEffectFactor;
 }
 
-
+//! Set time
+/*!
+	\param timeMsec time in milliseconds
+*/
 void Storm3D_Camera::SetTime(unsigned long timeMsec)
 {
 	this->timeMsec = timeMsec;
 }
 
-void Storm3D_Camera::ForceOrthogonalProjection (bool force, float minX, float maxX, float minY, float maxY) 
+//! Force orthogonal projection
+/*!
+	\param force true to force projection
+	\param minX X-axis minimum
+	\param maxX X-axis maximum
+	\param minY X-axis minimum
+	\param maxY Y-axis maximum
+*/
+void Storm3D_Camera::ForceOrthogonalProjection(bool force, float minX, float maxX, float minY, float maxY)
 {
 	if(force)
 	{
-		D3DXMatrixIdentity ( &matProj );
+		D3DXMatrixIdentity (matProj);
 		//D3DXMatrixOrthoLH ( &matProj , width, height, 0.1f, 1000.0f );
-		D3DXMatrixOrthoOffCenterLH ( &matProj, minX, maxX, minY, maxY, 0.1f, 1000.0f );
+		D3DXMatrixOrthoOffCenterLH(matProj, minX, maxX, minY, maxY, 0.1f, 1000.0f);
 		matForcedOrtho = matProj;
 		forcedOrthogonalProjection = true;
 	}
@@ -785,3 +718,58 @@ void Storm3D_Camera::ForceOrthogonalProjection (bool force, float minX, float ma
 	
 }
 
+//! Get ray vector
+/*!
+	\param x
+	\param y
+	\param dir
+	\param origin
+	\param near_z
+*/
+void Storm3D_Camera::getRayVector(int x, int y, VC3 &dir, VC3 &origin, float near_z)
+{
+	D3DXMATRIX pProjection;
+	D3DXMATRIX pView;
+
+	VC3 upvec = this->GetUpVec();
+
+	VC3 position = this->GetPosition();
+	VC3 target = this->GetTarget();
+	D3DXMatrixLookAtLH(pView, position, target, upvec);
+
+	float fov = this->GetFieldOfView();
+	Storm3D_SurfaceInfo ss = Storm3D2->GetScreenSize();
+	float aspect=(float) ss.width / (float) ss.height;
+	float vis_range = this->GetVisibilityRange();
+
+	VC3 pV;
+
+	D3DXMatrixPerspectiveFovLH(pProjection, fov, aspect, 1.0f, vis_range);
+
+	pV.x = ( ( ( 2.0f * (float)x * ss.width / 1024 ) / ss.width  ) - 1 ) / pProjection._11;
+	pV.y = ( ( ( 2.0f * (float)y * ss.height / 768 ) / ss.height ) - 1 ) / pProjection._22;
+	pV.z = 1.0f;
+
+	D3DXMATRIX m;
+	D3DXMatrixInverse(m, NULL, pView);
+
+	VC3 vPickRayDir;
+	VC3 vPickRayOrig;
+
+	vPickRayDir.x  = pV.x * m._11 + pV.y * m._21 + pV.z * m._31;
+	vPickRayDir.y  = pV.x * m._12 + pV.y * m._22 + pV.z * m._32;
+	vPickRayDir.z  = pV.x * m._13 + pV.y * m._23 + pV.z * m._33;
+	vPickRayDir.Normalize();
+	vPickRayOrig.x = m._41;
+	vPickRayOrig.y = m._42;
+	vPickRayOrig.z = m._43;
+
+	vPickRayOrig += vPickRayDir * near_z;
+
+	dir.x = vPickRayDir.x;
+	dir.y = vPickRayDir.y;
+	dir.z = vPickRayDir.z;
+	origin.x = vPickRayOrig.x;
+	origin.y = vPickRayOrig.y;
+	origin.z = vPickRayOrig.z;
+}

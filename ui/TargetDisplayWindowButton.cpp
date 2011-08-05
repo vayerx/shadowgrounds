@@ -15,15 +15,6 @@ namespace ui {
 
 TargetDisplayButtonManager* TargetDisplayWindowButton::buttonManager = NULL;
 
-enum directions
-{
-	topleft = 0,
-	topright = 1,
-	bottomright = 2,
-	bottomleft = 3,
-	buttontext = 4
-};
-
 ///////////////////////////////////////////////////////////////////////////////
 
 TargetDisplayWindowButton::TargetDisplayWindowButton()
@@ -96,8 +87,6 @@ void TargetDisplayWindowButton::operator=( const TargetDisplayWindowButton& butt
 float TargetDisplayWindowButton::getAnimPos( int x )
 {
 	float f = (float)x / 30.0f;
-	
-	float result = beginAnimPos;
 
 	beginAnimPos -= ( beginAnimPos / 2 ) * f;
 

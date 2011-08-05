@@ -3,7 +3,7 @@
 
 class IStorm3D_Scene;
 class IStorm3D_Material;
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 
 class IStorm3D_VideoStreamer
 {
@@ -19,6 +19,8 @@ public:
 	virtual void setAlpha(float alpha) = 0;
 	virtual void update() = 0;
 	virtual void render(IStorm3D_Scene *scene) = 0;
+
+	virtual void getTextureCoords(float &x, float &y) = 0;
 
 };
 

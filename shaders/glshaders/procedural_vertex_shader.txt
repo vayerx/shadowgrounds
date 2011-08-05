@@ -1,0 +1,48 @@
+!!ARBvp1.0
+#fromList ["c"]
+TEMP r0;
+PARAM c[100] = { program.env[0..99] };
+OUTPUT oPos = result.position;
+OUTPUT oT0 = result.texcoord[0];
+OUTPUT oT1 = result.texcoord[1];
+OUTPUT oT2 = result.texcoord[2];
+OUTPUT oT3 = result.texcoord[3];
+# Default shader:
+#   -> Transform vertex
+#   -> Apply ambient color
+#   -> Apply surface color
+#   -> Apply directional light
+#   -> Apply base texturing 
+# Light direction could be transformed to 
+# model space and avoid rotating normal.
+# Constant declarations:
+#   -> c[0..3] -> World x View x Projection matrix
+#   -> c[4..7] -> World matrix (first 3 rows)   
+#   -> c[7]    -> Ambient color (.w transparency)
+#   -> c[8]    -> Diffuse color
+#   -> c[9]    -> Light direction (.w 0.f for clamping)
+#   -> c[10]   -> Light color
+#   -> c[11]   -> Fog start/end/range (.w 1.f)
+# Vertex data:
+#   -> v0 -> position
+#   -> v3 -> normal
+#   -> v7,v8,v9 -> texture coordinates
+ATTRIB v0 = vertex.position;
+ATTRIB v1 = vertex.texcoord[0];
+ATTRIB v2 = vertex.texcoord[1];
+# Position
+MOV oPos, v0;
+# ** Texcoords** 
+# Offset1
+MUL r0, v1, c[0];
+ADD oT0.xy, r0, c[1];
+# Base1
+MUL r0, v2, c[2];
+ADD oT1.xy, r0, c[3];
+# Offset2
+MUL r0, v1, c[4];
+ADD oT2.xy, r0, c[5];
+# Base2
+MUL r0, v2, c[6];
+ADD oT3.xy, r0, c[7];
+END

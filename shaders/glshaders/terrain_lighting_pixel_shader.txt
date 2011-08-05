@@ -1,0 +1,25 @@
+!!ARBfp1.0
+PARAM c0 = program.env[0];
+ATTRIB v0 = fragment.color.primary;
+OUTPUT outColor = result.color;
+TEMP r0, t0, t2, t3;
+# Terrain pixel shader:
+# Lightmap
+TEX t0, fragment.texcoord[0], texture[0], 2D;
+# Fake
+TXP t2, fragment.texcoord[2], texture[2], 2D;
+# Terrain
+TXP t3, fragment.texcoord[3], texture[3], 2D;
+# c0 - lightmap multiplier
+
+# lightmap is in d3d color fmt, need some trickery
+MAD r0, t0.zyxw, c0, v0;
+#MUL r0, t0, c0;
+ADD_SAT r0, r0, t2;
+MUL r0, r0, t3;
+ADD r0, r0, r0;
+
+LRP outColor.rgb, fragment.fogcoord.x, r0, state.fog.color;
+MOV outColor.a, v0;
+#MOV outColor, r0;
+END

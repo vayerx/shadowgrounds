@@ -1,0 +1,85 @@
+!!ARBvp1.0
+PARAM object[4] = { state.matrix.program[0] };
+PARAM mvp[4] = { state.matrix.mvp };
+#fromList ["c"]
+TEMP r0, r2, r7;
+PARAM c[100] = { program.env[0..99] };
+OUTPUT oD0 = result.color.primary;
+OUTPUT oPos = result.position;
+OUTPUT oT0 = result.texcoord[0];
+OUTPUT oT1 = result.texcoord[1];
+# Default shader:
+#   -> Transform vertex
+#   -> Apply ambient color
+#   -> Apply surface color
+#   -> Apply directional light
+#   -> Apply base texturing 
+# Light direction could be transformed to 
+# model space and avoid rotating normal.
+# Constant declarations:
+#   -> c[0..3] -> World x View x Projection matrix
+#   -> c[4..7] -> World matrix (first 3 rows)   
+#   -> c[7]    -> Ambient color (.w transparency)
+#   -> c[8]    -> Diffuse color
+#   -> c[9]    -> Light direction (.w 0.f for clamping)
+#   -> c[10]   -> Light color
+#   -> c[19]   -> Fog
+# Vertex data:
+#   -> v0 -> position
+#   -> v1,2 -> texture coordinates
+#   -> v3 -> normal
+ATTRIB v0 = vertex.position;
+ATTRIB v3 = vertex.normal;
+ATTRIB v1 = vertex.texcoord[0];
+ATTRIB v2 = vertex.texcoord[1];
+# ** POSITION **
+# Transform position to clip space
+#dp4 oPos.x, v0, mvp[0]
+#dp4 oPos.y, v0, mvp[1]
+#dp4 oPos.z, v0, mvp[2]
+#dp4 oPos.w, v0, mvp[3]
+DP4 r0.x, v0, mvp[0];
+DP4 r0.y, v0, mvp[1];
+DP4 r0.z, v0, mvp[2];
+DP4 r0.w, v0, mvp[3];
+
+MOV oPos, r0;
+# Normal to world space
+#dp4 r0.x, v1.xyz, c[4].xyz
+#dp4 r0.y, v1.xyz, c[5].xyz
+#dp4 r0.z, v1.xyz, c[6].xyz
+#m3x3 r0, v1, c[4]
+# ** DIRECTIONAL LIGHT **
+# Dot with light vector (diffuse intensity)
+#dp3 r1.x, r0.xyz, c[9].xyz
+# Clamp
+#max r1.x, r1.x, c[9].w
+# * light_color
+#mul r2.xyz, r1.x, c[10].xyz
+# Add ambient color and multiply with material color
+MOV r2.xyz, c[7].xyzz;
+MUL r2.xyz, r2.xyzz, c[8].xyzz;
+MOV oD0.w, c[7].w;
+# Height fog
+DP4 r7.x, v0, object[0];
+DP4 r7.y, v0, object[1];
+DP4 r7.z, v0, object[2];
+SUB r0, r7.y, c[19].x;
+MUL r0, r0, c[19].y;
+MIN r0, r0, c[19].w;
+MAX r0, r0, c[19].z;
+MUL oD0.xyz, r0.xxxx, r2.xyzz;
+# ** TEXTURING **
+# Move texture coordinates
+ADD oT0.xy, v1.xyyy, c[12].xyyy;
+MOV oT1.xy, v2.xyyy;
+# ** Fog **
+# Camera z
+#dp4 r1.x, v0, mvp[2]
+# - fog start
+#add r1.x, r1.x, -c[11].x
+# 1 / range
+#rcp r1.y, c[11].z
+# 1.0 - (z - fog start) * 1/range
+#mad oFog.x, -r1.x, r1.y, c[11].w
+END

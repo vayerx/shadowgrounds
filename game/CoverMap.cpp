@@ -48,6 +48,7 @@ namespace game
 			}
 			virtual void distanceFloodfillProgress(int line)
 			{
+#ifndef __APPLE__
 				FILE *f = fopen(filename, "wb");
 				if (f != NULL)
 				{
@@ -57,6 +58,7 @@ namespace game
 					}
 					fclose(f);					
 				}
+#endif
 			}
 	};
 
@@ -125,7 +127,7 @@ namespace game
 		assert(filename != NULL);
 
 		bool success = false;
-
+#ifndef __APPLE__
 		RLE_PACKED_FILE *f = rle_packed_fopen(filename, "wb");
 		if (f != NULL)
 		{
@@ -147,7 +149,7 @@ namespace game
 			Logger::getInstance()->error("CoverMap::save - Could not open file.");
 			Logger::getInstance()->debug(filename);
 		}
-
+#endif
 		return success;
 	}
 

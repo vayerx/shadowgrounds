@@ -28,7 +28,7 @@ public:
 	// Functions (these do not modify this color)
 	DWORD GetAsD3DCompatibleARGB() const
 	{
-		return ((DWORD)((((255)&0xff)<<24)|((((int)(r*255.0f))&0xff)<<16)|((((int)(g*255.0f))&0xff)<<8)|(((int)(b*255.0f))&0xff)));
+		return ((DWORD)((((255)&0xff)<<24)|((((int)(b*255.0f))&0xff)<<16)|((((int)(g*255.0f))&0xff)<<8)|(((int)(r*255.0f))&0xff)));
 	}
 
 	TColor GetClamped() const			// Forces all colors in range [0,1]	

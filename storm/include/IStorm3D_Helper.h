@@ -6,7 +6,6 @@
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
-#include <windows.h>
 
 // Common datatypes
 #include "DatatypeDef.h"
@@ -77,7 +76,7 @@ class ST3D_EXP_DLLAPI IStorm3D_Helper_Point : public IStorm3D_Helper
 public:
 
 	// Change params
-	virtual void SetPosition(VC3 &position)=0;
+	virtual void SetPosition(const VC3 &position)=0;
 
 	// Get params
 	virtual VC3 &GetPosition()=0;
@@ -98,7 +97,7 @@ class ST3D_EXP_DLLAPI IStorm3D_Helper_Vector : public IStorm3D_Helper_Point
 public:
 
 	// Change params
-	virtual void SetDirection(VC3 &direction)=0;
+	virtual void SetDirection(const VC3 &direction)=0;
 
 	// Get params
 	virtual VC3 &GetDirection()=0;
@@ -159,7 +158,7 @@ class ST3D_EXP_DLLAPI IStorm3D_Helper_Camera : public IStorm3D_Helper_Vector
 public:
 
 	// Change params
-	virtual void SetUpVector(VC3 &upvec)=0;
+	virtual void SetUpVector(const VC3 &upvec)=0;
 
 	// Get params
 	virtual VC3 &GetUpVector()=0;

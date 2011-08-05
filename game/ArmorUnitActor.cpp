@@ -33,7 +33,7 @@
 #include "../convert/str2int.h"
 #include "../system/Logger.h"
 
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 
 namespace game
@@ -206,7 +206,7 @@ frozenbyte::ai::Path *ArmorUnitActor::solvePath(Unit *unit, const VC3 &startPosi
 	float sy = startPositionInBound.z;
 	float ex = endPosition.x;
 	float ey = endPosition.z;
-	VC3 unitPos = unit->getPosition();
+	// VC3 unitPos = unit->getPosition();
 
 	if (unitType->isFlying())
 	{
@@ -360,7 +360,7 @@ frozenbyte::ai::Path *ArmorUnitActor::solvePath(Unit *unit, const VC3 &startPosi
 }
 
 
-bool ArmorUnitActor::setPathTo(Unit *unit, VC3 &destination_)
+bool ArmorUnitActor::setPathTo(Unit *unit, const VC3 &destination_)
 {
 	VC3 destination = destination_;
 	frozenbyte::ai::Path *path = solvePath(unit, unit->getPosition(), destination);
@@ -461,7 +461,7 @@ if (unit->isPhysicsObjectLock()
 			normalState = false;
 		}
 
-		VC3 waypoint = unit->getWaypoint();
+		// VC3 waypoint = unit->getWaypoint();
 
 		bool doRotation = false;
 		bool doMove = false;

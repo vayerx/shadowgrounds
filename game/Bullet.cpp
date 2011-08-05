@@ -34,7 +34,7 @@ namespace game
 {
 
 #ifdef PROJECT_SHADOWGROUNDS
-	char *hitChainName[HITCHAIN_AMOUNT] =
+	const char *hitChainName[HITCHAIN_AMOUNT] =
 	{
 		"nothing",
 		"unit",
@@ -56,7 +56,7 @@ namespace game
 		"indirect_metallic"
 	};
 #else
-	char *hitChainName[HITCHAIN_AMOUNT] =
+	const char *hitChainName[HITCHAIN_AMOUNT] =
 	{
 		"nothing",
 		"unit",
@@ -124,7 +124,8 @@ namespace game
 		terrainBlendRadius = 0.0f;
 		terrainHoleEdges = false;
 		visualEffect = 0; // PROJECTILE_VIS_NONE;
-		bool radicalDistanceRatio = false;
+
+		radicalDistanceRatio = false;
 
 		for (int i = 0; i < HITCHAIN_AMOUNT; i++)
 		{
@@ -195,6 +196,8 @@ namespace game
 		terrainObjectRadiusDamageAmount = 15;
 		terrainObjectDirectDamageAmount = 1;
 		terrainObjectDamageProbability = 100;
+
+		forcewearEffect = 0;
 
 		accuracyChange = 0;
 
@@ -272,10 +275,7 @@ namespace game
 			{
 				if (chainSound[i][j] != NULL)
 				{
-					if (ret->chainSound[i][j] != NULL)
-					{
-						delete[] ret->chainSound[i][j];
-					}
+					delete[] ret->chainSound[i][j];
 					ret->chainSound[i][j] = new char[strlen(chainSound[i][j]) + 1];
 					strcpy(ret->chainSound[i][j], chainSound[i][j]);
 				} else {
@@ -394,7 +394,7 @@ namespace game
 	} 
 	*/
 
-	bool Bullet::setSub(char *key)
+	bool Bullet::setSub(const char *key)
 	{
 		if (key != NULL && strcmp(key, "hit") == 0)
 		{

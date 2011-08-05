@@ -554,7 +554,6 @@ public:
     }
 
 		void makeHeightAreaBlocked(int heightMapX, int heightMapY);
-		void makeUnreachableAreasBlocked(int obstacleX, int obstacleY);
 
   };
 

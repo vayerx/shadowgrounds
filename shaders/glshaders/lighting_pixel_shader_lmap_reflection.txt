@@ -1,0 +1,29 @@
+!!ARBfp1.0
+OPTION ARB_precision_hint_fastest;
+PARAM c0 = program.env[0];
+PARAM c1 = program.env[1];
+PARAM two = { 2.0, 2.0, 2.0, 2.0 };
+ATTRIB v0 = fragment.color.primary;
+ATTRIB v1 = fragment.color.secondary;
+OUTPUT outColor = result.color;
+TEMP r0, r1, t0, t1, t2, t3;
+TEX t0, fragment.texcoord[0], texture[0], 2D;
+# base
+TEX t1, fragment.texcoord[1], texture[1], 2D;
+# lightmap
+TEX t2, fragment.texcoord[2], texture[2], 2D;
+# fake
+TXP t3, fragment.texcoord[3], texture[3], 2D;
+# reflection
+# c0 - lightmap multiplier
+# c1 - reflection multiplier
+MAD_SAT r0, t1, c0, v0;
+ADD_SAT r0, r0, t2;
+MUL r0, r0, v1;
+MAD_SAT r1, t3, c1, t0;
+MUL r0.rgb, r0, r1;
+MUL_SAT r0.rgb, r0.rgbb, two;
+MUL outColor.a, v0.a, t0.a;
+#MOV outColor, r0;
+LRP outColor.rgb, fragment.fogcoord.x, r0, state.fog.color;
+END

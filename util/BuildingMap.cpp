@@ -1,5 +1,11 @@
-
 #include "precompiled.h"
+
+#include <boost/lexical_cast.hpp>
+#include <string>
+#include <vector>
+#include <stdio.h>
+#include <assert.h>
+#include <SDL.h>
 
 #include "BuildingMap.h"
 #include <Storm3D_UI.h>
@@ -20,13 +26,9 @@
 
 #define BMAP_FLOODFILL_REACHABLE_BYTE 99
 
-#include <string>
-#include <vector>
-#include <stdio.h>
-#include <assert.h>
-#include <boost/lexical_cast.hpp>
-
+#ifdef _MSC_VER
 #pragma warning(disable: 4786)
+#endif
 #include "../filesystem/input_stream_wrapper.h"
 
 namespace frozenbyte {
@@ -50,8 +52,9 @@ const float heightScale = 0.1f;
 // Collision rays properties
 const float rayHeight = 400.f;
 
+#ifdef BUILDINGMAP_SHOW_LOADINGMESSAGE
 static char bmap_msgbuf[256];
-
+#endif
 
 #define CURRENT_BUILDINGMAP_VERSION 3
 
@@ -88,12 +91,9 @@ namespace {
 
 	bool isEscDown()
 	{
-		MSG msg = { 0 };
-		while(PeekMessage(&msg, 0, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE))
-		{
-		}
-
-		return (GetKeyState(VK_ESCAPE) & 0x80) ? true : false;
+		SDL_PumpEvents();
+		Uint8 *keys = SDL_GetKeyState(NULL);
+		return (keys[SDLK_ESCAPE] == 1);
 	}
 }
 
@@ -350,11 +350,13 @@ return;
 				// Height -> raytrace down
 				// (don't take all the way to zero height, -0.01 for float
 				// rounding things..)
+				/*
 				float rayLen = rayHeight;
 				if (negativeHeights)
 				{
 					rayLen = rayHeight * 2;
 				}
+				*/
 // TEMP!!!
 // raytrace disabled, to avoid "inconsistency" in collisions...
 // (only sphere collision used currently, giving more consistent results)
@@ -386,7 +388,7 @@ collisionInfo.hit = false;
 							obstH = 250.0f;
 					}
 
-					heightMap[i][j] = unsigned char((obstH + 0.5f));
+					heightMap[i][j] = (unsigned char) (obstH + 0.5f);
 
 					// floormap cannot be exactly 0, if it is, raise by one...
 					if (negativeHeights && heightMap[i][j] == 0)
@@ -399,7 +401,7 @@ collisionInfo.hit = false;
 				} else {
 					if (negativeHeights)
 					{
-						heightMap[i][j] = unsigned char(BUILDINGMAP_NO_FLOOR_BLOCK);
+						heightMap[i][j] = (unsigned char) (BUILDINGMAP_NO_FLOOR_BLOCK);
 					} else {
 						// NOTE: added this when adding negative values..
 						// assuming this was the default behaviour anyway.
@@ -471,13 +473,13 @@ collisionInfo.hit = false;
 								obstH = -124.0f;
 							if(obstH > char(heightMap[i][j])
 								|| char(heightMap[i][j]) == BUILDINGMAP_NO_FLOOR_BLOCK)
-								heightMap[i][j] = unsigned char((obstH + 0.5f));
+								heightMap[i][j] = (unsigned char) (obstH + 0.5f);
 							//Logger::getInstance()->error(int2str(k));
 						} else {
 							if (obstH > 250.0f) 
 								obstH = 250.0f;
 							if(obstH > heightMap[i][j])
-								heightMap[i][j] = unsigned char((obstH + 0.5f));
+								heightMap[i][j] = (unsigned char) (obstH + 0.5f);
 						}
 
 						break;
@@ -776,6 +778,7 @@ collisionInfo.hit = false;
 
 	void saveBinary(const std::string &fileName)
 	{
+#ifndef __APPLE__
 		FILE *fp = fopen(fileName.c_str(), "wb");
 		if(fp == 0)
 			return;
@@ -826,6 +829,7 @@ collisionInfo.hit = false;
 
 		fclose(fp);
 		return;
+#endif
 	}
 
 
@@ -1195,13 +1199,23 @@ void BuildingMapHeightFillMapper::setByte(int x, int y, unsigned char value)
 
 /* BuildingMap */
 
-BuildingMap::BuildingMap(const char *fileName, IStorm3D_Model *model, int rotationX, int rotationY, int rotationZ)
+BuildingMap::BuildingMap(const char *fileNameRaw, IStorm3D_Model *model, int rotationX, int rotationY, int rotationZ)
 {
 	data = new BuildingMapData();
 
 	// gotta remove the @xx rotation part from filename first...
 	// --jpk
-	int fileNameLen = strlen(fileName);
+#ifndef WIN32
+  std::string fileNameStr(fileNameRaw);
+  int fileNameLen = fileNameStr.length();
+  for(int i=0;i<fileNameLen;++i)
+    if (fileNameStr[i] == '\\') fileNameStr[i] = '/';
+  const char *fileName = fileNameStr.c_str();
+#else
+	int fileNameLen = strlen(fileNameRaw);
+  const char *fileName = fileNameRaw;
+#endif
+
 	int cutpos = 0;
 #ifdef LEGACY_FILES
 	for (int ri = 0; ri < fileNameLen; ri++)

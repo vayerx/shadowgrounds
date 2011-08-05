@@ -1,45 +1,53 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 #include "Storm3D_Line.h"
-#include "Storm3D.h"
+#include "storm3d.h"
 #include <cassert>
 
 #include "Storm3D_ShaderManager.h"
 #include "VertexFormats.h"
-#include "..\..\util\Debug_MemoryManager.h"
+#include "igios3D.h"
+#include "../../util/Debug_MemoryManager.h"
 
 extern int storm3d_dip_calls;
 
+//! Constructor
 Storm3D_Line::Storm3D_Line(Storm3D *storm_)
-:	storm(storm_)
+:	storm(storm_),
+	index_buffer(0),
+	vertex_buffer(0),
+	vertex_buffer2(0),
+	pixel_line(false),
+	points(),
+	thickness(0.5f),
+	color(RGBI(255,255,255)),
+	rebuild_indices(true),
+	rebuild_vertices(true)
 {
-	vertex_buffer = 0;
-	vertex_buffer2 = 0;
-	index_buffer = 0;
-
-	thickness = 0.5f;
-	color = RGB(255,255,255);
-
-	rebuild_indices = true;
-	rebuild_vertices = true;
-	pixel_line = false;
 }
 
+//! Destructor
 Storm3D_Line::~Storm3D_Line()
 {
 	if(storm)
 		storm->lines.erase(this);
 
-	if(index_buffer)
-		index_buffer->Release();
-	if(vertex_buffer)
-		vertex_buffer->Release();
-	if(vertex_buffer2)
-		vertex_buffer2->Release();
+	if(glIsBuffer(index_buffer))
+		glDeleteBuffers(1, &index_buffer);
+	if(glIsBuffer(vertex_buffer))
+		glDeleteBuffers(1, &vertex_buffer);
+	if(glIsBuffer(vertex_buffer2))
+		glDeleteBuffers(1, &vertex_buffer2);
 }
 
+//! Add new point to line
+/*!
+	\param position point position
+*/
 void Storm3D_Line::AddPoint(const Vector &position)
 {
 	points.push_back(position);
@@ -48,11 +56,19 @@ void Storm3D_Line::AddPoint(const Vector &position)
 	rebuild_vertices = true;
 }
 
+//! Get number of points in line
+/*!
+	\return number of points
+*/
 int Storm3D_Line::GetPointCount()
 {
 	return points.size();
 }
 
+//! Remove point from line
+/*!
+	\param index point to remove
+*/
 void Storm3D_Line::RemovePoint(int index)
 {
 	assert((index >= 0) && (index < static_cast<int> (points.size()) ));
@@ -61,7 +77,11 @@ void Storm3D_Line::RemovePoint(int index)
 	rebuild_indices = true;
 	rebuild_vertices = true;
 }
-	
+
+//! Set thickness of line
+/*!
+	\param thickness thickness value
+*/
 void Storm3D_Line::SetThickness(float thickness)
 {
 	this->thickness = thickness;
@@ -74,6 +94,10 @@ void Storm3D_Line::SetThickness(float thickness)
 	rebuild_vertices = true;
 }
 
+//! Set color of line
+/*!
+	\param color color
+*/
 void Storm3D_Line::SetColor(int color)
 {
 	this->color = color;
@@ -81,7 +105,8 @@ void Storm3D_Line::SetColor(int color)
 	rebuild_vertices = true;
 }
 
-void Storm3D_Line::Render(IDirect3DDevice9 *device)
+//! Render line
+void Storm3D_Line::Render()
 {
 	if(points.size() < 2)
 		return;
@@ -90,40 +115,37 @@ void Storm3D_Line::Render(IDirect3DDevice9 *device)
 	int vertices = (points.size() - 1) * 4;
 
 	// Create buffers when needed
-	if(vertex_buffer == 0)
+	if(!glIsBuffer(vertex_buffer))
 	{
-		if(Storm3D_ShaderManager::GetSingleton()->SoftwareShaders() == true)
-			device->CreateVertexBuffer( vertices*sizeof(VXFORMAT_PSD), D3DUSAGE_SOFTWAREPROCESSING| D3DUSAGE_WRITEONLY|D3DUSAGE_DYNAMIC, FVF_VXFORMAT_PSD, D3DPOOL_DEFAULT, &vertex_buffer, 0);
-		else
-			device->CreateVertexBuffer( vertices*sizeof(VXFORMAT_PSD), D3DUSAGE_WRITEONLY|D3DUSAGE_DYNAMIC,FVF_VXFORMAT_PSD, D3DPOOL_DEFAULT, &vertex_buffer, 0);
+		glGenBuffers(1, &vertex_buffer);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+		glBufferData(GL_ARRAY_BUFFER, vertices*sizeof(VXFORMAT_PSD), NULL, GL_DYNAMIC_DRAW);
 	}
-	if(index_buffer == 0)
+	if(!glIsBuffer(index_buffer))
 	{
-		if(Storm3D_ShaderManager::GetSingleton()->SoftwareShaders() == true)
-			device->CreateIndexBuffer(sizeof(WORD)*faces*3, D3DUSAGE_WRITEONLY|D3DUSAGE_SOFTWAREPROCESSING|D3DUSAGE_DYNAMIC,D3DFMT_INDEX16,D3DPOOL_DEFAULT, &index_buffer, 0);
-		else
-			device->CreateIndexBuffer(sizeof(WORD)*faces*3, D3DUSAGE_WRITEONLY|D3DUSAGE_DYNAMIC,D3DFMT_INDEX16,D3DPOOL_DEFAULT, &index_buffer, 0);
+		glGenBuffers(1, &index_buffer);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort)*faces*3, NULL, GL_DYNAMIC_DRAW);
 	}
-	if(vertex_buffer2 == 0)
+	if(!glIsBuffer(vertex_buffer2))
 	{
-		if(Storm3D_ShaderManager::GetSingleton()->SoftwareShaders() == true)
-			device->CreateVertexBuffer( points.size()*sizeof(VXFORMAT_PSD), D3DUSAGE_SOFTWAREPROCESSING| D3DUSAGE_WRITEONLY|D3DUSAGE_DYNAMIC, FVF_VXFORMAT_PSD, D3DPOOL_DEFAULT, &vertex_buffer2, 0);
-		else
-			device->CreateVertexBuffer( points.size()*sizeof(VXFORMAT_PSD), D3DUSAGE_WRITEONLY|D3DUSAGE_DYNAMIC,FVF_VXFORMAT_PSD, D3DPOOL_DEFAULT, &vertex_buffer2, 0);
+		glGenBuffers(1, &vertex_buffer2);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer2);
+		glBufferData(GL_ARRAY_BUFFER, points.size()*sizeof(VXFORMAT_PSD), NULL, GL_DYNAMIC_DRAW);
 	}
 
 	// Update as needed
 	if(rebuild_vertices == true)
 	{
-		void *vp = 0;
-		vertex_buffer->Lock(0,0,&vp,D3DLOCK_DISCARD);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+		void *vp = reinterpret_cast<void *> (glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
 
-		VXFORMAT_PSD *p= (VXFORMAT_PSD*) vp;
+		VXFORMAT_PSD *p=(VXFORMAT_PSD*)vp;
 
 		// last corner points (next part will be connected to these)
 		// -jpk
-		VXFORMAT_PSD *lastp1;
-		VXFORMAT_PSD *lastp2;
+		VXFORMAT_PSD *lastp1 = NULL;
+		VXFORMAT_PSD *lastp2 = NULL;
 
 		for(unsigned int i = 0; i < points.size() - 1; ++i)
 		{
@@ -165,33 +187,33 @@ void Storm3D_Line::Render(IDirect3DDevice9 *device)
 			lastp2 = p;
 			++p;
 		}
-					
-		vertex_buffer->Unlock();
+
+		glUnmapBuffer(GL_ARRAY_BUFFER);
 	}
 	if(rebuild_indices == true)
 	{
-		WORD *ip = 0;
-		index_buffer->Lock(0, sizeof(WORD)*faces*3, (void**)& ip, D3DLOCK_DISCARD);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+		GLushort *ip = reinterpret_cast<unsigned short *> (glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY));
 
 		for(int i = 0; i < static_cast<int> (points.size() - 1); ++i)
 		{
 			// First face
 			*ip++ = i*4 + 0;
-			*ip++ = i*4 + 1;
 			*ip++ = i*4 + 2;
+			*ip++ = i*4 + 1;
 
 			// Second face
 			*ip++ = i*4 + 1;
-			*ip++ = i*4 + 3;
 			*ip++ = i*4 + 2;
+			*ip++ = i*4 + 3;
 		}
-		
-		index_buffer->Unlock();
+
+		glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
 	}
 	if(rebuild_vertices == true)
 	{
-		void *vp = 0;
-		vertex_buffer2->Lock(0,0,&vp,D3DLOCK_DISCARD);
+		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer2);
+		void *vp = reinterpret_cast<void *> (glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
 
 		VXFORMAT_PSD *p=(VXFORMAT_PSD*)vp;
 		for(unsigned int i=0;i<points.size();i++)
@@ -199,43 +221,46 @@ void Storm3D_Line::Render(IDirect3DDevice9 *device)
 			p[i].color = color;
 			p[i].position = points[i];
 		}
-					
-		vertex_buffer2->Unlock();
+
+		glUnmapBuffer(GL_ARRAY_BUFFER);
 	}
 
 	rebuild_vertices = false;
 	rebuild_indices = false;
 
-	device->SetVertexShader(0);
-	device->SetFVF(FVF_VXFORMAT_PSD);
+	frozenbyte::storm::VertexShader::disable();
 
 	// Render
 	if(!pixel_line)
 	{
-		device->SetStreamSource(0, vertex_buffer, 0, sizeof(VXFORMAT_PSD));
-		device->SetIndices(index_buffer);
+		applyFVF(FVF_VXFORMAT_PSD, sizeof(VXFORMAT_PSD));
+		setStreamSource(0, vertex_buffer, 0, sizeof(VXFORMAT_PSD));
+		glDrawRangeElements(GL_TRIANGLES, 0, vertices, faces*3, GL_UNSIGNED_SHORT, NULL);
 
-		device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, vertices, 0, faces);
 		++storm3d_dip_calls;
 	}
 	else
 	{
-		device->SetStreamSource(0, vertex_buffer2, 0, sizeof(VXFORMAT_PSD));
-		device->DrawPrimitive(D3DPT_LINELIST, 0, points.size() / 2);
+		applyFVF(FVF_VXFORMAT_PSD, sizeof(VXFORMAT_PSD));
+		setStreamSource(0, vertex_buffer2, 0, sizeof(VXFORMAT_PSD));
+		glDrawArrays(GL_LINES, 0, points.size());
+
 		++storm3d_dip_calls;
 	}
 }
 
+//! Release dynamic resources
 void Storm3D_Line::releaseDynamicResources()
 {
-	if(index_buffer)
-		index_buffer->Release();
-	if(vertex_buffer)
-		vertex_buffer->Release();
-	if(vertex_buffer2)
-		vertex_buffer2->Release();
+	if(glIsBuffer(index_buffer))
+		glDeleteBuffers(1, &index_buffer);
+	if(glIsBuffer(vertex_buffer))
+		glDeleteBuffers(1, &vertex_buffer);
+	if(glIsBuffer(vertex_buffer2))
+		glDeleteBuffers(1, &vertex_buffer2);
 }
 
+//! Recreate dynamic resources
 void Storm3D_Line::recreateDynamicResources()
 {
 }

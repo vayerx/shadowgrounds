@@ -2,14 +2,10 @@
 #ifndef PERMANENTGAMESYNCER_H
 #define PERMANENTGAMESYNCER_H
 
-#include "ISyncCommand.h"
-
 namespace game
 {
 namespace sync
 {
-	class PermanentGameSyncerImpl;
-
 	/**
 	 * This class synchronizes the game permanently, in other words, it saves any changes to a file that
 	 * will be applied during next same mission startup. Also, that file will be read in by the editor
@@ -29,12 +25,12 @@ namespace sync
 
 		// on server, broadcast a sync command to clients
 		// on client, ask server to broadcast a sync command
-		virtual void sendSyncCommand(const ISyncCommand &command);
+		virtual void sendSyncCommand(const IGameSyncCommand &command);
 
 		virtual bool isReceivedSyncCommandAvailable();
 
 		// may return a temporary reference, will be invalidated at next isReceived.../receive call .
-		virtual const ISyncCommand &receiveSyncCommand();
+		virtual const IGameSyncCommand &receiveSyncCommand();
 
 	private:
 		PermanentGameSyncerImpl *impl;

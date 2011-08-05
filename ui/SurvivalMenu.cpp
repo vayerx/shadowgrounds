@@ -1,13 +1,21 @@
 
 #include "precompiled.h"
 
+#include <sstream>
+#include <assert.h>
+#include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
+#include <vector>
+#include <algorithm>
+#include <SDL.h>
+
 #include "SurvivalMenu.h"
 #include "CoopMenu.h"
 
-#include "../system/timer.h"
+#include "../system/Timer.h"
 #include "../ogui/Ogui.h"
 #include "../game/Game.h"
-#include "../game/SaveGameVars.h"
+#include "../game/savegamevars.h"
 #include "../game/GameUI.h"
 #include "MenuCollection.h"
 #include "../game/DHLocaleManager.h"
@@ -23,24 +31,21 @@
 #include "../util/fb_assert.h"
 #include "../util/Debug_MemoryManager.h"
 #include "../util/StringUtil.h"
-#include "../util/parser.h"
+#include "../util/Parser.h"
 #include "../game/options/options_locale.h"
 #include "../filesystem/input_stream_wrapper.h"
 
 #include "../ogui/OguiLocaleWrapper.h"
 #include "../ogui/OguiFormattedText.h"
 #include "../ogui/OguiCheckBox.h"
-
+#include "../filesystem/file_package_manager.h"
 #include "../ui/LoadingMessage.h"
 
 #include "CharacterSelectionWindow.h"
 
-#include <sstream>
-#include <assert.h>
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
-#include <vector>
-#include <algorithm>
+#include "../survivor/SurvivorConfig.h"
+
+#include "../game/userdata.h"
 
 using namespace game;
 
@@ -50,17 +55,17 @@ namespace ui
 	SurvivalMenu::MissionInfo SurvivalMenu::lastLoadedMission;
 
 SurvivalMenu::SurvivalMenu( MenuCollection* menu, MenuCollection::Fonts* fonts, Ogui* o_gui, Game* g ) :
-  MenuBaseImpl( NULL ),
-  menuCollection( menu ),
-  fonts( fonts ),
-  doubleClickHack( -1 ),
-  doubleClickTimeHack( 0 ),
-  scrollCount( 0 ),
-  scrollPosition( 0 ),
-  buttonYMinLimit( 64 ),
+	MenuBaseImpl( NULL ),
 	scrollUpArrow( NULL ),
 	scrollDownArrow( NULL ),
-  buttonYMaxLimit( 450 ),
+	doubleClickHack( -1 ),
+	doubleClickTimeHack( 0 ),
+	scrollCount( 0 ),
+	scrollPosition( 0 ),
+	buttonYMinLimit( 64 ),
+	buttonYMaxLimit( 450 ),
+	menuCollection( menu ),
+	fonts( fonts ),
 	locked_font( NULL )
 {
 	assert( o_gui );
@@ -140,7 +145,7 @@ SurvivalMenu::SurvivalMenu( MenuCollection* menu, MenuCollection::Fonts* fonts, 
 			getLocaleGuiString( "gui_survivalmenu_showcustom_img_norm" ), "", "", 
 			getLocaleGuiString( "gui_survivalmenu_showcustom_img_fill" ));
 
-	showCustomMissions->setText( getLocaleGuiString( "gui_survivalmenu_showcustom_text" ), OguiCheckBox::TEXT_ALIGN_LEFT, 200, fonts->little.highlighted );
+	showCustomMissions->setText( getLocaleGuiString( "gui_survivalmenu_showcustom_text" ), OguiCheckBox::TEXT_ALIGN_LEFT, getLocaleGuiInt( "gui_survivalmenu_showcustom_textwidth", 200 ), fonts->little.highlighted );
 	showCustomMissions->setValue(SimpleOptions::getBool(DH_OPT_B_GUI_SHOW_CUSTOM_SURVIVAL_MISSIONS));
 	showCustomMissions->setListener( this );
 
@@ -447,12 +452,12 @@ void SurvivalMenu::loadMission(MissionInfo &mi, game::Game *game)
 	if(startAsCoop)
 	{
 		CoopMenu::enableCoopGameSettings(game);
-		GameStats::setCurrentScoreFile((mi.dir + "\\score_coop.dat").c_str());
+		GameStats::setCurrentScoreFile((mi.dir + "/score_coop.dat").c_str());
 	}
 	else
 	{
 		CoopMenu::disableCoopGameSettings(game);
-		GameStats::setCurrentScoreFile((mi.dir + "\\score.dat").c_str());
+		GameStats::setCurrentScoreFile((mi.dir + "/score.dat").c_str());
 	}
 
 	// no bonuses in survival
@@ -588,18 +593,24 @@ bool SurvivalMenu::loadMissionInfo(const std::string &directory, MissionInfo &mi
 	std::string description_key = "description_" + std::string(locale_id);
 
 	std::string root = "Survival";
-	std::string dir = root + "\\" + directory;
-	std::string optionsfile = dir + "\\mission_options.txt";
-	std::string scorefile = dir + "\\score.dat";
+	std::string dir = root + "/" + directory;
+	std::string optionsfile = dir + "/mission_options.txt";
+	std::string scorefile = dir + "/score.dat";
 	if(startAsCoop)
 	{
-		scorefile = dir + "\\score_coop.dat";
+		scorefile = dir + "/score_coop.dat";
 	}
 	util::SimpleParser parser;
 	if(!parser.loadFile(optionsfile.c_str()))
 	{
 		return false;
 	}
+
+#ifdef PROJECT_SURVIVOR_DEMO
+	unsigned int crc = frozenbyte::filesystem::FilePackageManager::getInstance().getCrc(optionsfile);
+	if(crc == 0xFFFFFFFF)
+		return false;
+#endif
 
 	std::string description;
 	std::string characters;
@@ -609,6 +620,9 @@ bool SurvivalMenu::loadMissionInfo(const std::string &directory, MissionInfo &mi
 	while (parser.next())
 	{
 		char *k = parser.getKey();
+		if(k == NULL)
+			continue;
+
 		if(strcmp(k, "thumbnail_norm") == 0)
 			mi.thumbnail_norm = parser.getValue();
 		else if(strcmp(k, "thumbnail_high") == 0)
@@ -660,7 +674,7 @@ void SurvivalMenu::createMissionButtons()
 	dirs = fileWrapper.getAllDirs();
 
 
-	int time_loading_start = timeGetTime();
+	int time_loading_start = SDL_GetTicks();
 	bool show_loading_bar = false;
 
 	std::vector<std::string> lockedMissions;
@@ -676,29 +690,64 @@ void SurvivalMenu::createMissionButtons()
 
 	bool show_custom = SimpleOptions::getBool(DH_OPT_B_GUI_SHOW_CUSTOM_SURVIVAL_MISSIONS);
 
+	const char *standard_missions[] =
+	{
+		"surv_spider",
+		"surv_shriek",
+		"surv_overtime",
+		"surv_comecloser",
+		"surv_clawsoff",
+		"surv_allover",
+		"surv_forest",
+		"surv_techfacil",
+		"surv_snowstora",
+		NULL,
+	};
+
+	// reorder missions
+	{
+		// collect custom dirs
+		std::vector<std::string> custom_dirs;
+		if(show_custom)
+		{
+			//unsigned int insert_str = 0;
+			for(unsigned int i = 0; i < dirs.size(); i++)
+			{
+				std::string dirname = boost::to_lower_copy( dirs[i] );
+				bool is_standard = false;
+				for(unsigned int j = 0; standard_missions[j] != NULL; j++)
+				{
+					if(dirname == standard_missions[j])
+					{
+						is_standard = true;
+						break;
+					}
+				}
+				if(!is_standard)
+				{
+					custom_dirs.push_back(dirname);
+				}			
+			}
+		}
+		dirs.clear();
+
+		// insert standard dirs
+		for(unsigned int j = 0; standard_missions[j] != NULL; j++)
+		{
+			dirs.push_back(standard_missions[j]);
+		}
+
+		// insert custom dirs
+		dirs.insert(dirs.end(), custom_dirs.begin(), custom_dirs.end());
+	}
+
 	missionInfos.resize(dirs.size() + 1);
 	unsigned int numDirs = dirs.size();
 	for(unsigned int i = 0; i < numDirs; i++)
 	{
-		if(!show_custom)
-		{
-			std::string dirname = boost::to_lower_copy( dirs[i] );
-			if(dirname != "surv_clawsoff"
-				&& dirname != "surv_comecloser"
-				&& dirname != "surv_forest"
-				&& dirname != "surv_overtime"
-				&& dirname != "surv_shriek"
-				&& dirname != "surv_snowstora"
-				&& dirname != "surv_allover"
-				&& dirname != "surv_spider"
-				&& dirname != "surv_techfacil")
-			{
-				continue;
-			}
-		}
-
 		if(!loadMissionInfo(dirs[i], missionInfos[i+1]))
 		{
+      // printf("WARNING: Loading of mission info for %s failed!\n",dirs[i].c_str());
 			continue;
 		}
 
@@ -730,7 +779,7 @@ void SurvivalMenu::createMissionButtons()
 		if(i == 4)
 		{
 			// loading first 5 entries took longer than 100 ms
-			if(timeGetTime() - time_loading_start > 100)
+			if(SDL_GetTicks() - time_loading_start > 100)
 			{
 				// show loading bar
 				show_loading_bar = true;
@@ -852,7 +901,7 @@ void SurvivalMenu::updateArrows()
 
 void SurvivalMenu::unlockMission(const std::string &mission)
 {
-	FILE *file = fopen("Config/unlocked_missions.dat", "ab");
+	FILE *file = fopen(igios_mapUserDataPrefix("Config/unlocked_missions.dat").c_str(), "ab");
 	if(file)
 	{
 		char buf[256];
@@ -883,7 +932,7 @@ bool SurvivalMenu::readLockedMissions(std::vector<std::string> &missions)
 	locked.push_back("surv_techfacil");
 
 	// open file
-	frozenbyte::filesystem::FB_FILE *f = frozenbyte::filesystem::fb_fopen("Config/unlocked_missions.dat", "rb");
+	frozenbyte::filesystem::FB_FILE *f = frozenbyte::filesystem::fb_fopen(igios_mapUserDataPrefix("Config/unlocked_missions.dat").c_str(), "rb");
 	if(f != NULL)
 	{
 		int flen = frozenbyte::filesystem::fb_fsize(f);
@@ -897,7 +946,6 @@ bool SurvivalMenu::readLockedMissions(std::vector<std::string> &missions)
 		{
 			// decrypt
 			buf[i] = ~buf[i];
-
 			if(buf[i] == '$')
 			{
 				buf[i] = 0;

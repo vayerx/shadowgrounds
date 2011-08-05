@@ -48,7 +48,7 @@ namespace ui
 		/*
 		void moveTo(int x, int y);
 		*/
-		void setFont(IOguiFont *font, bool centered, bool rightAligned = false);
+		void setFont(IOguiFont *font, bool centered);
 		void setBoxed(bool textBoxed);
 
 		virtual void raise();
@@ -84,7 +84,6 @@ namespace ui
 		
 		IOguiFont *textFont;
 		bool textCentered;
-		bool textRightAligned;
 		bool textBoxed;
 
 		char *textConfName;
@@ -98,12 +97,6 @@ namespace ui
 
 		OguiButton *messageImageBGButton;
 		IOguiImage *iconBGImage;
-#ifdef LEGACY_FILES
-		// legacy have no fg image
-#else
-		OguiButton *messageImageFGButton;
-		IOguiImage *iconFGImage;
-#endif
 
 		GUIEffectWindow *effectWindow;
 		int time;

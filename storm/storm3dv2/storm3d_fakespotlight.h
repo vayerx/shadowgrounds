@@ -5,12 +5,10 @@
 
 #include <istorm3d_fakespotlight.h>
 #include <boost/scoped_ptr.hpp>
-#include <c2_aabb.h>
+#include "igios3D.h"
 
 class Storm3D;
 class Storm3D_Camera;
-struct IDirect3D9;
-struct IDirect3DDevice9;
 
 class Storm3D_FakeSpotlight: public IStorm3D_FakeSpotlight
 {
@@ -18,7 +16,7 @@ class Storm3D_FakeSpotlight: public IStorm3D_FakeSpotlight
 	boost::scoped_ptr<Data> data;
 
 public:
-	Storm3D_FakeSpotlight(Storm3D &storm, IDirect3D9 &d3d, IDirect3DDevice9 &device);
+	Storm3D_FakeSpotlight(Storm3D &storm);
 	~Storm3D_FakeSpotlight();
 
 	void testVisibility(Storm3D_Camera &camera);
@@ -37,24 +35,23 @@ public:
 
 	void getPlane(VC2 &min, VC2 &max) const;
 	float getPlaneHeight() const;
-	void getArea(AABB &area) const;
 	bool shouldRenderObjectShadows() const;
 
 	Storm3D_Camera &getCamera();
 	void setClipPlanes(const float *cameraView);
 	void setScissorRect(Storm3D_Camera &camera, const VC2I &screenSize);
 
-	bool setAsRenderTarget(const float *cameraView);
-	void applyTextures(const float *cameraView);
+	bool setAsRenderTarget(const D3DXMATRIX &cameraView);
+	void applyTextures(const D3DXMATRIX &cameraView);
 	void renderProjection();
 	void debugRender();
 
 	void releaseDynamicResources();
 	void recreateDynamicResources();
 
-	static void filterBuffers(Storm3D &storm, IDirect3DDevice9 &device);
+	static void filterBuffers(Storm3D &storm);
 	static void querySizes(Storm3D &storm, int shadowQuality);
-	static void createBuffers(Storm3D &storm, IDirect3D9 &d3d, IDirect3DDevice9 &device, int shadowQuality);
+	static void createBuffers(Storm3D &storm, int shadowQuality);
 	static void freeBuffers();
 	static void clearCache();
 };

@@ -2,7 +2,7 @@
 #define INCLUDED_FROZENBYTE_COOKER_H
 
 #include <boost/scoped_ptr.hpp>
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 
 class NxPhysicsSDK;
 class NxScene;

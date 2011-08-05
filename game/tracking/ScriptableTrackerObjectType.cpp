@@ -15,8 +15,8 @@ namespace tracking
 
 	ScriptableTrackerObjectType *ScriptableTrackerObjectType::trackerTypeForCurrentlyRunningScript = NULL;
 
-	static int typeId_data = 0;
-	void *ScriptableTrackerObjectType::typeId = &typeId_data;
+	static int STOTtypeId_data = 0;
+	void *ScriptableTrackerObjectType::typeId = &STOTtypeId_data;
 
 
 	ScriptableTrackerObjectType::ScriptableTrackerObjectType()

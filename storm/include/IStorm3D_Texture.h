@@ -6,9 +6,9 @@
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
-#include <windows.h>
 
-// Storm3D includes 
+// Storm3D includes
+#include <SDL.h>
 #include "Storm3D_Common.h"
 #include "Storm3D_Datatypes.h"
 
@@ -45,13 +45,13 @@ public:
 
 	// Get parameters
 	virtual const char *GetFilename()=0;		// Returns NULL, if dynamic texture
-	virtual DWORD GetTexIdentity()=0;
+	virtual Uint32 GetTexIdentity()=0;
 
 	// Texture edit etc
 	virtual Storm3D_SurfaceInfo GetSurfaceInfo()=0;
 	virtual void CopyTextureToAnother(IStorm3D_Texture *other)=0;
-	virtual void Copy32BitSysMembufferToTexture(DWORD *sysbuffer)=0;
-	virtual void CopyTextureTo32BitSysMembuffer(DWORD *sysbuffer)=0;
+	virtual void Copy32BitSysMembufferToTexture(Uint32 *sysbuffer)=0;
+	virtual void CopyTextureTo32BitSysMembuffer(Uint32 *sysbuffer)=0;
 
 	virtual int getWidth() const = 0;
 	virtual int getHeight() const = 0;

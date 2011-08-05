@@ -9,7 +9,7 @@
 #include <sstream>
 #include <boost/lexical_cast.hpp>
 
-#include "../system/logger.h"
+#include "../system/Logger.h"
 #include "../game/DHLocaleManager.h"
 
 using namespace game;
@@ -201,7 +201,7 @@ TargetDisplayButtonManager::button TargetDisplayButtonManager::newButton( int st
 	for( j = 0; j < (int)i->second.buttonImages.size(); j++ )
 	{
 		result[ j ] = ogui->CreateSimpleImageButton( window, 0, 0, i->second.width, i->second.height, 
-			i->second.buttonImages[ j ].c_str(), NULL, NULL, NULL );
+			i->second.buttonImages[ j ].c_str(), NULL, NULL, 0 );
 
 		result[ j ]->SetReactMask( 0 );
 		result[ j ]->SetEventMask( 0 );
@@ -217,7 +217,6 @@ TargetDisplayButtonManager::button TargetDisplayButtonManager::newButton( int st
 	result.offsetY	= i->second.textOffsetY;
 	result.textCenter = i->second.textCenter;
 	
-	int slider_height = 20;
 	if( i->second.hasSlider )
 	{
 		// result.hasHealthSlider = true;

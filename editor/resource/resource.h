@@ -44,7 +44,6 @@
 #define IDD_STRING                      142
 #define IDI_ICON1                       143
 #define IDI_ICON2                       144
-#define IDI_ICON                        144
 #define IDD_DIALOG3                     145
 #define IDD_NEWMISSION                  145
 #define IDD_MULTIEXPORT                 146
@@ -123,6 +122,8 @@
 #define IDC_POINT_INSERT                1006
 #define IDC_LIGHT_ROTATE                1006
 #define IDC_FOG_ENABLED                 1006
+#define IDC_TERRAIN_MODE_HEIGHTS2       1006
+#define IDC_TERRAIN_MODE_LIGHTMAP       1006
 #define IDC_CHECK3                      1007
 #define IDC_MODE_CANCEL                 1007
 #define IDC_EMITTER_UPDATE              1007
@@ -231,7 +232,6 @@
 #define IDC_P_NUM_FRAMES                1061
 #define IDC_CE_BOX_MIN_Z                1061
 #define IDC_COLOR_BT                    1061
-#define IDC_OBJECT_UEOH                 1061
 #define IDC_CLICK_MODE                  1062
 #define IDC_EMITTERPOS_Z                1062
 #define IDC_CE_BOX_MAX_Z                1062

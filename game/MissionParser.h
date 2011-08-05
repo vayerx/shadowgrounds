@@ -33,7 +33,7 @@ namespace game
     void parseMission(Game *game, char *filename, int section);
 
   private:
-    void error(char *err, int linenum, bool isError = true);
+    void error(const char *err, int linenum, bool isError = true);
   };
 
 }

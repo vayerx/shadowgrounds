@@ -26,7 +26,7 @@ namespace tracking
 
 		TrackableUnifiedHandleObject(UnifiedHandle unifiedHandle);
 
-		virtual bool TrackableUnifiedHandleObject::doesExist() const;
+		virtual bool doesExist() const;
 
 		virtual void *getTypeId() const { return TrackableUnifiedHandleObject::typeId; }
 

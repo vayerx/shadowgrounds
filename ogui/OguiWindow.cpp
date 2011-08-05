@@ -13,11 +13,11 @@
 
 // bad dependency...
 #include "OguiStormDriver.h"
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
-
+#ifdef _MSC_VER
 #pragma warning(disable : 4244) 
-
+#endif
 
 // orvgui callback handling and conversion to ogui button listener events
 
@@ -263,7 +263,7 @@ void OguiWindow::SetUnmovable()
 
 OguiButton *OguiWindow::CreateNewButton(int x, int y, int sizex, int sizey, 
 	IOguiImage *img, IOguiImage *imgdown, IOguiImage *imghigh, IOguiImage *imgdisabled, bool withText, 
-	const char *text, int id, void *argument, IOguiFont *font, bool clipToWindow )
+	const char *text, int id, const void *argument, IOguiFont *font, bool clipToWindow )
 {
 	orvgui_but *but;
 

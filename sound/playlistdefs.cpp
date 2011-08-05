@@ -3,7 +3,7 @@
 
 #include "playlistdefs.h"
 
-char *playlistNames[PLAYLIST_AMOUNT] =
+const char *playlistNames[PLAYLIST_AMOUNT] =
 {
   "menus",
   "calm",

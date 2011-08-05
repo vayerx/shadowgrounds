@@ -1,6 +1,8 @@
 #ifndef PRECOMPILED_H
 #define PRECOMPILED_H
 
+#ifndef __OBJC__
+
 #ifndef __GNUC__
 #pragma message("Creating precompiled header (stormtest).")
 #endif
@@ -16,7 +18,11 @@
 #include <string.h>
 #include <string>
 
-//#include "../util/Debug_MemoryManager.h"
+#ifdef __APPLE__
+#include "configuration.h"
+#endif
+
+#include "../util/Debug_MemoryManager.h"
 
 //#include <Storm3D_UI.h>
 #include <DatatypeDef.h>
@@ -33,4 +39,4 @@
 #include "../util/ScriptProcess.h"
 
 #endif
-
+#endif

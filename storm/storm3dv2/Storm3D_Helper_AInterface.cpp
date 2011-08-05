@@ -1,14 +1,16 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
 
 //------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------
 #include "storm3d_helper.h"
-#include "storm3d_bone.h"
+#include "Storm3D_Bone.h"
 #include "storm3d_model_object.h"
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 
 
@@ -17,11 +19,11 @@
 //------------------------------------------------------------------
 Storm3D_Helper_AInterface::Storm3D_Helper_AInterface(const char *_name,
 		Storm3D_Model *_parent_model,VC3 &_position, IStorm3D_Helper *helper_) :
-	update_globals(true),
+	position(_position),
 	parent_model(_parent_model),
 	parent_object(NULL),
 	parent_bone(NULL),
-	position(_position),
+	update_globals(true),
 	helper(helper_)
 {
 	

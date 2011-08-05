@@ -66,27 +66,22 @@ namespace game
 
 		this->lastEffectSoundTick = 0;
 
-		this->mass = 0;
-
-		this->exactPreviousVelocity = VC3(0,0,0);
-
 //		this->m_actor = NULL;
 
-		this->collisionGroupToSet = -1;
-
-		this->changeLinearDamping = false;
-		this->changeAngularDamping = false;
-
-#ifdef PROJECT_CLAW_PROTO
-		this->thrownByClaw = false;
-#endif
-
-		gamePhysics->addNewObject(this); 
+		// FIXME: ugly hack
+		// workaround gamePhysics sometimes being NULL
+		// WHY?
+		if (gamePhysics != NULL)
+			gamePhysics->addNewObject(this);
 	}
 
 	AbstractPhysicsObject::~AbstractPhysicsObject() 
-	{ 
-		gamePhysics->removeObject(this); 
+	{
+		// FIXME: ugly hack
+		// workaround gamePhysics sometimes being NULL
+		// WHY?
+		if (gamePhysics != NULL)
+			gamePhysics->removeObject(this);
 	}
 
 	void AbstractPhysicsObject::setPosition(const VC3 &position)
@@ -211,27 +206,6 @@ namespace game
 			obj->putToSleep();
 		}
 
-		// change collision group
-		if(this->collisionGroupToSet >= 0)
-		{
-			obj->setCollisionGroup(this->collisionGroupToSet);
-			this->collisionGroupToSet = -1;
-		}
-
-		// change damping
-		if(this->changeLinearDamping)
-		{
-			obj->setLinearDamping(this->linearDamping);
-			this->changeLinearDamping = false;
-		}
-
-		// change damping
-		if(this->changeAngularDamping)
-		{
-			obj->setAngularDamping(this->angularDamping);
-			this->changeAngularDamping = false;
-		}
-
 		VC3 prevVel = velocity;
 		VC3 prevAngVel = angularVelocity;
 
@@ -247,14 +221,6 @@ namespace game
 //			obj->enableYMovement();
 #endif
 		}
-
-		obj->getVelocity(exactPreviousVelocity);
-
-#ifdef PROJECT_CLAW_PROTO
-		// reset thrown flag when object has stopped
-		if(exactPreviousVelocity.GetSquareLength() < 0.1f)
-			this->thrownByClaw = false;
-#endif
 
 		if (moveToVelocity)
 		{
@@ -309,8 +275,6 @@ namespace game
 		}
 
 		obj->getMassCenterPosition(massCenterPosition);
-
-		this->mass = obj->getMass();
 
 		if (this->disableAngularVelocitySet)
 		{
@@ -538,32 +502,6 @@ namespace game
 		return this->dynamicActor;
 	}
 
-	float AbstractPhysicsObject::getMass()
-	{
-		return this->mass;
-	}
-
-	VC3 AbstractPhysicsObject::getExactPreviousVelocity() const
-	{
-		return this->exactPreviousVelocity;
-	}
-
-	void AbstractPhysicsObject::setCollisionGroup(int group)
-	{
-		this->collisionGroupToSet = group;
-	}
-
-	void AbstractPhysicsObject::setLinearDamping(float damping)
-	{
-		this->linearDamping = damping;
-		this->changeLinearDamping = true;
-	}
-
-	void AbstractPhysicsObject::setAngularDamping(float damping)
-	{
-		this->angularDamping = damping;
-		this->changeAngularDamping = true;
-	}
 }
 
 

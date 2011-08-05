@@ -4,33 +4,28 @@
 // (C) Sebastian Aaltonen 2000
 
 
-#include <windows.h>
-
-
 #ifndef _KEYB3_H_
 #define _KEYB3_H_
 
 #include "RawInputMouseHandler.h"
+#include "../../ui/GameController.h"
 
-
-#ifdef __cplusplus
-extern "C" {
+#ifdef JOY_BUTTON1
+#undef JOY_BUTTON1
 #endif
-
-
 
 //-----------------------------------------------------------------------------
 // Functions
 //-----------------------------------------------------------------------------
 
 // Inits/frees Keyb3 Control System
-int Keyb3_Init(HWND hw,DWORD CAPS);		// Returns: TRUE=ok, FALSE=error
+int Keyb3_Init(int CAPS);		// Returns: TRUE=ok, FALSE=error
 void Keyb3_Free();
 
 // Activates/Deactivates Keyb3 Control System.
 // Deactivate Keyb3 when your window gets minimized.
 // Activate Keyb3 when your window gets active again.
-void Keyb3_SetActive(int on);
+void Keyb3_SetActive(bool on);
 
 // Updates all devices
 // Use this function frequently (it's best to be placed in your programs main loop)
@@ -45,7 +40,7 @@ void Keyb3_UpdateDevices_Optimized(int time);	// time in 1/1000 secs (1000=1 sec
 int Keyb3_WaitKeypress( bool returnIndividualMouse = true );
 
 // Checks if key is down (returns TRUE if down, FALSE is not)
-int Keyb3_IsKeyDown(int keycode);	
+int Keyb3_IsKeyDown(unsigned int keycode);
 
 // Gets keypress(/release), and clears the keypress(/release) mark. (returns TRUE if pressed, FALSE is not)
 int Keyb3_GetKeyPress(int keynum);
@@ -71,6 +66,9 @@ int Keyb3_GetNumberOfMouseDevices();	// NOTICE: counts the "every mouse" -handle
 // (joynum: 0=first joystick, 1=second joystick)
 // (give a NULL-pointer if you don't want some information) 
 void Keyb3_ReadJoystick(int joynum,int *x,int *y,int *rx,int *ry,int *throttle,int *rudder);
+
+// Add GameController callback
+void Keyb3_AddController(ui::GameController *_gc);
 
 
 //-----------------------------------------------------------------------------
@@ -472,11 +470,6 @@ void Keyb3_ReadJoystick(int joynum,int *x,int *y,int *rx,int *ry,int *throttle,i
 
 #define KEYB3_CAPS_USE_RAWINPUT 64	 // Default is DirectInput
 #define KEYB3_CAPS_USE_DIRECTINPUT 0 // To keep the code compatible with old one.
-
-
-#ifdef __cplusplus
-};
-#endif
 
 
 

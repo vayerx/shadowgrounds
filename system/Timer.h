@@ -36,6 +36,10 @@ public:
   static int getTime();
 
 
+  // return the current time right now
+  static int getCurrentTime();
+
+
   static void setTimeFactor(float factor);
 	static float getTimeFactor();
 

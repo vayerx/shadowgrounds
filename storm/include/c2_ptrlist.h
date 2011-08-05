@@ -60,7 +60,7 @@ public:
 	// Constructor
 	PtrListIterator(PtrListData<A> *first) : pointer(first), previous(NULL) {}
 
-	friend PtrList<A>;
+	friend class PtrList<A>;
 };
 
 

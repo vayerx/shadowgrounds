@@ -1,6 +1,15 @@
 
 #include "precompiled.h"
 
+#include <vector>
+#include <map>
+#include <string>
+#include <sstream>
+#include <boost/shared_ptr.hpp>
+
+#include <istorm3D_terrain_renderer.h>
+#include <IStorm3D_Terrain.h>
+
 #include "MapWindow.h"
 #include "Map.h"
 #include "../util/assert.h"
@@ -12,15 +21,8 @@
 #include "../game/DHLocaleManager.h"
 #include "../ui/GUIEffectWindow.h"
 #include "../ui/uidefaults.h"
-#include "../system/logger.h"
+#include "../system/Logger.h"
 #include "../game/GameScene.h"
-#include <istorm3d_terrain_renderer.h>
-#include <istorm3d_terrain.h>
-#include <vector>
-#include <map>
-#include <string>
-#include <sstream>
-#include <boost/shared_ptr.hpp>
 
 #include "../game/options/options_gui.h"
 
@@ -28,11 +30,10 @@ using namespace boost;
 using namespace game;
 
 namespace ui {
-namespace {
 
 	static const int TEXTURE_RESOLUTION = 1024;
-	static const int FADE_IN_TIME = 500;
-	static const int FADE_OUT_TIME = 500;
+	static const int MAP_FADE_IN_TIME = 500;
+	static const int MAP_FADE_OUT_TIME = 500;
 
 	struct MapEntity
 	{
@@ -82,7 +83,6 @@ namespace {
 	typedef std::vector<Portal> PortalList;
 	typedef std::map<std::string, PortalList> Portals;
 
-} // unnamed
 
 typedef std::vector<MapEntity> EntityList;
 typedef std::map<std::string, ObjectivePoint> ObjectivePoints;
@@ -173,22 +173,22 @@ struct MapWindow::Data : private IOguiButtonListener, private IOguiEffectListene
 
 	VC2I mapBackgroundPosition;
 
-	std::vector<DWORD> mapBuffer;
-	std::vector<DWORD> mapBufferOutput;
+	std::vector<Uint32> mapBuffer;
+	std::vector<Uint32> mapBufferOutput;
 
 	Data(game::Game &game_, Ogui &ogui_, shared_ptr<Map> &map_)
 	:	game(game_),
 		ogui(ogui_),
+		playerRotation(0),
 		currentObjective(0),
 		map(map_),
-		playerRotation(0),
 		visible(false),
-		mapZoomFactor(1.0f),
-		mapZoomingStarted(Timer::getTime()),
-		mapPositionOffset(0, 0),
-		mapZoomCenter(0.0f, 0.0f),
-		mapZoomSpeed(0.0f, 0.0f),
 		mapScrollSpeedFactor(0.0f),
+		mapZoomSpeed(0.0f, 0.0f),
+		mapZoomCenter(0.0f, 0.0f),
+		mapZoomFactor(1.0f),
+		mapPositionOffset(0, 0),
+		mapZoomingStarted(Timer::getTime()),
 		mapAspectRatio( 1.0f )
 	{
 		FB_ASSERT(map);
@@ -196,10 +196,10 @@ struct MapWindow::Data : private IOguiButtonListener, private IOguiEffectListene
 		objectiveTextOffset[1] = 0;
 
 		const std::string &dir = map->getMission();
-		int end = dir.find_last_of("/");
+		std::string::size_type end = dir.find_last_of("/");
 		if(end == dir.npos)
 			return;
-		int start = dir.find_last_of("/", end - 2);
+		std::string::size_type start = dir.find_last_of("/", end - 2);
 		if(start == dir.npos)
 			return;
 
@@ -683,7 +683,7 @@ struct MapWindow::Data : private IOguiButtonListener, private IOguiEffectListene
 				int rad_sqr_x = radius_x * radius_x / 2;
 				int rad_sqr_y = radius_y * radius_y / 2;
 
-				DWORD *buffer = &mapBuffer[start_y * width];
+				Uint32 *buffer = &mapBuffer[start_y * width];
 
 				unsigned int size_y = end_y - start_y;
 				unsigned int size_x = end_x - start_x;
@@ -717,15 +717,16 @@ struct MapWindow::Data : private IOguiButtonListener, private IOguiEffectListene
 						new_fog = 255 - new_fog;
 
 						// set new fog if it's less
-						if(new_fog > fog)
+						if(new_fog > fog) {
 							fog = new_fog;
 
-						// mask out existing fog
-						col &= 0x00FFFFFF;
-						// apply new fog
-						col |= (fog & 0xFF) << 24;
-						// write to buffer
-						buffer[x] = col;
+							// mask out existing fog
+							col &= 0x00FFFFFF;
+							// apply new fog
+							col |= (fog & 0xFF) << 24;
+							// write to buffer
+							buffer[x] = col;
+						}
 						x++;
 					}
 					while(x < size_x);
@@ -746,8 +747,8 @@ struct MapWindow::Data : private IOguiButtonListener, private IOguiEffectListene
 			// scroll map
 			//
 			{
-				int cursor_x = ogui.getCursorScreenX(0) - mapPosition.x;
-				int cursor_y = ogui.getCursorScreenY(0) - mapPosition.y;
+				/*int cursor_x = ogui.getCursorScreenX(0) - mapPosition.x;
+				int cursor_y = ogui.getCursorScreenY(0) - mapPosition.y;*/
 
 				// unstable frame rate, interpolate for smoothness
 				mapScrollSpeedFactor = ms * 0.125f + mapScrollSpeedFactor * 0.875f;
@@ -1187,7 +1188,6 @@ struct MapWindow::Data : private IOguiButtonListener, private IOguiEffectListene
 		for(int i = 0; i < 2; ++i)
 		{
 			int yOff = objectiveTextOffset[i];
-			int index = 0;
 			int offsetBetween = getLocaleGuiInt( "gui_map_space_between_objects", 0 );
 
 			int yLimit = 0;
@@ -1206,7 +1206,9 @@ struct MapWindow::Data : private IOguiButtonListener, private IOguiEffectListene
 			highlight.reset(NULL);
 
 			// WTF?????
-			//for(; start != list.end(); ++start)
+#ifdef PROJECT_SHADOWGROUNDS
+			for(; start != list.end(); ++start)
+#endif
 			{
 				int xPos = objectiveTextPosition[i].x;
 				int yPos = objectiveTextPosition[i].y;
@@ -1226,7 +1228,7 @@ struct MapWindow::Data : private IOguiButtonListener, private IOguiEffectListene
 						int ys = getLocaleGuiInt("gui_map_highlight_size_y", 0);
 						highsizeY = ys;
 						highsizeX = xs;
-						const char *fname = fname = getLocaleGuiString("gui_map_highlight_image");
+						const char *fname = getLocaleGuiString("gui_map_highlight_image");
 						highlight.reset(ogui.CreateSimpleTextButton(window.get(), x, y, xs, ys, fname, fname, fname, 0));
 					}
 					
@@ -1255,11 +1257,17 @@ struct MapWindow::Data : private IOguiButtonListener, private IOguiEffectListene
 					yPos += yAdd + offsetBetween;
 					if(yAdd > highsizeY && (i == 0 && it - list.begin() == currentObjective) && highlight)
 						highlight->Resize(highsizeX, yAdd + (highsizeY - yOff));
-
-					if(yPos < yLimit)
-					{
-						break;
-					}
+#ifdef PROJECT_SHADOWGROUNDS
+				}
+#endif
+				if(yPos < yLimit)
+				{
+#ifdef PROJECT_SHADOWGROUNDS
+					return true;
+#else
+					break;
+				}
+#endif
 				}
 			}
 		}
@@ -1284,10 +1292,10 @@ struct MapWindow::Data : private IOguiButtonListener, private IOguiEffectListene
 		createObjectives();
 
 		effectWindow->raise();
-		effectWindow->fadeIn(FADE_IN_TIME);
+		effectWindow->fadeIn(MAP_FADE_IN_TIME);
 
 		window->Raise();
-		window->StartEffect(OGUI_WINDOW_EFFECT_FADEIN, FADE_IN_TIME);
+		window->StartEffect(OGUI_WINDOW_EFFECT_FADEIN, MAP_FADE_IN_TIME);
 		window->Show();
 		visible = true;
 
@@ -1471,8 +1479,8 @@ struct MapWindow::Data : private IOguiButtonListener, private IOguiEffectListene
 		if(!visible)
 			return;
 
-		window->StartEffect(OGUI_WINDOW_EFFECT_FADEOUT, FADE_OUT_TIME);
-		effectWindow->fadeOut(FADE_OUT_TIME);
+		window->StartEffect(OGUI_WINDOW_EFFECT_FADEOUT, MAP_FADE_OUT_TIME);
+		effectWindow->fadeOut(MAP_FADE_OUT_TIME);
 
 		entities.clear();
 		visible = false;
@@ -1629,12 +1637,12 @@ bool MapWindow::isVisible() const
 
 int MapWindow::getFadeInTime() const
 {
-	return FADE_IN_TIME;
+	return MAP_FADE_IN_TIME;
 }
 
 int MapWindow::getFadeOutTime() const
 {
-	return FADE_OUT_TIME;
+	return MAP_FADE_OUT_TIME;
 }
 
 const std::string &MapWindow::getActiveLayer() const

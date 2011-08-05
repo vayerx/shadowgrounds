@@ -5,7 +5,7 @@
 
 #include <boost/scoped_ptr.hpp>
 #include <c2_vectors.h>
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 
 class Storm3D;
 class IStorm3D_Model;
@@ -17,13 +17,13 @@ class Storm3D_FakeSpotlight;
 struct Storm3D_TerrainModelsData;
 struct Storm3D_CollisionInfo;
 
-struct Light
+struct TerrainLight
 {
 	VC3 position;
 	float radius;
 	COL color;
 
-	Light()
+	TerrainLight()
 	:	radius(0)
 	{
 	}
@@ -87,7 +87,7 @@ public:
 	void setLightPosition(int index, const VC3 &position);
 	void setLightRadius(int index, float radius);
 	void setLightColor(int index, const COL &color);
-	const Light &getLight(int index) const;
+	const TerrainLight &getLight(int index) const;
 	void removeLight(int index);
 	void clearLights();
 

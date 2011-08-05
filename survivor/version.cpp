@@ -14,17 +14,17 @@
 
 void log_version()
 {
-  LOG_INFO("---------------------------------");
-  LOG_INFO(PROGRAM_NAME_STRING);
-  LOG_INFO("Version " VERSION_STRING);
+  Logger::getInstance()->info("---------------------------------");
+  Logger::getInstance()->info(PROGRAM_NAME_STRING);
+  Logger::getInstance()->info("Version " VERSION_STRING);
 #ifdef FB_TESTBUILD
-  LOG_INFO("Test build " APPLICATION_NAME_STRING);
+  Logger::getInstance()->info("Test build " APPLICATION_NAME_STRING);
 #elif NDEBUG
-  LOG_INFO("Build " APPLICATION_NAME_STRING);
+  Logger::getInstance()->info("Build " APPLICATION_NAME_STRING);
 #else
-  LOG_INFO("DEBUG Build " APPLICATION_NAME_STRING);
+  Logger::getInstance()->info("DEBUG Build " APPLICATION_NAME_STRING);
 #endif
-  LOG_INFO("---------------------------------");
+  Logger::getInstance()->info("---------------------------------");
 }
 
 const char *get_application_name_string()

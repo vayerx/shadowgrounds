@@ -1,5 +1,7 @@
 #include "precompiled.h"
 
+#include <boost/scoped_ptr.hpp>
+
 #include "Ogui.h"
 #include "orvgui2.h"
 
@@ -14,11 +16,11 @@
 
 #include <map>
 
-#include "../system/logger.h"
+#include "../system/Logger.h"
 #include "../container/LinkedList.h"
 
 #include "../util/assert.h"
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 
 /* --------------------------------------------------------- */
@@ -50,25 +52,25 @@ Ogui::Ogui()
 			cursorOffsetY[i][j] = 0;
 		}
 	}
-
-	buttons = new LinkedList();
-	windows = new LinkedList();
 }
 
 /* --------------------------------------------------------- */
 	
 Ogui::~Ogui()
 {
-	while (!buttons->isEmpty())
+	while (!buttons.empty())
 	{
-		delete buttons->popLast();
+		// Bad old code: button destructor will remove the button from the list. Do not remove here!
+		delete buttons.back();
 	}
-	delete buttons;
-	while (!windows->isEmpty())
+	buttons.clear();
+
+	while (!windows.empty())
 	{
-		delete windows->popLast();
+		// Bad old code: window destructor will remove the window from the list. Do not remove here!
+		delete windows.back();
 	}
-	delete windows;
+	windows.clear();
 
 	if (defaultFont != NULL)
 	{
@@ -159,14 +161,14 @@ void Ogui::Uninit()
 
 void Ogui::RemovedWindow(OguiWindow *win)
 {
-	windows->remove(win);
+	windows.remove(win);
 }
 
 /* --------------------------------------------------------- */
 
 void Ogui::RemovedButton(OguiButton *but)
 {
-	buttons->remove(but);
+	buttons.remove(but);
 }
 
 /* --------------------------------------------------------- */
@@ -181,17 +183,15 @@ void Ogui::SetMenuIndexMode(int cursor, bool menuIndexModeEnabled)
 
 void Ogui::ResetData()
 {
-	windows->resetIterate();
-	while (windows->iterateAvailable())
+	std::list<OguiWindow*>::iterator iterw;
+	for (iterw = windows.begin(); iterw != windows.end(); iterw++)
 	{
-		OguiWindow *win = (OguiWindow *)windows->iterateNext();
-		win->ResetData();
+		(*iterw)->ResetData();
 	}
-	buttons->resetIterate();
-	while (buttons->iterateAvailable())
+	std::list<OguiButton*>::iterator iterb;
+	for (iterb = buttons.begin(); iterb != buttons.end(); iterb++)
 	{
-		OguiButton *but = (OguiButton *)buttons->iterateNext();
-		but->ResetData();
+		(*iterb)->ResetData();
 	}
 	// FIXME: resets cursor image state to 0
 	for (int i = 0; i < GetMaxCursors(); i++)
@@ -204,7 +204,7 @@ void Ogui::ResetData()
 
 // WARNING: invalidates any pointers to previous default font
 // should only be used once, or recreate all buttons/textlabels after this
-void Ogui::LoadDefaultFont(char *filename) throw (OguiException *)
+void Ogui::LoadDefaultFont(const char *filename) throw (OguiException *)
 {
 	if (drv == NULL)
 	{
@@ -314,7 +314,7 @@ void Ogui::LoadCursorImage(int cursornum, const char *filename, int forstate)
 
 // NOTICE: maximum state is limited in current implementation, 
 // although it should not be.
-void Ogui::SetCursorImageState(int cursornum, int state)
+void Ogui::SetCursorImageState(int cursornum, int state) throw (OguiException *)
 {
 	if (cursornum < 0 || cursornum >= GetMaxCursors())
 	{
@@ -339,8 +339,39 @@ void Ogui::SetCursorImageState(int cursornum, int state)
 
 /* --------------------------------------------------------- */
 
+void Ogui::SwapCursorImages(int cursor1, int cursor2)
+{
+	for(int i = 0; i < OG_CURSORS; i++)
+	{
+		std::swap(cursorImages[i][cursor1], cursorImages[i][cursor2]);
+		std::swap(cursorOffsetX[i][cursor1], cursorOffsetX[i][cursor2]);
+		std::swap(cursorOffsetY[i][cursor1], cursorOffsetY[i][cursor2]);
+	}
+	swappedCursorImages.push_back( std::pair<int,int> (cursor1, cursor2) );
+}
+
+/* --------------------------------------------------------- */
+
+void Ogui::ResetSwappedCursorImages()
+{
+	while(!swappedCursorImages.empty())
+	{
+		int cursor1 = swappedCursorImages.back().first;
+		int cursor2 = swappedCursorImages.back().second;
+		for(int i = 0; i < OG_CURSORS; i++)
+		{
+			std::swap(cursorImages[i][cursor1], cursorImages[i][cursor2]);
+			std::swap(cursorOffsetX[i][cursor1], cursorOffsetX[i][cursor2]);
+			std::swap(cursorOffsetY[i][cursor1], cursorOffsetY[i][cursor2]);
+		}
+		swappedCursorImages.pop_back();
+	}
+}
+
+/* --------------------------------------------------------- */
+
 void Ogui::SetCursorImageOffset(int cursornum, int offsetX, int offsetY, 
-	int forstate)
+	int forstate) throw (OguiException *)
 {
 	if (cursornum < 0 || cursornum >= GetMaxCursors())
 	{
@@ -375,7 +406,7 @@ OguiWindow *Ogui::CreateSimpleWindow(int x, int y, int sizex, int sizey,
 
 	OguiWindow *tmp = new OguiWindow(this, x, y, sizex, sizey, img, id);
 
-	windows->append(tmp);  
+	windows.push_back(tmp);  
 
 	return tmp; 
 }
@@ -405,9 +436,9 @@ OguiButton *Ogui::CreateSimpleImageButton(OguiWindow *win, int x, int y,
 	tmp->imageHighlightedAutodel = true;
 	tmp->imageDisabledAutodel = true;
 
-	buttons->append(tmp);  
+	buttons.push_back(tmp);
 	
-	return tmp; 
+	return tmp;
 }
 
 /* --------------------------------------------------------- */
@@ -425,7 +456,7 @@ OguiButton *Ogui::CreateSimpleImageButton(OguiWindow *win, int x, int y,
 
 OguiButton *Ogui::CreateSimpleTextButton(OguiWindow *win, int x, int y, 
 	int sizex, int sizey, const char *imageFilename, const char *imageDownFilename, 
-	const char *imageHighlightFilename, const char *text, int id, void *argument, bool clipToWindow )
+	const char *imageHighlightFilename, const char *text, int id, const void *argument, bool clipToWindow )
 	throw (OguiException *)
 {
 	// these images loaded here get deleted by the button destructor 
@@ -449,9 +480,9 @@ OguiButton *Ogui::CreateSimpleTextButton(OguiWindow *win, int x, int y,
 	tmp->imageDownAutodel = true;
 	tmp->imageHighlightedAutodel = true;
 
-	buttons->append(tmp);  
+	buttons.push_back(tmp);
 	
-	return tmp; 
+	return tmp;
 }
 
 /* --------------------------------------------------------- */
@@ -471,9 +502,9 @@ OguiTextLabel *Ogui::CreateTextLabel(OguiWindow *win, int x, int y,
 
 	OguiTextLabel *ret = new OguiTextLabel(tmp);
 
-	buttons->append(tmp);  
+	buttons.push_back(tmp);
 
-	return ret; 
+	return ret;
 }
 
 /* --------------------------------------------------------- */
@@ -497,7 +528,7 @@ OguiTextLabel *Ogui::CreateTextArea(OguiWindow *win, int x, int y,
 
 	OguiTextLabel *ret = new OguiTextLabel(tmp);
 
-	buttons->append(tmp);
+	buttons.push_back(tmp);
 
 	ret->SetText(text);
 
@@ -533,14 +564,14 @@ OguiSelectList *Ogui::CreateSelectList(OguiWindow *win, int x, int y,
 		listb[i]->SetTextHAlign(OguiButton::TEXT_H_ALIGN_LEFT);
 		listb[i]->SetEventMask(OGUI_EMASK_ALL ^ OGUI_EMASK_HOLD);
 		//listb[i]->SetTextVAlign(OguiButton::TEXT_V_ALIGN_MIDDLE);
-		buttons->append(listb[i]);
+		buttons.push_back(listb[i]);
 	}
 
 	// create scroll buttons
 	OguiButton *upsb = win->CreateNewButton(x + butSizeX, y, style->scrollSizeX, style->scrollSizeY, NULL, NULL, NULL, NULL, false, NULL, 0, NULL, NULL);
 	OguiButton *downsb = win->CreateNewButton(x + butSizeX, y + style->sizeY - style->scrollSizeY, style->scrollSizeX, style->scrollSizeY, NULL, NULL, NULL, NULL, false, NULL, 0, NULL, NULL);
-	buttons->append(upsb);
-	buttons->append(downsb);
+	buttons.push_back(upsb);
+	buttons.push_back(downsb);
 
 	OguiSelectList *ret = new OguiSelectList(x, y, defaultSelection, multiSelectable, 
 		valueAmount, values, descs, listb, upsb, downsb, style, id, argument);
@@ -621,10 +652,10 @@ void Ogui::skipCursorMovement()
 void Ogui::UpdateEffects(int timeDelta)
 {
 	// window effects...
-	SafeLinkedListIterator iter(windows);
-	while (iter.iterateAvailable())
+	std::list<OguiWindow*>::iterator iter;
+	for (iter = windows.begin(); iter != windows.end(); iter++)
 	{
-		OguiWindow *win = (OguiWindow *)iter.iterateNext();
+		OguiWindow *win = *iter;
 
 		// BUGBUG, FIXME
 		// Crashes sometimes because win points to a window which is deleted.
@@ -666,11 +697,10 @@ void Ogui::UpdateEffects(int timeDelta)
 					// Make sure the above event has not deleted this window!
 					bool winStillExists = false;
 
-					LinkedListIterator chkiter(windows);
-					while (chkiter.iterateAvailable())
+					std::list<OguiWindow*>::iterator chkiter;
+					for (chkiter = windows.begin(); chkiter != windows.end(); chkiter++)
 					{
-						OguiWindow *chkwin = (OguiWindow *)chkiter.iterateNext();
-						if (chkwin == win)
+						if (*chkiter == win)
 						{
 							winStillExists = true;
 							break;
@@ -697,7 +727,6 @@ void Ogui::UpdateEffects(int timeDelta)
 			
 			float value = 1.0f - ( (float)win->effectTextLineTimeLeft / (float)win->effectTextLineTimeTotal );
 
-			bool winStillExists = false;
 			int number_of_buttons = 0;
 			std::map< int, OguiButton* > buttons;
 
@@ -738,11 +767,10 @@ void Ogui::UpdateEffects(int timeDelta)
 				// Make sure the above event has not deleted this window!
 				bool winStillExists = false;
 
-				LinkedListIterator chkiter(windows);
-				while (chkiter.iterateAvailable())
+				std::list<OguiWindow*>::iterator chkiter;
+				for (chkiter = windows.begin(); chkiter != windows.end(); chkiter++)
 				{
-					OguiWindow *chkwin = (OguiWindow *)chkiter.iterateNext();
-					if (chkwin == win)
+					if (*chkiter == win)
 					{
 						winStillExists = true;
 						break;
@@ -781,17 +809,17 @@ void Ogui::UpdateEffects(int timeDelta)
 				win->fadingOut = false;
 				if (win->effectListener != NULL)
 				{
-					OguiEffectEvent *eve = new OguiEffectEvent(eveType, win);
-					win->effectListener->EffectEvent(eve);
-					delete eve;
+					{
+						boost::scoped_ptr<OguiEffectEvent> eve(new OguiEffectEvent(eveType, win));
+						win->effectListener->EffectEvent(eve.get());
+					}
 
 					// Make sure the above event has not deleted this window!
 					bool winStillExists = false;
-					LinkedListIterator chkiter(windows);
-					while (chkiter.iterateAvailable())
+					std::list<OguiWindow*>::iterator chkiter;
+					for (chkiter = windows.begin(); chkiter != windows.end(); chkiter++)
 					{
-						OguiWindow *chkwin = (OguiWindow *)chkiter.iterateNext();
-						if (chkwin == win)
+						if (*chkiter == win)
 						{
 							winStillExists = true;
 							break;
@@ -869,7 +897,7 @@ void Ogui::ShowError(char *msg)
 
 void Ogui::ShowError(OguiException *ex)
 {
-	char *foo = ex->GetErrorMessage();
+	const char *foo = ex->GetErrorMessage();
 	og_show_error(foo);
 }
 

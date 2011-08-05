@@ -31,7 +31,6 @@ namespace game
 		virtual const VC3 &getVelocity();
 		virtual const VC3 &getAngularVelocity();
 		virtual const QUAT &getRotation();
-		virtual float getMass();
 
 		virtual const VC3 &getPreviousVelocity();
 		virtual const VC3 &getPreviousAngularVelocity();
@@ -77,21 +76,9 @@ namespace game
 		virtual bool isFeedbackEnabled() const;
 #endif
 
-		virtual VC3 getExactPreviousVelocity() const;
-
 		virtual int getHandle() const;
 
 //		inline NxActor * getActor() const { return m_actor; }
-
-		void setCollisionGroup(int group);
-
-		void setLinearDamping(float damping);
-		void setAngularDamping(float damping);
-
-#ifdef PROJECT_CLAW_PROTO
-		bool wasThrownByClaw() const { return thrownByClaw; }
-		void setThrownByClaw(bool thrown) { this->thrownByClaw = thrown; }
-#endif
 
 	protected:
 		virtual void setHandle(int objectHandle);
@@ -115,9 +102,10 @@ namespace game
 		bool moveToAngularVelocity;
 		bool attemptedPosition;
 		bool attemptedRotation;
-		float mass;
 
+#ifdef PHYSICS_PHYSX
 		NxActor * m_actor;
+#endif
 
 		VC3 previousVelocity;
 		VC3 previousAngularVelocity;
@@ -148,19 +136,6 @@ protected:
 		VC3 feedbackNormal;
 		VC3 feedbackNormalLeft;
 		VC3 feedbackNormalRight;
-#endif
-
-		VC3 exactPreviousVelocity;
-
-		int collisionGroupToSet;
-
-		bool changeLinearDamping;
-		float linearDamping;
-		bool changeAngularDamping;
-		float angularDamping;
-
-#ifdef PROJECT_CLAW_PROTO
-		bool thrownByClaw;
 #endif
 
 		GamePhysics *gamePhysics;

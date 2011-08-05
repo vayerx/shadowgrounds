@@ -1,14 +1,17 @@
 
 #include "precompiled.h"
 
-#include "CharacterSelectionWindow.h"
-
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 #include <string>
 #include <sstream>
 #include <algorithm>
 
+#include "CharacterSelectionWindow.h"
+
+#include <IStorm3D.h>
+#include <istorm3d_videostreamer.h>
 #include "../util/assert.h"
 
 #include "uidefaults.h"
@@ -29,13 +32,11 @@
 #include "../game/scripting/GameScripting.h"
 #include "../util/LipsyncManager.h"
 #include "../sound/SoundMixer.h"
-#include <istorm3d.h>
-#include <IStorm3D_VideoStreamer.h>
 #include "../ogui/OguiAligner.h"
 
 #include "../game/DHLocaleManager.h"
 
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 #include "../game/scripting/UnitScripting.h"
 #include "../game/UnitType.h"
 #include "../game/UnitList.h"
@@ -44,6 +45,8 @@
 #include "../util/Script.h"
 #include "../ui/GameController.h"
 #include <keyb3.h>
+
+#include "../survivor/SurvivorConfig.h"
 
 extern int scr_width;
 extern int scr_height;
@@ -56,29 +59,16 @@ namespace ui
 	bool CharacterSelectionWindow::characterEnabled[3] = { true, true, true };
 	int CharacterSelectionWindow::characterForced = -1;
 
-	static int getNumberOfPlayers()
-	{
-		int result = 0;
-		for(int c = 0; c < MAX_PLAYERS_PER_CLIENT; c++ )
-		{
-			if( SimpleOptions::getBool( DH_OPT_B_1ST_PLAYER_ENABLED + c ) )
-			{
-				result++;
-			}
-		}
-
-		return result;
-	}
 
 	CharacterSelectionWindow::CharacterSelectionWindow( Ogui *ogui, game::Game *game ) :
       ogui( ogui ),
 	  game( game )
 	{
 		FB_ASSERT( ogui != NULL );
-		FB_ASSERT( win != NULL );
 		FB_ASSERT( game != NULL );
 		oguiLoader = new OguiLocaleWrapper(ogui);
 		win = oguiLoader->LoadWindow("characterselectionwindow");
+		FB_ASSERT( win != NULL );
 
 		frame = 0;
 
@@ -94,7 +84,7 @@ namespace ui
 		{
 			std::string buttonname = characterNames[i];
 			// lower case plz
-			std::transform(buttonname.begin(),buttonname.end(),buttonname.begin(),tolower);
+			std::transform(buttonname.begin(),buttonname.end(),buttonname.begin(),(int(*)(int))tolower);
 
 			characterImages[i] = oguiLoader->LoadButton(buttonname, win, i);
 #ifdef PROJECT_SURVIVOR
@@ -113,7 +103,7 @@ namespace ui
 		{
 			std::string buttonname = characterNames[i];
 			// lower case plz
-			std::transform(buttonname.begin(),buttonname.end(),buttonname.begin(),tolower);
+			std::transform(buttonname.begin(),buttonname.end(),buttonname.begin(),(int(*)(int))tolower);
 
 			characterButtons[i] = oguiLoader->LoadButton(buttonname, win, i);
 			characterButtons[i]->SetListener(this);
@@ -174,7 +164,7 @@ namespace ui
 		if(characterForced != -1)
 		{
 			std::string locale = characterNames[characterForced];
-			std::transform(locale.begin(),locale.end(),locale.begin(),tolower);
+			std::transform(locale.begin(),locale.end(),locale.begin(),(int(*)(int))tolower);
 			locale = "gui_characterselectionwindow_mustchoose_text_" + locale;
 			mustChooseError = oguiLoader->LoadButton("mustchoose", win, 0);
 			mustChooseError->SetDisabled(true);
@@ -194,6 +184,7 @@ namespace ui
 #endif
 		win->Hide();
 
+#ifndef PROJECT_SURVIVOR_DEMO
 		int numChoices = 0;
 		for(int i = 0; i < 3; i++)
 		{
@@ -209,6 +200,7 @@ namespace ui
 			closeWindow();
 			readyToCloseTimer = game->gameTimer;
 		}
+#endif
 	}
 
 	CharacterSelectionWindow::~CharacterSelectionWindow()
@@ -484,7 +476,7 @@ namespace ui
 
 		// transform to lower case
 		std::string chars = params;
-		std::transform(chars.begin(),chars.end(),chars.begin(),tolower);
+		std::transform(chars.begin(),chars.end(),chars.begin(),(int(*)(int))tolower);
 
 		CharacterSelectionWindow::characterForced = -1;
 
@@ -493,7 +485,7 @@ namespace ui
 		{
 			// transform to lower case
 			std::string name = CharacterSelectionWindow::characterNames[i];
-			std::transform(name.begin(),name.end(),name.begin(),tolower);
+			std::transform(name.begin(),name.end(),name.begin(),(int(*)(int))tolower);
 
 			// find name in string
 			const char *pos = strstr(chars.c_str(), name.c_str());
@@ -591,7 +583,7 @@ namespace ui
 		if(chosen)
 		{
 			animName = characterNames[charNum] + std::string("_selected");
-			std::transform(animName.begin(),animName.end(),animName.begin(),tolower);
+			std::transform(animName.begin(),animName.end(),animName.begin(),(int(*)(int))tolower);
 
 
 			IOguiImage *downImage = NULL;
@@ -602,7 +594,7 @@ namespace ui
 		else
 		{
 			animName = characterNames[charNum] + std::string("_idle");
-			std::transform(animName.begin(),animName.end(),animName.begin(),tolower);
+			std::transform(animName.begin(),animName.end(),animName.begin(),(int(*)(int))tolower);
 
 			characterButtons[charNum]->SetImage( characterButtonImages[charNum*2 + 0] );
 			characterButtons[charNum]->SetHighlightedImage( characterButtonImages[charNum*2 + 1] );
@@ -664,15 +656,17 @@ namespace ui
 		}
 
 		// lock all
-		bool forced_character_chosen = false;
+		// bool forced_character_chosen = false;
 		for(int i = 0; i < MAX_PLAYERS_PER_CLIENT; i++)
 		{
 			if(!SimpleOptions::getBool( DH_OPT_B_1ST_PLAYER_ENABLED + i )) continue;
 
 			chosenCharacterLocked[i] = true;
 
+			/*
 			if(chosenCharacter[i] == characterForced)
 				forced_character_chosen = true;
+			*/
 		}
 
 		for(unsigned int i = 0; i < characterButtons.size(); i++)

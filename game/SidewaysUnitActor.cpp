@@ -202,8 +202,10 @@ void SidewaysUnitActor::actDirectSidewaysControls(Unit *unit)
 	float moveAngle = util::PositionDirectionCalculator::calculateDirection(VC3(0,0,0), globalDirVec);
 	float rotateToAngle = moveAngle;
 
+	/*
 	bool doStrafeLeftAnim = false;
 	bool doStrafeRightAnim = false;
+	*/
 	bool doStrafeBackAnim = false;
 
 	static float standAngle = 0;
@@ -242,11 +244,11 @@ void SidewaysUnitActor::actDirectSidewaysControls(Unit *unit)
 					{
 						rotateToAngle = moveAngle - 90.0f;
 						if (rotateToAngle < 0.0f) rotateToAngle += 360.0f;
-						doStrafeRightAnim = true;
+						// doStrafeRightAnim = true;
 					} else {
 						rotateToAngle = moveAngle + 90.0f;
 						if (rotateToAngle >= 360.0f) rotateToAngle -= 360.0f;
-						doStrafeLeftAnim = true;
+						// doStrafeLeftAnim = true;
 					}
 				} else {
 					rotateToAngle = moveAngle + 180.0f;
@@ -389,8 +391,6 @@ void SidewaysUnitActor::act(Unit *unit)
 
 	float rotationAngle = 0.0f;
 
-	float oldYRotation = unit->getRotation().y;
-
 	UnitActAnimationRequests animRequests;
 	
 	// animated units don't do normal acting...
@@ -412,7 +412,7 @@ void SidewaysUnitActor::act(Unit *unit)
 		actDestroyed(unit, &animRequests);
 	} else {
 
-		VC3 waypoint = unit->getWaypoint();
+		// VC3 waypoint = unit->getWaypoint();
 
 		bool doRotation = false;
 		bool doMove = false;
@@ -420,9 +420,6 @@ void SidewaysUnitActor::act(Unit *unit)
 		bool doLeftMove = false;
 		bool doRightMove = false;
 		bool doBackMove = false;
-		bool doLeftRotation = false;
-		bool doRightRotation = false;
-		bool doFire = false;
 
 		if (unit->getWalkDelay() > 0)
 		{

@@ -1,0 +1,46 @@
+!!ARBvp1.0
+PARAM mvp[4] = { state.matrix.mvp };
+#fromList ["c"]
+PARAM c[100] = { program.env[0..99] };
+OUTPUT oPos = result.position;
+OUTPUT oT0 = result.texcoord[0];
+OUTPUT oT1 = result.texcoord[1];
+OUTPUT oT2 = result.texcoord[2];
+# Default shader:
+#   -> Transform vertex
+#   -> Apply ambient color
+#   -> Apply surface color
+#   -> Apply directional light
+#   -> Apply base texturing 
+# Light direction could be transformed to 
+# model space and avoid rotating normal.
+# Constant declarations:
+#   -> c[0..3] -> World x View x Projection matrix
+#   -> c[4..7] -> World matrix (first 3 rows)   
+#   -> c[7]    -> Ambient color (.w transparency)
+#   -> c[8]    -> Diffuse color
+#   -> c[9]    -> Light direction (.w 0.f for clamping)
+#   -> c[10]   -> Light color
+#   -> c[11]   -> Fog start/end/range (.w 1.f)
+# Vertex data:
+#   -> v0 -> position
+#   -> v3 -> normal
+#   -> v7,v8,v9 -> texture coordinates
+ATTRIB v0 = vertex.position;
+ATTRIB v3 = vertex.normal;
+ATTRIB v4 = vertex.texcoord[0];
+ATTRIB v5 = vertex.texcoord[1];
+ATTRIB v6 = vertex.texcoord[2];
+# ** POSITION **
+# Transform position to clip space
+DP4 oPos.x, v0, mvp[0];
+DP4 oPos.y, v0, mvp[1];
+DP4 oPos.z, v0, mvp[2];
+DP4 oPos.w, v0, mvp[3];
+
+# ** TEXTURING **
+# Move texture coordinates
+MOV oT0.xy, v4.xyyy;
+MOV oT1.xy, v5.xyyy;
+MOV oT2.xy, v6.xyyy;
+END

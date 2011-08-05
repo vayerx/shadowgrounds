@@ -3,7 +3,7 @@
 
 #include "OguiFormattedText.h"
 #include "IOguiFormattedCommand.h"
-#include "ogui.h"
+#include "Ogui.h"
 #include <assert.h>
 #include <stack>
 
@@ -12,7 +12,7 @@
 #include "../util/assert.h"
 #include "OguiFormattedCommandImg.h"
 
-#include "..\util\Debug_MemoryManager.h"
+#include "../util/Debug_MemoryManager.h"
 
 using namespace util;
 ///////////////////////////////////////////////////////////////////////////////
@@ -32,8 +32,21 @@ struct OguiFormattedText::Rect
 ///////////////////////////////////////////////////////////////////////////////
 
 OguiFormattedText::OguiFormattedText( OguiWindow* win, Ogui* ogui, int x, int y, int w, int h, int id  ) :
+  buttons(),
+  commands(),
+  fonts(),
+  images(),
+  tagstack(),
+  currentFont( NULL ),
+  hAlign( OguiButton::TEXT_H_ALIGN_LEFT ),
+  vAlign( OguiButton::TEXT_V_ALIGN_TOP ),
+  
   window( win ),
   ogui( ogui ),
+  font( NULL ),
+  text(),
+  lineHeight( 1.0f ),
+
   position( new Rect( x, y, w, h ) ),
   clip( new Rect( x, y, w, h ) ),
 #ifdef PROJECT_SHADOWGROUNDS
@@ -44,19 +57,7 @@ OguiFormattedText::OguiFormattedText( OguiWindow* win, Ogui* ogui, int x, int y,
   clipPositionTop( 0 ),
   clipPositionBottom( 0 ),
   id( id ),
-  lineHeight( 1.0f ),
-  font( NULL ),
-  hAlign( OguiButton::TEXT_H_ALIGN_LEFT ),
-  vAlign( OguiButton::TEXT_V_ALIGN_TOP ),
 
-  buttons(),
-  commands(),
-  fonts(),
-  images(),
-  tagstack(),
-  
-  currentFont( NULL ),
-  text(),
   releaseMe( NULL )
 {
 	releaseMe = new OguiFormattedCommandImg;
@@ -331,8 +332,8 @@ void OguiFormattedText::parseTextToButtons()
 			// data.currentFont = myFonts[ tag_name ];
 			// find out the new font
 			{
-				int cnt = text.find_first_of( ">", data.cur_pos );
-				if( cnt != text.npos ) 
+				std::string::size_type cnt = text.find_first_of( ">", data.cur_pos );
+				if( cnt != text.npos )
 				{
 					std::string tag_name = text.substr( data.cur_pos, cnt - data.cur_pos );
 					data.cur_pos = cnt + 1;
@@ -397,7 +398,7 @@ void OguiFormattedText::parseFormattedCommand( const std::string& tag_name, Pars
 			
 			// parse the attributes of the command name
 			{
-				int i;
+				std::string::size_type i;
 				i = command_name.find_first_of( " " );
 				if( i != command_name.npos )
 				{
@@ -424,9 +425,9 @@ void OguiFormattedText::parseFormattedCommand( const std::string& tag_name, Pars
 // code reusabilty through copy-paste
 int OguiFormattedText::getLineWidth( int curpos, const std::stack< std::string >& stack, ParseData* data )
 {
-	int next_tag = 0;
-	int next_linebrk = 0;
-	int next_hardbreak = 0;
+	std::string::size_type next_tag = 0;
+	std::string::size_type next_linebrk = 0;
+	std::string::size_type next_hardbreak = 0;
 	int cur_pos = curpos;
 	IOguiFont* cur_font = font;
 
@@ -471,12 +472,7 @@ int OguiFormattedText::getLineWidth( int curpos, const std::stack< std::string >
 			if( next_linebrk == text.npos ) next_linebrk = next_hardbreak;
 			if( next_hardbreak == text.npos ) next_hardbreak = next_linebrk;
 
-			if( next_linebrk == next_hardbreak )
-			{
-				int i = 0;	//
-			}
-
-			int break_here = next_linebrk<next_hardbreak?next_linebrk:next_hardbreak;
+			std::string::size_type break_here = next_linebrk<next_hardbreak?next_linebrk:next_hardbreak;
 			// this happens when the line is complite without a font change
 
 			if ( break_here == next_hardbreak  && next_linebrk != next_hardbreak ) 
@@ -509,7 +505,7 @@ int OguiFormattedText::getLineWidth( int curpos, const std::stack< std::string >
 			// cur_font = myFonts[ tag_name ];
 			// find out the new font
 			{
-				int cnt = text.find_first_of( ">", cur_pos );
+				std::string::size_type cnt = text.find_first_of( ">", cur_pos );
 				if( cnt != text.npos ) 
 				{
 					std::string tag_name = text.substr( cur_pos, cnt - cur_pos );
@@ -554,10 +550,12 @@ int OguiFormattedText::getLineWidth( int curpos, const std::stack< std::string >
 
 //.............................................................................
 
-std::pair< int, int > OguiFormattedText::findLineWidthBreak( int pos, int width, IOguiFont* cur_font )
+std::pair< int, int > OguiFormattedText::findLineWidthBreak( std::string::size_type pos, int width, IOguiFont* cur_font )
 {
 	// next_linebrk stores the place where we break the line with the cur_font
+#ifndef PROJECT_SHADOWGROUNDS
 	const int start_pos = pos;
+#endif
 	int next_linebrk = pos; 
 	int cur_pos = pos;
 	int mw = 0;
@@ -582,7 +580,7 @@ std::pair< int, int > OguiFormattedText::findLineWidthBreak( int pos, int width,
 			mw = temp_w;
 		}
 
-		if( pos == (int)text.size() ) break;
+		if( pos == text.size() ) break;
 
 		pos++;
 	}
@@ -823,8 +821,9 @@ void OguiFormattedText::moveBy( int x, int y, bool clear_top, bool clear_bottom 
 		(*i)->MoveBy( x, y );
 
 		// apply clipping
-		int x = (*i)->GetX();
-		int w = (*i)->GetSizeX();
+		// FIXME: this looks like a bug...
+		// int x = (*i)->GetX();
+		// int w = (*i)->GetSizeX();
 		int y = (*i)->GetY();
 		int h = (*i)->GetSizeY();
 		

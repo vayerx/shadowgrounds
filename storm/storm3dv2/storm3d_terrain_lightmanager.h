@@ -1,7 +1,7 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
 #ifndef INCLUDED_STORM3D_TERRAIN_LIGHTMANAGER_H
-#define INCLUDED_STORM3D_TERRAIN_LIGHTMANAGEr_H
+#define INCLUDED_STORM3D_TERRAIN_LIGHTMANAGER_H
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
@@ -17,6 +17,9 @@ class Storm3D_Texture;
 class Storm3D_Spotlight;
 class Storm3D_FakeSpotlight;
 
+typedef std::vector<boost::shared_ptr<Storm3D_Spotlight> > StormSpotList;
+typedef std::vector<boost::shared_ptr<Storm3D_FakeSpotlight> > FakeSpotList;
+
 struct Storm3D_LightTexture
 {
 	VC2 start;
@@ -29,6 +32,7 @@ struct Storm3D_LightTexture
 	~Storm3D_LightTexture();
 };
 
+typedef std::vector<Storm3D_LightTexture> FakeLightList;
 
 class Storm3D_TerrainLightManager
 {
@@ -47,6 +51,8 @@ public:
 	void renderFakeLights(const VC2I &renderSize);
 
 	void renderCones(Storm3D_Scene &scene, bool renderShadows, bool renderGlows);
+
+	void setDebug(void);
 };
 
 #endif

@@ -1,5 +1,7 @@
 #include "precompiled.h"
 
+#include <boost/lexical_cast.hpp>
+
 #include "CombatSubWindowFactory.h"
 #include "GenericBarWindow.h"
 #include "GenericTextWindow.h"
@@ -18,15 +20,14 @@
 #include "../ogui/Ogui.h"
 #include "../ogui/OguiFormattedText.h"
 #include "../game/DHLocaleManager.h"
+#include "../game/SimpleOptions.h"
+#include "../game/options/options_players.h"
 #include "../sound/sounddefs.h"
 #include "../sound/SoundMixer.h"
 #include "../ui/CombatWindow.h"
 #include "../util/StringUtil.h"
 
-#include "../game/SimpleOptions.h"
-#include "../game/options/options_players.h"
-
-#include <boost/lexical_cast.hpp>
+#include "igios.h"
 
 namespace game {
 	class Game;
@@ -39,11 +40,10 @@ class GenericBarTimerUpdator : public IGenericBarWindowUpdator
 {
 public:
 	GenericBarTimerUpdator( game::Game* game, const std::string& global_value, const std::string& global_timer_length  ) :
-		game( game ),
 		valueVarName( global_value ),
-		lengthVarName( global_timer_length )
+		lengthVarName( global_timer_length ),
+		game( game )
 	{
-		pausedTime = game->missionPausedTime;
 		lastValue = 0.0f;
 	}
 
@@ -58,9 +58,6 @@ public:
 		value += game->missionStartTime;
 
 		int time_now = game->gameTimer;
-		if(game->missionPausedTime > pausedTime)
-			time_now -= game->missionPausedTime - pausedTime;
-
 		float time_gone = time_now - value;
 
 
@@ -76,7 +73,6 @@ public:
 	std::string valueVarName;
 	std::string lengthVarName;
 	game::Game* game;
-	int pausedTime;
 	float lastValue;
 };
 
@@ -86,11 +82,11 @@ class GenericBarScriptsGlobalUpdator : public IGenericBarWindowUpdator
 {
 public:
 	GenericBarScriptsGlobalUpdator( game::Game* game, GenericBarWindow *win, const std::string& global_value, const std::string& global_max, const std::string& global_min, bool hide_during_converse) :
-		game( game ),
 		valueVarName( global_value ),
 		maxVarName( global_max ),
 		minVarName( global_min ),
 		hideDuringConverse( hide_during_converse ),
+		game( game ),
 		win( win )
 	{
 	}
@@ -198,10 +194,10 @@ class GenericBarWeaponReloadUpdator : public IGenericBarWindowUpdator
 {
 public:
 	GenericBarWeaponReloadUpdator( game::Game* game, int player_id, int weapon_id ) :
-		game( game ),
 		playerId( player_id ),
 		weaponId( weapon_id ),
 		weaponOnPlayer( -1 ),
+		game( game ),
 		weapon( NULL )
 	{
 		setWeapon( player_id, weapon_id );
@@ -348,8 +344,8 @@ class StupidWindowAligner : public CombatSubWindowFactory::ICombatSubWindowConst
 {
 public:
 	StupidWindowAligner( const std::string& name, const std::string& window ) :
-		name( name ),
-		window( window )
+		window( window ),
+		name( name )
 	{
 		CombatSubWindowFactory::GetSingleton()->RegisterSubWindow( name, this );
 	}
@@ -371,7 +367,7 @@ public:
 		if(win1 == NULL)
 			return NULL;
 
-		int win1_x,win1_y,win1_w,win1_h;
+		int win1_x, win1_y = 0, win1_w, win1_h = 0;
 		win1->getWindowRect(win1_x, win1_y, win1_w, win1_h);
 
 		// test from bottom to top
@@ -387,7 +383,7 @@ public:
 					continue;
 				}
 
-				int win2_x,win2_y,win2_w,win2_h;
+				int win2_x, win2_y = 0, win2_w, win2_h = 0;
 				win2->getWindowRect(win2_x,win2_y,win2_w,win2_h);
 
 				// test if overlap
@@ -425,7 +421,7 @@ public:
 class KillCountUpdater : public IGenericTextWindowUpdator
 {
 public:
-	KillCountUpdater(int client, game::Game *game, const std::string &vocal_locale, Ogui *ogui) : game(game), client(client), ogui(ogui)
+	KillCountUpdater(int client, game::Game *game, const std::string &vocal_locale, Ogui *ogui) : client(client), game(game), ogui(ogui)
 	{
 		desc_text = NULL;
 		description = game::getLocaleGuiString("survivor_killcounter_text");
@@ -521,9 +517,9 @@ public:
 			}
 			if(bar_win != NULL)
 			{
-				int x,y,w,h;
+				int x = 0, y = 0, w, h = 0;
 				bar_win->getWindowRect(x,y,w,h);
-				win->getWindow()->MoveTo(x + offset_x, y + offset_y);
+				win->getWindow()->MoveTo(x + offset_x, y + h + offset_y);
 			}
 
 			// get timer
@@ -546,6 +542,23 @@ public:
 			desc_text->SetTextVAlign(OguiButton::TEXT_V_ALIGN_TOP);
 			win->getText()->setTextHAlign(OguiButton::TEXT_H_ALIGN_RIGHT);
 			aligned = true;
+		}
+
+		// hide during converse
+		if( game->gameUI
+			&& game->gameUI->getCombatWindow(0)
+			&& game->gameUI->getCombatWindow(0)->hasMessageWindow())
+		{
+			if(!win->isHidden())
+				win->hide(200);
+		}
+		else if(win->isHidden()
+			&& !game->gameUI->isVehicleGUIOpen()
+			&& game->gameUI->getCombatWindow(0)
+			&& !game->gameUI->getCombatWindow(0)->isGUIModeTempInvisible()
+			&& game->gameUI->getCombatWindow(0)->isGUIVisible())
+		{
+			win->show(200);
 		}
 
 		int kills = game::GameStats::instances[client]->getTotalKills() - killcount_start;
@@ -636,7 +649,7 @@ public:
 class KillingSpreeCountUpdater : public IGenericTextWindowUpdator
 {
 public:
-	KillingSpreeCountUpdater(int client, game::Game *game) : game(game), client(client)
+	KillingSpreeCountUpdater(int client, game::Game *game) : client(client), game(game)
 	{
 		originalText = game::getLocaleGuiString("gui_survivor_killingspree_counter_text");
 		killcount_start = game::GameStats::instances[client]->getTotalKills();
@@ -727,10 +740,10 @@ public:
 			}
 			if(bar_win != NULL)
 			{
-				int x,y,w,h;
+				int x = 0, y = 0, w, h = 0;
 				bar_win->getWindowRect(x,y,w,h);
 				xpos = x + offset_x;
-				ypos = y + offset_y;
+				ypos = y + h + offset_y;
 			}
 
 			// get killcounter
@@ -927,9 +940,9 @@ public:
 		int x = game::getLocaleGuiInt(("gui_"  + localesName + "_x").c_str(), 0);
 		int y = game::getLocaleGuiInt(("gui_"  + localesName + "_y").c_str(), 0);
 		int w = game::getLocaleGuiInt(("gui_"  + localesName + "_w").c_str(), 0);
-		int h = game::getLocaleGuiInt(("gui_"  + localesName + "_h").c_str(), 0);
+		//int h = game::getLocaleGuiInt(("gui_"  + localesName + "_h").c_str(), 0);
 
-		int x2,y2,w2,h2;
+		int x2 = 0, y2 = 0, w2 = 0, h2;
 
 		if(barwin)
 		{
@@ -961,7 +974,7 @@ public:
 class SurvivorGrenadeWindowUpdator : public IGenericTextWindowUpdator
 {
 public:
-	SurvivorGrenadeWindowUpdator(Ogui *ogui, game::Game* game) : game(game), ogui(ogui)
+	SurvivorGrenadeWindowUpdator(Ogui *ogui, game::Game* game) : ogui(ogui), game(game)
 	{
 		unit = game->gameUI->getFirstPerson(0);
 		first_run = true;
@@ -1063,7 +1076,7 @@ class LaunchSpeedBarUpdater : public IGenericBarWindowUpdator
 {
 public:
 	LaunchSpeedBarUpdater( game::Game* game, GenericBarWindow *win, int client ) :
-		game( game ), win(win), client(client)
+		game( game ), client(client), win(win)
 	{
 		offset_x = game::getLocaleGuiInt("gui_grenadelaunchbar_x",0);
 		offset_y = game::getLocaleGuiInt("gui_grenadelaunchbar_y",0);
@@ -1129,7 +1142,7 @@ public:
 		if(!game->isPaused() && value > 0)
 		{
 			bool exact = game->gameUI->getGameCamera()->getGameCameraMode();
-			int x,y,w,h;
+			int x = 0, y = 0, w, h;
 			win->getWindowRect(x,y,w,h);
 			win->moveBy(game->gameUI->getCursorScreenX(client, exact) - x + offset_x, game->gameUI->getCursorScreenY(client, exact) - y + offset_y);
 			if(win->isHidden())

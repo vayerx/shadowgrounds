@@ -4,7 +4,7 @@
 #include "TextureSwitcher.h"
 #include "TextureCache.h"
 #include "../system/Logger.h"
-#include <istorm3d_texture.h>
+#include <IStorm3D_Texture.h>
 
 #include <string>
 #include <map>

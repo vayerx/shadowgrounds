@@ -2,7 +2,7 @@
 #include "precompiled.h"
 
 #include "CombatMessageWindowWithHistory.h"
-#include "../system/timer.h"
+#include "../system/Timer.h"
 #include "../game/DHLocaleManager.h"
 
 using namespace game;
@@ -22,8 +22,8 @@ struct CombatMessageWindowWithHistory::TextMessage
 
 CombatMessageWindowWithHistory::CombatMessageWindowWithHistory( Ogui* ogui, const std::string& textConfName, const std::string& iconConfName ) :
 	CombatMessageWindow( ogui, NULL, 0, textConfName.c_str(), iconConfName.c_str() ),
-	numOfMessages( 1 ),
 	messageBuffer(),
+	numOfMessages( 1 ),
 	textHeight( 0 ),
 	messageStartFadeTime( 0 ),
 	messageEndFadeTime( 0 )

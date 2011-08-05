@@ -18,7 +18,7 @@
 #include "storm3d_lensflare.h"
 #include "storm3d_texture.h"
 
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 
 

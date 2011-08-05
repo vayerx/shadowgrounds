@@ -50,7 +50,7 @@ public:
 
   static void cleanInstance();
 
-	static void createInstanceForLogfile(char *logfile);
+	static void createInstanceForLogfile(const char *logfile);
 
   Logger(const char *logfile);
   ~Logger();

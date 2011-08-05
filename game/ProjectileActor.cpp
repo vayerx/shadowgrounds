@@ -48,7 +48,6 @@
 #include "../game/scaledefs.h"
 #include "../sound/sounddefs.h"
 #include "../convert/str2int.h"
-#include "UnifiedHandleManager.h"
 
 #include "Forcewear.h"
 
@@ -67,9 +66,11 @@
 #include "../ui/TargetDisplayWindowUpdator.h"
 
 // for gore part
+/*
 #include "../game/scripting/scripting_macros_start.h"
 #include "../game/scripting/unit_script_commands.h"
 #include "../game/scripting/scripting_macros_end.h"
+*/
 
 using namespace ui;
 
@@ -158,18 +159,6 @@ namespace game
 		}
 		projectile->setOriginUnit(originUnit);
 
-		if (projectile->getOriginUnifiedHandle() != UNIFIED_HANDLE_NONE)
-		{
-			projectile->setFollowOrigin(true);
-			if (originUnit == NULL)
-			{
-				if (IS_UNIFIED_HANDLE_UNIT(projectile->getOriginUnifiedHandle()))
-				{
-					originUnit = game->units->getUnitById(game->units->unifiedHandleToUnitId(projectile->getOriginUnifiedHandle()));
-				}
-			}
-		}
-
 
 		// HACK: ...
 		IStorm3D_Model *spawnModel = NULL;
@@ -185,11 +174,6 @@ namespace game
 			position, endPosition, rotFixed, velFixed,
 			game, 1, spawnModel);
 		projectile->setVisualEffect(ve);
-
-		if (projectile->getOriginUnifiedHandle() != UNIFIED_HANDLE_NONE)
-		{
-			ve->setOriginUnifiedHandle(projectile->getOriginUnifiedHandle());
-		}
 
 		// TODO: only if options allow this - and only if fullscreen.
 		// (no point in causing fps drop if it is not even gonna show)
@@ -331,18 +315,6 @@ namespace game
 				if (projectile->getVisualEffect() != NULL)
 				{
 					projectile->getVisualEffect()->setPosition(newpos);
-				}
-			}
-			if (projectile->getOriginUnifiedHandle() != UNIFIED_HANDLE_NONE)
-			{
-				if (game->unifiedHandleManager->doesObjectExist(projectile->getOriginUnifiedHandle()))
-				{
-					VC3 newpos = game->unifiedHandleManager->getObjectPosition(projectile->getOriginUnifiedHandle());
-					projectile->setPosition(newpos);
-					if (projectile->getVisualEffect() != NULL)
-					{
-						projectile->getVisualEffect()->setPosition(newpos);
-					}
 				}
 			}
 		}
@@ -1168,6 +1140,7 @@ if (ltime < 1) ltime = 1;
 
 				float blastHeight = 0;
 
+                // can't be const because param 2 of doUnitHit is not const
 				Unit *hitUnit = projectile->getHitUnit();
 
 				// do hitmisses... (and noises too)
@@ -1592,16 +1565,18 @@ if (ltime < 1) ltime = 1;
 						{
 							int visualType = game->gameUI->getVisualEffectManager()->getVisualEffectIdByName(effname);
 
-							VisualEffect *ve =
-								game->gameUI->getVisualEffectManager()->createNewVisualEffect(
-								visualType, NULL, NULL, upos, upos, urot, VC3(0,0,0), game);
+							if (visualType >= 0) {
+								VisualEffect *ve =
+									game->gameUI->getVisualEffectManager()->createNewManagedVisualEffect(
+									visualType, GAME_TICKS_PER_SECOND * 2, NULL, NULL, upos, upos, urot, VC3(0,0,0), game);
 
-							if (ve != NULL)
-							{
-								if(projectile->getBulletType() && projectile->getBulletType()->getDamageRange() > 0)
-									ve->setParticleExplosion(projectile->getPosition(), true);
-								else
-									ve->setParticleExplosion(projectile->getPosition(), false);
+								if (ve != NULL)
+								{
+									if(projectile->getBulletType() && projectile->getBulletType()->getDamageRange() > 0)
+										ve->setParticleExplosion(projectile->getPosition(), true);
+									else
+										ve->setParticleExplosion(projectile->getPosition(), false);
+								}
 							}
 						}
 
@@ -1617,11 +1592,24 @@ if (ltime < 1) ltime = 1;
 						} else {
 							if (gorepart != NULL && gorepart[0] != '\0')
 							{
-								int dummy1 = 0;
+								/*int dummy1 = 0;
 								int dummy2 = 0;
 								GameScriptData gsd;
 								gsd.unit = hitUnit;
-								game->gameScripting->runSingleCommand(GS_CMD_ADDUNITROOTPART, 0, gorepart, &dummy1, &dummy2, &gsd);
+								game->gameScripting->runSingleCommand(GS_CMD_ADDUNITROOTPART, 0, gorepart, &dummy1, &dummy2, &gsd);*/
+								PartType *pt = getPartTypeById(PARTTYPE_ID_STRING_TO_INT(gorepart));
+								if (pt != NULL)
+								{
+									game->deleteVisualOfParts(hitUnit, hitUnit->getRootPart());
+									if(hitUnit->getRootPart() != NULL)
+									{
+										game->detachParts(hitUnit, hitUnit->getRootPart());
+									}
+									Part *part = pt->getNewPartInstance();
+									part->setOwner(hitUnit->getOwner());
+									hitUnit->setRootPart(part);
+									game->createVisualForParts(hitUnit, hitUnit->getRootPart());
+								}
 							}
 						}
 					}
@@ -1634,7 +1622,7 @@ if (ltime < 1) ltime = 1;
 
 
 	void ProjectileActor::doHitMisses(Projectile *projectile, 
-		Unit *hitUnit)
+		const Unit *hitUnit)
 	{
 		Unit *shooter = projectile->getShooter();
 
@@ -1705,6 +1693,7 @@ if (ltime < 1) ltime = 1;
 	}
 
 
+  // hitUnit is not const
 	void ProjectileActor::doUnitHit(Projectile *projectile, 
 		Unit *hitUnit, Part *hitPart, VC3 &pushVector, float damageFactor,
 		bool directHit)
@@ -2972,7 +2961,7 @@ if (ltime < 1) ltime = 1;
 			{
 				int snum = (game->gameRandom->nextInt() % chainSoundAmount);
 				int priority = projectile->getBulletType()->getChainSoundPriority(hitchain);
-				float range = projectile->getBulletType()->getChainSoundRange(hitchain);
+				projectile->getBulletType()->getChainSoundRange(hitchain);
 
 				const char *chainSound =			 
 					projectile->getBulletType()->getChainSound(hitchain, snum);
@@ -3164,7 +3153,6 @@ if (ltime < 1) ltime = 1;
 		bool gravity = false;
 		bool parabolic = false;
 		bool flypathParabolic = false;
-		float parabolicHitHeight = 0;
 		if (bulletType != NULL)
 		{
 			if (bulletType->getFlyPath() == Bullet::FLYPATH_PARABOLIC)
@@ -3288,6 +3276,7 @@ if (ltime < 1) ltime = 1;
 		}
 
 		// see what we hit and set the projectile's hit chain accordingly
+        // can't be const
 		Unit *hitUnit = NULL;
 		Part *hitPart = NULL;
 		if (cinfo.hit)
@@ -3459,8 +3448,7 @@ if (ltime < 1) ltime = 1;
 
 		if (flypathParabolic)
 		{
-			VC3 targVector = (target - weaponPosition);
-			float targDist = targVector.GetLength();
+			// VC3 targVector = (target - weaponPosition);
 			// flypath top height is about 10 meters... (or something...?)
 			proj->setParabolicPathHeight((float)bulletType->getParabolicPathHeight());
 			// velocity gets scaled based on distance 

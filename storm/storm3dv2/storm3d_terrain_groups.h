@@ -4,7 +4,7 @@
 #define INCLUDED_STORM3D_TERRAIN_GROUP_H
 
 #include "DatatypeDef.h"
-#include "istorm3d_terrain.h"
+#include "IStorm3D_Terrain.h"
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -20,7 +20,7 @@ class Storm3D_TerrainGroup
 	boost::scoped_ptr<Storm3D_TerrainGroupData> data;
 
 public:
-	Storm3D_TerrainGroup(Storm3D &storm, Storm3D_TerrainModels &models, bool ps14);
+	Storm3D_TerrainGroup(Storm3D &storm, Storm3D_TerrainModels &models);
 	~Storm3D_TerrainGroup();
 
 	int addModel(boost::shared_ptr<Storm3D_Model> model, boost::shared_ptr<Storm3D_Model> fadeModel, const std::string &bones, const std::string &idleAnimation);

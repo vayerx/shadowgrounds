@@ -1,0 +1,157 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_EXPORT DIALOG DISCARDABLE  0, 0, 551, 324
+STYLE DS_MODALFRAME | DS_3DLOOK | DS_CENTER | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "Frozenbyte Exporter v2.1"
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Info",IDC_STATIC,229,7,311,310
+    CONTROL         "Copy textures",IDC_COPYTEXTURES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,142,239,60,9
+    PUSHBUTTON      "Export model",IDC_MODEL,15,258,115,16
+    PUSHBUTTON      "Export structure",IDC_BONES,15,277,115,16
+    PUSHBUTTON      "Export animation",IDC_ANIMATION,15,295,115,16
+    EDITTEXT        IDC_INFO,235,18,298,278,ES_MULTILINE | ES_AUTOVSCROLL | 
+                    ES_AUTOHSCROLL | ES_READONLY | WS_VSCROLL | WS_HSCROLL
+    CONTROL         "Model",IDC_CHECK_MODEL,"Button",BS_AUTOCHECKBOX | 
+                    BS_PUSHLIKE | WS_TABSTOP,339,299,51,12
+    CONTROL         "Bones",IDC_CHECK_BONES,"Button",BS_AUTOCHECKBOX | 
+                    BS_PUSHLIKE | WS_TABSTOP,391,299,44,12
+    CONTROL         "Animation",IDC_CHECK_ANIMATION,"Button",BS_AUTOCHECKBOX | 
+                    BS_PUSHLIKE | WS_TABSTOP,435,299,44,12
+    CONTROL         "Pivot as origin",IDC_PIVOT_ORIGIN,"Button",
+                    BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,150,293,59,
+                    9
+    CONTROL         "Summary",IDC_CHECK_SUMMARY,"Button",BS_AUTOCHECKBOX | 
+                    BS_PUSHLIKE | WS_TABSTOP,287,299,51,12
+    CONTROL         "Warnings",IDC_CHECK_WARNINGS,"Button",BS_AUTOCHECKBOX | 
+                    BS_PUSHLIKE | WS_TABSTOP,235,299,51,12
+    CONTROL         "Object selection",IDC_OBJECT_SELECTION,"Button",
+                    BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP,7,7,73,12
+    CONTROL         "Bone selection",IDC_BONE_SELECTION,"Button",
+                    BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP,80,7,72,12
+    LISTBOX         IDC_LISTBOX,7,19,217,202,LBS_MULTIPLESEL | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Options",IDC_STATIC,7,226,217,91
+    CONTROL         "Optimize vertices",IDC_VCACHE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,142,251,73,9
+    CONTROL         "Chop model",IDC_CHOP,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,142,263,65,9
+    COMBOBOX        IDC_TRANSFORM_TYPE,15,238,115,67,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_EXPORT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 544
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 317
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_LOGO                ICON    DISCARDABLE     "bp.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_EXPORT DLGINIT
+BEGIN
+    IDC_TRANSFORM_TYPE, 0x403, 16, 0
+0x6950, 0x6f76, 0x2074, 0x7361, 0x6f20, 0x6972, 0x6967, 0x006e, 
+    IDC_TRANSFORM_TYPE, 0x403, 24, 0
+0x6950, 0x6f76, 0x2074, 0x7361, 0x7420, 0x6172, 0x736e, 0x6f66, 0x6d72, 
+0x7461, 0x6f69, 0x006e, 
+    IDC_TRANSFORM_TYPE, 0x403, 5, 0
+0x6f4e, 0x656e, "\000" 
+    0
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

@@ -8,8 +8,8 @@ namespace ui
   {
   public:
 		virtual ~IPointableObject() {}
-		virtual const VC3 &getPointerPosition() = 0;
-		virtual const VC3 getPointerMiddleOffset() = 0;
+		virtual const VC3 &getPointerPosition() const = 0;
+		virtual const VC3 getPointerMiddleOffset() const = 0;
   };
 }
 

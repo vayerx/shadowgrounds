@@ -62,7 +62,7 @@ namespace ui
   {
   public:
 	  virtual ~IVisualObjectData() {}
-    virtual void *getVisualObjectDataId() = 0;
+	  virtual void *getVisualObjectDataId() const = 0;
   };
 
   class VisualObject : public IStorm3D_Model_Data
@@ -113,7 +113,6 @@ namespace ui
     void setCollidable(bool collidable);
 
     void setForcedNoCollision(bool forcedNoCollision) { this->forcedNoCollision = forcedNoCollision; }
-		bool getForcedNoCollision() const { return this->forcedNoCollision; }
 
     void setVisible(bool visible);
 	 inline bool isVisible() { return this->visible; };

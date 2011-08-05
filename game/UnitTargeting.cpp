@@ -164,7 +164,7 @@ namespace game
   }
 
 
-  Unit *UnitTargeting::getTargetUnit()
+  Unit *UnitTargeting::getTargetUnit() const
   {
     return targetUnit;
   }

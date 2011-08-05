@@ -10,7 +10,10 @@
 
 // ---------
 
+#ifndef COMBINE
 #include "scriptcommands.h"
+#endif
+
 #include "GameScriptingUtils.h"
 
 #include "DecorScripting.h"
@@ -35,8 +38,6 @@
 #include "TrackingScripting.h"
 #include "SyncScripting.h"
 #include "DirectControlScripting.h"
-#include "PhysicsScripting.h"
-#include "TerrainObjectScripting.h"
 #include "../../util/fb_assert.h"
 
 #include "../Projectile.h"
@@ -67,7 +68,7 @@
 #include "../../util/CircleAreaTracker.h"
 #include "../../util/ITrackable.h"
 
-#include "../../util/AI_Pathfind.h"
+#include "../../util/AI_PathFind.h"
 #include "../../util/ScriptManager.h"
 #include "../../util/ScriptProcess.h"
 #include "../../util/AngleRotationCalculator.h"
@@ -115,7 +116,7 @@ using namespace util;
 namespace game
 {
 
-	char *gs_keywords[GS_CMD_AMOUNT + 1];
+	const char *gs_keywords[GS_CMD_AMOUNT + 1];
 	int gs_datatypes[GS_CMD_AMOUNT + 1];
 
 	Bullet *gs_hitscript_hit_bullet_type = NULL;
@@ -125,7 +126,7 @@ namespace game
 	struct gs_commands_listtype
 	{
 		int id;
-		char *name;
+		const char *name;
 		int datatype;
 	};
 
@@ -136,7 +137,7 @@ namespace game
 	#undef GS_EXPAND_GAMESCRIPTING_LIST
 
 
-	bool GameScripting::process(util::ScriptProcess *sp, int command, int intData, 
+	bool GameScripting::process(util::ScriptProcess *sp, int command, floatint intFloat,
 		char *stringData, ScriptLastValueType *lastValue)
 	{
 		// WARNING: unsafe cast!
@@ -144,8 +145,6 @@ namespace game
 		
 		bool pause = false;
 		//bool pause = true;
-
-		Unit *unit = gsd->unit;
 
 #ifdef PROJECT_SHADOWGROUNDS
 		// (backward compatibility for sg, do nothing to stringData.)
@@ -168,148 +167,136 @@ namespace game
 
 		// all of these commands sent to CameraScripting...
 		#include "camera_script_commands.h"
-			CameraScripting::process(sp, command, intData, stringData, 
+			CameraScripting::process(sp, command, intFloat, stringData,
 				lastValue, gsd, game);
 			break;
 
 		// all of these commands sent to SoundScripting...
 		#include "sound_script_commands.h"
-			SoundScripting::process(sp, command, intData, stringData, 
+			SoundScripting::process(sp, command, intFloat, stringData, 
 				lastValue, gsd, game);
 			break;
 
 		// all these are sent forward to DecorScripting...
 		#include "decor_script_commands.h"
-			DecorScripting::process(sp, command, intData, stringData, 
+			DecorScripting::process(sp, command, intFloat, stringData, 
 				lastValue, gsd, game);
 			break;
 
 		// all these are sent forward to WaterScripting...
 		#include "water_script_commands.h"
-			WaterScripting::process(sp, command, intData, stringData, 
+			WaterScripting::process(sp, command, intFloat, stringData, 
 				lastValue, gsd, game);
 			break;
 
 		// all these are sent forward to CinematicScripting...
 		#include "cinematic_script_commands.h"
-			CinematicScripting::process(sp, command, intData, stringData, 
+			CinematicScripting::process(sp, command, intFloat, stringData, 
 				lastValue, gsd, game, &pause);
 			break;
 
 		// all these are sent forward to MissionScripting...
 		#include "mission_script_commands.h"
-			MissionScripting::process(sp, command, intData, stringData, 
+			MissionScripting::process(sp, command, intFloat, stringData, 
 				lastValue, gsd, game);
 			break;
 
 		// all these are sent forward to MathScripting...
 		#include "math_script_commands.h"
-			MathScripting::process(sp, command, intData, stringData, 
+			MathScripting::process(sp, command, intFloat, stringData, 
 				lastValue, gsd, game);
 			break;
 
 		// all these are sent forward to PositionScripting...
 		#include "position_script_commands.h"
-			PositionScripting::process(sp, command, intData, stringData, 
+			PositionScripting::process(sp, command, intFloat, stringData, 
 				lastValue, gsd, game);
 			break;
 
 		// all these are sent forward to MiscScripting...
 		#include "misc_script_commands.h"
-			MiscScripting::process(sp, command, intData, stringData, 
+			MiscScripting::process(sp, command, intFloat, stringData, 
 				lastValue, gsd, game, &pause);
 			break;
 
 		// all these are sent forward to OptionScripting...
 		#include "option_script_commands.h"
-			OptionScripting::process(sp, command, intData, stringData, 
+			OptionScripting::process(sp, command, intFloat, stringData, 
 				lastValue, gsd, game, &pause);
 			break;
 
 		// all these are sent forward to DevScripting...
 		#include "dev_script_commands.h"
-			DevScripting::process(sp, command, intData, stringData, 
+			DevScripting::process(sp, command, intFloat, stringData, 
 				lastValue, gsd, game, &pause);
 			break;
 
 		// all these are sent forward to UnitScripting...
 		#include "unit_script_commands.h"
-			UnitScripting::process(sp, command, intData, stringData, 
+			UnitScripting::process(sp, command, intFloat, stringData, 
 				lastValue, gsd, game, &pause);
 			break;
 
 		// all these are sent forward to StringScripting...
 		#include "string_script_commands.h"
-			StringScripting::process(sp, command, intData, stringData, 
+			StringScripting::process(sp, command, intFloat, stringData, 
 				lastValue, gsd, game);
 			break;
 
 		// all these are sent forward to LightScripting...
 		#include "light_script_commands.h"
-			LightScripting::process(sp, command, intData, stringData, 
+			LightScripting::process(sp, command, intFloat, stringData, 
 				lastValue, gsd, game);
 			break;
 
 		// all these are sent forward to AnimationScripting...
 		#include "animation_script_commands.h"
-			AnimationScripting::process(sp, command, intData, stringData, 
+			AnimationScripting::process(sp, command, intFloat, stringData, 
 				lastValue, gsd, game, &pause);
 			break;
 
 		// all these are sent forward to EnvironmentScripting...
 		#include "environment_script_commands.h"
-			EnvironmentScripting::process(sp, command, intData, stringData, 
+			EnvironmentScripting::process(sp, command, intFloat, stringData, 
 				lastValue, gsd, game);
 			break;
 
 		// all these are sent forward to HitChainScripting...
 		#include "hitchain_script_commands.h"
-			HitChainScripting::process(sp, command, intData, stringData, 
+			HitChainScripting::process(sp, command, intFloat, stringData, 
 				lastValue, gsd, game);
 			break;
 
 		// all these are sent forward to MapScripting...
 		#include "map_script_commands.h"
-			MapScripting::process(sp, command, intData, stringData, 
+			MapScripting::process(sp, command, intFloat, stringData, 
 				lastValue, gsd, game);
 			break;
 
 		// all these are sent forward to ItemScripting...
 		#include "item_script_commands.h"
-			ItemScripting::process(sp, command, intData, stringData, 
+			ItemScripting::process(sp, command, intFloat, stringData, 
 				lastValue, gsd, game, &pause);
 			break;
 
 		// all these are sent forward to TrackingScripting...
 		#include "tracking_script_commands.h"
-			TrackingScripting::process(sp, command, intData, stringData, 
+			TrackingScripting::process(sp, command, intFloat, stringData, 
 				lastValue, gsd, game, &pause);
 			break;
 
 		// all these are sent forward to SyncScripting...
 #ifndef PROJECT_SURVIVOR
 		#include "sync_script_commands.h"
-			SyncScripting::process(sp, command, intData, stringData, 
+			SyncScripting::process(sp, command, intFloat, stringData, 
 				lastValue, gsd, game, &pause);
 			break;
 #endif
 
 		// all these are sent forward to DirectControlScripting...
 		#include "directcontrol_script_commands.h"
-			DirectControlScripting::process(sp, command, intData, stringData, 
+			DirectControlScripting::process(sp, command, intFloat, stringData, 
 				lastValue, gsd, game, &pause);
-			break;
-
-		// ...
-		#include "physics_script_commands.h"
-			PhysicsScripting::process(sp, command, intData, stringData, 
-				lastValue, gsd, game);
-			break;
-
-		// ...
-		#include "terrainobject_script_commands.h"
-			TerrainObjectScripting::process(sp, command, intData, stringData, 
-				lastValue, gsd, game);
 			break;
 
 		default:
@@ -348,10 +335,10 @@ namespace game
 // FIXME: should sticky units use inaccurate position checking too???
 // (some seem to get stuck waiting for path complete???)
 
-					if ((gsd->unit->getUnitType()->isSticky()
-							&& (position.x != dest.x || position.z != dest.z)
-						|| (!gsd->unit->getUnitType()->isSticky() 
-							&& (fabs(position.x - dest.x) >= pathAcc 
+					if (((gsd->unit->getUnitType()->isSticky()
+							&& (position.x != dest.x || position.z != dest.z))
+						|| (!gsd->unit->getUnitType()->isSticky()
+							&& (fabs(position.x - dest.x) >= pathAcc
 							|| fabs(position.z - dest.z) >= pathAcc)))
 						|| gsd->unit->isTurning())
 					{
@@ -505,7 +492,6 @@ namespace game
 					sp->warning("GameScripting::runTrackerScript - Script process will be abnormally terminated.");
 					sp->debug(scriptname);
 					sp->debug(subname);
-					assert(!"tracker sub run limit!");
 					break;
 				}
 			}
@@ -547,7 +533,6 @@ namespace game
 					sp->warning("GameScripting::runOtherScript - Script process will be abnormally terminated.");
 					sp->debug(scriptname);
 					sp->debug(subname);
-					assert(!"GameScripting::runOtherScript - other sub run limit!");
 					break;
 				}
 			}
@@ -1503,7 +1488,7 @@ namespace game
 
 	}
 
-	void GameScripting::runSingleCommand(int command, int intData, const char *stringData, int *lastValue, int *secondaryValue, GameScriptData *gsd)
+	void GameScripting::runSingleCommand(int command, floatint intFloat, const char *stringData, int *lastValue, int *secondaryValue, GameScriptData *gsd)
 	{
 		assert(lastValue != NULL);
 		assert(secondaryValue != NULL);
@@ -1542,13 +1527,13 @@ namespace game
 		singleCommandScriptProcess->setSecondaryValue(*secondaryValue);
 
 		// WARNING: const char * -> char * cast... as that should be the case (?)
-		process(singleCommandScriptProcess, command, intData, (char *)stringData, &singleCommandScriptProcess->lastValue);
+		process(singleCommandScriptProcess, command, intFloat, (char *)stringData, &singleCommandScriptProcess->lastValue);
 
 		*lastValue = singleCommandScriptProcess->lastValue;
 		*secondaryValue = singleCommandScriptProcess->secondaryValue;
 	}
 
-	void GameScripting::runSingleSimpleCommand(int command, int intData, const char *stringData, int *lastValue, int *secondaryValue)
+	void GameScripting::runSingleSimpleCommand(int command, floatint intFloat, const char *stringData, int *lastValue, int *secondaryValue)
 	{
 		// NOTE: optimization, this could be a static variable that gets intialized only once...
 		// but that might cause problems when calling some commands, as the previous values would persist.
@@ -1556,10 +1541,10 @@ namespace game
 		int dummy1 = 0, dummy2 = 0;
 		if (lastValue == NULL) lastValue = &dummy1;
 		if (secondaryValue == NULL) secondaryValue = &dummy2;
-		runSingleCommand(command, intData, stringData, lastValue, secondaryValue, &gsd);
+		runSingleCommand(command, intFloat, stringData, lastValue, secondaryValue, &gsd);
 	}
 
-	void GameScripting::runMultipleSimpleCommands(int commandAmount, int *command, int *intData, const char **stringData, int *lastValue, int *secondaryValue)
+	void GameScripting::runMultipleSimpleCommands(int commandAmount, int *command, floatint *intFloat, const char **stringData, int *lastValue, int *secondaryValue)
 	{
 		GameScriptData gsd;
 		int dummy1 = 0, dummy2 = 0;
@@ -1567,7 +1552,7 @@ namespace game
 		if (secondaryValue == NULL) secondaryValue = &dummy2;
 		for (int i = 0; i < commandAmount; i++)
 		{
-			runSingleCommand(command[i], intData[i], stringData[i], lastValue, secondaryValue, &gsd);
+			runSingleCommand(command[i], intFloat[i], stringData[i], lastValue, secondaryValue, &gsd);
 		}
 	}
 
@@ -1599,26 +1584,31 @@ namespace game
 
 		if (gs_datatypes[cmdid] == SCRIPT_DATATYPE_NONE)
 		{
-			runSingleSimpleCommand(cmdid, 0, param, lastValue, secondaryValue);
+			floatint z;
+			z.i = 0;
+			runSingleSimpleCommand(cmdid, z, param, lastValue, secondaryValue);
 		}
 		else if (gs_datatypes[cmdid] == SCRIPT_DATATYPE_INT)
 		{
-			int tmp = 0;
+			floatint tmp;
 			if (param != NULL)
 			{
-				tmp = str2int((char *)param);
+				tmp.i = str2int((char *)param);
 				if (str2int_errno() != 0)
 				{
 					Logger::getInstance()->error("GameScripting::runSingleSimpleStringCommand - Command expected int, but given parameter is not a valid int value.");
 				}
 			} else {
+				tmp.i = 0;
 				Logger::getInstance()->error("GameScripting::runSingleSimpleStringCommand - Command expected int, but no parameter given.");
 			}
 			runSingleSimpleCommand(cmdid, tmp, param, lastValue, secondaryValue);
 		}
 		else if (gs_datatypes[cmdid] == SCRIPT_DATATYPE_STRING)
 		{
-			runSingleSimpleCommand(cmdid, 0, param, lastValue, secondaryValue);
+			floatint z;
+			z.i = 0;
+			runSingleSimpleCommand(cmdid, z, param, lastValue, secondaryValue);
 		}
 		else if (gs_datatypes[cmdid] == SCRIPT_DATATYPE_FLOAT)
 		{
@@ -1634,7 +1624,8 @@ namespace game
 			} else {
 				Logger::getInstance()->error("GameScripting::runSingleSimpleStringCommand - Command expected float, but no parameter given.");
 			}
-			int tmp = *((int *)&tmpfloat);
+			floatint tmp;
+			tmp.f = tmpfloat;
 			runSingleSimpleCommand(cmdid, tmp, param, lastValue, secondaryValue);			
 		} else {
 			Logger::getInstance()->error("GameScripting::runSingleSimpleStringCommand - Unsupported command parameter type.");
@@ -1677,26 +1668,31 @@ namespace game
 
 			if (gs_datatypes[cmdid] == SCRIPT_DATATYPE_NONE)
 			{
-				runSingleSimpleCommand(cmdid, 0, param[i], lastValue, secondaryValue);
+				floatint z;
+				z.i = 0;
+				runSingleSimpleCommand(cmdid, z, param[i], lastValue, secondaryValue);
 			}
 			else if (gs_datatypes[cmdid] == SCRIPT_DATATYPE_INT)
 			{
-				int tmp = 0;
+				floatint tmp;
 				if (param[i] != NULL)
 				{
-					tmp = str2int((char *)(param[i]));
+					tmp.i = str2int((char *)(param[i]));
 					if (str2int_errno() != 0)
 					{
 						Logger::getInstance()->error("GameScripting::runMultipleSimpleStringCommands - Command expected int, but given parameter is not a valid int value.");
 					}
 				} else {
+					tmp.i = 0;
 					Logger::getInstance()->error("GameScripting::runMultipleSimpleStringCommands - Command expected int, but no parameter given.");
 				}
 				runSingleSimpleCommand(cmdid, tmp, param[i], lastValue, secondaryValue);
 			}
 			else if (gs_datatypes[cmdid] == SCRIPT_DATATYPE_STRING)
 			{
-				runSingleSimpleCommand(cmdid, 0, param[i], lastValue, secondaryValue);
+				floatint z;
+				z.i = 0;
+				runSingleSimpleCommand(cmdid, z, param[i], lastValue, secondaryValue);
 			}
 			else if (gs_datatypes[cmdid] == SCRIPT_DATATYPE_FLOAT)
 			{
@@ -1712,7 +1708,8 @@ namespace game
 				} else {
 					Logger::getInstance()->error("GameScripting::runMultipleSimpleStringCommands - Command expected float, but no parameter given.");
 				}
-				int tmp = *((int *)&tmpfloat);
+				floatint tmp;
+				tmp.f = tmpfloat;
 				runSingleSimpleCommand(cmdid, tmp, param[i], lastValue, secondaryValue);			
 			} else {
 				Logger::getInstance()->error("GameScripting::runMultipleSimpleStringCommands - Unsupported command parameter type.");

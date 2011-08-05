@@ -1,6 +1,11 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
+#ifdef _MSC_VER
 #pragma warning(disable:4103)
+#endif
+
+#include <queue>
+#include <vector>
 
 #include "storm3d_terrain_renderer.h"
 #include "storm3d_terrain_heightmap.h"
@@ -15,29 +20,21 @@
 #include "storm3d_texture.h"
 #include "storm3d.h"
 #include "storm3d_terrain_utils.h"
-#include "storm3d_adapter.h"
-#include "storm3d_shadermanager.h"
+#include "Storm3D_ShaderManager.h"
 #include "storm3d_model.h"
-#include <istorm3d_logger.h>
-#include "vertexformats.h"
+#include <IStorm3D_Logger.h>
+#include "VertexFormats.h"
+#include "igios3D.h"
 
-#include <d3d9.h>
-#include <atlbase.h>
-#include "..\..\util\Debug_MemoryManager.h"
+#include "../../util/Debug_MemoryManager.h"
 
 using namespace std;
 using namespace boost;
 
 namespace {
-
-	typedef vector<shared_ptr<Storm3D_Spotlight> > SpotList;
-	typedef vector<shared_ptr<Storm3D_FakeSpotlight> > FakeSpotList;
-	typedef vector<Storm3D_LightTexture> FakeLightList;
-
 	static const int MAX_SIZES = 2;
 };
 
-void toNearestPow(int &v);
 extern int active_visibility;
 
 struct Storm3D_TerrainRendererData
@@ -48,7 +45,7 @@ struct Storm3D_TerrainRendererData
 	Storm3D_TerrainModels &models;
 	Storm3D_TerrainDecalSystem &decalSystem;
 
-	SpotList spots;
+	StormSpotList spots;
 	FakeSpotList fakeSpots;
 	FakeLightList fakeLights;
 	Storm3D_TerrainLightManager lightManager;
@@ -59,32 +56,25 @@ struct Storm3D_TerrainRendererData
 	COL outdoorLightmapMultiplier;
 	Storm3D_Model *skyBox;
 
-	static CComPtr<IDirect3DTexture9> renderTexture;
-	static CComPtr<IDirect3DTexture9> terrainTexture;
-	static CComPtr<IDirect3DTexture9> fakeTexture;
-	static CComPtr<IDirect3DTexture9> glowTarget;
-	static CComPtr<IDirect3DTexture9> glowTexture1;
-	static CComPtr<IDirect3DTexture9> glowTexture2;
-	static CComPtr<IDirect3DTexture9> offsetTexture;
+	static boost::shared_ptr<glTexWrapper> renderTexture;
+	static boost::shared_ptr<glTexWrapper> terrainTexture;
+	static boost::shared_ptr<glTexWrapper> fakeTexture;
+	static boost::shared_ptr<glTexWrapper> glowTexture1;
+	static boost::shared_ptr<glTexWrapper> glowTexture2;
+	static boost::shared_ptr<glTexWrapper> offsetTexture;
 
 	static VC2I renderSize;
-	static VC2I fakeSize;
-	static VC2I fakeTargetSize;
 	static VC2I glowSize;
 
-	CComPtr<IDirect3DTexture9> depthLookupTexture;
-	CComPtr<IDirect3DTexture9> spotFadeTexture;
-	CComPtr<IDirect3DTexture9> fakeFadeTexture;
-	CComPtr<IDirect3DTexture9> fake2DFadeTexture;
-	CComPtr<IDirect3DTexture9> coneFadeTexture;
-	CComPtr<IDirect3DTexture9> noFadeTexture;
+	boost::shared_ptr<glTexWrapper> depthLookupTexture;
+	boost::shared_ptr<glTexWrapper> spotFadeTexture;
+	boost::shared_ptr<glTexWrapper> fakeFadeTexture;
+	boost::shared_ptr<glTexWrapper> fake2DFadeTexture;
+	boost::shared_ptr<glTexWrapper> coneFadeTexture;
+	boost::shared_ptr<glTexWrapper> noFadeTexture;
 
-	bool ps14;
-	bool ps20;
+	frozenbyte::storm::PixelShader skyboxPixelShader;
 	frozenbyte::storm::PixelShader glowShader;
-	frozenbyte::storm::PixelShader glowPs2Shader;
-	frozenbyte::storm::PixelShader glowPs14Shader;
-	frozenbyte::storm::PixelShader glowFinalShader;
 	frozenbyte::storm::PixelShader lightShader;
 	frozenbyte::storm::PixelShader colorEffectShader;
 	frozenbyte::storm::PixelShader colorEffectOffsetShader;
@@ -121,7 +111,6 @@ struct Storm3D_TerrainRendererData
 	bool freezeCameraCulling;
 	bool freezeSpotCulling;
 	bool movieAspect;
-	bool betterGlowSampling;
 	bool multipassGlow;
 	bool smoothShadows;
 	bool proceduralFallback;
@@ -138,13 +127,13 @@ struct Storm3D_TerrainRendererData
 	bool colorEffectOn;
 
 	VC2I backbufferSize;
-	RECT scissorRectSizes[MAX_SIZES];
-	RECT scissorRect;
+	SDL_Rect scissorRectSizes[MAX_SIZES];
+	SDL_Rect scissorRect;	// NOTE: x, y are LOWER left corner of rectangle!
 	int movieAspectPad;
 	int movieAspectStartTime;
 
-	D3DVIEWPORT9 viewportSizes[MAX_SIZES];
-	D3DVIEWPORT9 viewport;
+	SDL_Rect viewportSizes[MAX_SIZES];
+	SDL_Rect viewport;		// NOTE: x, y are LOWER left corner of rectangle!
 
 	bool fogEnable;
 	float fogStart;
@@ -166,7 +155,10 @@ struct Storm3D_TerrainRendererData
 	COL forcedDirectionalLightColor;
 	VC3 forcedDirectionalLightDirection;
 
-	Storm3D_TerrainRendererData(Storm3D &storm_, IStorm3D_TerrainRendererBase &rendererBase, Storm3D_TerrainHeightmap &heightMap_, Storm3D_TerrainGroup &groups_, Storm3D_TerrainModels &models_, Storm3D_TerrainDecalSystem &decalSystem_, bool ps14_, bool ps20_)
+	// TODO: have several fbos for different textures
+	Framebuffer *fbo;
+
+	Storm3D_TerrainRendererData(Storm3D &storm_, IStorm3D_TerrainRendererBase &rendererBase, Storm3D_TerrainHeightmap &heightMap_, Storm3D_TerrainGroup &groups_, Storm3D_TerrainModels &models_, Storm3D_TerrainDecalSystem &decalSystem_)
 	:	storm(storm_),
 		heightMap(heightMap_),
 		groups(groups_),
@@ -176,17 +168,12 @@ struct Storm3D_TerrainRendererData
 		lightmapMultiplier(1.f, 1.f, 1.f),
 		outdoorLightmapMultiplier(1.f, 1.f, 1.f),
 		skyBox(0),
-		ps14(ps14_),
-		ps20(ps20_),
-		glowShader(*storm.GetD3DDevice()),
-		glowPs14Shader(*storm.GetD3DDevice()),
-		glowPs2Shader(*storm.GetD3DDevice()),
-		glowFinalShader(*storm.GetD3DDevice()),
-		lightShader(*storm.GetD3DDevice()),
-		colorEffectShader(*storm.GetD3DDevice()),
-		colorEffectOffsetShader(*storm.GetD3DDevice()),
-		colorEffectOffsetShader_NoGamma(*storm.GetD3DDevice()),
-		blackWhiteShader(*storm.GetD3DDevice()),
+		glowShader(),
+		lightShader(),
+		colorEffectShader(),
+		colorEffectOffsetShader(),
+		colorEffectOffsetShader_NoGamma(),
+		blackWhiteShader(),
 
 		renderMode(IStorm3D_TerrainRenderer::Normal),
 		renderRenderTargets(true),
@@ -218,7 +205,6 @@ struct Storm3D_TerrainRendererData
 		freezeCameraCulling(false),
 		freezeSpotCulling(false),
 		movieAspect(false),
-		betterGlowSampling(false),
 		multipassGlow(false),
 		smoothShadows(false),
 		proceduralFallback(false),
@@ -244,50 +230,31 @@ struct Storm3D_TerrainRendererData
 
 		forcedDirectionalLightEnabled(false)
 	{
-		IDirect3DDevice9 &device = *storm.GetD3DDevice();
+		fbo = new Framebuffer();
+		skyboxPixelShader.createSkyboxShader();
 		glowShader.createGlowShader();
 		lightShader.createLightShader();
 		colorEffectShader.createColorEffectPixelShader();
 		blackWhiteShader.createBlackWhiteShader();
 
-		if(ps14)
-			glowPs14Shader.createGlowPs14Shader();
-		if(ps14 && ps20)
-		{
-			colorEffectOffsetShader.createColorEffectOffsetPixelShader();
-			colorEffectOffsetShader_NoGamma.createColorEffectOffsetPixelShader_NoGamma();
-		}
-		if(ps20)
-			glowPs2Shader.createGlowTex8Shader();
+		colorEffectOffsetShader.createColorEffectOffsetPixelShader();
+		colorEffectOffsetShader_NoGamma.createColorEffectOffsetPixelShader_NoGamma();
 
-		if(ps14)
-		{
-			Storm3D_ShaderManager::GetSingleton()->CreateAtiShaders(&device);
-			device.CreateTexture(2048, 1, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &depthLookupTexture, 0);
+		DWORD *buffer = new DWORD[2048];
+		for(int i = 0; i < 2048; ++i)
+			buffer[i] = COLOR_RGBA(i & 0xFF, (i & 0xFF00) >> 3, 0, 0);
 
-			D3DLOCKED_RECT lockedRect = { 0 };
-			depthLookupTexture->LockRect(0, &lockedRect, 0, 0);
-
-			DWORD *buffer = reinterpret_cast<DWORD *> (lockedRect.pBits);
-			for(int i = 0; i < 2048; ++i)
-				*buffer++ = D3DCOLOR_RGBA(i & 0xFF, (i & 0xFF00) >> 3, 0, 0);
-
-			depthLookupTexture->UnlockRect(0);
-		}
+		depthLookupTexture = glTexWrapper::rgbaTexture(2048, 1);
+		glTexImage2D(GL_TEXTURE_2D, 0, depthLookupTexture->getFmt(), 2048, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		delete[] buffer;
 
 		// Spot fade texture
 		{
-			device.CreateTexture(128, 1, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &spotFadeTexture, 0);
-
-			D3DLOCKED_RECT lockedRect = { 0 };
-			spotFadeTexture->LockRect(0, &lockedRect, 0, 0);
-
-			DWORD *buffer = reinterpret_cast<DWORD *> (lockedRect.pBits);
+			DWORD *buffer = new DWORD[128];
 			for(int i = 0; i < 128; ++i)
 			{
 				int value = 255;
-				//if(i > 64)
-				//	value -= ((i - 64) * 4);
 				if(i > 96)
 					value -= ((i - 96) * 8);
 				if(i < 2)
@@ -297,106 +264,86 @@ struct Storm3D_TerrainRendererData
 				if(value > 0 && value <= 255)
 					c = value;
 
-				*buffer++ = D3DCOLOR_RGBA(c, c, c, c);
+				buffer[i] = COLOR_RGBA(c, c, c, c);
 			}
 
-			spotFadeTexture->UnlockRect(0);
+			spotFadeTexture = glTexWrapper::rgbaTexture(128, 1);
+			glTexImage2D(GL_TEXTURE_2D, 0, spotFadeTexture->getFmt(), 128, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			delete[] buffer;
 		}
 
 		// Fake spot fade texture
 		{
-			device.CreateTexture(128, 1, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &fakeFadeTexture, 0);
-
-			D3DLOCKED_RECT lockedRect = { 0 };
-			fakeFadeTexture->LockRect(0, &lockedRect, 0, 0);
-
-			DWORD *buffer = reinterpret_cast<DWORD *> (lockedRect.pBits);
+			DWORD *buffer = new DWORD[128];
 			for(int i = 0; i < 128; ++i)
 			{
-				//int value = 127 + int(i * 1.1f);
 				int value = 0;
-				//value = i;
-				//if(i > 96)
-				//	value = (i - 96) * 8;
-				//if(i > 64)
-				//	value = (i - 64) * 2;
-				//value = int((i/128.f) * 170.f);
-
-				//if(i > 64)
-				//	value = 6 * (i - 64) / 2;
-				//value = (3 * i) / 2;
 				value = i * 2;
 
 				unsigned char c = 0;
 				if(value >= 0 && value <= 255)
 					c = value;
 
-				*buffer++ = D3DCOLOR_RGBA(c, c, c, 0);
-				//*buffer++ = D3DCOLOR_RGBA(c, 0, 0, 0);
+				buffer[i] = COLOR_RGBA(c, c, c, 0);
 			}
 
-			fakeFadeTexture->UnlockRect(0);
+			fakeFadeTexture = glTexWrapper::rgbaTexture(128, 1);
+			glTexImage2D(GL_TEXTURE_2D, 0, fakeFadeTexture->getFmt(), 128, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			delete[] buffer;
 		}
 
 		// Fake 2D texture
 		{
-			device.CreateTexture(64, 64, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &fake2DFadeTexture, 0);
-
-			D3DLOCKED_RECT lockedRect = { 0 };
-			fake2DFadeTexture->LockRect(0, &lockedRect, 0, 0);
-
-			DWORD *buffer = reinterpret_cast<DWORD *> (lockedRect.pBits);
-			int pitch = lockedRect.Pitch / sizeof(DWORD);
+			DWORD *buffer = new DWORD[4096];
+			int pitch = 64;
 
 			float max = sqrtf(31*31 + 31*31);
 
 			for(int y = 0; y < 64; ++y)
-			for(int x = 0; x < 64; ++x)
-			{
-				float yd = float(y - 32);
-				float xd = float(x - 32);
-				float result = sqrtf(xd*xd + yd*yd) / max;
+				for(int x = 0; x < 64; ++x)
+				{
+					float yd = float(y - 32);
+					float xd = float(x - 32);
+					float result = sqrtf(xd*xd + yd*yd) / max;
 
-				if(result < 0.5f)
-					result = 0.f;
-				else
-					result = (result - 0.5f) * 2.f;
+					if(result < 0.5f)
+						result = 0.f;
+					else
+						result = (result - 0.5f) * 2.f;
 
-				if(result > 1.f)
-					result = 1.f;
+					if(result > 1.f)
+						result = 1.f;
 
-				unsigned char c = unsigned char(result * 255);
-				buffer[y * pitch + x] = D3DCOLOR_RGBA(c, c, c, 0);
-			}
+					unsigned char c = (unsigned char)(result * 255);
+					buffer[y * pitch + x] = COLOR_RGBA(c, c, c, 0);
+				}
 
-			fake2DFadeTexture->UnlockRect(0);
+			fake2DFadeTexture = glTexWrapper::rgbaTexture(64, 64);
+			glTexImage2D(GL_TEXTURE_2D, 0, fake2DFadeTexture->getFmt(), 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			delete[] buffer;
 		}
 
 		// No-fade texture
 		{
-			device.CreateTexture(128, 1, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &noFadeTexture, 0);
-
-			D3DLOCKED_RECT lockedRect = { 0 };
-			noFadeTexture->LockRect(0, &lockedRect, 0, 0);
-
-			DWORD *buffer = reinterpret_cast<DWORD *> (lockedRect.pBits);
+			DWORD *buffer = new DWORD[128];
 			for(int i = 0; i < 128; ++i)
 			{
 				unsigned char c = 255;
-				*buffer++ = D3DCOLOR_RGBA(c, c, c, 0);
+				buffer[i] = COLOR_RGBA(c, c, c, 0);
 			}
 
-			noFadeTexture->UnlockRect(0);
+			noFadeTexture = glTexWrapper::rgbaTexture(128, 1);
+			glTexImage2D(GL_TEXTURE_2D, 0, noFadeTexture->getFmt(), 128, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			delete[] buffer;
 		}
 
 		// Cone fade
 		{
-			device.CreateTexture(128, 1, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &coneFadeTexture, 0);
-
-			D3DLOCKED_RECT lockedRect = { 0 };
-			coneFadeTexture->LockRect(0, &lockedRect, 0, 0);
-
-			DWORD *buffer = reinterpret_cast<DWORD *> (lockedRect.pBits);
+			DWORD *buffer = new DWORD[128];
 			for(int i = 0; i < 128; ++i)
 			{
 				int value = 255 - (i * 6);
@@ -405,56 +352,46 @@ struct Storm3D_TerrainRendererData
 				if(value > 0)
 					c = value;
 
-				*buffer++ = D3DCOLOR_RGBA(c, c, c, c);
+				buffer[i] = COLOR_RGBA(c, c, c, c);
 			}
 
-			coneFadeTexture->UnlockRect(0);
+			coneFadeTexture = glTexWrapper::rgbaTexture(128, 1);
+			glTexImage2D(GL_TEXTURE_2D, 0, coneFadeTexture->getFmt(), 128, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			delete[] buffer;
 		}
 
-		if(glowTarget && glowTexture1 && glowTexture2)
+		if(glowTexture1 && glowTexture2)
 			renderGlows = true;
 
-		float xf = float(fakeSize.x) / fakeTargetSize.x * .5f;
-		float yf = float(fakeSize.y) / fakeTargetSize.y * .5f;
+		float xf = float(renderSize.x) / fakeTexture->getWidth() * .5f;
+		float yf = float(renderSize.y) / fakeTexture->getHeight() * .5f;
 		fakeTextureProjection = D3DXMATRIX (xf,		0.0f,	0.0f,	xf,
-											0.0f,	-yf,	0.0f,	yf,
+											0.0f,	yf,	0.0f,	yf,
 											0.0f,	0.0f,	0.0f,	0.0f,
 											0.0f,   0.0f,	0.0f,	1.0f);
-		/*
-		float xf = float(fakeSize.x) / fakeTargetSize.x * .5f;
-		float yf = float(fakeSize.y) / fakeTargetSize.y * .5f;
-		fakeTextureProjection = D3DXMATRIX (0.5f,	0.0f,	0.0f,	0.5f,
-											0.0f,	-0.5f,	0.0f,	0.5f,
-											0.0f,	0.0f,	0.0f,	0.0f,
-											0.0f,   0.0f,	0.0f,	1.0f);
-		*/
 
 		if(terrainTexture)
 		{
-			CComPtr<IDirect3DSurface9> terrainSurface;
-			terrainTexture->GetSurfaceLevel(0, &terrainSurface);
-			D3DSURFACE_DESC sourceDesc;
-			terrainSurface->GetDesc(&sourceDesc);
-
 			{
-				float xs = float(renderSize.x) / (sourceDesc.Width) * .5f;
-				float ys = float(renderSize.y) / (sourceDesc.Height) * .5f;
-				float xd = 1.f / float(sourceDesc.Width) * .5f;
-				float yd = 1.f / float(sourceDesc.Height) * .5f;
+				float xs = float(renderSize.x) / (terrainTexture->getWidth()) * .5f;
+				float ys = float(renderSize.y) / (terrainTexture->getHeight()) * .5f;
+				float xd = 1.f / float(terrainTexture->getWidth()) * .5f;
+				float yd = 1.f / float(terrainTexture->getHeight()) * .5f;
 
 				terrainTextureProjectionSizes[0] = D3DXMATRIX (	 xs,	0.0f,	0.0f,	xs + xd,
-																0.0f,	-ys,	0.0f,	ys + yd,
+																0.0f,    ys,	0.0f,	ys + yd,
 																0.0f,    0.0f,	0.0f,	0.0f,
 																0.0f,    0.0f,	0.0f,	1.0f);
 			}
 			{
-				float xs = float(renderSize.x) / (sourceDesc.Width) * .25f;
-				float ys = float(renderSize.y) / (sourceDesc.Height) * .25f;
-				float xd = 1.f / float(sourceDesc.Width) * .25f;
-				float yd = 1.f / float(sourceDesc.Height) * .25f;
+				float xs = float(renderSize.x) / (terrainTexture->getWidth()) * .25f;
+				float ys = float(renderSize.y) / (terrainTexture->getHeight()) * .25f;
+				float xd = 1.f / float(terrainTexture->getWidth()) * .25f;
+				float yd = 1.f / float(terrainTexture->getHeight()) * .25f;
 
 				terrainTextureProjectionSizes[1] = D3DXMATRIX (	 xs,	0.0f,	0.0f,	xs + xd,
-																0.0f,	-ys,	0.0f,	ys + yd,
+																0.0f,	ys,	0.0f,	ys + yd,
 																0.0f,    0.0f,	0.0f,	0.0f,
 																0.0f,    0.0f,	0.0f,	1.0f);
 			}
@@ -467,26 +404,24 @@ struct Storm3D_TerrainRendererData
 			backbufferSize.x = info.width;
 			backbufferSize.y = info.height;
 
-			viewportSizes[0].X = 0;
-			viewportSizes[0].Y = 0;
-			viewportSizes[0].Width = backbufferSize.x;
-			viewportSizes[0].Height = backbufferSize.y;
-			viewportSizes[0].MinZ = 0.f;;
-			viewportSizes[0].MaxZ = 1.f;
+			viewportSizes[0].x = 0;
+			viewportSizes[0].y = 0;
+			viewportSizes[0].w = backbufferSize.x;
+			viewportSizes[0].h = backbufferSize.y;
 			viewportSizes[1] = viewportSizes[0];
-			viewportSizes[1].Width /= 2;
-			viewportSizes[1].Height /= 2;
+			viewportSizes[1].w /= 2;
+			viewportSizes[1].h /= 2;
 			viewport = viewportSizes[activeSize];
 
 			movieAspect = false;
-			scissorRectSizes[0].left = 0;
-			scissorRectSizes[0].top = 0;
-			scissorRectSizes[0].right = backbufferSize.x;
-			scissorRectSizes[0].bottom = backbufferSize.y;
-			scissorRectSizes[1].left = scissorRectSizes[0].left / 2;
-			scissorRectSizes[1].top = scissorRectSizes[0].top / 2;
-			scissorRectSizes[1].right = scissorRectSizes[0].right / 2;
-			scissorRectSizes[1].bottom = scissorRectSizes[0].bottom / 2;
+			scissorRectSizes[0].x = 0;
+			scissorRectSizes[0].y = 0;
+			scissorRectSizes[0].w = backbufferSize.x;
+			scissorRectSizes[0].h = backbufferSize.y;
+			scissorRectSizes[1].x = scissorRectSizes[0].x / 2;
+			scissorRectSizes[1].y = scissorRectSizes[0].y / 2;
+			scissorRectSizes[1].w = scissorRectSizes[0].w / 2;
+			scissorRectSizes[1].h = scissorRectSizes[0].h / 2;
 			scissorRect = scissorRectSizes[activeSize];
 			setMovieAspectRatio(false, false);
 		}
@@ -495,16 +430,20 @@ struct Storm3D_TerrainRendererData
 		if(!offsetFade && storm.getLogger())
 			storm.getLogger()->error("Missing distortion mask texture. Distortion will not work properly.");
 
-		hasStretchFiltering = storm.adapters[storm.active_adapter].stretchFilter;
+		igios_unimplemented();
+		//hasStretchFiltering = storm.adapters[storm.active_adapter].stretchFilter;
 	}
 
 	~Storm3D_TerrainRendererData()
 	{
+		if (fbo != NULL) {
+			delete fbo; fbo = NULL;
+		}
 	}
 
 	void updateMovieAspectRatio(void)
 	{
-		if(movieAspectPad == scissorRectSizes[0].top)
+		if(movieAspectPad == scissorRectSizes[0].y)
 		{
 			// borders faded out
 			if(movieAspectPad == 0)
@@ -514,25 +453,23 @@ struct Storm3D_TerrainRendererData
 		}
 
 		// interpolate towards target
-		int time = timeGetTime() - movieAspectStartTime;
+		int time = SDL_GetTicks() - movieAspectStartTime;
 		int target = movieAspectPad * (time) / 500;
-		int current = (7*scissorRectSizes[0].top + target) / 8;
+		int current = (7*scissorRectSizes[0].y + target) / 8;
 
 		// clamping (note: needs to handle both larger and smaller targets)
-		if((current < target && current >= movieAspectPad)
-			 || (current > target && current < movieAspectPad))
+		if((current < target && current >= movieAspectPad) || (current > target && current < movieAspectPad))
 		{
 			current = movieAspectPad;
 		}
 
+		scissorRectSizes[0].y = current;
+		scissorRectSizes[0].h = backbufferSize.y;
+		scissorRectSizes[1].y = scissorRectSizes[0].y / 2;
+		scissorRectSizes[1].h = scissorRectSizes[0].h / 2;
 
-		scissorRectSizes[0].top = current;
-		scissorRectSizes[0].bottom = backbufferSize.y - current;
-		scissorRectSizes[1].top = scissorRectSizes[0].top / 2;
-		scissorRectSizes[1].bottom = scissorRectSizes[0].bottom / 2;
-
-		scissorRect.top = scissorRectSizes[activeSize].top;
-		scissorRect.bottom = scissorRectSizes[activeSize].bottom;
+		scissorRect.y = scissorRectSizes[activeSize].y;
+		scissorRect.h = scissorRectSizes[activeSize].h;
 	}
 
 	void setMovieAspectRatio(bool enable, bool fade)
@@ -561,22 +498,22 @@ struct Storm3D_TerrainRendererData
 		if(fade)
 		{
 			movieAspect = true;
-			movieAspectStartTime = timeGetTime();
+			movieAspectStartTime = SDL_GetTicks();
 			updateMovieAspectRatio();
 		}
 		else
 		{
 			movieAspect = enable;
 
-			scissorRectSizes[0].left = 0;
-			scissorRectSizes[0].top = movieAspectPad;
-			scissorRectSizes[0].right = backbufferSize.x;
-			scissorRectSizes[0].bottom = backbufferSize.y - movieAspectPad;
+			scissorRectSizes[0].x = 0;
+			scissorRectSizes[0].y = movieAspectPad;
+			scissorRectSizes[0].w = backbufferSize.x;
+			scissorRectSizes[0].h = backbufferSize.y - movieAspectPad;
 
-			scissorRectSizes[1].left = scissorRectSizes[0].left / 2;
-			scissorRectSizes[1].top = scissorRectSizes[0].top / 2;
-			scissorRectSizes[1].right = scissorRectSizes[0].right / 2;
-			scissorRectSizes[1].bottom = scissorRectSizes[0].bottom / 2;
+			scissorRectSizes[1].x = scissorRectSizes[0].x / 2;
+			scissorRectSizes[1].y = scissorRectSizes[0].y / 2;
+			scissorRectSizes[1].w = scissorRectSizes[0].w / 2;
+			scissorRectSizes[1].h = scissorRectSizes[0].h / 2;
 
 			scissorRect = scissorRectSizes[activeSize];
 		}
@@ -584,15 +521,14 @@ struct Storm3D_TerrainRendererData
 
 	void renderConeLights(Storm3D_Scene &scene, bool glowsEnabled)
 	{
-		IDirect3DDevice9 &device = *storm.GetD3DDevice();
-		device.SetTexture(2, coneFadeTexture);
+		glActiveTexture(GL_TEXTURE2);
+		coneFadeTexture->bind();
 
 		lightManager.renderCones(scene, renderSpotShadows, glowsEnabled);
 	}
 
 	void renderLightTargets(Storm3D_Scene &scene)
 	{
-		IDirect3DDevice9 &device = *storm.GetD3DDevice();
 		lightManager.renderProjectedRenderTargets(scene, renderSpotShadows, renderFakeShadows);
 	}
 
@@ -602,78 +538,62 @@ struct Storm3D_TerrainRendererData
 		Alpha
 	};
 
-	void renderPass(Storm3D_Scene &scene, Pass pass, bool atiShader)
+	void renderPass(Storm3D_Scene &scene, Pass pass)
 	{
 		Storm3D_ShaderManager::GetSingleton()->setLightingShaders();
 
-		IDirect3DDevice9 &device = *storm.GetD3DDevice();
-		D3DMATRIX dm = { 0 };
-		dm._11 = 1.f;
-		dm._22 = 1.f;
-		dm._33 = 1.f;
-		dm._44 = 1.f;
+		D3DXMATRIX dm;
+		D3DXMatrixIdentity(dm);
 
-		device.SetTransform(D3DTS_WORLD, &dm);
+		Storm3D_ShaderManager::GetSingleton()->SetWorldTransform(dm);
 		Storm3D_ShaderManager::GetSingleton()->SetAmbient(ambient);
 		Storm3D_ShaderManager::GetSingleton()->SetModelAmbient(COL(0,0,0));
 		Storm3D_ShaderManager::GetSingleton()->SetObjectAmbient(COL(0,0,0));
 		Storm3D_ShaderManager::GetSingleton()->SetObjectDiffuse(COL(1.f, 1.f, 1.f));
-		Storm3D_ShaderManager::GetSingleton()->SetShaderAmbient(&device, ambient);
-		device.SetRenderState(D3DRS_AMBIENT, ambient.GetAsD3DCompatibleARGB());
+		Storm3D_ShaderManager::GetSingleton()->SetShaderAmbient(ambient);
 
 		// update only in first pass
 		if(movieAspect && pass == Solid)
 		{
 			updateMovieAspectRatio();
 		}
+		glScissor(scissorRect.x, scissorRect.y, scissorRect.w, scissorRect.h);
+		glEnable(GL_SCISSOR_TEST);
 
-		device.SetScissorRect(&scissorRect);
-		device.SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
-/*
-// !!!!!!!!!!!!
-//Storm3D_Texture *t = (Storm3D_Texture *) storm.CreateNewTexture("noise_02.dds");
-//Storm3D_Texture *t = (Storm3D_Texture *) storm.CreateNewTexture("dirt_01.dds");
-//Storm3D_Texture *t = (Storm3D_Texture *) storm.CreateNewTexture("military_tech_wall_01.dds");
-Storm3D_Texture *t = (Storm3D_Texture *) storm.CreateNewTexture("water_1.dds");
-device.SetSamplerState(4, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
-device.SetSamplerState(4, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
-t->Apply(4);
-*/
 		if(pass == Solid)
 		{
+
 			if(renderHeightmap)
 			{
-				device.SetTexture(2, fakeTexture);
-				device.SetTexture(3, terrainTexture);
+				glActiveTexture(GL_TEXTURE0);
+				glDisable(GL_TEXTURE_2D);
+				glActiveTexture(GL_TEXTURE1);
+				glDisable(GL_TEXTURE_2D);
+
+				// fakeTexture contains lights
+				glActiveTexture(GL_TEXTURE2);
+				fakeTexture->bind();
+				// terrainTexture contains terrain textures
+				glActiveTexture(GL_TEXTURE3);
+				terrainTexture->bind();
 
 				const COL  &c = outdoorLightmapMultiplier;
 				float mult[4] = { c.r, c.g, c.b, 1.f };
-				device.SetPixelShaderConstantF(0, mult, 1);
+				glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0, mult);
 
-				Storm3D_TerrainHeightmap::RenderMode mode = Storm3D_TerrainHeightmap::Lighting;
-				Storm3D_TerrainHeightmap::RenderType type = Storm3D_TerrainHeightmap::Nv;
-				if(atiShader)
-					type = Storm3D_TerrainHeightmap::Ati;
+				D3DXMATRIX tm;
+				D3DXMatrixIdentity(tm);
+				Storm3D_ShaderManager::GetSingleton()->SetWorldTransform(tm);
 
-				D3DMATRIX dm = { 0 };
-				dm._11 = 1.f;
-				dm._22 = 1.f;
-				dm._33 = 1.f;
-				dm._44 = 1.f;
-				D3DXMATRIX tm = dm;
-				Storm3D_ShaderManager::GetSingleton()->SetWorldTransform(device, tm);
+				setTextureMatrix(2, fakeTextureProjection);
+				setTextureMatrix(3, terrainTextureProjection);
 
-				device.SetVertexShaderConstantF(14, fakeTextureProjection, 4);
-				device.SetVertexShaderConstantF(18, terrainTextureProjection, 4);
-				device.SetTextureStageState(2, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_PROJECTED);
-				//device.SetTextureStageState(3, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_PROJECTED);
-				device.SetSamplerState(2, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-				device.SetSamplerState(2, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
-				device.SetSamplerState(3, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-				device.SetSamplerState(3, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
-
-//device.SetTextureStageState(3, D3DTSS_TEXTURETRANSFORMFLAGS, 0);
-device.SetTextureStageState(3, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_PROJECTED);
+				glActiveTexture(GL_TEXTURE2);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+				glActiveTexture(GL_TEXTURE3);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
 				if(forcedDirectionalLightEnabled)
 				{
@@ -686,84 +606,61 @@ device.SetTextureStageState(3, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_PROJECTED);
 				else
 					Storm3D_ShaderManager::GetSingleton()->SetSun(VC3(), 0.f);
 
-				frozenbyte::storm::enableMipFiltering(device, 2, 3, false);
-				heightMap.renderDepth(scene, 0, mode, type, -1, 0);
-				frozenbyte::storm::enableMipFiltering(device, 2, 3, true);
+				heightMap.renderDepth(scene, 0, Storm3D_TerrainHeightmap::Lighting, IStorm3D_Spotlight::None, 0);
 
 				Storm3D_ShaderManager::GetSingleton()->SetSun(VC3(), 0.f);
 
-				device.SetTextureStageState(2, D3DTSS_TEXTURETRANSFORMFLAGS, 0);
-				device.SetTextureStageState(3, D3DTSS_TEXTURETRANSFORMFLAGS, 0);
-				device.SetSamplerState(2, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
-				device.SetSamplerState(2, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
-				device.SetSamplerState(3, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
-				device.SetSamplerState(3, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
-				device.SetTexture(3, 0);
+				glActiveTexture(GL_TEXTURE3);
+				glDisable(GL_TEXTURE_2D);
+				glDisable(GL_TEXTURE_3D);
+				glDisable(GL_TEXTURE_CUBE_MAP);
+				glBindTexture(GL_TEXTURE_2D, 0);
 			}
 
 			if(renderModels)
 			{
-				device.SetVertexShaderConstantF(14, fakeTextureProjection, 4);
-				device.SetTextureStageState(2, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_PROJECTED);
-				//device.SetTextureStageState(3, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_PROJECTED);
-				device.SetTexture(2, fakeTexture);
-				device.SetSamplerState(2, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-				device.SetSamplerState(2, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+				setTextureMatrix(2, fakeTextureProjection);
+
+				glActiveTexture(GL_TEXTURE2);
+				fakeTexture->bind();
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
 				Storm3D_ShaderManager::GetSingleton()->SetAmbient(ambient);
 				Storm3D_ShaderManager::GetSingleton()->SetObjectDiffuse(COL(1.f, 1.f, 1.f));
 
 				const COL  &c = lightmapMultiplier;
 				float mult[4] = { c.r, c.g, c.b, 1.f };
-				device.SetPixelShaderConstantF(0, mult, 1);
+				glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0, mult);
 
-				frozenbyte::storm::enableMipFiltering(device, 2, 2, false);
 				models.renderLighting(Storm3D_TerrainModels::SolidOnly, scene);
-				frozenbyte::storm::enableMipFiltering(device, 2, 2, true);
-
-				device.SetTextureStageState(2, D3DTSS_TEXTURETRANSFORMFLAGS, 0);
-				device.SetTextureStageState(3, D3DTSS_TEXTURETRANSFORMFLAGS, 0);
-
-				device.SetSamplerState(2, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
-				device.SetSamplerState(2, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
-
-// for blackedge...
-//device.SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_BORDER);
-//device.SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_BORDER);
-//DWORD blackCol = 0xff000000; // ARGB
-//device.SetSamplerState(0, D3DSAMP_BORDERCOLOR, blackCol);
-
+				glBindTexture(GL_TEXTURE_2D, 0);
 			}
+
 		}
 		else if(pass == Alpha)
 		{
-			device.SetTexture(0, fakeTexture);
-			device.SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_PROJECTED);
-			device.SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-			device.SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
-			device.SetVertexShaderConstantF(14, fakeTextureProjection, 4);
+			glActiveTexture(GL_TEXTURE0);
+			fakeTexture->bind();
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+			setTextureMatrix(2, fakeTextureProjection);
 
 			if(renderDecals)
 			{
-				frozenbyte::storm::enableMipFiltering(device, 0, 0, false);
-
-				device.SetRenderState(D3DRS_FOGENABLE, TRUE);
+				glEnable(GL_FOG);
 				decalSystem.renderTextures(scene);
-				device.SetRenderState(D3DRS_FOGENABLE, FALSE);
-
-				frozenbyte::storm::enableMipFiltering(device, 0, 0, true);
+				glDisable(GL_FOG);
 			}
-
-			device.SetTextureStageState(0, D3DTSS_TEXTURETRANSFORMFLAGS, 0);
-			device.SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
-			device.SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
 
 			Storm3D_ShaderManager::GetSingleton()->SetAmbient(ambient);
 			Storm3D_ShaderManager::GetSingleton()->SetObjectDiffuse(COL(1.f, 1.f, 1.f));
 
 			if(renderModels)
 			{
-				device.SetTexture(2, fakeTexture);
+				glActiveTexture(GL_TEXTURE2);
+				fakeTexture->bind();
 
 				if(renderWireframe)
 					models.setFillMode(Storm3D_TerrainModels::Wireframe);
@@ -772,23 +669,16 @@ device.SetTextureStageState(3, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_PROJECTED);
 
 				const COL  &c = lightmapMultiplier;
 				float mult[4] = { c.r, c.g, c.b, 1.f };
-				device.SetPixelShaderConstantF(0, mult, 1);
+				glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0, mult);
 
-				device.SetVertexShaderConstantF(14, fakeTextureProjection, 4);
-				device.SetTextureStageState(2, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_PROJECTED);
-				//device.SetTextureStageState(3, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_PROJECTED);
-				device.SetSamplerState(2, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-				device.SetSamplerState(2, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+				setTextureMatrix(2, fakeTextureProjection);
 
-				frozenbyte::storm::enableMipFiltering(device, 2, 2, false);
+				glActiveTexture(GL_TEXTURE2);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
 				models.renderLighting(Storm3D_TerrainModels::AlphaOnly, scene);
-				device.SetRenderState(D3DRS_FOGENABLE, FALSE);
-				frozenbyte::storm::enableMipFiltering(device, 2, 2, true);
-
-				device.SetSamplerState(2, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
-				device.SetSamplerState(2, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
-				device.SetTextureStageState(2, D3DTSS_TEXTURETRANSFORMFLAGS, 0);
-				device.SetTextureStageState(3, D3DTSS_TEXTURETRANSFORMFLAGS, 0);
+				glDisable(GL_FOG);
 			}
 		}
 	}
@@ -813,39 +703,27 @@ device.SetTextureStageState(3, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_PROJECTED);
 	{
 		Storm3D_SurfaceInfo screen = storm.GetScreenSize();
 		VC2I screenSize(screen.width, screen.height);
-		VC2I screenHalfSize(screen.width / 2, screen.height / 2);
-		
+
 		storm.setNeededDepthTarget(screenSize);
 		storm.setNeededSecondaryColorTarget(screenSize);
-
-		if(enableGlow)
-		{
-			storm.setNeededColorTarget(screenSize);
-			storm.setNeededSecondaryColorTarget(screenHalfSize);
-		}
+		if (enableGlow) storm.setNeededColorTarget(screenSize);
 	}
 
 	static void createTextures(Storm3D &storm, int lightmapQuality)
 	{
-		IDirect3DDevice9 &device = *storm.GetD3DDevice();
 		Storm3D_SurfaceInfo screen = storm.GetScreenSize();
 
 		renderSize.x = screen.width;
 		renderSize.y = screen.height;
-		glowSize = renderSize / 2;
-		glowSize.x = min(512, glowSize.x);
-		glowSize.y = min(384, glowSize.y);
+		glowSize = renderSize;
 
-		fakeSize = renderSize / 2;
+		int tempx = renderSize.x, tempy = renderSize.y;
+		toNearestPow(tempx); toNearestPow(tempy);
+		renderTexture = glTexWrapper::rgbaTexture(tempx, tempy);
 
-		device.CreateTexture(renderSize.x, renderSize.y, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &renderTexture, 0);
 		terrainTexture = storm.getColorSecondaryTarget();
 
-		fakeTargetSize = fakeSize;
-		toNearestPow(fakeTargetSize.x);
-		toNearestPow(fakeTargetSize.y);
-		//device.CreateTexture(fakeTargetSize.x, fakeTargetSize.y, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R5G6B5, D3DPOOL_DEFAULT, &fakeTexture, 0);
-		device.CreateTexture(fakeTargetSize.x, fakeTargetSize.y, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &fakeTexture, 0);
+		fakeTexture = glTexWrapper::rgbaTexture(tempx, tempy);
 
 		if(!renderTexture || !terrainTexture || !fakeTexture)
 		{
@@ -859,23 +737,20 @@ device.SetTextureStageState(3, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_PROJECTED);
 
 	static void createSecondaryTextures(Storm3D &storm, bool enableGlow)
 	{
-		IDirect3DDevice9 &device = *storm.GetD3DDevice();
-
 		if(enableGlow)
 		{
-			// ToDo: Test dev caps for D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES!
-
-			glowTarget = storm.getColorTarget();
-			//glowTexture1 = storm.getColorSecondaryTarget();
-			//device.CreateTexture(glowSize.x, glowSize.y, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &glowTexture2, 0);
 			glowTexture1 = storm.getColorTarget();
 			glowTexture2 = storm.getColorSecondaryTarget();
 
-			if(!glowTarget || !glowTexture1 || !glowTexture2)
+			if(!glowTexture1 || !glowTexture2)
 			{
-				glowTarget.Release();
-				glowTexture1.Release();
-				glowTexture2.Release();
+				if (glowTexture1) {
+					glowTexture1.reset();
+				}
+
+				if (glowTexture2) {
+					glowTexture2.reset();
+				}
 
 				IStorm3D_Logger *logger = storm.getLogger();
 				if(logger)
@@ -883,66 +758,85 @@ device.SetTextureStageState(3, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_PROJECTED);
 			}
 		}
 
-		offsetTexture = storm.getColorTarget();
-		//device.CreateTexture(renderSize.x, renderSize.y, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &offsetTexture, 0);
+		Storm3D_SurfaceInfo screen = storm.GetScreenSize();
+
+		int tempx = screen.width, tempy = screen.height;
+		toNearestPow(tempx); toNearestPow(tempy);
+		offsetTexture = glTexWrapper::rgbaTexture(tempx, tempy);
 	}
 
 	static void freeTextures()
 	{
-		renderTexture.Release();
-		terrainTexture.Release();
-		fakeTexture.Release();
+		if (renderTexture) {
+			renderTexture.reset();
+		}
+
+		if (terrainTexture) {
+			terrainTexture.reset();
+		}
+
+		if (fakeTexture) {
+			fakeTexture.reset();
+		}
 	}
 
 	static void freeSecondaryTextures()
 	{
-		glowTarget.Release();
-		glowTexture1.Release();
-		glowTexture2.Release();
-		offsetTexture.Release();
+		if (glowTexture1) {
+			glowTexture1.reset();
+		}
+
+		if (glowTexture2) {
+			glowTexture2.reset();
+		}
+
+		if (offsetTexture) {
+			offsetTexture.reset();
+		}
 	}
 };
 
-CComPtr<IDirect3DTexture9> Storm3D_TerrainRendererData::renderTexture;
-CComPtr<IDirect3DTexture9> Storm3D_TerrainRendererData::terrainTexture;
-CComPtr<IDirect3DTexture9> Storm3D_TerrainRendererData::fakeTexture;
-CComPtr<IDirect3DTexture9> Storm3D_TerrainRendererData::glowTarget;
-CComPtr<IDirect3DTexture9> Storm3D_TerrainRendererData::glowTexture1;
-CComPtr<IDirect3DTexture9> Storm3D_TerrainRendererData::glowTexture2;
-CComPtr<IDirect3DTexture9> Storm3D_TerrainRendererData::offsetTexture;
+boost::shared_ptr<glTexWrapper> Storm3D_TerrainRendererData::renderTexture;
+boost::shared_ptr<glTexWrapper> Storm3D_TerrainRendererData::terrainTexture;
+boost::shared_ptr<glTexWrapper> Storm3D_TerrainRendererData::fakeTexture;
+boost::shared_ptr<glTexWrapper> Storm3D_TerrainRendererData::glowTexture1;
+boost::shared_ptr<glTexWrapper> Storm3D_TerrainRendererData::glowTexture2;
+boost::shared_ptr<glTexWrapper> Storm3D_TerrainRendererData::offsetTexture;
 
 VC2I Storm3D_TerrainRendererData::renderSize;
-VC2I Storm3D_TerrainRendererData::fakeSize;
-VC2I Storm3D_TerrainRendererData::fakeTargetSize;
 VC2I Storm3D_TerrainRendererData::glowSize;
 
-Storm3D_TerrainRenderer::Storm3D_TerrainRenderer(Storm3D &storm, Storm3D_TerrainHeightmap &heightMap, Storm3D_TerrainGroup &groups, Storm3D_TerrainModels &models, Storm3D_TerrainDecalSystem &decalSystem, bool ps14, bool ps20)
+//! Constructor
+Storm3D_TerrainRenderer::Storm3D_TerrainRenderer(Storm3D &storm, Storm3D_TerrainHeightmap &heightMap, Storm3D_TerrainGroup &groups, Storm3D_TerrainModels &models, Storm3D_TerrainDecalSystem &decalSystem)
 {
-	boost::scoped_ptr<Storm3D_TerrainRendererData> tempData(new Storm3D_TerrainRendererData(storm, *this, heightMap, groups, models, decalSystem, ps14, ps20));
+	boost::scoped_ptr<Storm3D_TerrainRendererData> tempData(new Storm3D_TerrainRendererData(storm, *this, heightMap, groups, models, decalSystem));
 	data.swap(tempData);
 
 	setFog(false, 150.f, -50.f, COL(1.f, 0.5f, 0.5f));
-
-	// Foofoo
-	//setFog(true, 150.f, -50.f, COL(1.f, 0.5f, 0.5f));
 }
 
+//! Destructor
 Storm3D_TerrainRenderer::~Storm3D_TerrainRenderer()
 {
 }
 
+//! Create spotlight
+/*!
+	\return new spotlight
+*/
 boost::shared_ptr<IStorm3D_Spotlight> Storm3D_TerrainRenderer::createSpot()
 {
-	IDirect3D9 &d3d = *data->storm.GetD3D();
-	IDirect3DDevice9 &device = *data->storm.GetD3DDevice();
-
-	boost::shared_ptr<Storm3D_Spotlight> spot(new Storm3D_Spotlight(data->storm, d3d, device, data->ps14, data->ps20));
+	boost::shared_ptr<Storm3D_Spotlight> spot(new Storm3D_Spotlight(data->storm));
 	spot->enableSmoothing(data->smoothShadows);
 	data->spots.push_back(spot);
 
 	return boost::static_pointer_cast<IStorm3D_Spotlight> (spot);
 }
 
+//! Delete spotlight
+/*!
+	\param spot spotlight to delete
+*/
 void Storm3D_TerrainRenderer::deleteSpot(boost::shared_ptr<IStorm3D_Spotlight> &spot)
 {
 	for(unsigned int i = 0; i < data->spots.size(); ++i)
@@ -955,17 +849,22 @@ void Storm3D_TerrainRenderer::deleteSpot(boost::shared_ptr<IStorm3D_Spotlight> &
 	}
 }
 
+//! Create fake spotlight
+/*!
+	\return new fake spotlight
+*/
 boost::shared_ptr<IStorm3D_FakeSpotlight> Storm3D_TerrainRenderer::createFakeSpot()
 {
-	IDirect3D9 &d3d = *data->storm.GetD3D();
-	IDirect3DDevice9 &device = *data->storm.GetD3DDevice();
-
-	boost::shared_ptr<Storm3D_FakeSpotlight> spot(new Storm3D_FakeSpotlight(data->storm, d3d, device));
+	boost::shared_ptr<Storm3D_FakeSpotlight> spot(new Storm3D_FakeSpotlight(data->storm));
 	data->fakeSpots.push_back(spot);
 
-	return boost::static_pointer_cast<IStorm3D_FakeSpotlight> (spot);;
+	return boost::static_pointer_cast<IStorm3D_FakeSpotlight> (spot);
 }
 
+//! Delete fake spotlight
+/*!
+	\param spot fake spotlight to delete
+*/
 void Storm3D_TerrainRenderer::deleteFakeSpot(boost::shared_ptr<IStorm3D_FakeSpotlight> &spot)
 {
 	for(unsigned int i = 0; i < data->fakeSpots.size(); ++i)
@@ -978,16 +877,28 @@ void Storm3D_TerrainRenderer::deleteFakeSpot(boost::shared_ptr<IStorm3D_FakeSpot
 	}
 }
 
+//! Set aspect ratio to movie mode or normal
+/*!
+	\param enable true to set movie aspect ratio
+*/
 void Storm3D_TerrainRenderer::setMovieAspectRatio(bool enable, bool fade)
 {
 	data->setMovieAspectRatio(enable, fade);
 }
 
+//! Set particle system
+/*!
+	\param particlesystem particle system to use
+*/
 void Storm3D_TerrainRenderer::setParticleSystem(Storm3D_ParticleSystem *particlesystem)
 {
 	data->particleSystem = particlesystem;
 }
 
+//! Set render mode
+/*!
+	\param mode render mode
+*/
 void Storm3D_TerrainRenderer::setRenderMode(IStorm3D_TerrainRenderer::RenderMode mode)
 {
 	data->renderMode = mode;
@@ -998,6 +909,12 @@ void Storm3D_TerrainRenderer::setRenderMode(IStorm3D_TerrainRenderer::RenderMode
 		data->models.forceWhiteBaseTexture(false);
 }
 
+//! Enable or disable feature
+/*!
+	\param feature feature to enable or disable
+	\param enable true to enable feature
+	\return previous status of feature
+*/
 bool Storm3D_TerrainRenderer::enableFeature(RenderFeature feature, bool enable)
 {
 	bool oldValue = false;
@@ -1010,7 +927,7 @@ bool Storm3D_TerrainRenderer::enableFeature(RenderFeature feature, bool enable)
 	else if(feature == IStorm3D_TerrainRenderer::Glow)
 	{
 		oldValue = data->renderGlows;
-		if(data->glowTarget && data->glowTexture1 && data->glowTexture2)
+		if(data->glowTexture1 && data->glowTexture2)
 			data->renderGlows = enable;
 		else
 			data->renderGlows = false;
@@ -1023,7 +940,7 @@ bool Storm3D_TerrainRenderer::enableFeature(RenderFeature feature, bool enable)
 	else if(feature == IStorm3D_TerrainRenderer::Distortion)
 	{
 		oldValue = data->renderOffsets;
-		if(data->offsetTexture && data->ps14 && data->ps20)
+		if(data->offsetTexture)
 			data->renderOffsets = enable;
 	}
 	else if(feature == IStorm3D_TerrainRenderer::SmoothShadows)
@@ -1197,6 +1114,11 @@ bool Storm3D_TerrainRenderer::enableFeature(RenderFeature feature, bool enable)
 	return oldValue;
 }
 
+//! Set float value
+/*!
+	\param type float value to set
+	\param value new value
+*/
 void Storm3D_TerrainRenderer::setFloatValue(FloatValue type, float value)
 {
 	if(type == LightmapMultiplier)
@@ -1222,6 +1144,11 @@ void Storm3D_TerrainRenderer::setFloatValue(FloatValue type, float value)
 		data->glowAdditiveFactor = value;
 }
 
+//! Set color value
+/*!
+	\param type color value to set
+	\param value new value
+*/
 void Storm3D_TerrainRenderer::setColorValue(ColorValue type, const COL &value)
 {
 	if(type == LightmapMultiplierColor)
@@ -1246,6 +1173,11 @@ void Storm3D_TerrainRenderer::setColorValue(ColorValue type, const COL &value)
 		data->forcedDirectionalLightColor = value;
 }
 
+//! Get color value
+/*!
+	\param type color value to get
+	\return value
+*/
 COL Storm3D_TerrainRenderer::getColorValue(ColorValue type) const
 {
 	if(type == LightmapMultiplierColor)
@@ -1272,6 +1204,12 @@ VC3 Storm3D_TerrainRenderer::getVectorValue(VectorValue type) const
 	return VC3();
 }
 
+//! Set color effect values
+/*!
+	\param contrast contrast
+	\param brightness brightness
+	\param colorFactors color factors
+*/
 void Storm3D_TerrainRenderer::setColorEffect(float contrast, float brightness, const COL &colorFactors)
 {
 	data->contrast = contrast;
@@ -1292,26 +1230,52 @@ void Storm3D_TerrainRenderer::setColorEffect(float contrast, float brightness, c
 		data->colorEffectOn = false;
 }
 
+//! Render light texture
+/*!
+	\param start
+	\param end
+	\param texture
+	\param color
+*/
 void Storm3D_TerrainRenderer::renderLightTexture(const VC2 &start, const VC2 &end, IStorm3D_Texture &texture, const COL &color)
 {
 	data->fakeLights.push_back(Storm3D_LightTexture(start, end, texture, color));
 }
 
+//! Set ambient color
+/*!
+	\param color color
+*/
 void Storm3D_TerrainRenderer::setAmbient(const COL &color)
 {
 	data->ambient = color;
 }
 
+//! Set clear color
+/*!
+	\param color color
+*/
 void Storm3D_TerrainRenderer::setClearColor(const COL &color)
 {
 	data->clearColor = color;
 }
 
+//! Set skybox
+/*!
+	\param model skybox model
+*/
 void Storm3D_TerrainRenderer::setSkyBox(Storm3D_Model *model)
 {
 	data->skyBox = model;
 }
 
+//! Set fog parameters
+/*!
+	\param enable true to enable fog
+	\param startHeight fog start height
+	\param endHeight fog end height
+	\param color fog color
+*/
 void Storm3D_TerrainRenderer::setFog(bool enable, float startHeight, float endHeight, const COL &color)
 {
 	data->fogEnable = enable;
@@ -1322,18 +1286,23 @@ void Storm3D_TerrainRenderer::setFog(bool enable, float startHeight, float endHe
 	if(!data->fogEnable)
 	{
 		data->fogStart = -100000.f;
-		data->fogEnd = -100001.f;
+		data->fogEnd = -1000000.f;
 	}
 
-	Storm3D_ShaderManager::GetSingleton()->SetFog(data->fogStart, data->fogStart - data->fogEnd);
+	Storm3D_ShaderManager::GetSingleton()->SetFog(data->fogStart, data->fogStart - data->fogEnd, data->fogColor);
 	data->decalSystem.setFog(data->fogEnd, data->fogStart - data->fogEnd);
 }
 
+//! Update object visibility data
+/*!
+	\param scene scene
+	\param timeDelta time change
+*/
 void Storm3D_TerrainRenderer::updateVisibility(Storm3D_Scene &scene, int timeDelta)
 {
 	Storm3D_Camera &camera = static_cast<Storm3D_Camera &> (*scene.GetCamera());
 
-	SpotList::iterator is = data->spots.begin();
+	StormSpotList::iterator is = data->spots.begin();
 	for(; is != data->spots.end(); ++is)
 		is->get()->testVisibility(camera);
 
@@ -1348,6 +1317,10 @@ void Storm3D_TerrainRenderer::updateVisibility(Storm3D_Scene &scene, int timeDel
 	}
 }
 
+//! Render targets
+/*!
+	\param scene scene
+*/
 void Storm3D_TerrainRenderer::renderTargets(Storm3D_Scene &scene)
 {
 	if(!data->forceDraw && !data->renderRenderTargets)
@@ -1371,80 +1344,62 @@ void Storm3D_TerrainRenderer::renderTargets(Storm3D_Scene &scene)
 	data->models.enableAdditionalAlphaTestPass(data->additionalAlphaTestPassAllowed);
 	data->models.enableSkyModelGlow(data->skyModelGlowAllowed);
 
-	IDirect3DDevice9 &device = *data->storm.GetD3DDevice();
 	Storm3D_Camera &camera = static_cast<Storm3D_Camera &> (*scene.GetCamera());
 	camera.Apply();
 
-	device.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-	device.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-	device.SetRenderState(D3DRS_SPECULARENABLE, FALSE);
-	device.SetRenderState(D3DRS_NORMALIZENORMALS, FALSE);
-	device.LightEnable(0, FALSE);
-	device.SetRenderState(D3DRS_LIGHTING, TRUE);
+	glDisable(GL_BLEND);
+	glDisable(GL_ALPHA_TEST);
+	igios_unimplemented();
+	//device.SetRenderState(D3DRS_SPECULARENABLE, FALSE);
+	glDisable(GL_NORMALIZE);
 
-	D3DMATERIAL9 material = { 0 };
-	material.Diffuse.r = material.Diffuse.g = material.Diffuse.b = 1.f;
-	material.Ambient.r = material.Ambient.g = material.Ambient.b = 1.f;
+	frozenbyte::storm::setCulling(CULL_CCW);
 
-	device.SetMaterial(&material);
-	device.SetRenderState(D3DRS_AMBIENT, data->ambient.GetAsD3DCompatibleARGB());
-	frozenbyte::storm::setCulling(device, D3DCULL_CCW);
-
-	D3DMATRIX dm = { 0 };
-	dm._11 = 1.f;
-	dm._22 = 1.f;
-	dm._33 = 1.f;
-	dm._44 = 1.f;
+	D3DXMATRIX dm;
+	D3DXMatrixIdentity(dm);
 
 	data->models.setCollisionRendering(data->renderCollision);
 
-	bool atiShader = false;
-	if(Storm3D_Spotlight::getSpotType() == Storm3D_Spotlight::AtiBuffer || Storm3D_Spotlight::getSpotType() == Storm3D_Spotlight::AtiFloatBuffer)
-		atiShader = true;
-
 	// Rendertarget stuff
-	{		
-		CComPtr<IDirect3DSurface9> originalFrameBuffer;
-		CComPtr<IDirect3DSurface9> originalDepthBuffer;
-		device.GetRenderTarget(0, &originalFrameBuffer);
-		device.GetDepthStencilSurface(&originalDepthBuffer);
-
-		RECT frameRect = { 0 };
-		frameRect.right = data->renderSize.x;
-		frameRect.bottom = data->renderSize.y;
+	{
+		SDL_Rect frameRect;
+		memset(&frameRect, '\0', sizeof(SDL_Rect));
+		frameRect.w = data->renderSize.x;
+		frameRect.h = data->renderSize.y;
 		if(data->halfRendering)
 		{
-			frameRect.right /= 2;
-			frameRect.bottom /= 2;
+			frameRect.w /= 2;
+			frameRect.h /= 2;
 		}
 
-		device.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
+		glDisable(GL_SCISSOR_TEST);
 
-		CComPtr<IDirect3DSurface9> tempDepthSurface = data->storm.getDepthTarget();
-		device.SetDepthStencilSurface(tempDepthSurface);
+		boost::shared_ptr<glTexWrapper> tempDepthSurface = data->storm.getDepthTarget();
 
 		// 2D lights
+		// draws lights to fakeTexture
 		{
-			CComPtr<IDirect3DSurface9> colorSurface;
-			data->fakeTexture->GetSurfaceLevel(0, &colorSurface);
-			device.SetRenderTarget(0, colorSurface);
+			data->fbo->setRenderTarget(data->fakeTexture);
+			if (!data->fbo->validate()) {
+				igiosWarning("renderTargets: renderTarget validate failed with fakeTexture\n");
+				data->fbo->disable();
+				return;
+			}
 
-			device.Clear(0, 0, D3DCLEAR_TARGET, 0x00000000, 1.f, 0);
+			glViewport(0, 0, data->renderSize.x, data->renderSize.y);
+			glClearColor(0, 0, 0, 1);
+			glClear(GL_COLOR_BUFFER_BIT);
 
-			D3DVIEWPORT9 viewport = { 0 };
-			viewport.X = 0;
-			viewport.Y = 0;
-			viewport.Width = data->fakeSize.x;
-			viewport.Height = data->fakeSize.y;
-			viewport.MinZ = 0.f;;
-			viewport.MaxZ = 1.f;
-			device.SetViewport(&viewport);
+			// why?
+			glDisable(GL_CULL_FACE);
 
 			if(data->renderFakeLights)
-				data->lightManager.renderFakeLights(data->fakeSize);
+				data->lightManager.renderFakeLights(data->renderSize);
 		}
 
 		// Light targets
+		// spotlight depth maps
+
 		{
 			data->lightManager.setFog(data->fogStart, data->fogEnd);
 
@@ -1455,60 +1410,67 @@ void Storm3D_TerrainRenderer::renderTargets(Storm3D_Scene &scene)
 			data->renderLightTargets(scene);
 
 			Storm3D_ShaderManager::GetSingleton()->setLightingShaders();
-		}
+    	}
 
-		//if(!atiShader)
-		//	device.SetRenderTarget(0, originalFrameBuffer);
+		data->fbo->disable();
+		glViewport(data->viewport.x, data->viewport.y, data->viewport.w, data->viewport.h);
 
-		device.SetRenderTarget(0, originalFrameBuffer);
-		device.SetDepthStencilSurface(originalDepthBuffer);
-		device.SetViewport(&data->viewport);
+		glScissor(data->scissorRect.x, data->scissorRect.y, data->scissorRect.w, data->scissorRect.h);
+		glEnable(GL_SCISSOR_TEST);
+		glEnable(GL_FOG);
+		GLfloat fogcol[4];
+		fogcol[0] = data->fogColor.r; fogcol[1] = data->fogColor.g; fogcol[2] = data->fogColor.b; fogcol[3] = 1.0f;
+		glFogfv(GL_FOG_COLOR, fogcol);
 
-		device.SetScissorRect(&data->scissorRect);
-		device.SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
-		device.SetRenderState(D3DRS_FOGENABLE, TRUE);
-		device.SetRenderState(D3DRS_FOGCOLOR, data->fogColor.GetAsD3DCompatibleARGB());
-
-		CComPtr<IDirect3DSurface9> renderSurface;
-		data->renderTexture->GetSurfaceLevel(0, &renderSurface);
-
-		device.SetRenderState(D3DRS_FOGENABLE, FALSE);
+		glDisable(GL_FOG);
 
 		// Terrain textures
 		{
-			int clearFlag = D3DCLEAR_ZBUFFER;
+			data->fbo->setRenderTarget(data->terrainTexture);
+			GLbitfield clearFlag = GL_DEPTH_BUFFER_BIT;
 			if(data->storm.support_stencil)
-				clearFlag |= D3DCLEAR_STENCIL;
+				clearFlag |= GL_STENCIL_BUFFER_BIT;
 
+			glClearDepth(1.0);
+			glClearStencil(0);
 			if(data->renderTerrainTextures)
-				device.Clear(0, 0, D3DCLEAR_TARGET | clearFlag, 0x00000000, 1.f, 0);
+				glClearColor(0, 0, 0, 0);
 			else
-				device.Clear(0, 0, D3DCLEAR_TARGET | clearFlag, 0xFFFFFFFF, 1.f, 0);
+				glClearColor(1, 1, 1, 1);
+			glDisable(GL_SCISSOR_TEST);
+			glClear(clearFlag);
 
-			device.SetScissorRect(&data->scissorRect);
-			device.SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
+			glScissor(data->scissorRect.x, data->scissorRect.y, data->scissorRect.w, data->scissorRect.h);
+			glEnable(GL_SCISSOR_TEST);
 
-			device.SetTransform(D3DTS_WORLD, &dm);
+			Storm3D_ShaderManager::GetSingleton()->SetWorldTransform(dm);
+			// this draws terrain textures (snow etc.)
+			// (not rocks etc.)
 			if(data->renderHeightmap && data->renderTerrainTextures)
-				data->heightMap.renderTextures(scene, atiShader);
+				data->heightMap.renderTextures(scene);
 
-			CComPtr<IDirect3DSurface9> terrainSurface;
-			data->terrainTexture->GetSurfaceLevel(0, &terrainSurface);
-			device.StretchRect(originalFrameBuffer, &frameRect, terrainSurface, &frameRect, D3DTEXF_NONE);
+			data->fbo->disable();
 		}
 
-		device.SetRenderState(D3DRS_FOGENABLE, TRUE);
-		device.SetPixelShader(0);
+		glEnable(GL_FOG);
+		frozenbyte::storm::PixelShader::disable();
 
 		// (Ambient + lightmaps + fake) * base to fb
+		// this renders pretty much everything...
 		{
-			device.Clear(0, 0, D3DCLEAR_TARGET, data->clearColor.GetAsD3DCompatibleARGB(), 1.f, 0);
-			device.SetScissorRect(&data->scissorRect);
-			device.SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
+			data->fbo->setRenderTarget(data->renderTexture);
 
-			device.SetRenderState(D3DRS_FOGENABLE, TRUE);
-			data->renderPass(scene, data->Solid, atiShader);
-			device.SetRenderState(D3DRS_FOGENABLE, FALSE);
+			// this renders terrain
+			// not lights and terrain models
+			glDisable(GL_SCISSOR_TEST);
+			glClearColor(data->clearColor.r, data->clearColor.g, data->clearColor.b, 0);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+			glScissor(data->scissorRect.x, data->scissorRect.y, data->scissorRect.w, data->scissorRect.h);
+			glEnable(GL_SCISSOR_TEST);
+
+			glEnable(GL_FOG);
+			data->renderPass(scene, data->Solid);
+			glDisable(GL_FOG);
 
 			if(data->skyBox && !data->renderWireframe && data->renderSkyBox)
 			{
@@ -1525,131 +1487,103 @@ void Storm3D_TerrainRenderer::renderTargets(Storm3D_Scene &scene)
 				}
 				data->skyBox->SetScale(VC3(20.f, 20.f, 20.f));
 
-				device.SetPixelShader(0);
-				device.SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-				device.SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
-				device.SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
-				device.SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
-				device.SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+				data->skyboxPixelShader.apply();
+				glActiveTexture(GL_TEXTURE1);
+				glBindTexture(GL_TEXTURE_2D, 0);
+				glDisable(GL_TEXTURE_2D);
+				glDisable(GL_TEXTURE_3D);
+				glDisable(GL_TEXTURE_CUBE_MAP);
 
-				device.SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
+				glDepthMask(GL_FALSE);
 				data->models.renderBackground(data->skyBox);
 			}
 
+			// this tries to draw blob shadows under models
+			// but it's broken and even on direct3d seems to have no effect
+			// call it anyway to clear the list of decals
+			// FIXME
 			data->decalSystem.renderShadows(scene);
+
+			// does nothing?
+			// FIXME: produces interesting artifacts
 			data->renderFakelights(scene);
 
-			device.SetRenderState(D3DRS_AMBIENT, 0);
 			Storm3D_ShaderManager::GetSingleton()->SetAmbient(COL(0,0,0));
 			Storm3D_ShaderManager::GetSingleton()->SetModelAmbient(COL(0,0,0));
 			Storm3D_ShaderManager::GetSingleton()->SetObjectAmbient(COL(0,0,0));
 			Storm3D_ShaderManager::GetSingleton()->SetObjectDiffuse(COL(1.f, 1.f, 1.f));
 
+			// this renders spot lights
 			data->renderProjectedLightsSolid(scene);
-			device.SetScissorRect(&data->scissorRect);
-			device.SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
-		
-			data->renderPass(scene, data->Alpha, atiShader);
+			glScissor(data->scissorRect.x, data->scissorRect.y, data->scissorRect.w, data->scissorRect.h);
+			glEnable(GL_SCISSOR_TEST);
+
+			data->renderPass(scene, data->Alpha);
 			data->renderProjectedLightsAlpha(scene);
-			device.SetScissorRect(&data->scissorRect);
-			device.SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
+			glScissor(data->scissorRect.x, data->scissorRect.y, data->scissorRect.w, data->scissorRect.h);
+			glEnable(GL_SCISSOR_TEST);
 
 			if(data->renderCones)
 				data->renderConeLights(scene, data->renderGlows);
 
+			// this renders bullet trails, fire etc.
 			if(data->particleSystem && data->renderParticles)
 			{
 				data->particleSystem->RenderImp(&scene, false);
-				frozenbyte::storm::setCulling(device, D3DCULL_CCW);
+				frozenbyte::storm::setCulling(CULL_CCW);
 			}
 
-			if(data->movieAspect)
-			{
-#pragma message ("***************************")
-#pragma message ("*****   HALF SUPPORT  *****")
-#pragma message ("***************************")
+			data->fbo->disable();
+		}
 
-				D3DRECT rc[2] = { 0 };
-				rc[0].x1 = 0;
-				rc[0].y1 = 0;
-				rc[0].x2 = data->renderSize.x;
-				rc[0].y2 = data->scissorRect.top;
-				rc[1].x1 = 0;
-				rc[1].y1 = data->scissorRect.bottom;
-				rc[1].x2 = data->renderSize.x;
-				rc[1].y2 = data->renderSize.y;
-
-				device.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
-				device.Clear(2, rc, D3DCLEAR_TARGET, 0x00000000, 1.f, 0);
-				device.SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
-			}
-
-			device.StretchRect(originalFrameBuffer, &frameRect, renderSurface, &frameRect, D3DTEXF_NONE);
+		for (unsigned int i = 0; i < 4; ++i)
+		{
+			glActiveTexture(GL_TEXTURE0 + i);
+			glMatrixMode(GL_TEXTURE);
+			glLoadIdentity();
 		}
 
 		if(data->renderGlows)
 		{
 			Storm3D_ShaderManager::GetSingleton()->setNormalShaders();
 
-			CComPtr<IDirect3DSurface9> glowSurface1;
-			data->glowTexture1->GetSurfaceLevel(0, &glowSurface1);
-			D3DSURFACE_DESC sourceDesc1;
-			glowSurface1->GetDesc(&sourceDesc1);
-			CComPtr<IDirect3DSurface9> glowSurface2;
-			data->glowTexture2->GetSurfaceLevel(0, &glowSurface2);
-			D3DSURFACE_DESC sourceDesc2;
-			glowSurface2->GetDesc(&sourceDesc2);
-
-			int glowWidth1 = sourceDesc1.Width;
-			int glowHeight1 = sourceDesc1.Height;
-			int glowWidth2 = sourceDesc2.Width;
-			int glowHeight2 = sourceDesc2.Height;
-
 			// Material self illuminations to glow texture
 			{
-				{
-					device.SetRenderTarget(0, glowSurface2);
-					device.SetDepthStencilSurface(tempDepthSurface);
-
-					int xs = int(15.f * data->renderSize.x / 1024.f + 0.5f);
-					int ys = int(15.f * data->renderSize.y / 800.f + 0.5f);
-
-					D3DRECT rc[2] = { 0 };
-					rc[0].x1 = data->glowSize.x - xs;
-					rc[0].y1 = 0;
-					//rc[0].x2 = data->glowSize.x + 5;
-					rc[0].x2 = data->glowSize.x + xs;
-					rc[0].y2 = data->glowSize.y + ys;
-
-					rc[1].x1 = 0;
-					rc[1].y1 = data->glowSize.y - ys;
-					rc[1].x2 = data->glowSize.x + xs;
-					//rc[1].y2 = data->glowSize.y + 5;
-					rc[1].y2 = data->glowSize.y + ys;
-					//device.Clear(2, rc, D3DCLEAR_TARGET, 0x00000000, 1.f, 0);
-					device.Clear(0, 0, D3DCLEAR_TARGET, 0x00000000, 1.f, 0);
-
-					device.SetRenderTarget(0, glowSurface1);
-					//device.Clear(2, rc, D3DCLEAR_TARGET, 0x00000000, 1.f, 0);
-					device.Clear(0, 0, D3DCLEAR_TARGET, 0x00000000, 1.f, 0);
+				data->fbo->setRenderTarget(data->glowTexture2);
+				if (!data->fbo->validate()) {
+					igiosWarning("renderTargets: renderTarget validate failed with glowTexture2\n");
+					data->fbo->disable();
+					return;
 				}
 
-				device.SetRenderTarget(0, originalFrameBuffer);
-				device.SetDepthStencilSurface(originalDepthBuffer);
-				device.SetScissorRect(&data->scissorRect);
-				device.SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
-device.SetViewport(&data->viewport);
+				// FIXME: depth/stencil mismatch on medium graphics quality
+				glDisable(GL_SCISSOR_TEST);
+				glClearColor(0, 0, 0, 0);
+				glClear(GL_COLOR_BUFFER_BIT);
+
+				glScissor(data->scissorRect.x, data->scissorRect.y, data->scissorRect.w, data->scissorRect.h);
+				glEnable(GL_SCISSOR_TEST);
+				glViewport(data->viewport.x, data->viewport.y, data->viewport.w, data->viewport.h);
 
 				if(data->glowFactor > 0.001f)
 				{
-					device.SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_DIFFUSE);
-					device.SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE);
-					device.SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
-					device.SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
-					device.SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+					glActiveTexture(GL_TEXTURE1);
+					glDisable(GL_TEXTURE_2D);
+					glDisable(GL_TEXTURE_3D);
+					glDisable(GL_TEXTURE_CUBE_MAP);
+					glClientActiveTexture(GL_TEXTURE1);
+					glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
-					device.SetFVF(FVF_VXFORMAT_2D);
-					int c = unsigned char(data->glowFactor * 255.f);
+					glActiveTexture(GL_TEXTURE0);
+					glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_PRIMARY_COLOR);
+					glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_PRIMARY_COLOR);
+					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
+					glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+					glClientActiveTexture(GL_TEXTURE0);
+					glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+					int c = (unsigned char)(data->glowFactor * 255.f);
 					if(c > 255)
 						c = 255;
 					else if(c < 1)
@@ -1664,24 +1598,43 @@ device.SetViewport(&data->viewport);
 					buffer[2] = VXFORMAT_2D(VC3(x2, y2, 1.f), 1.f, color, VC2(1.f, 1.f));
 					buffer[3] = VXFORMAT_2D(VC3(x2, 0, 1.f),  1.f, color, VC2(1.f, 0.f));
 
-					device.SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-					device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_DESTCOLOR);
-					device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ZERO);
+					glBindBuffer(GL_ARRAY_BUFFER, 0);
+					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-					device.SetRenderState(D3DRS_ZFUNC, D3DCMP_ALWAYS);
-					device.SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
-					device.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, buffer, sizeof(VXFORMAT_2D));
-					device.SetRenderState(D3DRS_ZFUNC, D3DCMP_LESSEQUAL);
+					glMatrixMode(GL_MODELVIEW);
+					glLoadIdentity();
+
+					glMatrixMode(GL_PROJECTION);
+					glLoadIdentity();
+
+					glOrtho(0, data->renderSize.x, data->renderSize.y, 0, -1, 1);
+
+					glEnable(GL_BLEND);
+					glBlendFunc(GL_DST_COLOR, GL_ZERO);
+					glDepthFunc(GL_ALWAYS);
+					glDepthMask(GL_FALSE);
+
+					glVertexPointer(3, GL_FLOAT, sizeof(VXFORMAT_2D), buffer);
+					glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VXFORMAT_2D), &buffer[0].color);
+					glTexCoordPointer(2, GL_FLOAT, sizeof(VXFORMAT_2D), &buffer[0].texcoords);
+
+					glEnableClientState(GL_VERTEX_ARRAY);
+					glEnableClientState(GL_COLOR_ARRAY);
+
+					glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+					glDisableClientState(GL_VERTEX_ARRAY);
+					glDisableClientState(GL_COLOR_ARRAY);
+					glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+					glDepthFunc(GL_LEQUAL);
 				}
-				else
-					device.Clear(0, 0, D3DCLEAR_TARGET, 0x00000000, 1.f, 0);
 
 				if(data->renderModels)
 				{
-					device.SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-					device.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-					device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
-					device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+					glEnable(GL_BLEND);
+					glDisable(GL_ALPHA_TEST);
+					glBlendFunc(GL_ONE, GL_ONE);
 
 					data->models.renderGlows(scene);
 
@@ -1689,384 +1642,208 @@ device.SetViewport(&data->viewport);
 						data->renderConeLights(scene, data->renderGlows);
 				}
 
-				device.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-				device.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
+				glDisable(GL_BLEND);
+				glDisable(GL_ALPHA_TEST);
 
-				RECT dst = { 0 };
-				dst.right = data->glowSize.x;
-				dst.bottom = data->glowSize.y;
-
-				if(data->hasStretchFiltering)
-					device.StretchRect(originalFrameBuffer, &frameRect, glowSurface2, &dst, D3DTEXF_LINEAR);
-				else
-					device.StretchRect(originalFrameBuffer, &frameRect, glowSurface2, &dst, D3DTEXF_NONE);
+				data->fbo->disable();
 			}
 
-			device.SetDepthStencilSurface(tempDepthSurface);
+			frozenbyte::storm::setCulling(CULL_NONE);
+			frozenbyte::storm::VertexShader::disable();
 
-			frozenbyte::storm::setCulling(device, D3DCULL_NONE);
 			int glowPasses = (data->multipassGlow) ? 2 : 1;
+					
+			int stages = 4;
+
+			data->glowShader.apply();
+
+			float af = .6f;
+			float bf = .3f;
+			float cf = .15f;
+			float df = .075f;
+			float ef = .8f;
+
+			if(data->multipassGlow)
+				ef = 0.65f;
+
+			float a[] = { af, af, af, 1 };
+			float b[] = { bf, bf, bf, 1 };
+			float c[] = { cf, cf, cf, 1 };
+			float d[] = { df, df, df, 1 };
+			float e[] = { ef, ef, ef, 1 };
+
+			glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 0, a);
+			glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 1, b);
+			glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 2, c);
+			glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 3, d);
+			glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 4, e);
+
+			float offset = 0;
+			float width = float(data->viewport.w) + offset;
+			float height = float(data->viewport.h) + offset;
+
 			for(int i = 0; i < glowPasses; ++i)
 			{
 				// Filter glow texture
 				{
-					device.SetVertexShader(0);
-
-					bool singlePass = false; //(data->ps20);
-					bool betterGlow = data->betterGlowSampling && data->ps14;
-					int stages = (singlePass) ? 8 : ((betterGlow) ? 6 : 4);
-
-					if(betterGlow)
 					{
-						float af = .60f;
-						float bf = .30f;
-						float cf = .15f;
-						float df = .075f;
-						float ef = .05f;
-						float ff = .025f;
-						float gf = 0.8f;
-
-						if(data->multipassGlow)
-							gf = 0.7f;
-
-						float a[] = { af, bf, cf, df };
-						float b[] = { ef, ff,  0, 0  };
-						float c[] = { gf, gf, gf, gf };
-						device.SetPixelShaderConstantF(0, a, 1);
-						device.SetPixelShaderConstantF(1, b, 1);
-						device.SetPixelShaderConstantF(2, c, 1);
-					}
-					else
-					{
-						/*
-						float af = .5f;
-						float bf = .40f;
-						float cf = .10f;
-						float df = .05f;
-						float ef = 0.8f;
-						*/
-						float af = .6f;
-						float bf = .3f;
-						float cf = .15f;
-						float df = .075f;
-						float ef = 0.8f;
-
-						if(data->multipassGlow)
-							ef = 0.65f;
-
-						//4,3,2,1
-
-						float a[] = { af, af, af, af };
-						float b[] = { bf, bf, bf, bf };
-						float c[] = { cf, cf, cf, cf };
-						float d[] = { df, df, df, df };
-						float e[] = { ef, ef, ef, ef };
-
-						device.SetPixelShaderConstantF(0, a, 1);
-						device.SetPixelShaderConstantF(1, b, 1);
-						device.SetPixelShaderConstantF(2, c, 1);
-						device.SetPixelShaderConstantF(3, d, 1);
-						device.SetPixelShaderConstantF(4, e, 1);
-					}
-
-					for(int i = 0; i < stages; ++i)
-					{
-						device.SetSamplerState(i, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-						device.SetSamplerState(i, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
-					}
-
-					if(singlePass)
-					{
-						data->glowPs2Shader.apply();
-						device.SetFVF(D3DFVF_XYZRHW|D3DFVF_TEX8);
-					}
-					else
-					{
-						if(betterGlow)
-						{
-							data->glowPs14Shader.apply();
-							device.SetFVF(D3DFVF_XYZRHW|D3DFVF_TEX6);
+						data->fbo->setRenderTarget(data->glowTexture1);
+						if (!data->fbo->validate()) {
+							igiosWarning("renderTargets: renderTarget validate failed with glowTexture1\n");
+							data->fbo->disable();
+							return;
 						}
-						else
-						{
-							data->glowShader.apply();
-							device.SetFVF(D3DFVF_XYZRHW|D3DFVF_TEX4);
-						}
-					}
+						glDepthMask(GL_FALSE);
+						glDisable(GL_DEPTH_TEST);
+						
+						// FIXME ?
+						GLint sbox[4];
+						glGetIntegerv(GL_SCISSOR_BOX, sbox);
+						glScissor(data->glowSize.x - 1, 0, 12, data->glowSize.y);
+						glClear(GL_COLOR_BUFFER_BIT);
+						glScissor(0, data->glowSize.y - 1, data->glowSize.x, 12);
+						glClear(GL_COLOR_BUFFER_BIT);
+						glScissor(sbox[0], sbox[1], sbox[2], sbox[3]);
 
-					frozenbyte::storm::enableMipFiltering(device, 0, stages, false);
-					frozenbyte::storm::enableMinMagFiltering(device, 0, stages, true);
+						float xs = float(data->viewport.w) / (data->glowTexture2->getWidth());
+						float ys = float(data->viewport.h) / (data->glowTexture2->getHeight());
 
-					{
-						device.SetRenderTarget(0, glowSurface1);
-						device.SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
-						device.SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
-
-						D3DRECT rcs[2] = { { 0 }, { 0 } };
-						rcs[0].x1 = data->glowSize.x - 1;
-						rcs[0].y1 = 0;
-						rcs[0].x2 = data->glowSize.x + 11;
-						rcs[0].y2 = data->glowSize.y;
-						rcs[1].x1 = 0;
-						rcs[1].y1 = data->glowSize.y - 1;
-						rcs[1].x2 = data->glowSize.x;
-						rcs[1].y2 = data->glowSize.y + 11;
-						device.Clear(2, rcs, D3DCLEAR_TARGET, 0x00000000, 1.f, 0);
-
-						float xs = float(data->glowSize.x) / (glowWidth2);
-						float ys = float(data->glowSize.y) / (glowHeight2);
-
-						float xdp = (1.f / glowWidth2);
-						//xdp *= data->renderSize.x / 1024.f;
-
-						float xd1 = 0.5f * xdp;
-						float xd2 = 2.5f * xdp;
-						float xd3 = 4.5f * xdp;
-						float xd4 = 6.5f * xdp;
-						float xd5 = 8.5f * xdp;
-						float xd6 = 10.5f * xdp;
-
-						if(betterGlow)
-						{
-							xd1 = 0.5f * xdp;
-							xd2 = 2.0f * xdp;
-							xd3 = 3.7f * xdp;
-							xd4 = 5.2f * xdp;
-							xd5 = 7.1f * xdp;
-							xd6 = 8.5f * xdp;
-						}
-
-						float width = float(data->glowSize.x) - .5f;
-						float height = float(data->glowSize.y) - .5f;
+						float dp = (1.f / data->viewport.w) * xs;		
+						float d1 = 0.5f * dp;
+						float d2 = 2.5f * dp;
+						float d3 = 4.5f * dp;
+						float d4 = 6.5f * dp;
 
 						float buffer1[] = 
 						{
-							// Position, w,             uv1,              uv2,              uv3,        uv4
-							-.5f, height,  1.f, 1.f,    0.f-xd1, ys,    0.f-xd2, ys,    0.f-xd3, ys,    0.f-xd4, ys,
-							-.5f, -.5f,    1.f, 1.f,    0.f-xd1, 0.f,   0.f-xd2, 0.f,   0.f-xd3, 0.f,   0.f-xd4, 0.f,
-							width, height, 1.f, 1.f,    xs-xd1,  ys,    xs-xd2,  ys,    xs-xd3,  ys,    xs-xd4,  ys,
-							width, -.5f,   1.f, 1.f,    xs-xd1,  0.f,   xs-xd2,  0.f,   xs-xd3,  0.f,   xs-xd4,  0.f
+							// Position,          w,    uv1,           uv2,           uv3,           uv4
+							offset, height,  1.f, 1.f,  0.f-d1, 0.f,  0.f-d2, 0.f,  0.f-d3, 0.f,  0.f-d4, 0.f,
+							offset, offset,  1.f, 1.f,  0.f-d1, ys,   0.f-d2, ys,   0.f-d3, ys,   0.f-d4, ys,
+							width,  height,  1.f, 1.f,  xs-d1,  0.f,  xs-d2,  0.f,  xs-d3,  0.f,  xs-d4,  0.f,
+							width,  offset,  1.f, 1.f,  xs-d1,  ys,   xs-d2,  ys,   xs-d3,  ys,   xs-d4,  ys,
 						};
+
 						float buffer2[] = 
 						{
-							// Position, w,             uv1,              uv2,              uv3,        uv4
-							-.5f, height,  1.f, 1.f,    0.f+xd1, ys,    0.f+xd2, ys,    0.f+xd3, ys,    0.f+xd4, ys,
-							-.5f, -.5f,    1.f, 1.f,    0.f+xd1, 0.f,   0.f+xd2, 0.f,   0.f+xd3, 0.f,   0.f+xd4, 0.f,
-							width, height, 1.f, 1.f,    xs+xd1,  ys,    xs+xd2, ys,     xs+xd3,  ys,    xs+xd4,  ys,
-							width, -.5f,   1.f, 1.f,    xs+xd1,  0.f,   xs+xd2, 0.f,    xs+xd3,  0.f,   xs+xd4,  0.f
+							// Position,          w,    uv1,           uv2,           uv3,           uv4
+							offset, height,  1.f, 1.f,  0.f+d1, 0.f,  0.f+d2, 0.f,  0.f+d3, 0.f,  0.f+d4, 0.f,
+							offset, offset,  1.f, 1.f,  0.f+d1, ys,   0.f+d2, ys,   0.f+d3, ys,   0.f+d4, ys,
+							width,  height,  1.f, 1.f,  xs+d1,  0.f,  xs+d2, 0.f,   xs+d3,  0.f,  xs+d4,  0.f,
+							width,  offset,  1.f, 1.f,  xs+d1,  ys,   xs+d2, ys,    xs+d3,  ys,   xs+d4,  ys,
 						};
 
-						float buffer1_6[] = 
+						for(int stage = 0; stage < stages; ++stage)
 						{
-							// Position, w,             uv1,              uv2,              uv3,        uv4            uv5            uv6
-							-.5f, height,  1.f, 1.f,    0.f-xd1, ys,    0.f-xd2, ys,    0.f-xd3, ys,    0.f-xd4, ys,   0.f-xd5, ys,   0.f-xd6, ys,
-							-.5f, -.5f,    1.f, 1.f,    0.f-xd1, 0.f,   0.f-xd2, 0.f,   0.f-xd3, 0.f,   0.f-xd4, 0.f,  0.f-xd5, 0.f,  0.f-xd6, 0.f,
-							width, height, 1.f, 1.f,    xs-xd1,  ys,    xs-xd2,  ys,    xs-xd3,  ys,    xs-xd4,  ys,   xs-xd5,  ys,   xs-xd6,  ys,
-							width, -.5f,   1.f, 1.f,    xs-xd1,  0.f,   xs-xd2,  0.f,   xs-xd3,  0.f,   xs-xd4,  0.f,  xs-xd5,  0.f,  xs-xd6,  0.f
-						};
-						float buffer2_6[] = 
-						{
-							// Position, w,             uv1,              uv2,              uv3,        uv4
-							-.5f, height,  1.f, 1.f,    0.f+xd1, ys,    0.f+xd2, ys,    0.f+xd3, ys,    0.f+xd4, ys,   0.f+xd5, ys,    0.f+xd6, ys,
-							-.5f, -.5f,    1.f, 1.f,    0.f+xd1, 0.f,   0.f+xd2, 0.f,   0.f+xd3, 0.f,   0.f+xd4, 0.f,  0.f+xd5, 0.f,   0.f+xd6, 0.f,
-							width, height, 1.f, 1.f,    xs+xd1,  ys,    xs+xd2, ys,     xs+xd3,  ys,    xs+xd4,  ys,   xs+xd5,  ys,    xs+xd6,  ys,
-							width, -.5f,   1.f, 1.f,    xs+xd1,  0.f,   xs+xd2, 0.f,    xs+xd3,  0.f,   xs+xd4,  0.f,  xs+xd5,  0.f,   xs+xd6,  0.f
-						};
-
-						float buffer3[] = 
-						{
-							// Position, w,             uv1,              uv2,              uv3,        uv4
-							-.5f, height,  1.f, 1.f,    0.f-xd1, ys,    0.f-xd2, ys,    0.f-xd3, ys,    0.f-xd4, ys,  0.f+xd1, ys,    0.f+xd2, ys,    0.f+xd3, ys,    0.f+xd4, ys,
-							-.5f, -.5f,    1.f, 1.f,    0.f-xd1, 0.f,   0.f-xd2, 0.f,   0.f-xd3, 0.f,   0.f-xd4, 0.f, 0.f+xd1, 0.f,   0.f+xd2, 0.f,   0.f+xd3, 0.f,   0.f+xd4, 0.f,
-							width, height, 1.f, 1.f,    xs-xd1,  ys,    xs-xd2,  ys,    xs-xd3,  ys,    xs-xd4,  ys,  xs+xd1,  ys,    xs+xd2, ys,     xs+xd3,  ys,    xs+xd4,  ys,
-							width, -.5f,   1.f, 1.f,    xs-xd1,  0.f,   xs-xd2,  0.f,   xs-xd3,  0.f,   xs-xd4,  0.f, xs+xd1,  0.f,   xs+xd2, 0.f,    xs+xd3,  0.f,   xs+xd4,  0.f
-						};
-
-						if(singlePass)
-						{
-							device.SetTexture(0, data->glowTexture2);
-
-							frozenbyte::storm::validateDevice(device, data->storm.getLogger());
-							device.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, buffer3, sizeof(float) *  20);
+							glActiveTexture(GL_TEXTURE0 + stage);
+							data->glowTexture2->bind();
+							glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+							glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 						}
-						else
-						{
-							for(int stage = 0; stage < stages; ++stage)
-								device.SetTexture(stage, data->glowTexture2);
 
-							frozenbyte::storm::validateDevice(device, data->storm.getLogger());
-							if(betterGlow)
-								device.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, buffer1_6, sizeof(float) *  16);
-							else
-								device.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, buffer1, sizeof(float) *  12);
+						renderUP(D3DFVF_XYZRHW|D3DFVF_TEX4, GL_TRIANGLE_STRIP, 2, sizeof(float) * 12, (char *)buffer1);
 
-							device.SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-							device.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-							device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
-							device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
+						glEnable(GL_BLEND);
+						glDisable(GL_ALPHA_TEST);
+						glBlendFunc(GL_ONE, GL_ONE);
 
-							frozenbyte::storm::validateDevice(device, data->storm.getLogger());
-							if(betterGlow)
-								device.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, buffer2_6, sizeof(float) *  16);
-							else
-								device.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, buffer2, sizeof(float) *  12);
+						renderUP(D3DFVF_XYZRHW|D3DFVF_TEX4, GL_TRIANGLE_STRIP, 2, sizeof(float) * 12, (char *)buffer2);
 
-							device.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-							device.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-						}
+						glDisable(GL_BLEND);
+						glDisable(GL_ALPHA_TEST);
 					}
 
 					// Blur to final
 					{
-						device.SetRenderTarget(0, glowSurface2);
-						//D3DRECT rc = { 0 };
-						//rc.x2 = std::min(int(data->glowSize.x + 21), glowWidth2);
-						//rc.y2 = std::min(int(data->glowSize.y + 21), glowHeight2);
-						//device.Clear(1, &rc, D3DCLEAR_TARGET, 0x00000000, 1.f, 0);
-
-						float xs = float(data->glowSize.x) / (glowWidth1);
-						float ys = float(data->glowSize.y) / (glowHeight1);
-						float ydp = (1.f / glowHeight1);
-						//ydp *= data->renderSize.y / 768.f;
-
-						float yd1 = 0.5f * ydp;
-						float yd2 = 2.5f * ydp;
-						float yd3 = 4.5f * ydp;
-						float yd4 = 6.5f * ydp;
-						float yd5 = 8.5f * ydp;
-						float yd6 = 10.5f * ydp;
-
-						if(betterGlow)
-						{
-							yd1 = 0.5f * ydp;
-							yd2 = 2.0f * ydp;
-							yd3 = 3.7f * ydp;
-							yd4 = 5.2f * ydp;
-							yd5 = 7.1f * ydp;
-							yd6 = 8.5f * ydp;
+						data->fbo->setRenderTarget(data->glowTexture2);
+						if (!data->fbo->validate()) {
+							igiosWarning("renderTargets: renderTarget validate failed with glowTexture2\n");
+							data->fbo->disable();
+							return;
 						}
 
-						float width = float(data->glowSize.x) - .5f;
-						float height = float(data->glowSize.y) - .5f;
+						float xs = float(data->viewport.w) / (data->glowTexture1->getWidth());
+						float ys = float(data->viewport.h) / (data->glowTexture1->getHeight());
+
+						float dp = (1.f / data->viewport.h) * ys;		
+						float d1 = 0.5f * dp;
+						float d2 = 2.5f * dp;
+						float d3 = 4.5f * dp;
+						float d4 = 6.5f * dp;
 
 						float buffer1[] = 
 						{
-							// Position, w,             uv1,              uv2,              uv3,        uv4
-							-.5f, height,  1.f, 1.f,    0.f, ys-yd1,    0.f, ys-yd2,    0.f, ys-yd3,    0.f, ys-yd4,
-							-.5f, -.5f,    1.f, 1.f,    0.f, 0.f-yd1,   0.f, 0.f-yd2,   0.f, 0.f-yd3,   0.f, 0.f-yd4,
-							width, height, 1.f, 1.f,    xs, ys-yd1,     xs, ys-yd2,     xs, ys-yd3,     xs, ys-yd4,
-							width, -.5f,   1.f, 1.f,    xs, 0.f-yd1,    xs, 0.f-yd2,    xs, 0.f-yd3,    xs, 0.f-yd4
+							// Position,          w,    uv1,           uv2,           uv3,           uv4
+							offset, height,  1.f, 1.f,  0.f, 0.f-d1,  0.f, 0.f-d2,  0.f, 0.f-d3,  0.f, 0.f-d4,
+							offset, offset,  1.f, 1.f,  0.f, ys-d1,   0.f, ys-d2,   0.f, ys-d3,   0.f, ys-d4,
+							width,  height,  1.f, 1.f,  xs,  0.f-d1,  xs,  0.f-d2,  xs,  0.f-d3,  xs,  0.f-d4,
+							width,  offset,  1.f, 1.f,  xs,  ys-d1,   xs,  ys-d2,   xs,  ys-d3,   xs,  ys-d4
 						};
+
 						float buffer2[] = 
 						{
-							// Position, w,             uv1,              uv2,              uv3,        uv4
-							-.5f, height,  1.f, 1.f,    0.f, ys+yd1,    0.f, ys+yd2,    0.f, ys+yd3,    0.f, ys+yd4,
-							-.5f, -.5f,    1.f, 1.f,    0.f, 0.f+yd1,   0.f, 0.f+yd2,   0.f, 0.f+yd3,   0.f, 0.f+yd4,
-							width, height, 1.f, 1.f,    xs, ys+yd1,     xs, ys+yd2,     xs, ys+yd3,     xs, ys+yd4,
-							width, -.5f,   1.f, 1.f,    xs, 0.f+yd1,    xs, 0.f+yd2,    xs, 0.f+yd3,    xs, 0.f+yd4
+							// Position,          w,    uv1,           uv2,           uv3,           uv4
+							offset, height,  1.f, 1.f,  0.f, 0.f+d1,  0.f, 0.f+d2,  0.f, 0.f+d3,  0.f, 0.f+d4,
+							offset, offset,  1.f, 1.f,  0.f, ys+d1,   0.f, ys+d2,   0.f, ys+d3,   0.f, ys+d4,
+							width,  height,  1.f, 1.f,  xs,  0.f+d1,  xs,  0.f+d2,  xs,  0.f+d3,  xs,  0.f+d4,
+							width,  offset,  1.f, 1.f,  xs,  ys+d1,   xs,  ys+d2,   xs,  ys+d3,   xs,  ys+d4
 						};
 
-						float buffer1_6[] = 
+						for(int stage = 0; stage < stages; ++stage)
 						{
-							// Position, w,             uv1,              uv2,              uv3,        uv4
-							-.5f, height,  1.f, 1.f,    0.f, ys-yd1,    0.f, ys-yd2,    0.f, ys-yd3,    0.f, ys-yd4,   0.f, ys-yd5,    0.f, ys-yd6,
-							-.5f, -.5f,    1.f, 1.f,    0.f, 0.f-yd1,   0.f, 0.f-yd2,   0.f, 0.f-yd3,   0.f, 0.f-yd4,  0.f, 0.f-yd5,   0.f, 0.f-yd6,
-							width, height, 1.f, 1.f,    xs, ys-yd1,     xs, ys-yd2,     xs, ys-yd3,     xs, ys-yd4,    xs, ys-yd5,     xs, ys-yd6,
-							width, -.5f,   1.f, 1.f,    xs, 0.f-yd1,    xs, 0.f-yd2,    xs, 0.f-yd3,    xs, 0.f-yd4,    xs, 0.f-yd5,    xs, 0.f-yd6
-						};
-						float buffer2_6[] = 
-						{
-							// Position, w,             uv1,              uv2,              uv3,        uv4
-							-.5f, height,  1.f, 1.f,    0.f, ys+yd1,    0.f, ys+yd2,    0.f, ys+yd3,    0.f, ys+yd4,   0.f, ys+yd5,    0.f, ys+yd6,
-							-.5f, -.5f,    1.f, 1.f,    0.f, 0.f+yd1,   0.f, 0.f+yd2,   0.f, 0.f+yd3,   0.f, 0.f+yd4,  0.f, 0.f+yd5,   0.f, 0.f+yd6,
-							width, height, 1.f, 1.f,    xs, ys+yd1,     xs, ys+yd2,     xs, ys+yd3,     xs, ys+yd4,    xs, ys+yd5,     xs, ys+yd6,
-							width, -.5f,   1.f, 1.f,    xs, 0.f+yd1,    xs, 0.f+yd2,    xs, 0.f+yd3,    xs, 0.f+yd4,   xs, 0.f+yd5,    xs, 0.f+yd6
-						};
-
-						float buffer3[] = 
-						{
-							// Position, w,             uv1,              uv2,              uv3,        uv4
-							-.5f, height,  1.f, 1.f,    0.f, ys-yd1,    0.f, ys-yd2,    0.f, ys-yd3,    0.f, ys-yd4,  0.f, ys+yd1,    0.f, ys+yd2,    0.f, ys+yd3,    0.f, ys+yd4,
-							-.5f, -.5f,    1.f, 1.f,    0.f, 0.f-yd1,   0.f, 0.f-yd2,   0.f, 0.f-yd3,   0.f, 0.f-yd4, 0.f, 0.f+yd1,   0.f, 0.f+yd2,   0.f, 0.f+yd3,   0.f, 0.f+yd4,
-							width, height, 1.f, 1.f,    xs, ys-yd1,     xs, ys-yd2,     xs, ys-yd3,     xs, ys-yd4,   xs, ys+yd1,     xs, ys+yd2,     xs, ys+yd3,     xs, ys+yd4,
-							width, -.5f,   1.f, 1.f,    xs, 0.f-yd1,    xs, 0.f-yd2,    xs, 0.f-yd3,    xs, 0.f-yd4,  xs, 0.f+yd1,    xs, 0.f+yd2,    xs, 0.f+yd3,    xs, 0.f+yd4
-						};
-
-						if(singlePass)
-						{
-							device.SetTexture(0, data->glowTexture1);
-
-							frozenbyte::storm::validateDevice(device, data->storm.getLogger());
-							device.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, buffer3, sizeof(float) *  20);
+							glActiveTexture(GL_TEXTURE0 + stage);
+							data->glowTexture1->bind();
+							glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+							glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 						}
-						else
-						{
-							for(int stage = 0; stage < stages; ++stage)
-								device.SetTexture(stage, data->glowTexture1);
 
-							frozenbyte::storm::validateDevice(device, data->storm.getLogger());
-							if(betterGlow)
-								device.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, buffer1_6, sizeof(float) *  16);
-							else
-								device.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, buffer1, sizeof(float) *  12);
+						glScissor(data->scissorRect.x, data->scissorRect.y, data->scissorRect.w, data->scissorRect.h);
+						glEnable(GL_SCISSOR_TEST);
 
-							device.SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-							
-							frozenbyte::storm::validateDevice(device, data->storm.getLogger());
-							if(betterGlow)
-								device.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, buffer2_6, sizeof(float) *  16);
-							else
-								device.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, buffer2, sizeof(float) *  12);
-							device.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-						}
+						renderUP(D3DFVF_XYZRHW|D3DFVF_TEX4, GL_TRIANGLE_STRIP, 2, sizeof(float) * 12, (char *)buffer1);
+
+						glEnable(GL_BLEND);
+
+						renderUP(D3DFVF_XYZRHW|D3DFVF_TEX4, GL_TRIANGLE_STRIP, 2, sizeof(float) * 12, (char *)buffer2);
+
+						glDisable(GL_BLEND);
 					}
-
-					for(int i = 0; i < stages; ++i)
-					{
-						device.SetSamplerState(i, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
-						device.SetSamplerState(i, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
-					}
-
-					frozenbyte::storm::enableMipFiltering(device, 0, stages, true);
 				}
 			}
 
-			frozenbyte::storm::setCulling(device, D3DCULL_CCW);
-			device.SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
-			device.SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
+			frozenbyte::storm::setCulling(CULL_CCW);
+			glDepthMask(GL_TRUE);
+			glEnable(GL_DEPTH_TEST);
 
-			device.SetTexture(0, 0);
-			device.SetTexture(1, 0);
-			device.SetTexture(2, 0);
-			device.SetTexture(3, 0);
-			device.SetPixelShader(0);
+			for (unsigned int i = 0; i < 4; ++i)
+			{
+				glActiveTexture(GL_TEXTURE0 + i);
+				glDisable(GL_TEXTURE_2D);
+				glDisable(GL_TEXTURE_3D);
+				glDisable(GL_TEXTURE_CUBE_MAP);
+				glBindTexture(GL_TEXTURE_2D, 0);
+			}
 
-			device.SetRenderTarget(0, originalFrameBuffer);
-			device.SetDepthStencilSurface(originalDepthBuffer);
-device.SetViewport(&data->viewport);
+			frozenbyte::storm::PixelShader::disable();
+			data->fbo->disable();
+			glViewport(data->viewport.x, data->viewport.y, data->viewport.w, data->viewport.h);
 		}
 
 		if(data->renderOffsets && data->offsetTexture)
 		{
-			device.SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
+			data->fbo->setRenderTarget(data->offsetTexture);
+			if (!data->fbo->validate()) {
+				igiosWarning("renderTargets: renderTarget validate failed with offsetTexture\n");
+				data->fbo->disable();
+				return;
+			}
+			glDepthMask(GL_FALSE);
 
-			CComPtr<IDirect3DSurface9> colorSurface;
-			data->offsetTexture->GetSurfaceLevel(0, &colorSurface);
-			D3DSURFACE_DESC sourceDesc;
-			colorSurface->GetDesc(&sourceDesc);
+			glScissor(data->scissorRect.x, data->scissorRect.y, data->scissorRect.w, data->scissorRect.h);
+			glClearColor(0.5, 0.5, 0.5, 0.5);
+			glEnable(GL_SCISSOR_TEST);
+			glClear(GL_COLOR_BUFFER_BIT);
 
-			D3DRECT rc = { 0 };
-			rc.x1 = data->scissorRect.left;
-			rc.y1 = data->scissorRect.top;
-			rc.x2 = data->scissorRect.right;
-			rc.y2 = data->scissorRect.bottom;
-
-			device.Clear(1, &rc, D3DCLEAR_TARGET, 0x80808080, 1.f, 0);
-			device.Clear(1, &rc, D3DCLEAR_TARGET, 0x80808080, 1.f, 0);
-
-			device.SetScissorRect(&data->scissorRect);
-			device.SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
-
+			// render the distortion effect
 			if(data->particleSystem && data->renderParticles)
 			{
 				Storm3D_ShaderManager::GetSingleton()->setNormalShaders();
@@ -2074,30 +1851,32 @@ device.SetViewport(&data->viewport);
 					data->models.renderDistortion(scene);
 
 				data->particleSystem->RenderImp(&scene, true);
-				frozenbyte::storm::setCulling(device, D3DCULL_CCW);
+				frozenbyte::storm::setCulling(CULL_CCW);
 			}
 
-//device.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
-			device.StretchRect(originalFrameBuffer, &frameRect, colorSurface, &frameRect, D3DTEXF_NONE);
-			device.SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
+			glDepthMask(GL_TRUE);
+			data->fbo->disable();
 		}
 
-		device.SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
+		glDepthMask(GL_FALSE);
 
 		if(data->renderGlows)
 		{
-			frozenbyte::storm::setCulling(device, D3DCULL_NONE);
-			device.SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
-			device.SetRenderTarget(0, renderSurface);
-			device.SetDepthStencilSurface(tempDepthSurface);
-device.SetViewport(&data->viewport);
+			frozenbyte::storm::setCulling(CULL_NONE);
+			glDisable(GL_DEPTH_TEST);
+			data->fbo->setRenderTarget(data->renderTexture);
+			if (!data->fbo->validate()) {
+				igiosWarning("renderTargets: renderTarget validate failed with renderTexture\n");
+				data->fbo->disable();
+				return;
+			}
+			glViewport(data->viewport.x, data->viewport.y, data->viewport.w, data->viewport.h);
 
-			Storm3D_SurfaceInfo info = data->storm.GetScreenSize();
-			float width = float(info.width) - .5f;
-			float height = float(info.height) - .5f;
-			float textureOffset = -1.f;
-			float glowWidth = 0.f;
-			float glowHeight = 0.f;
+			float width = data->viewport.w;
+			float height = data->viewport.h;
+			float textureOffset = 0.f;
+			float glowWidth = float(data->viewport.w) / data->glowTexture2->getWidth();
+			float glowHeight = float(data->viewport.h) / data->glowTexture2->getHeight();
 
 			if(data->halfRendering)
 			{
@@ -2105,105 +1884,93 @@ device.SetViewport(&data->viewport);
 				height *= 0.5f;
 			}
 
-			{
-				CComPtr<IDirect3DSurface9> glowSourceSurface;
-				data->glowTexture2->GetSurfaceLevel(0, &glowSourceSurface);
-				D3DSURFACE_DESC sourceDesc;
-				glowSourceSurface->GetDesc(&sourceDesc);
-				glowWidth = float(data->glowSize.x) / (sourceDesc.Width);
-				glowHeight = float(data->glowSize.y) / (sourceDesc.Height);
-			}
-
 			float glowTex1[] = 
 			{
-				textureOffset, height,         1.f, 1.f, 0.f, glowHeight,
-				textureOffset, textureOffset,  1.f, 1.f, 0.f, 0.f,
-				width, height,                 1.f, 1.f, glowWidth, glowHeight,
-				width, textureOffset,          1.f, 1.f, glowWidth, 0.f
+				textureOffset, height,         1.f, 1.f, 0.f, 0.f,
+				textureOffset, textureOffset,  1.f, 1.f, 0.f, glowHeight,
+				width, height,                 1.f, 1.f, glowWidth, 0.f,
+				width, textureOffset,          1.f, 1.f, glowWidth, glowHeight
 			};
 
-			device.SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-			device.SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+			glEnable(GL_BLEND);
 
-			device.SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-			
-			device.SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-			device.SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_DIFFUSE);
-			device.SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
-			device.SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
-			device.SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
-			device.SetTexture(0, data->glowTexture2);
+			glActiveTexture(GL_TEXTURE1);
+			glDisable(GL_TEXTURE_2D);
+			glDisable(GL_TEXTURE_3D);
+			glDisable(GL_TEXTURE_CUBE_MAP);
 
-			if(data->renderGlowDebug)
+			glActiveTexture(GL_TEXTURE0);
+			data->glowTexture2->bind();
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_TEXTURE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_TEXTURE); //PRIMARY_COLOR);
+			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+
+			if (data->renderGlowDebug)
 			{
-				device.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+				glDisable(GL_BLEND);
 			}
 
-			frozenbyte::storm::enableMipFiltering(device, 0, 0, false);
+			frozenbyte::storm::PixelShader::disable();
+			frozenbyte::storm::VertexShader::disable();
 
-			device.SetPixelShader(0);
-			device.SetVertexShader(0);
-			device.SetFVF(D3DFVF_XYZRHW|D3DFVF_TEX1);
-			frozenbyte::storm::validateDevice(device, data->storm.getLogger());
 
 			// Transparency
 			if(data->glowTransparencyFactor > 0.001f)
 			{
-				int c = unsigned char(data->glowTransparencyFactor * 255.f);
-				if(c > 255)
-					c = 255;
-				else if(c < 1)
+				float c = data->glowTransparencyFactor;
+				if(c > 1)
 					c = 1;
-				DWORD color = c << 24 | c << 16 | c << 8 | c;
-				device.SetRenderState(D3DRS_BLENDFACTOR, color);
+				else if(c < 0)
+					c = 0;
+				glBlendColor(1, 1, 1, 1 - c);
 
-				device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_BLENDFACTOR);
-				device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVBLENDFACTOR);
-				device.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, glowTex1, sizeof(float) *  6);
+				glBlendFunc(GL_CONSTANT_COLOR, GL_ONE); //_MINUS_CONSTANT_COLOR);
+				renderUP(D3DFVF_XYZRHW|D3DFVF_TEX1, GL_TRIANGLE_STRIP, 2, sizeof(float) * 6, (char *)glowTex1);
 			}
 
 			// Additive
 			if(data->glowAdditiveFactor > 0.001f)
 			{
-				int c = unsigned char(data->glowAdditiveFactor * 255.f);
+				int c = (int)(data->glowAdditiveFactor * 255.f);
 				if(c > 255)
 					c = 255;
 				else if(c < 1)
 					c = 1;
-				DWORD color = c << 24 | c << 16 | c << 8 | c;
-				device.SetRenderState(D3DRS_TEXTUREFACTOR, color);
+				GLint color[4];
+				color[0] = color[1] = color[2] = color[3] = c;
+				glTexEnviv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
 
-				device.SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-				device.SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
-				device.SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TFACTOR);
-				device.SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
-				device.SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
-				device.SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+				glActiveTexture(GL_TEXTURE0);
+				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+				glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_TEXTURE);
+				glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_TEXTURE); //CONSTANT);
+				glTexEnvi(GL_TEXTURE_ENV, GL_SRC1_RGB, GL_CONSTANT);
+				glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+				glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
 
-				device.SetRenderState(D3DRS_SRCBLEND, D3DBLEND_INVDESTCOLOR);
-				device.SetRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE);
-				device.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, glowTex1, sizeof(float) *  6);
+				glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ONE);
+				renderUP(D3DFVF_XYZRHW|D3DFVF_TEX1, GL_TRIANGLE_STRIP, 2, sizeof(float) * 6, (char *)glowTex1);
 			}
 
-			device.SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
-			device.SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
-			frozenbyte::storm::enableMipFiltering(device, 0, 0, true);
-
-			device.SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
-			device.SetRenderTarget(0, originalFrameBuffer);
-			device.SetDepthStencilSurface(originalDepthBuffer);
-			frozenbyte::storm::setCulling(device, D3DCULL_CCW);
-device.SetViewport(&data->viewport);
+			glEnable(GL_DEPTH_TEST);
+			data->fbo->disable();
+			frozenbyte::storm::setCulling(CULL_CCW);
+			glViewport(data->viewport.x, data->viewport.y, data->viewport.w, data->viewport.h);
 		}
 
-		device.SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
+		glDepthMask(GL_TRUE);
 	}
 
 	Storm3D_ShaderManager::GetSingleton()->setNormalShaders();
 
-	device.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-	device.SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
-	device.SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
+	glDisable(GL_BLEND);
+	glDepthMask(GL_TRUE);
+	glEnable(GL_DEPTH_TEST);
 
 	if(data->particleSystem && active_visibility == 0)
 		data->particleSystem->Clear();
@@ -2211,77 +1978,39 @@ device.SetViewport(&data->viewport);
 	data->fakeLights.clear();
 }
 
+//! Render base
+/*!
+	\param scene scene
+*/
 void Storm3D_TerrainRenderer::renderBase(Storm3D_Scene &scene)
 {
-	IDirect3DDevice9 &device = *data->storm.GetD3DDevice();
-
 	Storm3D_Camera &camera = static_cast<Storm3D_Camera &> (*scene.GetCamera());
 	camera.Apply();
 
-	device.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-	device.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-	device.SetRenderState(D3DRS_SPECULARENABLE, FALSE);
-	device.SetRenderState(D3DRS_NORMALIZENORMALS, FALSE);
-	device.SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+	glDisable(GL_BLEND);
+	glDisable(GL_ALPHA_TEST);
+	glDisable(GL_DEPTH_TEST);
+	//device.SetRenderState(D3DRS_SPECULARENABLE, FALSE);
+	glDisable(GL_NORMALIZE);
+	glPolygonMode(GL_FRONT, GL_FILL);
 
-	D3DMATERIAL9 material = { 0 };
-	material.Diffuse.r = material.Diffuse.g = material.Diffuse.b = 1.f;
-	material.Ambient.r = material.Ambient.g = material.Ambient.b = 1.f;
+	frozenbyte::storm::setCulling(CULL_NONE);
 
-	device.SetMaterial(&material);
-	device.SetRenderState(D3DRS_AMBIENT, data->ambient.GetAsD3DCompatibleARGB());
-	frozenbyte::storm::setCulling(device, D3DCULL_NONE);
-
-	D3DMATRIX dm = { 0 };
-	dm._11 = 1.f;
-	dm._22 = 1.f;
-	dm._33 = 1.f;
-	dm._44 = 1.f;
+	D3DXMATRIX dm;
+	D3DXMatrixIdentity(dm);
 
 	data->models.setCollisionRendering(data->renderCollision);
 	data->models.setForcedDirectional(data->forcedDirectionalLightEnabled, data->forcedDirectionalLightDirection, data->forcedDirectionalLightColor);
 
-	bool atiShader = false;
-	if(Storm3D_Spotlight::getSpotType() == Storm3D_Spotlight::AtiBuffer || Storm3D_Spotlight::getSpotType() == Storm3D_Spotlight::AtiFloatBuffer)
-		atiShader = true;
-
 	Storm3D_ShaderManager::GetSingleton()->setNormalShaders();
 
-	Storm3D_SurfaceInfo info = data->storm.GetScreenSize();
-	float width = float(info.width) - .5f;
-	float height = float(info.height) - .5f;
-
-	// HAX
-	if(data->halfRendering)
-	{
-		//width *= 2.f;
-		//height *= 2.f;
-	}
+	float width = float(data->renderTexture->getWidth()) - .5f;
+	float height = float(data->renderTexture->getHeight()) - .5f;
 
 	float textureOffset = -1.f;
-/*
-	float glowWidth = 0.f;
-	float glowHeight = 0.f;
 
-	if(data->glowTexture2)
-	{
-		CComPtr<IDirect3DSurface9> glowSourceSurface;
-		data->glowTexture2->GetSurfaceLevel(0, &glowSourceSurface);
-		D3DSURFACE_DESC sourceDesc;
-		glowSourceSurface->GetDesc(&sourceDesc);
-		glowWidth = float(data->glowSize.x) / (sourceDesc.Width);
-		glowHeight = float(data->glowSize.y) / (sourceDesc.Height);
-	}
-
-	float glowTex1[] = 
-	{
-		textureOffset, height,         1.f, 1.f, 0.f, glowHeight,
-		textureOffset, textureOffset,  1.f, 1.f, 0.f, 0.f,
-		width, height,                 1.f, 1.f, glowWidth, glowHeight,
-		width, textureOffset,          1.f, 1.f, glowWidth, 0.f
-	};
-*/
 	textureOffset = -.5f;
+    /*
 	float bufferTex2[] = 
 	{
 		textureOffset, height,         1.f, 1.f, 0.f, 1.f,
@@ -2297,51 +2026,53 @@ void Storm3D_TerrainRenderer::renderBase(Storm3D_Scene &scene)
 		width, height,                 1.f, 1.f, 1.f, 1.f, 1.f, 1.f,
 		width, textureOffset,          1.f, 1.f, 1.f, 0.f, 1.f, 0.f
 	};
+	*/
 
-	device.SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
-	device.SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
-	device.SetVertexShader(0);
-	device.SetFVF(D3DFVF_XYZRHW|D3DFVF_TEX1);
+	glDepthMask(GL_FALSE);
+	glDisable(GL_DEPTH_TEST);
+	frozenbyte::storm::VertexShader::disable();
+	applyFVF(D3DFVF_XYZRHW|D3DFVF_TEX1, 6 * sizeof(float));
 
 	Storm3D_ShaderManager::GetSingleton()->setNormalShaders();
 
-	device.SetViewport(&data->viewportSizes[0]);
-	device.SetScissorRect(&data->scissorRectSizes[0]);
-	device.SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
+	glViewport(data->viewportSizes[0].x, data->viewportSizes[0].y, data->viewportSizes[0].w, data->viewportSizes[0].h);
+	glScissor(data->scissorRectSizes[0].x, data->scissorRectSizes[0].y, data->scissorRectSizes[0].w, data->scissorRectSizes[0].h);
+	glEnable(GL_SCISSOR_TEST);
 
+/*  This made the bottom black bar in in-game movies disappear. FIXME?
 	if(data->movieAspect && data->halfRendering)
-		device.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
-
-
+		glDisable(GL_SCISSOR_TEST);
+*/
 	// Render map
 	if(data->renderMode == IStorm3D_TerrainRenderer::Normal || data->renderMode == IStorm3D_TerrainRenderer::LightOnly)
 	{
-		device.SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-		device.SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
-		//frozenbyte::storm::enableMipFiltering(device, 0, 0, false);
+		for (unsigned int i = 0; i < 6; i++)
+		{
+			glActiveTexture(GL_TEXTURE0 + i);
+			glDisable(GL_TEXTURE_2D);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			//			glDisable(GL_TEXTURE_3D);
+			//			glDisable(GL_TEXTURE_CUBE_MAP);
+		}
+		/* causes gui to turn black in spider trouble
+		glActiveTexture(GL_TEXTURE3);
+		glEnable(GL_TEXTURE_2D);
+		*/
 
+		glDisable(GL_BLEND);
+		glDisable(GL_ALPHA_TEST);
+		//glEnable(GL_ALPHA_TEST);
 
-// for blackedge...
-//device.SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_BORDER);
-//device.SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_BORDER);
-//DWORD blackCol = 0xff000000; // ARGB
-//device.SetSamplerState(0, D3DSAMP_BORDERCOLOR, blackCol);
-
-		device.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-		device.SetRenderState(D3DRS_ALPHATESTENABLE, FALSE);
-
-		float offsetWidth = 0.f;
-		float offsetHeight = 0.f;
+		float offsetWidth = 1.f;
+		float offsetHeight = 1.f;
 		{
 			if(data->offsetTexture)
 			{
-				CComPtr<IDirect3DSurface9> colorSurface;
-				data->offsetTexture->GetSurfaceLevel(0, &colorSurface);
-				D3DSURFACE_DESC sourceDesc;
-				colorSurface->GetDesc(&sourceDesc);
-
-				offsetWidth = float(data->renderSize.x) / sourceDesc.Width;
-				offsetHeight = float(data->renderSize.y) / sourceDesc.Height;
+				offsetWidth = float(data->renderSize.x) / data->offsetTexture->getWidth();
+				offsetHeight = float(data->renderSize.y) / data->offsetTexture->getHeight();
+				// FIXME: This doesn't make any fucking sense since the offset texture is only partially rendered
+				offsetWidth = offsetWidth > 0.5f ? 1 : 0.5f;
+				offsetHeight = offsetHeight > 0.5f ? 1 : 0.5f;
 			}
 		}
 
@@ -2355,27 +2086,37 @@ void Storm3D_TerrainRenderer::renderBase(Storm3D_Scene &scene)
 			offsetHeight *= 0.5f;
 		}
 
-		float bufferTex[] = 
+		float bufferTex[] =
 		{
-			textureOffset, height,         1.f, 1.f, 0.f, yv, 0.f, offsetHeight,0.f, 1.f,
-			textureOffset, textureOffset,  1.f, 1.f, 0.f, 0.f,0.f, 0.f,0.f, 0.f,
-			width, height,                 1.f, 1.f, xv,  yv, offsetWidth, offsetHeight,1.f, 1.f,
-			width, textureOffset,          1.f, 1.f, xv,  0.f,offsetWidth, 0.f,1.f, 0.f
+			textureOffset, height,         1.f, 1.f, 0.f, yv,  0.f,         offsetHeight, 0.f, 1.f,
+			textureOffset, textureOffset,  1.f, 1.f, 0.f, 0.f, 0.f,         0.f,          0.f, 0.f,
+			width,         height,         1.f, 1.f, xv,  yv,  offsetWidth, offsetHeight, 1.f, 1.f,
+			width,         textureOffset,  1.f, 1.f, xv,  0.f, offsetWidth, 0.f,          1.f, 0.f
 		};
+
+		glActiveTexture(GL_TEXTURE0);
+		glEnable(GL_TEXTURE_2D);
+		// renderTexture has everything
+		data->renderTexture->bind();
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+		if(data->renderOffsets && data->offsetTexture)
+		{
+			glActiveTexture(GL_TEXTURE1);
+			glEnable(GL_TEXTURE_2D);
+			// offsetTexture has distortion displacement texture
+			data->offsetTexture->bind();
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+			if(data->offsetFade)
+				data->offsetFade->Apply(2);
+		}
+
 
 		if(!data->renderBlackWhite && (data->colorEffectOn || data->renderOffsets))
 		{
-			float c = data->contrast;
-			float b = data->brightness;
-			const COL &col = data->colorFactors;
-
-			float c2[4] = { c, c, c, c };
-			float c3[4] = { b * (col.r + 1.f), b * (col.g + 1.f), b * (col.b + 1.f), 0 };
-			float c4[4] = { col.r, col.g, col.b, 1.f };
-
-			device.SetPixelShaderConstantF(2, c2, 1);
-			device.SetPixelShaderConstantF(3, c3, 1);
-			device.SetPixelShaderConstantF(4, c4, 1);
 
 			if(data->renderOffsets && data->offsetTexture)
 			{
@@ -2386,6 +2127,19 @@ void Storm3D_TerrainRenderer::renderBase(Storm3D_Scene &scene)
 			}
 			else
 				data->colorEffectShader.apply();
+
+			float c = data->contrast;
+			float b = data->brightness;
+			const COL &col = data->colorFactors;
+
+			float c2[4] = { c, c, c, c };
+			float c3[4] = { b * (col.r + 1.f), b * (col.g + 1.f), b * (col.b + 1.f), 0 };
+			float c4[4] = { col.r, col.g, col.b, 1.f };
+
+			glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 2, c2);
+			glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 3, c3);
+			glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 4, c4);
+			
 		}
 		else if(data->renderBlackWhite)
 		{
@@ -2393,52 +2147,66 @@ void Storm3D_TerrainRenderer::renderBase(Storm3D_Scene &scene)
 		}
 		else
 		{
-			device.SetPixelShader(0);
-			device.SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-			device.SetTextureStageState(0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
-			device.SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
-			device.SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
-			device.SetTextureStageState(1, D3DTSS_COLOROP, D3DTOP_DISABLE);
-		}	
+			frozenbyte::storm::PixelShader::disable();
+			glActiveTexture(GL_TEXTURE0);
+			glEnable(GL_TEXTURE_2D);
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_TEXTURE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_TEXTURE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
+			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+			/*
+			data->colorEffectShader.apply();
 
-		device.SetSamplerState(1, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-		device.SetSamplerState(1, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+			float c = data->contrast;
+			float b = data->brightness;
+			const COL &col = data->colorFactors;
 
-		frozenbyte::storm::enableMinMagFiltering(device, 0, 1, false);
-		frozenbyte::storm::enableMipFiltering(device, 0, 1, false);
+			float c2[4] = { c, c, c, c };
+			float c3[4] = { b * (col.r + 1.f), b * (col.g + 1.f), b * (col.b + 1.f), 0 };
+			float c4[4] = { col.r, col.g, col.b, 1.f };
 
-		device.SetTexture(0, data->renderTexture);
-		device.SetTexture(1, data->offsetTexture);
-		if(data->offsetFade)
-			data->offsetFade->Apply(2);
+			glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 2, c2);
+			glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 3, c3);
+			glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 4, c4);
+			*/
+		}
 
 		float offsetScale = 0.06f;
 		offsetScale *= data->renderSize.x / 1024.f;
 		if(data->halfRendering)
 			offsetScale *= 0.5f;
 		float offsetValues[4] = { offsetScale, offsetScale, offsetScale, offsetScale };
-		device.SetPixelShaderConstantF(5, offsetValues, 1);
+		glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 5, offsetValues);
 
-		device.SetFVF(D3DFVF_XYZRHW|D3DFVF_TEX3);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-		frozenbyte::storm::validateDevice(device, data->storm.getLogger());
-		device.DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, bufferTex, sizeof(float) *  10);
+		glDisableClientState(GL_COLOR_ARRAY);
+		glDisableClientState(GL_NORMAL_ARRAY);
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(2, GL_FLOAT, sizeof(float) * 10, bufferTex);
+		for (unsigned int i = 0; i < 4; i++) {
+			glClientActiveTexture(GL_TEXTURE0 + i);
+			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+			glTexCoordPointer(2, GL_FLOAT, sizeof(float) * 10, bufferTex + (4 + i * 2));
+		}
 
-		device.SetFVF(D3DFVF_XYZRHW|D3DFVF_TEX1);
-		device.SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
-		device.SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
-		device.SetSamplerState(1, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
-		device.SetSamplerState(1, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
 
-		frozenbyte::storm::enableMinMagFiltering(device, 0, 1, true);
-		frozenbyte::storm::enableMipFiltering(device, 0, 1, true);
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
 
-		device.SetPixelShader(0);
+		glOrtho(0, data->renderSize.x, data->renderSize.y, 0, -1, 1);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+		frozenbyte::storm::PixelShader::disable();
 	}
 
-	device.SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
-	device.SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
-	device.SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
+	glDisable(GL_BLEND);
+	glDepthMask(GL_TRUE);
+	glEnable(GL_DEPTH_TEST);
 
 	data->fakeLights.clear();
 
@@ -2447,31 +2215,101 @@ void Storm3D_TerrainRenderer::renderBase(Storm3D_Scene &scene)
 	if(data->renderFakeShadowDebug && data->fakeSpots[0])
 		data->fakeSpots[0]->debugRender();
 
-	device.SetRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
-	frozenbyte::storm::setCulling(device, D3DCULL_CCW);
+	glDisable(GL_SCISSOR_TEST);
+	frozenbyte::storm::setCulling(CULL_CCW);
+
+	// debugging code
+	if (false) {
+		glErrors();
+		glPushAttrib(GL_ALL_ATTRIB_BITS);
+		glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
+
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
+
+		glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glLoadIdentity();
+
+		for (int i = 1; i < 8; i++)
+		{
+			glActiveTexture(GL_TEXTURE0 + i);
+			glDisable(GL_TEXTURE_2D);
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
+
+		glActiveTexture(GL_TEXTURE0);
+		glEnable(GL_TEXTURE_2D);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_RGB, GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SRC0_ALPHA, GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+		data->glowTexture2->bind();
+		//data->offsetTexture->bind();
+		//data->lightManager.setDebug();
+		//data->terrainTexture->bind();
+		//data->renderTexture->bind();
+		//data->fakeTexture->bind();
+		glErrors();
+
+		glErrors();
+		frozenbyte::storm::PixelShader::disable();
+		frozenbyte::storm::VertexShader::disable();
+//		glTexEnvi(GL_TEXTURE_2D, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+		glErrors();
+		glDisable(GL_CULL_FACE);
+		glDisable(GL_BLEND);
+		glDisable(GL_ALPHA_TEST);
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_SCISSOR_TEST);
+		glDisable(GL_FOG);
+		glDepthMask(GL_FALSE);
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+		glErrors();
+		float x2 = 300, y2 = 300;
+		VXFORMAT_2D buffer[4];
+		DWORD color = 0xFFFFFFFF;
+		buffer[0] = VXFORMAT_2D(VC3(0, y2, 1.f),  1.f, color, VC2(0.f, 1.f));
+		buffer[1] = VXFORMAT_2D(VC3(0, 0, 1.f),   1.f, color, VC2(0.f, 0.f));
+		buffer[2] = VXFORMAT_2D(VC3(x2, y2, 1.f), 1.f, color, VC2(1.f, 1.f));
+		buffer[3] = VXFORMAT_2D(VC3(x2, 0, 1.f),  1.f, color, VC2(1.f, 0.f));
+		renderUP(FVF_VXFORMAT_2D, GL_TRIANGLE_STRIP, 2, sizeof(VXFORMAT_2D), (char *) buffer);
+
+		glMatrixMode(GL_MODELVIEW);
+		glPopMatrix();
+		glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
+
+		glPopClientAttrib();
+		glPopAttrib();
+		glErrors();
+	}
+
 }
 
+//! Render terrain
+/*!
+	\param mode render mode
+	\param scene scene
+	\param spot spotlight
+	\param fakeSpot fake spotlight
+*/
 void Storm3D_TerrainRenderer::render(IStorm3D_TerrainRendererBase::RenderMode mode, Storm3D_Scene &scene, Storm3D_Spotlight *spot, Storm3D_FakeSpotlight *fakeSpot)
 {
 	Storm3D_Camera &camera = *static_cast<Storm3D_Camera *> (scene.GetCamera());
-	IDirect3DDevice9 &device = *data->storm.GetD3DDevice();
-
-	bool atiShader = false;
-	int spotType = Storm3D_Spotlight::getSpotType();
-	if(spotType == Storm3D_Spotlight::AtiBuffer || spotType == Storm3D_Spotlight::AtiFloatBuffer)
-		atiShader = true;
 
 	if(mode == SpotBuffer && spot)
 	{
-		if(spotType == Storm3D_Spotlight::AtiBuffer)
-			device.SetTexture(1, data->depthLookupTexture);
-
+		// removing this will break shadows
 		if(data->renderModels)
 			data->models.renderDepth(scene, camera, *spot, spot->getNoShadowModel());
 
 		if(data->renderHeightmap)
-			data->heightMap.renderDepth(scene, &camera, Storm3D_TerrainHeightmap::Depth, Storm3D_TerrainHeightmap::Nv, spot->getSpotType(), spot);
-
+			data->heightMap.renderDepth(scene, &camera, Storm3D_TerrainHeightmap::Depth, spot->getType(), spot);
 	}
 	else if((mode == SpotProjectionSolid || mode == SpotProjectionDecal || mode == SpotProjectionAlpha) && spot)
 	{
@@ -2484,54 +2322,48 @@ void Storm3D_TerrainRenderer::render(IStorm3D_TerrainRendererBase::RenderMode mo
 			return;
 
 		if(spot->featureEnabled(IStorm3D_Spotlight::Fade))
-			device.SetTexture(3, data->spotFadeTexture);
+		{
+			glActiveTexture(GL_TEXTURE3);
+			data->spotFadeTexture->bind();
+		}
 		else
-			device.SetTexture(3, data->noFadeTexture);
+		{
+			glActiveTexture(GL_TEXTURE3);
+			data->noFadeTexture->bind();
+		}
 
-		frozenbyte::storm::enableMipFiltering(device, 1, 1, false);
-
+		// removing this breaks spotlight shadows
 		if(mode == SpotProjectionSolid)
 		{
-			spot->applySolidShader(data->renderSpotShadows);
-
 			if(data->renderModels)
 				data->models.renderProjection(Storm3D_TerrainModels::SolidOnly, scene, *spot);
 
 			spot->applyTerrainShader(data->renderSpotShadows);
 			if(data->renderHeightmap)
 			{
-				Storm3D_TerrainHeightmap::RenderMode mode = Storm3D_TerrainHeightmap::Projection;
-				Storm3D_TerrainHeightmap::RenderType type = Storm3D_TerrainHeightmap::Nv;
-				if(atiShader)
-					type = Storm3D_TerrainHeightmap::Ati;
-
 				Storm3D_ShaderManager::GetSingleton()->SetObjectDiffuse(COL(1.f, 1.f, 1.f));
-				device.SetTexture(2, data->terrainTexture);
-				device.SetVertexShaderConstantF(18, data->terrainTextureProjection, 4);
+				glActiveTexture(GL_TEXTURE2);
+				data->terrainTexture->bind();
+				for (int i = 0; i < 4; i++) {
+					glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, 18 + i, data->terrainTextureProjection.raw + (4 * i));
+				}
 
-				frozenbyte::storm::enableMipFiltering(device, 2, 2, false);
-				data->heightMap.renderDepth(scene, &spotCamera, mode, type, spot->getType(), spot);
-				frozenbyte::storm::enableMipFiltering(device, 2, 2, true);
+				data->heightMap.renderDepth(scene, &spotCamera, Storm3D_TerrainHeightmap::Projection, spot->getType(), spot);
 			}
 		}
 		else if(mode == SpotProjectionDecal)
 		{
-			spot->applyNormalShader(data->renderSpotShadows);
 			if(data->renderDecals)
 				data->decalSystem.renderProjection(scene, spot);
 		}
 		else
 		{
-			spot->applyNormalShader(data->renderSpotShadows);
 			if(data->renderModels)
 				data->models.renderProjection(Storm3D_TerrainModels::AlphaOnly, scene, *spot);
 		}
-
-		frozenbyte::storm::enableMipFiltering(device, 1, 1, true);
 	}
 	else if(mode == FakeSpotBuffer && fakeSpot)
 	{
-		//device.SetTexture(1, data->fake2DFadeTexture);
 		bool needRender = false;
 
 		if(data->renderModels)
@@ -2555,55 +2387,70 @@ void Storm3D_TerrainRenderer::render(IStorm3D_TerrainRendererBase::RenderMode mo
 	}
 }
 
+//! Release dynamic resources
 void Storm3D_TerrainRenderer::releaseDynamicResources()
 {
-	SpotList::iterator its = data->spots.begin();
-	for(; its != data->spots.end(); ++its)
-		(*its)->releaseDynamicResources();
-
 	FakeSpotList::iterator itf = data->fakeSpots.begin();
 	for(; itf != data->fakeSpots.end(); ++itf)
 		(*itf)->releaseDynamicResources();
 }
 
+//! Recreate dynamic resources
 void Storm3D_TerrainRenderer::recreateDynamicResources()
 {
 	data->forceDraw = true;
-
-	SpotList::iterator its = data->spots.begin();
-	for(; its != data->spots.end(); ++its)
-		(*its)->recreateDynamicResources();
 
 	FakeSpotList::iterator itf = data->fakeSpots.begin();
 	for(; itf != data->fakeSpots.end(); ++itf)
 		(*itf)->recreateDynamicResources();
 }
 
+//! Query sizes
+/*!
+	\param storm Storm3D
+	\param enableGlow is glow enabled
+*/
 void Storm3D_TerrainRenderer::querySizes(Storm3D &storm, bool enableGlow)
 {
 	Storm3D_TerrainRendererData::querySizes(storm, enableGlow);
 }
 
+//! Create render buffers
+/*!
+	\param storm Storm3D
+	\param lightmapQuality lightmap quality
+*/
 void Storm3D_TerrainRenderer::createRenderBuffers(Storm3D &storm, int lightmapQuality)
 {
 	Storm3D_TerrainRendererData::createTextures(storm, lightmapQuality);
 }
 
+//! Free render buffers
 void Storm3D_TerrainRenderer::freeRenderBuffers()
 {
 	Storm3D_TerrainRendererData::freeTextures();
 }
 
+//! Create secondary render buffers
+/*!
+	\param storm Storm3D
+	\param enableGlow is glow enabled
+*/
 void Storm3D_TerrainRenderer::createSecondaryRenderBuffers(Storm3D &storm, bool enableGlow)
 {
 	Storm3D_TerrainRendererData::createSecondaryTextures(storm, enableGlow);
 }
 
+//! Free secondary render buffers
 void Storm3D_TerrainRenderer::freeSecondaryRenderBuffers()
 {
 	Storm3D_TerrainRendererData::freeSecondaryTextures();
 }
 
+//! Are required buffers present?
+/*!
+	\return true if necessary buffers exist
+*/
 bool Storm3D_TerrainRenderer::hasNeededBuffers()
 {
 	if(!Storm3D_TerrainRendererData::renderTexture)

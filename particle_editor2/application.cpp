@@ -40,6 +40,8 @@
 	#include "../physics/spherical_joint.h"
 #endif
 
+#pragma comment(lib, "storm3dv2.lib")
+
 #include <fstream>
 #include <windowsx.h>
 #include "parseutil.h"
@@ -155,7 +157,6 @@ using namespace frozenbyte::editor;
 			params.push_back(ParamDesc("scale", IDC_SCALE_X, IDC_SCALE_Y, IDC_SCALE_Z));
 			params.push_back(ParamDesc("rotation", IDC_ROTATION_X, IDC_ROTATION_Y, IDC_ROTATION_Z));
 			params.push_back(ParamDesc("direction_from_normals", IDC_DIRECTION_NORMALS, PARAM_INT));
-			params.push_back(ParamDesc("direction_from_binormals", IDC_DIRECTION_BINORMALS, PARAM_INT));
 			params.push_back(ParamDesc("positions_between_vertices", IDC_POSITIONS_BETWEEN_VERTICES, PARAM_INT));
 			params.push_back(ParamDesc("plane_positions", IDC_PLANE_POSITIONS, PARAM_INT));
 			params.push_back(ParamDesc("first_vertex", IDC_FIRST_VERTEX, PARAM_INT));
@@ -209,11 +210,6 @@ using namespace frozenbyte::editor;
 			params.push_back(ParamDesc("xz_slow_factor", IDC_PARTICLE_XZ_SLOW_FACTOR, PARAM_FLOAT, "0.40"));
 			params.push_back(ParamDesc("unit_collision", IDC_UNIT_COLLISION, PARAM_BOOL, "1"));
 
-#ifdef PROJECT_PARTICLE_EDITOR
-			std::string soundMaterialString;
-			params.push_back(ParamDesc("sound_material", IDC_SOUND_MATERIAL, soundMaterialString, PARAM_SELECTION));
-#else
-			// what is this? crashes at particle editor startup.
 			util::SoundMaterialParser materialParser;
 			std::string soundMaterialString;
 			for(int i = 0; i < materialParser.getMaterialAmount(); ++i)
@@ -225,7 +221,6 @@ using namespace frozenbyte::editor;
 			}
 
 			params.push_back(ParamDesc("sound_material", IDC_SOUND_MATERIAL, soundMaterialString, PARAM_SELECTION));
-#endif
 		}
 	};
 
@@ -240,14 +235,6 @@ using namespace frozenbyte::editor;
 		std::vector<ParamDesc> params;
 		SideGravityForceParamDesc() {
 			params.push_back(ParamDesc("sidegravity", IDC_SIDEGRAVITY, PARAM_FLOAT));
-		}
-	};
-
-	struct GravityPointForceParamDesc {
-		std::vector<ParamDesc> params;
-		GravityPointForceParamDesc() {
-			params.push_back(ParamDesc("gravity", IDC_GRAVITYPOINT, PARAM_FLOAT));
-			params.push_back(ParamDesc("point", IDC_GRAVITYPOINT_POS_X, IDC_GRAVITYPOINT_POS_Y, IDC_GRAVITYPOINT_POS_Z));
 		}
 	};
 
@@ -291,7 +278,6 @@ using namespace frozenbyte::editor;
 //	static CouldParticleSystemParamDesc theCloudParticleSystemParamDesc;
 	static GravityForceParamDesc theGravityForceParamDesc;
 	static SideGravityForceParamDesc theSideGravityForceParamDesc;
-	static GravityPointForceParamDesc theGravityPointForceParamDesc;
 	static DragForceParamDesc theDragForceParamDesc;
 	static WindForceParamDesc theWindForceParamDesc;
 
@@ -637,8 +623,6 @@ using namespace frozenbyte::editor;
 					fileName = "editor/particles/wind.txt";
 				else if(selection == 3)
 					fileName = "editor/particles/sidegravity.txt";
-				else if(selection == 4)
-					fileName = "editor/particles/gravitypoint.txt";
 				else
 				{
 					assert(0);
@@ -740,11 +724,6 @@ using namespace frozenbyte::editor;
 			else if(className == "sidegravity") {
 				boost::shared_ptr<ParamUI> p(new ParamUI(dialog, IDD_SIDEGRAVITY,
 					force, theSideGravityForceParamDesc.params));				
-				forceUI.swap(p);
-			}
-			else if(className == "gravitypoint") {
-				boost::shared_ptr<ParamUI> p(new ParamUI(dialog, IDD_GRAVITYPOINT,
-					force, theGravityPointForceParamDesc.params));				
 				forceUI.swap(p);
 			}
 			else if(className == "drag") {
@@ -1152,7 +1131,6 @@ using namespace frozenbyte::editor;
 					ComboBox_AddString(GetDlgItem(hwnd, IDC_FORCE_TYPE), "drag force");				
 					ComboBox_AddString(GetDlgItem(hwnd, IDC_FORCE_TYPE), "wind force");				
 					ComboBox_AddString(GetDlgItem(hwnd, IDC_FORCE_TYPE), "sidegravity force");
-					ComboBox_AddString(GetDlgItem(hwnd, IDC_FORCE_TYPE), "gravitypoint force");
 					ComboBox_SetCurSel(GetDlgItem(hwnd, IDC_FORCE_TYPE), 0);
 				} break;
 			case WM_COMMAND:
@@ -2129,7 +2107,7 @@ Application::~Application()
 
 					actor->enableFeature(physics::ActorBase::DISABLE_GRAVITY, true);
 					actor->setMass(30.f);
-					actor->setLinearDamping(3.f);
+					actor->setDamping(3.f, 0.f);
 
 					if(i == BOX_AMOUNT - 1)
 						actor->setMass(70.f);
@@ -2722,8 +2700,8 @@ if(data->storm.scene)
 		if(data->storm.terrain)
 		{
 #ifdef PHYSICS_PHYSX
-			//data->storm.terrain->getRenderer().enableFeature(IStorm3D_TerrainRenderer::Collision, isCheckEnabled(data->sharedData.dialog, IDC_GLOW));
-			//data->storm.terrain->getRenderer().enableFeature(IStorm3D_TerrainRenderer::Wireframe, isCheckEnabled(data->sharedData.dialog, IDC_GLOW));
+			data->storm.terrain->getRenderer().enableFeature(IStorm3D_TerrainRenderer::Collision, isCheckEnabled(data->sharedData.dialog, IDC_GLOW));
+			data->storm.terrain->getRenderer().enableFeature(IStorm3D_TerrainRenderer::Wireframe, isCheckEnabled(data->sharedData.dialog, IDC_GLOW));
 			physics->enableFeature(frozenbyte::physics::PhysicsLib::VISUALIZE_FLUIDS, isCheckEnabled(data->sharedData.dialog, IDC_FLUID_STUFF));
 #endif
 

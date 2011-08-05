@@ -150,6 +150,7 @@ namespace ui
 		}
 		float timeFactor = confFactor * 0.01f * float(timeDiff);
 
+		/*
 		VC3 posDiffVector = position - lastPosition;
 		VC3 posDiffVectorRotated = VC3(
 			posDiffVector.x * cosf(UNIT_ANGLE_TO_RAD(rotAngle)) 
@@ -157,6 +158,7 @@ namespace ui
 			0,
 			posDiffVector.x * sinf(UNIT_ANGLE_TO_RAD(rotAngle)) 
 			+ posDiffVector.z * cosf(UNIT_ANGLE_TO_RAD(rotAngle)));
+		*/
 
 		//if (posDiffVectorRotated.z < -0.01f)
 		//	Logger::getInstance()->error("z m");

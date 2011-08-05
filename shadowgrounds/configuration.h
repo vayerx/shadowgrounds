@@ -17,7 +17,7 @@
 #define CRIMSON_MODE 1
 
 // show rebuilding binaries loading message for buildingmaps
-#define BUILDINGMAP_SHOW_LOADINGMESSAGE 1
+//#define BUILDINGMAP_SHOW_LOADINGMESSAGE 1
 
 // make buildingmap use game's options (force/auto recreate, etc.)
 #define BUILDINGMAP_USE_OPTIONS 1
@@ -71,6 +71,7 @@
 //#define PHYSICS_ODE_BOTTOM_TRANSFORM
 
 #if !defined(PHYSICS_NONE) && !defined(PHYSICS_ODE) && !defined(PHYSICS_PHYSX)
+// PhysX on Shadowgrounds
 #define PHYSICS_PHYSX
 #endif
 

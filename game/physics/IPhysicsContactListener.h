@@ -2,7 +2,7 @@
 #ifndef IPHYSICSCONTACTLISTENER_H
 #define IPHYSICSCONTACTLISTENER_H
 
-#include <datatypedef.h>
+#include <DatatypeDef.h>
 
 namespace frozenbyte {
 namespace physics {
@@ -44,6 +44,7 @@ namespace game
 	{
 	public:
 		virtual void physicsContact(const PhysicsContact &contact) = 0;
+		virtual ~IPhysicsContactListener() {};
 	};
 }
 
