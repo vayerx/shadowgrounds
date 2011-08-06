@@ -68,7 +68,7 @@ namespace game
     // nop
   }
 
-  bool ItemPack::setData(char *key, char *value)
+  bool ItemPack::setData(const char *key, char *value)
   {
     if (atSub == PARTTYPE_SUB_NONE)
     {

@@ -142,7 +142,7 @@ namespace game
 
     // parser calls this function to configure the part type based on file
     // should return true if key and value pair was identified and valid
-    virtual bool setData(char *key, char *value);
+    virtual bool setData(const char *key, char *value);
 
     // should return the 2d image of this part, NULL if it has none
     virtual ui::Visual2D *getVisual2D();

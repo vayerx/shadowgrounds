@@ -14,7 +14,7 @@ namespace game
     Reactor(int id);
     virtual ~Reactor();
 
-    virtual bool setData(char *key, char *value);
+    virtual bool setData(const char *key, char *value);
 
     int getEnergyAmount();
 

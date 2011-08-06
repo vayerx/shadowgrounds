@@ -23,7 +23,7 @@ namespace game
 
     // parser calls this function to configure the part type based on file
     // should return true if key and value pair was identified and valid
-    virtual bool setData(char *key, char *value);
+    virtual bool setData(const char *key, char *value);
   };
 
 }

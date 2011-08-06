@@ -17,7 +17,7 @@ namespace game
     // nop
   }
 
-  bool SidewaysUnitType::setData(char *key, char *value)
+  bool SidewaysUnitType::setData(const char *key, char *value)
   {
     return setRootData(key, value);
   }

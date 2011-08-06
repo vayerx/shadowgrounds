@@ -21,7 +21,7 @@ namespace game
     Weapon(int id);
     virtual ~Weapon();
 
-    virtual bool setData(char *key, char *value);
+    virtual bool setData(const char *key, char *value);
 
     virtual Part *getNewPartInstance();
 

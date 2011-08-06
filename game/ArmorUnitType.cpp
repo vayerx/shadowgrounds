@@ -17,7 +17,7 @@ namespace game
     // nop
   }
 
-  bool ArmorUnitType::setData(char *key, char *value)
+  bool ArmorUnitType::setData(const char *key, char *value)
   {
     return setRootData(key, value);
   }

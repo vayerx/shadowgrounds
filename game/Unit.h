@@ -1227,7 +1227,7 @@ namespace game
 		// what they have to do with Unit class (UnitType seems more wise)
 		/*
 		bool setRootSub(char *key);
-		bool setRootData(char *key, char *value);
+		bool setRootData(const char *key, char *value);
 		*/
 
 		int unitTypeId;

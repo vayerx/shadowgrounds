@@ -778,7 +778,7 @@ void Storm3D_Mesh::ReBuild()
 		{
 			igios_unimplemented(); // FIXME: this if BUGGY! should not be necessary
 			igiosWarning("vbuf %d %d\n", vbuf, glIsBuffer(vbuf));
-			igiosWarning("size: %d vertex amount: %d %d\n", temp, vertex_amount, vertex_amount*sizeof(VXFORMAT_TC2));
+			igiosWarning("size: %d vertex amount: %d %d\n", temp, vertex_amount, int(vertex_amount*sizeof(VXFORMAT_TC2)));
 		} else {
 			// Typecast (to simplify code)
 			VXFORMAT_TC2 *p=(VXFORMAT_TC2*) glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);

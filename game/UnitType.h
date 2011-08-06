@@ -106,7 +106,7 @@ namespace game
 
 		// parser calls this function to configure the part type based on file
 		// should return true if key and value pair was identified and valid
-		virtual bool setData(char *key, char *value);
+		virtual bool setData(const char *key, char *value);
 
 		// returns a new instance of this unit type
 		virtual Unit *getNewUnitInstance(int player);
@@ -126,7 +126,7 @@ namespace game
 
 	protected:
 		virtual bool setRootSub(char *key);
-		virtual bool setRootData(char *key, char *value);
+		virtual bool setRootData(const char *key, char *value);
 
 		int unitTypeId;
 		char *name;

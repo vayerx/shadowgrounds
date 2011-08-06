@@ -223,7 +223,7 @@ namespace game
     return partTypeIdString;
   }
 
-  bool PartType::setData(char *key, char *value)
+  bool PartType::setData(const char *key, char *value)
   {
     return setRootData(key, value);
   }

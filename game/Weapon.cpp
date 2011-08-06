@@ -359,7 +359,7 @@ namespace game
 	}
 
 
-	bool Weapon::setData(char *key, char *value)
+	bool Weapon::setData(const char *key, char *value)
 	{
 		if (strcmp(key, "bullettype") == 0)
 		{

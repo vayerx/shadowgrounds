@@ -102,7 +102,7 @@ void renderUP(VxFormat fmt, GLenum type, int count, int size, char *vx) {
 	setStreamSource(0, 0, (intptr_t) vx, size);
 
 	if (ptr != size) {
-		igiosWarning("strange: ptr(%d) != size(%d)\n", ptr, size);
+		igiosWarning("strange: ptr(%p) != size(%d)\n", ptr, size);
 		igios_backtrace();
 	}
 

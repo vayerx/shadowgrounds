@@ -41,7 +41,7 @@ namespace game
     // nop
   }
 
-  bool Leg::setData(char *key, char *value)
+  bool Leg::setData(const char *key, char *value)
   {
     if (strcmp(key, "carryingcapacity") == 0)
     {

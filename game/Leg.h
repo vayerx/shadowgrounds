@@ -14,7 +14,7 @@ namespace game
     Leg(int id);
     virtual ~Leg();
 
-    virtual bool setData(char *key, char *value);
+    virtual bool setData(const char *key, char *value);
 
   private:
     int carryingCapacity;

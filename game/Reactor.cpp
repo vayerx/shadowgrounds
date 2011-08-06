@@ -42,7 +42,7 @@ namespace game
     // nop
   }
 
-  bool Reactor::setData(char *key, char *value)
+  bool Reactor::setData(const char *key, char *value)
   {
     if (atSub == PARTTYPE_SUB_NONE)
     {

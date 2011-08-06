@@ -14,7 +14,7 @@ namespace game
     ItemPack(int id);
     virtual ~ItemPack();
 
-    virtual bool setData(char *key, char *value);
+    virtual bool setData(const char *key, char *value);
 
     int getAmount();
 

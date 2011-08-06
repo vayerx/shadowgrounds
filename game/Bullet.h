@@ -40,7 +40,7 @@ namespace game
 
 		virtual bool setSub(const char *key);
 		// FIXME: making key const breaks stuff, WHY?
-		virtual bool setData(char *key, char *value);
+		virtual bool setData(const char *key, char *value);
 
 		FLYPATH getFlyPath();
 		float getVelocity();

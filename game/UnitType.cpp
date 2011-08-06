@@ -405,7 +405,7 @@ int getMaterialFromString( const std::string& string )
 		return "";
 	}
 
-	bool UnitType::setData(char *key, char *value)
+	bool UnitType::setData(const char *key, char *value)
 	{
 		return setRootData(key, value);
 	}
@@ -420,7 +420,7 @@ int getMaterialFromString( const std::string& string )
 		return false;
 	}
 
-	bool UnitType::setRootData(char *key, char *value)
+	bool UnitType::setRootData(const char *key, char *value)
 	{
 		if (strcmp(key, "unitid") == 0)
 		{

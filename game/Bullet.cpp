@@ -410,7 +410,7 @@ namespace game
 		return setRootSub(key);
 	}
 
-	bool Bullet::setData(char *key, char *value)
+	bool Bullet::setData(const char *key, char *value)
 	{
 
 		// Delete possible whitespaces/tabs from front of the key.

@@ -17,7 +17,7 @@ namespace game
     // nop
   }
 
-  bool ClawUnitType::setData(char *key, char *value)
+  bool ClawUnitType::setData(const char *key, char *value)
   {
     return setRootData(key, value);
   }

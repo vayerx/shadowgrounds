@@ -191,7 +191,7 @@ const char *ctrlName[DH_CTRL_AMOUNT + 1] =
 
 // NOTICE: the wheel up and wheel down are inverted here!
 // this is because keyb3 seems to give them inverted, so we fix that here.
-char *keycodeName[KEYCODE_NAME_AMOUNT] =
+const char *keycodeName[KEYCODE_NAME_AMOUNT] =
 {
 	"none", "esc", "1", "2", "3", "4", "5", "6", "7", "8", 
 	"9", "0", "+", "", "backspace", "tab", "q", "w", "e", "r",
@@ -340,17 +340,11 @@ GameController::GameController(Ogui *ogui)
 		{
 			for(int k = 0; k < MAX_KEYS; k++)
 			{
-				int len = strlen(keycodeName[k]);
-				keycodeName[kl] = new char [ len + 7 ];
-				strcpy(keycodeName[kl], keycodeName[k]);
-				keycodeName[kl][len++] = ' ';
-				keycodeName[kl][len++] = '(';
-				keycodeName[kl][len++] = 'k';
-				keycodeName[kl][len++] = 'b';
-				keycodeName[kl][len++] = '1' + l - 1;
-				keycodeName[kl][len++] = ')';
-				keycodeName[kl][len++] = 0;
-				kl++;
+				const int len = strlen(keycodeName[k]);
+				const int aloc_len = len + 7;
+				char *kbname = new char [ aloc_len ];
+				snprintf(kbname, aloc_len, "%s (kb%c)", keycodeName[k], char('1' + l - 1));
+				keycodeName[kl++] = kbname;
 			}
 		}
 	}
