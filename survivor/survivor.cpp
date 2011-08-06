@@ -105,7 +105,7 @@
 
 #include "../game/Forcewear.h"
 
-#include "ScrambledZipPackage.h"
+// #include "ScrambledZipPackage.h"
 
 #include "SurvivorConfig.h"
 

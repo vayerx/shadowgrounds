@@ -46,6 +46,8 @@
 
 #elif defined(PROJECT_SURVIVOR)
 
+	#define DH_CURSOR_MOVE_TO 6
+
 	#define DH_CURSOR_INVISIBLE 0
 	#define DH_CURSOR_ARROW 1
 	#define DH_CURSOR_AIM_SPREAD1 2

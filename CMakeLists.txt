@@ -11,7 +11,7 @@ FIND_PACKAGE( GTK2 REQUIRED )
 FIND_PACKAGE( ZLIB REQUIRED )
 FIND_PACKAGE( OpenAL REQUIRED )
 
-INCLUDE_DIRECTORIES( BEFORE SYSTEM
+SET( GLOBAL_INCLUDE_DIRS
     ${Boost_INCLUDE_DIRS}
     ${SDL_INCLUDE_DIR}
     ${SDL_SOUND_INCLUDE_DIR}
@@ -22,17 +22,8 @@ INCLUDE_DIRECTORIES( BEFORE SYSTEM
     ${ZLIB_INCLUDE_DIRS}
     ${OPENAL_INCLUDE_DIR}
 )
-INCLUDE_DIRECTORIES( . storm/include storm/keyb3 )
 
-INCLUDE_DIRECTORIES( shadowgrounds )
-
-ADD_EXECUTABLE( shadowgrounds shadowgrounds/shadowgrounds.cpp shadowgrounds/version.cpp )
-SET_TARGET_PROPERTIES( shadowgrounds PROPERTIES
-    COMPILE_FLAGS               "-DPHYSICS_NONE -include ${PROJECT_SOURCE_DIR}/shadowgrounds/configuration.h -DPROJECT_SHADOWGROUNDS"
-    COMPILE_DEFINITIONS_DEBUG   "_DEBUG=1"
-    COMPILE_DEFINITIONS_RELEASE "NDEBUG=1"
-)
-TARGET_LINK_LIBRARIES( shadowgrounds
+SET( GLOBAL_LIBRARIES
     ${Boost_LIBRARIES}
     ${GTK2_LIBRARIES}
     ${SDL_LIBRARY}
@@ -44,7 +35,14 @@ TARGET_LINK_LIBRARIES( shadowgrounds
     ${OPENAL_LIBRARY}
 )
 
-# minor macro for strings concatination
+INCLUDE_DIRECTORIES( BEFORE SYSTEM
+    ${GLOBAL_INCLUDE_DIRS}
+    ${PROJECT_SOURCE_DIR}
+    storm/include
+    storm/keyb3
+)
+
+# Build source list from module name and path prefix
 MACRO( CompileSrcList module prefix )
     FOREACH( item ${ARGN} )
         SET( ${module}_sources ${${module}_sources} ${prefix}/${item} )
@@ -91,6 +89,8 @@ CompileSrcList( game game
     UnitSpawner.cpp UnitTargeting.cpp UnitType.cpp unittypes.cpp UnitVariables.cpp UnitVisibilityChecker.cpp
     UnitVisibility.cpp UpgradeManager.cpp UpgradeType.cpp userdata.cpp VisualObjectModelStorage.cpp Water.cpp
     WaterManager.cpp Weapon.cpp WeaponObject.cpp
+
+    BonusManager.cpp    # TODO survivor-only
 )
 
 CompileSrcList( game game/physics
@@ -181,6 +181,11 @@ CompileSrcList( ui ui
     WeaponWindowCoop.cpp WeaponWindow.cpp
 )
 
+# TODO
+# SURVIVOR_FILES:=
+#     CoopMenu.cpp SurvivalMenu.cpp CharacterSelectionWindow.cpp SurvivorLoadGameMenu.cpp VehicleWindow.cpp
+
+
 CompileSrcList( ui ui/camera_system
     CameraAreaStreet.cpp CameraSystem.cpp CameraSystemAim.cpp CameraSystemAreas.cpp
 )
@@ -199,26 +204,49 @@ CompileSrcList( util util
     TextFinder.cpp TextureCache.cpp TextureSwitcher.cpp UberCrypt.cpp UnicodeConverter.cpp
 )
 
-FOREACH( mod    container convert editor filesystem game ogui sound system ui util storm particlesystem )
-    # IF ( NOT ${mod}_sources )
-    #     AUX_SOURCE_DIRECTORY( ${mod} ${mod}_sources )
-    # ENDIF ( NOT ${mod}_sources )
-    SET( SG_LIBS ${SG_LIBS} sg_${mod} )
-    ADD_LIBRARY( sg_${mod} STATIC ${${mod}_sources} )
-    SET_TARGET_PROPERTIES( sg_${mod} PROPERTIES
-        COMPILE_FLAGS               "-DPHYSICS_NONE -include ${PROJECT_SOURCE_DIR}/shadowgrounds/configuration.h -DPROJECT_SHADOWGROUNDS"
+# Set default build options
+MACRO( SetShadowgroundsProperties name flags )
+    SET_TARGET_PROPERTIES( ${name} PROPERTIES
+        COMPILE_FLAGS               "-DPHYSICS_NONE ${flags}"
         COMPILE_DEFINITIONS_DEBUG   "_DEBUG=1"
         COMPILE_DEFINITIONS_RELEASE "NDEBUG=1"
     )
-    TARGET_LINK_LIBRARIES( shadowgrounds sg_${mod} )
-ENDFOREACH( mod )
+ENDMACRO( SetShadowgroundsProperties )
 
-# linkage dependencies hotfix
-TARGET_LINK_LIBRARIES( shadowgrounds sg_editor )
-TARGET_LINK_LIBRARIES( shadowgrounds sg_filesystem )
-TARGET_LINK_LIBRARIES( shadowgrounds sg_container )
-TARGET_LINK_LIBRARIES( shadowgrounds sg_ogui)
-TARGET_LINK_LIBRARIES( shadowgrounds sg_game )
-TARGET_LINK_LIBRARIES( shadowgrounds sg_util )
-TARGET_LINK_LIBRARIES( shadowgrounds sg_convert )
-TARGET_LINK_LIBRARIES( shadowgrounds sg_sound )
+# Register executable
+MACRO( AddShadowgroundsBinary name flags )
+    ADD_EXECUTABLE( ${name} ${ARGN} )
+    INCLUDE_DIRECTORIES( ${name} )
+    SetShadowgroundsProperties( ${name} "-include ${PROJECT_SOURCE_DIR}/${name}/configuration.h ${flags}" )
+    TARGET_LINK_LIBRARIES( ${name} ${GLOBAL_LIBRARIES} )
+
+    FOREACH( mod    container convert editor filesystem game ogui sound system ui util storm particlesystem )
+        # IF ( NOT ${mod}_sources )
+        #     AUX_SOURCE_DIRECTORY( ${mod} ${mod}_sources )
+        # ENDIF ( NOT ${mod}_sources )
+        ADD_LIBRARY( ${name}_${mod} STATIC ${${mod}_sources} )
+        SetShadowgroundsProperties( ${name}_${mod} "-include ${PROJECT_SOURCE_DIR}/${name}/configuration.h ${flags}" )
+        TARGET_LINK_LIBRARIES( ${name} ${name}_${mod} )
+    ENDFOREACH( mod )
+
+    # linkage dependencies hotfix
+    TARGET_LINK_LIBRARIES( ${name} ${name}_editor )
+    TARGET_LINK_LIBRARIES( ${name} ${name}_filesystem )
+    TARGET_LINK_LIBRARIES( ${name} ${name}_container )
+    TARGET_LINK_LIBRARIES( ${name} ${name}_ogui)
+    TARGET_LINK_LIBRARIES( ${name} ${name}_game )
+    TARGET_LINK_LIBRARIES( ${name} ${name}_util )
+    TARGET_LINK_LIBRARIES( ${name} ${name}_convert )
+    TARGET_LINK_LIBRARIES( ${name} ${name}_sound )
+ENDMACRO( AddShadowgroundsBinary )
+
+AddShadowgroundsBinary( shadowgrounds "-DPROJECT_SHADOWGROUNDS"
+    shadowgrounds/shadowgrounds.cpp
+    shadowgrounds/version.cpp
+)
+
+AddShadowgroundsBinary( survivor "-DPROJECT_SURVIVOR"
+    survivor/survivor.cpp
+    survivor/ui_credits_text.cpp
+    survivor/version.cpp
+)
