@@ -46,7 +46,8 @@ Checkouting and building is simple (Linux):
     cd shadowgrounds/build
     cmake -DCMAKE_BUILD_TYPE=Release ..
     gmake
-    Data-files (data1.fbz`, `data/` for Shadowgrounds) should be located at the current working directory.
+
+Data-files (data1.fbz`, `data/` for Shadowgrounds) should be located at the current working directory.
 
 Alternative (original) build:
 
