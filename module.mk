@@ -1,4 +1,4 @@
-.PHONY: default all clean combine partial
+.PHONY: default all bindirs clean combine partial
 
 TARGETS:=survivor$(EXESUFFIX) shadowgrounds$(EXESUFFIX)
 
@@ -28,8 +28,6 @@ CLEANDIRS:=
 #dirs:=container convert filesystem game ogui physics physics_ode shadowgrounds sound storm system ui util
 #$(foreach dir, $(dirs), include $(dir)/module.mk)
 
-dir:=chat
-include $(TOPDIR)/$(dir)/module.mk
 dir:=container
 include $(TOPDIR)/$(dir)/module.mk
 dir:=convert
@@ -66,12 +64,17 @@ clean:
 	rm -f $(TARGETS) $(foreach dir,$(CLEANDIRS),$(dir)/*.o) $(foreach dir,$(CLEANDIRS),$(dir)/*.d) *-combine.cpp
 
 
-shadowgrounds_modules:=chat container convert editor filesystem game ogui \
+# create directories which might contain object files
+bindirs:
+	mkdir -p $(CLEANDIRS)
+
+
+shadowgrounds_modules:=container convert editor filesystem game ogui \
                        particlesystem shadowgrounds sound \
                        system ui util storm
 
 
-survivor_modules:=chat container convert editor filesystem game ogui \
+survivor_modules:=container convert editor filesystem game ogui \
                   particlesystem survivor sound \
                   system ui util storm
 
@@ -95,7 +98,7 @@ LDLIBS:=$(LAVCODEC) $(LDLIBS)
 endif
 
 
-shadowgrounds_SRC:=$(foreach mod,$(shadowgrounds_modules),$(SRC_$(mod))) storm/keyb3/keyb.cpp ui/TacticalUnitWindow.cpp survivor/ScrambledZipPackage.cpp
+shadowgrounds_SRC:=$(foreach mod,$(shadowgrounds_modules),$(SRC_$(mod))) storm/keyb3/keyb.cpp ui/TacticalUnitWindow.cpp
 shadowgrounds_OBJS:=$(shadowgrounds_SRC:.cpp=.sg.o)
 
 
