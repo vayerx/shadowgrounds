@@ -243,7 +243,6 @@ MACRO( AddShadowgroundsBinary name flags )
     ADD_EXECUTABLE( ${name} ${ARGN} )
     INCLUDE_DIRECTORIES( ${name} )
     SetShadowgroundsProperties( ${name} "-include ${PROJECT_SOURCE_DIR}/${name}/configuration.h ${flags}" )
-    TARGET_LINK_LIBRARIES( ${name} ${GLOBAL_LIBRARIES} )
 
     FOREACH( mod    container convert editor filesystem game ogui sound system ui util storm particlesystem )
         # IF ( NOT ${mod}_sources )
@@ -263,6 +262,8 @@ MACRO( AddShadowgroundsBinary name flags )
     TARGET_LINK_LIBRARIES( ${name} ${name}_util )
     TARGET_LINK_LIBRARIES( ${name} ${name}_convert )
     TARGET_LINK_LIBRARIES( ${name} ${name}_sound )
+
+    TARGET_LINK_LIBRARIES( ${name} ${GLOBAL_LIBRARIES} )
 ENDMACRO( AddShadowgroundsBinary )
 
 AddShadowgroundsBinary( shadowgrounds "-DPROJECT_SHADOWGROUNDS"

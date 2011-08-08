@@ -1,5 +1,5 @@
 SHADOWGROUNDS
-============
+=============
 
 SHADOWGROUNDS is an epic action experience combining modern technology with addictive playability.
 
@@ -45,7 +45,7 @@ Checkouting and building is simple (Linux):
     mkdir shadowgrounds/build
     cd shadowgrounds/build
     cmake -DCMAKE_BUILD_TYPE=Release ..
-    gmake
+    make
 
 Data-files (`data1.fbz`, `data/` for Shadowgrounds) should be located at the current working directory.
 
