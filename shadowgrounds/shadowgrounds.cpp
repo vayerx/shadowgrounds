@@ -256,11 +256,10 @@ void parse_commandline(const char *cmdline, int *windowed, bool *compile, bool *
 				parseBuf[i] = '\0';
 		}
 
-		for (i = 0; i < cmdlineLen; i++)
+		for (i = 0; i < cmdlineLen; )
 		{
-			if (parseBuf[i] == '-')
+			if (parseBuf[i++] == '-')
 			{
-				i++;
 				if (strcmp(&parseBuf[i], "nosound") == 0 || strcmp(&parseBuf[i], "s") == 0) {
 				  Logger::getInstance()->info("No sound command line parameter given.");
 				  *sound = false;
@@ -772,9 +771,6 @@ try {
 		cmdline.append(argv[i]);
 		if (i != argc) cmdline.append(" ");
 	}
-	parse_commandline(cmdline.c_str(), &windowedMode, &compileOnly, &exit, &soundCmdOn);
-	if (exit) return 0;
-
 	if (windowedMode == -1) {
 		if (SimpleOptions::getBool(DH_OPT_B_WINDOWED)) windowedMode = true;
 		else windowedMode = false;
@@ -782,6 +778,9 @@ try {
 		SimpleOptions::setBool(DH_OPT_B_WINDOWED, windowedMode);
 		GameOptionManager::getInstance()->save();
 	}
+
+	parse_commandline(cmdline.c_str(), &windowedMode, &compileOnly, &exit, &soundCmdOn);
+	if (exit) return 0;
 
 	//if (!windowedMode)
 	//{
