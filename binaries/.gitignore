@@ -1,2 +1,9 @@
 local.mk
 *~
+*.o
+*.d
+
+libunzip.a
+
+shadowgrounds-bin
+survivor-bin

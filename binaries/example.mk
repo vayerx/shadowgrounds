@@ -30,7 +30,7 @@ CXXFLAGS+=$(shell pkg-config gtk+-2.0 --cflags)
 DYNAMICLIB:=-shared
 
 LDFLAGS:=-g -Wl,-rpath,\$$ORIGIN -Wl,-rpath,\$$ORIGIN/lib
-LDLIBS:=-L../unzip -lunzip -lz
+LDLIBS:=-L. -lunzip -lz
 LDLIBS+=$(shell sdl-config --libs) -lSDL_image -lSDL_ttf -lSDL_sound -lGLEW
 LDLIBS+=$(shell pkg-config gtk+-2.0 --libs)
 
