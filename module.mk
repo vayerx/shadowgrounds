@@ -28,8 +28,6 @@ CLEANDIRS:=
 #dirs:=container convert filesystem game ogui physics physics_ode shadowgrounds sound storm system ui util
 #$(foreach dir, $(dirs), include $(dir)/module.mk)
 
-dir:=chat
-include $(TOPDIR)/$(dir)/module.mk
 dir:=container
 include $(TOPDIR)/$(dir)/module.mk
 dir:=convert
