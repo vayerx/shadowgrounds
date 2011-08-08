@@ -278,7 +278,11 @@ namespace game
 		"screen_width", "i+", "Display", "800", "-", "-",
 		"screen_height", "i+", "Display", "600", "-", "-",
 		"screen_bpp", "i+", "Display", "32", "-", "-",
+#ifdef _DEBUG
+		"windowed", "b+", "Display", "1", "1", "1",
+#else
 		"windowed", "b+", "Display", "0", "1", "1",
+#endif
 		"maximize_window", "b+", "Display", "1", "1", "1",
 
 		"camera_scrolly_enabled", "b", "Camera", "-", "-", "-",
