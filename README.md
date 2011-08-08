@@ -51,7 +51,28 @@ Data-files (`data1.fbz`, `data/` for Shadowgrounds) should be located at the cur
 
 Alternative (original) build:
 
-    TOPDIR=.. make -f ../module.mk
+    # need to create libunzip.a
+    # once only
+    # should integrate to build system
+    # but unzip is old shit C code and g++ barfs on it
+    cd filesystem/detail
+    gcc -c -o ioapi.o -O ioapi.c
+    gcc -c -o unzip.o -O unzip.c
+    ar r libunzip.a ioapi.o unzip.o
+    ranlib libunzip.a
+    mv libunzip.a ../../binaries/
+    cd ../..
+
+    cd binaries
+    cp example.mk local.mk
+    # Edit local.mk to suit your tastes.
+
+    # Create necessary subdirectories. Only needed the first time and when directory structure changes
+    make bindirs
+
+    # The build system is parallel build safe, add -j<n> if you like
+    make
+
 
 Make-only build won't be supported in favor of Cmake.
 
