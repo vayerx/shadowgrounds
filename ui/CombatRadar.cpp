@@ -174,7 +174,7 @@ namespace ui
     delete [] radarUnitType;
   }
 
-  void CombatRadar::CursorEvent(OguiButtonEvent *eve)
+  void CombatRadar::CursorEvent(OguiButtonEvent * /*eve*/)
   {
     // TODO
   }

@@ -345,7 +345,7 @@ namespace game
 		setRotation(destAngle2, destAngle, 0);
 	}
 
-	void Projectile::setPathByDirection(const VC3 &origin, const VC3 &direction, float velocity, int lifeTime)
+	void Projectile::setPathByDirection(const VC3 &/*origin*/, const VC3 &/*direction*/, float /*velocity*/, int /*lifeTime*/)
 	{
 		// TODO
 		assert(0);
@@ -757,7 +757,7 @@ namespace game
 		}
 	}
 
-	void Projectile::setTrackableVelocity(const VC3 &velocity)
+	void Projectile::setTrackableVelocity(const VC3 &/*velocity*/)
 	{
 		// TODO
 	}
@@ -768,7 +768,7 @@ namespace game
 			this->lifeTime = 1;
 	}
 
-	void Projectile::trackerSignal(int trackerSignalNumber)
+	void Projectile::trackerSignal(int /*trackerSignalNumber*/)
 	{
 		// TODO: ...
 		// handle KILL signal?
@@ -781,7 +781,7 @@ namespace game
 			this->lifeTime = 1;
 	}
 
-	void Projectile::attachedToTrackable(tracking::ITrackableObject *trackable)
+	void Projectile::attachedToTrackable(tracking::ITrackableObject * /*trackable*/)
 	{
 		// nop?
 		// ...or...
@@ -803,7 +803,7 @@ namespace game
 		return this->position;
 	}
 
-	void Projectile::iterateTrackables(tracking::ITrackableObjectIterator *iter)
+	void Projectile::iterateTrackables(tracking::ITrackableObjectIterator * /*iter*/)
 	{
 		// nop?
 	}

@@ -100,12 +100,12 @@ namespace tracking
 		this->position = globalPosition;
 	}
 
-	void ScriptableTrackerObject::setTrackableRotation(const QUAT &rotation)
+	void ScriptableTrackerObject::setTrackableRotation(const QUAT &/*rotation*/)
 	{
 		// nop?
 	}
 
-	void ScriptableTrackerObject::setTrackableVelocity(const VC3 &velocity)
+	void ScriptableTrackerObject::setTrackableVelocity(const VC3 &/*velocity*/)
 	{
 		// nop?
 	}

@@ -19,7 +19,7 @@
 
 extern int storm3d_dip_calls;
 
-void Storm3D_ParticleSystem::PointArray::init(Storm3D* Storm3D2) 
+void Storm3D_ParticleSystem::PointArray::init(Storm3D* /*Storm3D2*/) 
 {
 }
 
@@ -30,7 +30,7 @@ int Storm3D_ParticleSystem::PointArray::getMaxParticleAmount() const
 	return 0;
 }
 
-int Storm3D_ParticleSystem::PointArray::lock(VXFORMAT_PART *pointer, int particleOffset, Storm3D_Scene *scene)
+int Storm3D_ParticleSystem::PointArray::lock(VXFORMAT_PART */*pointer*/, int /*particleOffset*/, Storm3D_Scene */*scene*/)
 {
 	return 0;
 }
@@ -47,7 +47,7 @@ void Storm3D_ParticleSystem::PointArray::release()
 {
 }
 
-void Storm3D_ParticleSystem::PointArray::createDynamicBuffers(Storm3D* Storm3D2) 
+void Storm3D_ParticleSystem::PointArray::createDynamicBuffers(Storm3D* /*Storm3D2*/) 
 {
 }
 
@@ -82,7 +82,7 @@ void Storm3D_ParticleSystem::QuadArray::release()
 		glDeleteBuffers(1, &m_ib);
 }
 
-void Storm3D_ParticleSystem::QuadArray::createDynamicBuffers(Storm3D* Storm3D2) 
+void Storm3D_ParticleSystem::QuadArray::createDynamicBuffers(Storm3D* /*Storm3D2*/) 
 {
 }
 
@@ -488,7 +488,7 @@ void Storm3D_ParticleSystem::LineArray::release()
 		glDeleteBuffers(1, &m_ib);
 }
 
-void Storm3D_ParticleSystem::LineArray::createDynamicBuffers(Storm3D* Storm3D2)
+void Storm3D_ParticleSystem::LineArray::createDynamicBuffers(Storm3D* /*Storm3D2*/)
 {
 	if(glIsBuffer(m_vb))
 		glDeleteBuffers(1, &m_vb);

@@ -439,7 +439,7 @@ int TReader::init()
 	return 1;
 }
 
-int TReader::read_info(const char *filename, IStorm3D_StreamBuilder *builder)
+int TReader::read_info(const char * /*filename*/, IStorm3D_StreamBuilder * /*builder*/)
 {
 	return 1;
 }
@@ -449,7 +449,7 @@ int TReader::nextframe()
 	return 1;
 }
 
-int TReader::read_pixels(char* buffer, unsigned int w, unsigned int h)
+int TReader::read_pixels(char* /*buffer*/, unsigned int /*w*/, unsigned int /*h*/)
 {
 	return 1;
 }

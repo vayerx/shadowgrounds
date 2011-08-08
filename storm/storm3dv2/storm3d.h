@@ -227,7 +227,7 @@ public:
 	void SetAntiAliasing(int quality) { antialiasing_level = quality; }
 	void AllocateProceduralTarget(bool enable) { allocate_procedural_target = enable; }
 	void SetReflectionQuality(int quality);
-	void UseReferenceDriver(bool refdriver) {};
+	void UseReferenceDriver(bool /*refdriver*/) {};
 	void forceReset() { force_reset = true; }
 
 	bool hasHighQualityTextures() const { return high_quality_textures; }

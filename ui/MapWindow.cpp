@@ -1688,7 +1688,7 @@ void MapWindow::addPortal(const std::string &fromLayer, const std::string &toLay
 	data->findTargetPositions();
 }
 
-void MapWindow::removePortal(const std::string &fromLayer, const std::string &toLayer, const VC3 &fromPosition, const VC3 &toPosition)
+void MapWindow::removePortal(const std::string &/*fromLayer*/, const std::string &/*toLayer*/, const VC3 &/*fromPosition*/, const VC3 &/*toPosition*/)
 {
 }
 

@@ -415,7 +415,7 @@ int getMaterialFromString( const std::string& string )
 		return setRootSub(key);
 	}
 
-	bool UnitType::setRootSub(char *key)
+	bool UnitType::setRootSub(char * /*key*/)
 	{
 		return false;
 	}

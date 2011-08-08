@@ -589,7 +589,7 @@ bool Storm3D::SetWindowedMode(int width, int height, bool titlebar)
 	\param disableBuffers
 	\return true if successful
 */
-bool Storm3D::SetWindowedMode(bool disableBuffers = false)
+bool Storm3D::SetWindowedMode(bool /*disableBuffers*/ = false)
 {
 	igios_unimplemented();
 	return true;
@@ -1022,14 +1022,14 @@ void Storm3D::TakeScreenshot(const char *file_name)
 }
 
 
-IStorm3D_ScreenBuffer *Storm3D::TakeScreenshot(const VC2 &area)
+IStorm3D_ScreenBuffer *Storm3D::TakeScreenshot(const VC2 &/*area*/)
 {
 	igios_unimplemented();
 	return NULL;
 }
 
 
-DWORD Storm3D::getScreenColorValue(const VC2 &area)
+DWORD Storm3D::getScreenColorValue(const VC2 &/*area*/)
 {
 	igios_unimplemented();
 	return 0;

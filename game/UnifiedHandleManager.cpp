@@ -118,27 +118,27 @@ namespace game
 		}
 	}
 
-	QUAT UnifiedHandleManager::getObjectRotation(UnifiedHandle uh) const
+	QUAT UnifiedHandleManager::getObjectRotation(UnifiedHandle /*uh*/) const
 	{
 		// TODO
 		assert(!"UnifiedHandleManager::getObjectRotation - TODO.");
 		return QUAT();
 	}
 
-	void UnifiedHandleManager::setObjectRotation(UnifiedHandle uh, const QUAT &rotation)
+	void UnifiedHandleManager::setObjectRotation(UnifiedHandle /*uh*/, const QUAT &/*rotation*/)
 	{
 		// TODO
 		assert(!"UnifiedHandleManager::setObjectRotation - TODO.");
 	}
 
-	VC3 UnifiedHandleManager::getObjectVelocity(UnifiedHandle uh) const
+	VC3 UnifiedHandleManager::getObjectVelocity(UnifiedHandle /*uh*/) const
 	{
 		// TODO
 		assert(!"UnifiedHandleManager::getObjectVelocity - TODO.");
 		return VC3(0,0,0);
 	}
 
-	void UnifiedHandleManager::setObjectVelocity(UnifiedHandle uh, const VC3 &velocity)
+	void UnifiedHandleManager::setObjectVelocity(UnifiedHandle /*uh*/, const VC3 &/*velocity*/)
 	{
 		// TODO
 		assert(!"UnifiedHandleManager::setObjectVelocity - TODO.");

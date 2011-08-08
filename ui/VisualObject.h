@@ -184,7 +184,7 @@ namespace ui
 		bool isSkyModel() { return skyModel; }
 
 		void setPerFrameInterpolation(bool enabled) { interpolatePerFrame = enabled; }
-		bool getPerFrameInterpolation(bool enabled) { return interpolatePerFrame; }
+		bool getPerFrameInterpolation(bool /*enabled WTF?*/) { return interpolatePerFrame; }
   private:
 		VC3 renderPosition;
 		float renderXAngle;

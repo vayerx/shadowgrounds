@@ -1686,7 +1686,7 @@ namespace game
 			}
 		}
 
-		bool fits(const AABB &area) const
+		bool fits(const AABB &/*area*/) const
 		{
 			return false;
 		}

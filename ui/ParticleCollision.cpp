@@ -500,7 +500,7 @@ FluidParticleCollision::~FluidParticleCollision()
 {
 }
 
-bool FluidParticleCollision::spawnPosition(const VC3 &emitter, const VC3 &dir, VC3 &position) const
+bool FluidParticleCollision::spawnPosition(const VC3 &/*emitter*/, const VC3 &/*dir*/, VC3 &/*position*/) const
 {
 	return true;
 }

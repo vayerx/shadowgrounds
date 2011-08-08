@@ -42,7 +42,7 @@ public:
 	static boost::shared_ptr<IParticleSystem> createNew();
 	boost::shared_ptr<IParticleSystem> clone();
 	
-	void setLighting(const COL &ambient, const VC3 lightPos, const COL &lightCol, float lightRange) {}
+	void setLighting(const COL &/*ambient*/, const VC3 /*lightPos*/, const COL &/*lightCol*/, float /*lightRange*/) {}
 	void setCollision(boost::shared_ptr<IParticleCollision> &collision) {}
 	void setEmitterRotation(const QUAT &rotation) {}
 	void setParticlePosition(Vector& pos);

@@ -140,8 +140,8 @@ public:
 	static boost::shared_ptr<IParticleSystem> createNew();
 	boost::shared_ptr<IParticleSystem> clone();
 
-	void setParticlePosition(Vector& pos) {}
-	void setParticleVelocity(Vector& vel, const Vector& direction, float speed, const GenParticleSystemEditables& eds) {}
+	void setParticlePosition(Vector& /*pos*/) {}
+	void setParticleVelocity(Vector& /*vel*/, const Vector& /*direction*/, float /*speed*/, const GenParticleSystemEditables& /*eds*/) {}
 	void setLighting(const COL &ambient, const signed short int *lightIndices);
 	void setCollision(boost::shared_ptr<IParticleCollision> &collision);
 	void setPhysics(boost::shared_ptr<ParticlePhysics> &physics);

@@ -83,7 +83,7 @@ public:
 
 	}
 
-	void EffectEvent( OguiEffectEvent *eve )
+	void EffectEvent( OguiEffectEvent * /*eve*/ )
 	{
 	}
 
@@ -130,7 +130,7 @@ public:
 		}
 	}
 
-	void update( int ms )
+	void update( int /*ms*/ )
 	{
 		if( currentActive == lastClosed && visible == true )
 		{
@@ -306,7 +306,7 @@ void IngameGuiTabs::raise()
 	impl->raise();
 }
 
-void IngameGuiTabs::update( int ms )
+void IngameGuiTabs::update( int /*ms*/ )
 {
 
 }

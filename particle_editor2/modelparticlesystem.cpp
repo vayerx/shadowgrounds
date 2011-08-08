@@ -765,7 +765,7 @@ void ModelParticleSystem::tick(IStorm3D_Scene *scene)
 	update();
 }
 
-void ModelParticleSystem::render(IStorm3D_Scene* scene)
+void ModelParticleSystem::render(IStorm3D_Scene* /*scene*/)
 {
 	// nop
 }

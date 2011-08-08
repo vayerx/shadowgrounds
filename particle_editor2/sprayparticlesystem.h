@@ -41,7 +41,7 @@ public:
 	const SprayParticleSystemEditables& getEditables() const;
 
 	void setCollision(boost::shared_ptr<IParticleCollision> &collision);
-	void setEmitterRotation(const QUAT &rotation) {}
+	void setEmitterRotation(const QUAT &/*rotation*/) {}
 };
 	
 } // particle

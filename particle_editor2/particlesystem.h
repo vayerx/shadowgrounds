@@ -73,7 +73,7 @@ public:
 	virtual void setLighting(const COL &ambient, const signed short int *lightIndices)=0;
 	virtual void setCollision(boost::shared_ptr<IParticleCollision> &collision) = 0;
 	virtual void setArea(boost::shared_ptr<IParticleArea> &area) = 0;
-	virtual void setPhysics(boost::shared_ptr<ParticlePhysics> &physics) {}
+	virtual void setPhysics(boost::shared_ptr<ParticlePhysics> &/*physics*/) {}
 	virtual void setEmitterRotation(const QUAT &rotation) = 0;
 	virtual void releasePhysicsResources() = 0;
 //	virtual int getTypeID()=0;

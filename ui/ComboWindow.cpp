@@ -80,13 +80,13 @@ public:
 
 	///////////////////////////////////////////////////////////////////////////
 
-	void onKill( const std::string& enemy ) 
+	void onKill( const std::string& /*enemy*/ ) 
 	{ 
 		onCombo();
 	}
-	void onMapChange( const std::string& maplayer ) { }
-	void onMarker( const std::string& marker ) { }
-	void onPickup( const std::string& pickup ) { }
+	void onMapChange( const std::string& /*maplayer*/ ) { }
+	void onMarker( const std::string& /*marker*/ ) { }
+	void onPickup( const std::string& /*pickup*/ ) { }
 	void onDeath() { }
 
 	///////////////////////////////////////////////////////////////////////////
@@ -183,13 +183,13 @@ ComboWindow::~ComboWindow()
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void ComboWindow::show( int time )
+void ComboWindow::show( int /*time*/ )
 {
 }
 
 //================================================================================
 
-void ComboWindow::hide( int time )
+void ComboWindow::hide( int /*time*/ )
 {
 }
 

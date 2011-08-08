@@ -1,10 +1,12 @@
+#define __STDC_FORMAT_MACROS
+
 #include <GL/glew.h>
 #include <SDL.h>
 #include "VertexFormats.h"
 #include "igios.h"
 #include "igios3D.h"
 #include "storm3d.h"
-
+#include <inttypes.h>
 
 //! Apply FVF vertex format
 /*! buffer must be bound before this
@@ -56,11 +58,7 @@ uintptr_t applyFVF(VxFormat fmt, uintptr_t size) {
 	}
 
 	if (ptr != size) {
-#ifdef __x86_64
-		igiosWarning("applyFVF: ptr(%ld) != size(%ld)\n", ptr, size);
-#else
-		igiosWarning("applyFVF: ptr(%d) != size(%d)\n", ptr, size);
-#endif
+		igiosWarning("applyFVF: ptr(%" PRIiPTR ") != size(%" PRIiPTR ")\n", ptr, size);
 		igios_backtrace();
 	}
 
@@ -102,7 +100,7 @@ void renderUP(VxFormat fmt, GLenum type, int count, int size, char *vx) {
 	setStreamSource(0, 0, (intptr_t) vx, size);
 
 	if (ptr != size) {
-		igiosWarning("strange: ptr(%p) != size(%d)\n", ptr, size);
+		igiosWarning("strange: ptr(%" PRIiPTR ") != size(%d)\n", ptr, size);
 		igios_backtrace();
 	}
 
@@ -546,12 +544,12 @@ void D3DXPlaneFromPointNormal(D3DXPLANE &out, const VC3 &point, const VC3 &norma
 	out.d = -normal.x * point.x - normal.y * point.y - normal.z * point.z;
 }
 
-void D3DXPlaneNormalize(D3DXPLANE &out, const D3DXPLANE &in) {
+void D3DXPlaneNormalize(D3DXPLANE &/*out*/, const D3DXPLANE &/*in*/) {
 	// Not actually used
 	igios_unimplemented();
 }
 
-void D3DXPlaneTransform(D3DXPLANE &out, const D3DXPLANE &in, const D3DXMATRIX &mat) {
+void D3DXPlaneTransform(D3DXPLANE &/*out*/, const D3DXPLANE &/*in*/, const D3DXMATRIX &/*mat*/) {
 	// Not actually used
 	/*
 	out.a = mat._11 * in.a + mat._12 * in.b + mat._13 * in.c;
@@ -562,7 +560,7 @@ void D3DXPlaneTransform(D3DXPLANE &out, const D3DXPLANE &in, const D3DXMATRIX &m
 	igios_unimplemented();
 }
 
-void D3DXPlaneFromPoints(D3DXPLANE &out, const VC3 &p1, const VC3 &p2, const VC3 &p3) {
+void D3DXPlaneFromPoints(D3DXPLANE &/*out*/, const VC3 &/*p1*/, const VC3 &/*p2*/, const VC3 &/*p3*/) {
 	// Not actually used
 	igios_unimplemented();
 }

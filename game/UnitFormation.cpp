@@ -434,7 +434,7 @@ void UnitFormation::addMovePoint(std::vector<Unit *> *units,
 	}
 }
 
-void UnitFormation::setMovePoint(std::vector<Unit *> *units, const VC3 &scaledMapPos)
+void UnitFormation::setMovePoint(std::vector<Unit *> * /*units*/, const VC3 &/*scaledMapPos*/)
 {
 	// TODO
 }
