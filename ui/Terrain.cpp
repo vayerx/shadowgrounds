@@ -2980,6 +2980,7 @@ void Terrain::loadPhysicsCache(game::GamePhysics *gamePhysics, char *mapFilename
 			fb_fread(&rotq.z, sizeof(float), 1, f);
 			fb_fread(&rotq.w, sizeof(float), 1, f);
 
+#if 0 /// @todo physics?!
 			if (hasphys)
 			{
 				//assert(data.hasPhysics());
@@ -2994,6 +2995,7 @@ void Terrain::loadPhysicsCache(game::GamePhysics *gamePhysics, char *mapFilename
 				//assert(data.physicsType < 1);
 				//assert(!data.hasPhysics());
 			}
+#endif
 		}
 	}
 	
