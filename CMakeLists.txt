@@ -1,7 +1,14 @@
+# TODO split CMakeLists.txt
+
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 PROJECT(shadowgrounds)
 
+SET( CMAKE_VERBOSE_MAKEFILE  OFF )
+
+SET( Boost_USE_STATIC_LIBS   OFF )
+SET( Boost_USE_MULTITHREADED ON )
 FIND_PACKAGE( Boost 1.37 REQUIRED thread )
+
 FIND_PACKAGE( SDL REQUIRED )
 FIND_PACKAGE( SDL_sound REQUIRED )
 FIND_PACKAGE( SDL_image REQUIRED )
@@ -204,10 +211,28 @@ CompileSrcList( util util
     TextFinder.cpp TextureCache.cpp TextureSwitcher.cpp UberCrypt.cpp UnicodeConverter.cpp
 )
 
+# minor macro for strings concatination
+MACRO( CompileList result )
+    FOREACH( item ${ARGN} )
+        SET( ${result} "${${result}} ${item}" )
+    ENDFOREACH( item )
+ENDMACRO( CompileList )
+
+IF( CMAKE_COMPILER_IS_GNUCXX )
+    # CompileList( SG_WARNINGS        -Wall -Wextra -Werror -pedantic -Woverloaded-virtual -Wnon-virtual-dtor
+    #                                 -Wcomment -Wstrict-null-sentinel -Wconversion -Wcast-align -Wcast-qual
+    #                                 -Winit-self )
+    CompileList( SG_WARNINGS        -Wall -Wextra )
+    SET( CMAKE_CXX_FLAGS_DEBUG      "-O0 -g" )     # ( waiting for COMPILE_OPTIONS_<CONFIG> )
+    SET( CMAKE_CXX_FLAGS_RELEASE    "-O2" )        # ( waiting for COMPILE_OPTIONS_<CONFIG> )
+ELSE( CMAKE_COMPILER_IS_GNUCXX )
+    MESSAGE( "WARNING: using default options for non-GCC compiler" )
+ENDIF( CMAKE_COMPILER_IS_GNUCXX )
+
 # Set default build options
 MACRO( SetShadowgroundsProperties name flags )
     SET_TARGET_PROPERTIES( ${name} PROPERTIES
-        COMPILE_FLAGS               "-DPHYSICS_NONE ${flags}"
+        COMPILE_FLAGS               "-DPHYSICS_NONE ${flags} ${SG_WARNINGS}"
         COMPILE_DEFINITIONS_DEBUG   "_DEBUG=1"
         COMPILE_DEFINITIONS_RELEASE "NDEBUG=1"
     )
@@ -250,3 +275,12 @@ AddShadowgroundsBinary( survivor "-DPROJECT_SURVIVOR"
     survivor/ui_credits_text.cpp
     survivor/version.cpp
 )
+
+# some files must be compiled unoptimized (gcc bug?)
+IF( CMAKE_COMPILER_IS_GNUCXX )
+    SET_SOURCE_FILES_PROPERTIES(
+        storm/storm3dv2/Storm3D_Mesh_CollisionTable.cpp
+        util/LipsyncManager.cpp
+        PROPERTIES  COMPILE_FLAGS   "-O0"
+    )
+ENDIF( CMAKE_COMPILER_IS_GNUCXX )
