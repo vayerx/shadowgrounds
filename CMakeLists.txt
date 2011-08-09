@@ -219,10 +219,21 @@ MACRO( CompileList result )
 ENDMACRO( CompileList )
 
 IF( CMAKE_COMPILER_IS_GNUCXX )
-    # CompileList( SG_WARNINGS        -Wall -Wextra -Werror -pedantic -Woverloaded-virtual -Wnon-virtual-dtor
-    #                                 -Wcomment -Wstrict-null-sentinel -Wconversion -Wcast-align -Wcast-qual
-    #                                 -Winit-self )
-    CompileList( SG_WARNINGS        -Wall -Wextra )
+    CompileList( SG_WARNINGS        -Wall
+                                    -Wextra
+                                    # -pedantic
+                                    -Wcast-align
+                                    -Wcast-qual
+                                    # -Wconversion
+                                    -Woverloaded-virtual
+                                    # -Wnon-virtual-dtor
+                                    -Wcomment
+                                    -Wstrict-null-sentinel
+                                    -Winit-self
+                                    # -Werror
+
+                                    -Wno-unused-parameter -Wno-unused-variable  # TODO
+    )
     SET( CMAKE_CXX_FLAGS_DEBUG      "-O0 -g" )     # ( waiting for COMPILE_OPTIONS_<CONFIG> )
     SET( CMAKE_CXX_FLAGS_RELEASE    "-O2" )        # ( waiting for COMPILE_OPTIONS_<CONFIG> )
 ELSE( CMAKE_COMPILER_IS_GNUCXX )
