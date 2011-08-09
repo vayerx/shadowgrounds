@@ -2746,8 +2746,7 @@ namespace util
 								Logger::getInstance()->debug(data); 										
 							}
 						}
-						// WARNING: casting const char * to char *
-						char *subname = (char *)data;
+						const char *subname = data;
 						char *rettypename = NULL;
 
 						bool allocedNameBufs = false;
@@ -2758,8 +2757,10 @@ namespace util
 							allocedNameBufs = true;
 							createEnterAndLeaveSubs = true;
 
-							subname = new char[strlen(data) + 1];
-							rettypename = new char[strlen(data) + 1];
+							const size_t dataSize = strlen(data) + 1;
+							char *newSubname = new char[dataSize];
+							subname = newSubname;
+							rettypename = new char[dataSize];
 							int subnamelen = 0;
 							if (containsParenthesis != -1)
 							{
@@ -2767,14 +2768,14 @@ namespace util
 							} else {
 								subnamelen = strlen(&data[containsComma + 1]) - (containsComma + 1);
 							}
-							strncpy(subname, &data[containsComma + 1], subnamelen);
-							subname[subnamelen] = '\0';
+							strncpy(newSubname, &data[containsComma + 1], subnamelen);
+							newSubname[subnamelen] = '\0';
 							
 							{
 								std::string tmp = subname;
 								std::string tmp2 = StringRemoveWhitespace(tmp);
 								assert(tmp2.size() <= strlen(data));
-								strcpy(subname, tmp2.c_str());
+								strcpy(newSubname, tmp2.c_str());
 							}
 
 							if (containsComma == 0)
