@@ -936,8 +936,8 @@ bool Storm3D_Model::LoadS3D(const char *filename)
 
 		int originalVertexAmount = 0;
 		int originalFaceAmount = 0;
-		int vertexAmountMult = 1;
-		int faceAmountMult = 1;
+		uint16_t vertexAmountMult = 1;
+		uint16_t faceAmountMult = 1;
 
 		if(s3d_version >= 6)
 		{

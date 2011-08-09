@@ -59,7 +59,7 @@ public:
 	virtual ~IStorm3D_ScreenBuffer() {};
 
 	virtual const VC2I &getSize() const = 0;
-	virtual const std::vector<DWORD> &getBuffer() const = 0;
+	virtual const std::vector<uint32_t> &getBuffer() const = 0;
 };
 
 //------------------------------------------------------------------
@@ -128,12 +128,12 @@ public:
 	// Screenshot
 	virtual void TakeScreenshot(const char *file_name) = 0;
 	virtual IStorm3D_ScreenBuffer *TakeScreenshot(const VC2 &area) = 0;
-	virtual DWORD getScreenColorValue(const VC2 &area) = 0;
+	virtual uint32_t getScreenColorValue(const VC2 &area) = 0;
 
 	virtual bool RenderSceneToArray( IStorm3D_Scene * stormScene, unsigned char * destination, int width, int height ) = 0;
 
 	// Texture handling
-	virtual IStorm3D_Texture *CreateNewTexture(const char *filename,DWORD tex_load_flags=0,DWORD tex_identity=0, const void *data=0, size_t data_size=0)=0;	// Use tex_identity if you do not want to share this texture resource. (reasonable for videotextures only)
+	virtual IStorm3D_Texture *CreateNewTexture(const char *filename, uint32_t tex_load_flags=0, uint32_t tex_identity=0, const void *data=0, size_t data_size=0)=0;	// Use tex_identity if you do not want to share this texture resource. (reasonable for videotextures only)
 	virtual IStorm3D_Texture *CreateNewTexture(int width,int height,IStorm3D_Texture::TEXTYPE textype)=0; // For dynamic textures
 	//virtual void DeleteTexture(IStorm3D_Texture *tex)=0;
 

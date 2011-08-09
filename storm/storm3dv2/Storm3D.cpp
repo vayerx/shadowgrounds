@@ -829,7 +829,7 @@ void Storm3D::SetGammaRamp(float gamma, float brightness, float contrast, float 
 	}
 
 	/*
-	DWORD flags;
+	uint32_t flags;
 	if (calibrate)
 		flags = D3DSGR_CALIBRATE;
 	else
@@ -1029,7 +1029,7 @@ IStorm3D_ScreenBuffer *Storm3D::TakeScreenshot(const VC2 &/*area*/)
 }
 
 
-DWORD Storm3D::getScreenColorValue(const VC2 &/*area*/)
+uint32_t Storm3D::getScreenColorValue(const VC2 &/*area*/)
 {
 	igios_unimplemented();
 	return 0;
@@ -1041,7 +1041,7 @@ DWORD Storm3D::getScreenColorValue(const VC2 &/*area*/)
 	\param texloadcaps
 	\param texidentity
 */
-IStorm3D_Texture *Storm3D::CreateNewTexture(const char *originalFilename, DWORD texloadcaps, DWORD texidentity, const void *data, size_t data_size)
+IStorm3D_Texture *Storm3D::CreateNewTexture(const char *originalFilename, uint32_t texloadcaps, uint32_t texidentity, const void *data, size_t data_size)
 {
 	Storm3D_Texture *ex_tex = 0;
 	std::string originalString = originalFilename;

@@ -3,7 +3,7 @@
 
 #pragma once
 #include <math.h>
-
+#include <stdint.h>
 
 //------------------------------------------------------------------
 // Defines for DLL export/import
@@ -46,20 +46,9 @@
 #endif
 
 #ifndef C2_DO_NOT_DEFINE_DATATYPES
-typedef unsigned char	BYTE;
-typedef unsigned short	WORD;
-
-// turol: FIXME: ugly hack
-#ifdef __GNUC__
- #ifdef __WINE__
-  typedef unsigned int	DWORD;
- #else
-  typedef long unsigned int DWORD;
- #endif // __WINE__
-#else
-typedef unsigned long	DWORD;
-#endif
-
+typedef uint8_t     BYTE;
+typedef uint16_t    WORD;
+typedef uint32_t    DWORD;
 #endif
 
 

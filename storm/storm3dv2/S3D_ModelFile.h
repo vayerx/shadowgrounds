@@ -150,21 +150,21 @@ struct S3D_OBJECT
 	bool light_object;
 	//bool is_volume_fog;		// This object is volume fog (color=material.color, density=material.transparency/1000)
 	bool is_mirror;			// If this object is an mirror
-	BYTE shadow_level;		// Realtime shadows (number of lightsources)
+	uint8_t shadow_level;		// Realtime shadows (number of lightsources)
 
 	int keyframe_endtime;	// Keyframe animation end time (loops at 0)
 
-	BYTE lod_amount;		// number of following LOD's
-	WORD poskey_amount;		// number of following POSITIONKEYs
-	WORD rotkey_amount;		// number of following ROTATIONKEYs
-	WORD scalekey_amount;	// number of following SCALEKEYs
-	WORD meshkey_amount;	// number of following MESHKEYs
+	uint8_t lod_amount;		// number of following LOD's
+	uint16_t poskey_amount;		// number of following POSITIONKEYs
+	uint16_t rotkey_amount;		// number of following ROTATIONKEYs
+	uint16_t scalekey_amount;	// number of following SCALEKEYs
+	uint16_t meshkey_amount;	// number of following MESHKEYs
 
-	WORD vertex_amount;		// number of following VERTEXes (new in v2.1)
-	WORD face_amount;		// number of following FACEs (new in v3. NO LODS SAVED!)
+	uint16_t vertex_amount;		// number of following VERTEXes (new in v2.1)
+	uint16_t face_amount;		// number of following FACEs (new in v3. NO LODS SAVED!)
 
 	// Number of affecting bones. bone_amount * vertex_amount BONEWEIGHTS follows
-	WORD bone_amount;
+	uint16_t bone_amount;
 
 	S3D_OBJECT()
 	:	material_index(0),

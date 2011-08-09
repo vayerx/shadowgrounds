@@ -268,10 +268,10 @@ public:
 	// Screenshot
 	void TakeScreenshot(const char *file_name);
 	IStorm3D_ScreenBuffer *TakeScreenshot(const VC2 &area);
-	DWORD getScreenColorValue(const VC2 &area);
+	uint32_t getScreenColorValue(const VC2 &area);
 
 	// Texture handling
-	IStorm3D_Texture *CreateNewTexture(const char *filename,DWORD tex_flags=0,DWORD tex_identity=0, const void *data=0, size_t data_size=0);
+	IStorm3D_Texture *CreateNewTexture(const char *filename, uint32_t tex_flags=0, uint32_t tex_identity=0, const void *data=0, size_t data_size=0);
 	IStorm3D_Texture *CreateNewTexture(int width,int height,IStorm3D_Texture::TEXTYPE textype); // For dynamic textures
 
 
