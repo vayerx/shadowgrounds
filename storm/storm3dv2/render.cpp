@@ -75,7 +75,7 @@ uintptr_t applyFVF(VxFormat fmt, uintptr_t size) {
  \param count
  \param vx
  */
-void renderUP(VxFormat fmt, GLenum type, int count, int size, char *vx) {
+void renderUP(VxFormat fmt, GLenum type, int count, int size, const char *vx) {
 	int vxCount = 0;
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -97,7 +97,7 @@ void renderUP(VxFormat fmt, GLenum type, int count, int size, char *vx) {
 	}
 
 	intptr_t ptr = applyFVF(fmt, size);
-	setStreamSource(0, 0, (intptr_t) vx, size);
+	setStreamSource(0, 0, vx, size);
 
 	if (ptr != size) {
 		igiosWarning("strange: ptr(%" PRIiPTR ") != size(%d)\n", ptr, size);
@@ -125,10 +125,10 @@ void setTextureMatrix(int stage, const D3DMATRIX &mat_) {
 }
 
 
-Element::Element(int stream_, int offset_, d3dtype type_, d3dusage usage_, int index_)
+Element::Element(int stream_, uintptr_t offset_, d3dtype type_, d3dusage usage_, int index_)
 : stream(stream_),
-  offset(offset_),
   index(index_),
+  offset(offset_),
   type(type_),
   usage(usage_)
 {
@@ -193,13 +193,13 @@ static void d3dTypeSize(d3dtype type, int &siz, GLenum &gltype) {
 	}
 }
 
-void setStreamSource(int stream_, GLuint vbo, int offs, int stride) {
+void setStreamSource(int stream_, GLuint vbo, const void *data, int stride) {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	for (unsigned int i = 0; i < vertexDecl.size(); i++) {
 		if (vertexDecl[i].stream == stream_) {
 			int siz = 3;
 			GLenum typ = GL_FLOAT;
-			GLvoid *offs_ = (GLvoid *) (offs + vertexDecl[i].offset);
+			const GLvoid *offs_ = reinterpret_cast<const uint8_t *>(data) + vertexDecl[i].offset;
 			d3dTypeSize(vertexDecl[i].type, siz, typ);
 			switch (vertexDecl[i].usage) {
 			case D3DDECLUSAGE_POSITION:

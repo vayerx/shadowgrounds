@@ -1087,9 +1087,9 @@ void VertexBuffer::apply(int stream) const
 /*!
 	\param stream stream
 */
-void VertexBuffer::apply(int stream, int offset) const
+void VertexBuffer::apply(int stream, uintptr_t offset) const
 {
-	setStreamSource(stream, buffer, offset, vertexSize);
+	setStreamSource(stream, buffer, reinterpret_cast<const void *>(offset), vertexSize);
 }
 
 VertexBuffer::operator bool() const

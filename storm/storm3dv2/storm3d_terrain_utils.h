@@ -176,7 +176,7 @@ public:
 	void unlock();
 
 	void apply(int stream) const;
-	void apply(int stream, int offset) const;
+	void apply(int stream, uintptr_t offset) const;
 	operator bool() const;
 };
 

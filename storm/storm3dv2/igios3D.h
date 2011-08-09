@@ -28,10 +28,11 @@ typedef enum {
 class Element
 {
 public:
-	int stream, offset, index;
+	int stream, index;
+	uintptr_t offset;
 	d3dtype type;
 	d3dusage usage;
-	Element(int stream_, int offset_, d3dtype type_, d3dusage usage_, int index_ = 0);
+	Element(int stream_, uintptr_t offset_, d3dtype type_, d3dusage usage_, int index_ = 0);
 };
 
 
@@ -88,10 +89,10 @@ public:
 
 
 uintptr_t applyFVF(VxFormat fmt, uintptr_t size);
-void renderUP(VxFormat fmt, GLenum type, int count, int size, char *vx);
+void renderUP(VxFormat fmt, GLenum type, int count, int size, const char *vx);
 
 void setVertexDeclaration(const std::vector<Element> &elements);
-void setStreamSource(int stream_, GLuint vbo, int offs, int stride);
+void setStreamSource(int stream_, GLuint vbo, const void *offs, int stride);
 
 #ifndef M_PI
 #define M_PI PI
