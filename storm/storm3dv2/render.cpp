@@ -250,7 +250,7 @@ void D3DXMatrixLookAtLH(D3DXMATRIX &out, const VC3 &eye, const VC3 &at, const VC
 }
 
 void D3DXMatrixPerspectiveFovLH(D3DXMATRIX &out, float fov, float aspect, float zNear, float zFar) {
-	float yscale = 1.0f / (tan(fov/2));
+	float yscale = 1.0f / float(tan(fov/2));
 	float xscale = yscale / aspect;
 
 	out._11 = xscale;

@@ -401,7 +401,7 @@ namespace game
 	void Flashlight::setImpact(float factor)
 	{
 		impl->impactFactor = factor;
-		impl->impactDirection = (impl->game->gameRandom->nextInt() % 360) / 180.0f * 3.1415926f;
+		impl->impactDirection = float(impl->game->gameRandom->nextInt() % 360) / 180.0f * 3.1415926f;
 	}
 
 

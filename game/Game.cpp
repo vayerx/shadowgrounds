@@ -974,7 +974,7 @@ static VC3 last_attemptedPos = VC3(0,0,0);
 							culler = gameUI->gridOcclusionCuller;
 						}
 						gameUI->getTerrain()->updatePhysics(physics, removedObjects, culler);
-						int removedAmount = removedObjects.size();
+						const size_t removedAmount = removedObjects.size();
 						if (removedAmount > 0)
 						{
 							gameScene->removeTerrainObstacles(removedObjects);
@@ -1470,13 +1470,13 @@ std::string fooid = std::string(this->nextMissionOnSuccess);
 
 // HACK: some real crap here!
 // FIX: less crap now
-int end = fooid.find_last_of(".");
+const size_t end = fooid.find_last_of(".");
 #ifdef PROJECT_SURVIVOR
-int start = fooid.find_last_of("/");
+const size_t start = fooid.find_last_of("/");
 #else
-int s1 = fooid.find_last_of("/");
-int s2 = fooid.find_last_of("_");
-int start = std::max(s1, s2);
+const size_t s1 = fooid.find_last_of("/");
+const size_t s2 = fooid.find_last_of("_");
+const size_t start = std::max(s1, s2);
 #endif
 std::string tmp = fooid.substr(start + 1, end - start - 1);
 
@@ -2574,16 +2574,16 @@ gameUI->getTerrain()->calculateLighting();
 
 				// HACK: some real crap here!
 				// FIX: less crap now
-				int end = fooid.find_last_of(".");
+				const size_t end = fooid.find_last_of(".");
 #ifdef PROJECT_SURVIVOR
-				int start = fooid.find_last_of("/");
+				const size_t start = fooid.find_last_of("/");
 #else
-				int s1 = fooid.find_last_of("/");
-				int s2 = fooid.find_last_of("_");
-				int start = std::max(s1, s2);
+				const size_t s1 = fooid.find_last_of("/");
+				const size_t s2 = fooid.find_last_of("_");
+				const size_t start = std::max(s1, s2);
 #endif
 				std::string tmp = fooid.substr(start + 1, end - start - 1);
-				this->missionId = (char *)tmp.c_str();
+				this->missionId = (char *)tmp.c_str();      /// @todo OMFG WTF???!!!!11eleven
 				
 				gameUI->openLoadingWindow(singlePlayerNumber);
 				this->missionId = foocrap;
@@ -3147,7 +3147,7 @@ gameUI->getTerrain()->calculateLighting();
 
 	bool Game::loadVariablesFromMemory(const char *memoryBuffer, const char *saveId, const char *saveType, const char *applySub)
 	{
-		int buflen = strlen(memoryBuffer);
+		const size_t buflen = strlen(memoryBuffer);
 		char *tmp = new char[buflen + 1];
 		strcpy(tmp, memoryBuffer);
 
@@ -3205,7 +3205,7 @@ gameUI->getTerrain()->calculateLighting();
 		FILE *f = fopen(filename, "wb");
 		if (f != NULL)
 		{
-			int got = fwrite(buf, strlen(buf), 1, f);
+			const size_t got = fwrite(buf, strlen(buf), 1, f);
 			if (got != 1)
 			{
 				saveFailed = true;
@@ -3233,10 +3233,10 @@ gameUI->getTerrain()->calculateLighting();
 			//fseek(f, 0, SEEK_END);
 			//int filelen = ftell(f);
 			//fseek(f, 0, SEEK_SET);
-			int filelen = filesystem::fb_fsize(f);
+			const size_t filelen = filesystem::fb_fsize(f);
 
 			buf = new char[filelen + 1];
-			int got = filesystem::fb_fread(buf, filelen, 1, f);
+			const size_t got = filesystem::fb_fread(buf, filelen, 1, f);
 			if (got != 1)
 			{
 				loadFailed = true;
@@ -4607,7 +4607,7 @@ gameUI->getTerrain()->calculateLighting();
 		else if(strchr(saveId, '/') != NULL)
 		{
 			saveGameType = "savegame";
-			int size = strlen(saveId) + 1;
+			const size_t size = strlen(saveId) + 1;
 			savefile = new char[size];
 			memcpy(savefile, saveId, size);
 		}
@@ -4758,7 +4758,7 @@ gameUI->getTerrain()->calculateLighting();
 		// saveid is a full path
 		if(strchr(saveId, '/') != NULL)
 		{
-			int size = strlen(saveId) + 1;
+			const size_t size = strlen(saveId) + 1;
 			savefile = new char[size];
 			memcpy(savefile, saveId, size);
 		}
@@ -4999,7 +4999,7 @@ gameUI->getTerrain()->calculateLighting();
 		if (strncmp(ver_buf, "SAVE1.0", 8) != 0) return false;
 
 		// read data chunks
-		int gothdr;
+		size_t gothdr;
 		while ((gothdr = fread(hdr_buf, sizeof(int), 5, f)) == 5)
 		{
 			int chunkid = hdr_buf[0];

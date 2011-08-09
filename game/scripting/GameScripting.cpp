@@ -162,6 +162,7 @@ namespace game
 		#define GS_EXPAND_GAMESCRIPTING_CASE
 		#include "scripting_macros_start.h"
 
+/// @todo CRAPPY SHIT WTF
 		switch(command)
 		{
 
@@ -1526,7 +1527,7 @@ namespace game
 		singleCommandScriptProcess->setLastValue(*lastValue);
 		singleCommandScriptProcess->setSecondaryValue(*secondaryValue);
 
-		// WARNING: const char * -> char * cast... as that should be the case (?)
+		/// @todo WARNING: const char * -> char * cast... as that should be the case (?)
 		process(singleCommandScriptProcess, command, intFloat, (char *)stringData, &singleCommandScriptProcess->lastValue);
 
 		*lastValue = singleCommandScriptProcess->lastValue;
@@ -1593,7 +1594,7 @@ namespace game
 			floatint tmp;
 			if (param != NULL)
 			{
-				tmp.i = str2int((char *)param);
+				tmp.i = str2int(param);
 				if (str2int_errno() != 0)
 				{
 					Logger::getInstance()->error("GameScripting::runSingleSimpleStringCommand - Command expected int, but given parameter is not a valid int value.");
@@ -1677,7 +1678,7 @@ namespace game
 				floatint tmp;
 				if (param[i] != NULL)
 				{
-					tmp.i = str2int((char *)(param[i]));
+					tmp.i = str2int(param[i]);
 					if (str2int_errno() != 0)
 					{
 						Logger::getInstance()->error("GameScripting::runMultipleSimpleStringCommands - Command expected int, but given parameter is not a valid int value.");

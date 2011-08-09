@@ -365,7 +365,7 @@ namespace ui
 
 	inline Unit *getNextUnitOfType(const char *name, Unit *unit, Game *game)
 	{
-		UnitType *ut = getUnitTypeByName((char *)name);
+		UnitType *ut = getUnitTypeByName(name);
 		unit = UnitScripting::nextOwnedUnit(game, Vector(0,0,0), 0, unit, false );
 		while (unit != NULL)
 		{

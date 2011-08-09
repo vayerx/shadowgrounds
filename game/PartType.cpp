@@ -336,8 +336,8 @@ namespace game
         if (desc != NULL) delete [] desc;
         desc = new char[strlen(value) + 1];
         strcpy(desc, value);
-        int slen = strlen(desc);
-        for (int i = 0; i < slen; i++)
+        const size_t slen = strlen(desc);
+        for (size_t i = 0; i < slen; i++)
         {
           if (desc[i] == '\\') desc[i] = '\n';
         }
@@ -347,13 +347,13 @@ namespace game
       {
         if (desc == NULL) return false;
         char *olddesc = desc;
-        int olddesclen = strlen(olddesc);
+        const size_t olddesclen = strlen(olddesc);
         desc = new char[olddesclen + strlen(value) + 1];
         strcpy(desc, olddesc);
         strcpy(&desc[olddesclen], value);
         delete [] olddesc;
-        int slen = strlen(desc);
-        for (int i = 0; i < slen; i++)
+        const size_t slen = strlen(desc);
+        for (size_t i = 0; i < slen; i++)
         {
           if (desc[i] == '\\') desc[i] = '\n';
         }

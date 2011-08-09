@@ -644,7 +644,7 @@ struct SpotlightData
 			spot->setPosition(spot1pos);
 
 			if(lightModel)
-				lightModel->SetPosition((VC3 &) pos);
+				lightModel->SetPosition(pos);
 		}
 
 		if(spot2 && spotAmount >= 2)

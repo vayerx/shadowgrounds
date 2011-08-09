@@ -124,10 +124,10 @@ namespace game
     //fseek(f, 0, SEEK_END);
     //int size = ftell(f);
     //fseek(f, 0, SEEK_SET);
-    int size = filesystem::fb_fsize(f);
+    const size_t size = filesystem::fb_fsize(f);
 
     buf = new char[size + 1];
-    int datalen = filesystem::fb_fread(buf, sizeof(char), size, f);
+    const size_t datalen = filesystem::fb_fread(buf, sizeof(char), size, f);
     buf[datalen] = '\0';
 
 		if (strlen(filename) > 4
@@ -145,8 +145,8 @@ namespace game
     bool stateAwait = false;  // when expecting to change state + 1
 
     int lineNumber = 1;
-    int lastpos = 0;
-    int i;
+    size_t lastpos = 0;
+    size_t i;
     for (i = 0; i < datalen; i++)
     {
       if (buf[i] == '\r' || buf[i] == '\n')
@@ -158,7 +158,7 @@ namespace game
         buf[i] = '\0';
 
         // remove trailing spaces
-        for (int j = i - 1; j >= lastpos; j--)
+        for (size_t j = i - 1; j >= lastpos; j--)
         {
           if (buf[j] == ' ' || buf[j] == '\t')  
             buf[j] = '\0';
@@ -179,15 +179,15 @@ namespace game
 							if (strlen(importfile) > 0)
 							{
 								int pos = 0;
-								int slen = strlen(importfile);
-								for (int j = 0; j < slen; j++)
+								const size_t slen = strlen(importfile);
+								for (size_t j = 0; j < slen; j++)
 								{
 									if (importfile[j] != ' ')
 									{
 										if (importfile[j] == '"')
 										{
 											pos = j + 1;
-											for (int k = strlen(importfile) - 1; k > j; k--)
+											for (size_t k = strlen(importfile) - 1; k > j; k--)
 											{
 												if (importfile[k] == '"')
 												{
@@ -308,13 +308,13 @@ namespace game
             if (!lineok)
             {
               int hasEqual = -1;
-              for (int j = lastpos; j < i; j++)
+              for (size_t j = lastpos; j < i; j++)
               {
                 if (buf[j] == '=') 
                 { 
                   buf[j] = '\0';
 									// trim left side of equal sign
-									for (int backtrim = j-1; backtrim >= lastpos; backtrim--)
+									for (size_t backtrim = j-1; backtrim >= lastpos; backtrim--)
 									{
 										if (buf[backtrim] == ' ' || buf[backtrim] == '\t')
 										{

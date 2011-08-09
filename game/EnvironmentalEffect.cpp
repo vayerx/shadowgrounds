@@ -62,7 +62,7 @@ void EnvironmentalEffect::update(int ms)
 
 	if(visualEffect)
 	{
-		float factor = float(time) / fadeTime;
+		float factor = time / float(fadeTime);
 		if(state == FadeIn)
 		{
 			if(factor > 1.0f)

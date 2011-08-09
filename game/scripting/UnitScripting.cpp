@@ -6735,38 +6735,38 @@ namespace game
 					int startdelay = 0;
 					float damagefactor = 0;
 
-					char *pos;
+					const char *pos;
 
 					// VS doesn't handle this as const
-					pos = strstr((char*)stringData, "limit");
+					pos = strstr(stringData, "limit");
 					if(pos == NULL || sscanf(pos, "limit=%f", &limit) != 1)
 					{
 						sp->error("UnitScripting::process - setUnitHPGainMode expects float parameter 'limit'.");
 						break;
 					}
 
-					pos = strstr((char*)stringData, "amount");
+					pos = strstr(stringData, "amount");
 					if(pos == NULL || sscanf(pos, "amount=%i", &amount) != 1)
 					{
 						sp->error("UnitScripting::process - setUnitHPGainMode expects integer parameter 'amount'.");
 						break;
 					}
 
-					pos = strstr((char*)stringData, "delay");
+					pos = strstr(stringData, "delay");
 					if(pos == NULL || sscanf(pos, "delay=%i", &delay) != 1)
 					{
 						sp->error("UnitScripting::process - setUnitHPGainMode expects integer parameter 'delay'.");
 						break;
 					}
 
-					pos = strstr((char*)stringData, "startdelay");
+					pos = strstr(stringData, "startdelay");
 					if(pos == NULL || sscanf(pos, "startdelay=%i", &startdelay) != 1)
 					{
 						sp->error("UnitScripting::process - setUnitHPGainMode expects integer parameter 'startdelay'.");
 						break;
 					}
 
-					pos = strstr((char*)stringData, "damagefactor");
+					pos = strstr(stringData, "damagefactor");
 					if(pos == NULL || sscanf(pos, "damagefactor=%f", &damagefactor) != 1)
 					{
 						sp->error("UnitScripting::process - setUnitHPGainMode expects float parameter 'damagefactor'.");
