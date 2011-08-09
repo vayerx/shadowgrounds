@@ -83,7 +83,7 @@ namespace game
 
     virtual const char *getStatusInfo() const;
 
-    void setData(WORD *heightMap, WORD *doubledMap, VC2I size, VC2 scaledSize, float scaledHeight,
+    void setData(uint16_t *heightMap, uint16_t *doubledMap, VC2I size, VC2 scaledSize, float scaledHeight,
 			const char *vegeFilename);
 
 		// should call this after obstacle map is complete.
@@ -125,7 +125,7 @@ namespace game
     // returns scale height
     float getScaleHeight();
     
-    WORD *getObstacleHeightMap();
+    uint16_t *getObstacleHeightMap();
 
     void applyObstacleHeightChanges();
 
@@ -183,19 +183,19 @@ namespace game
 
 // for efficiency
 public:
-    WORD *heightMap;
-    WORD *pathfindHeightMap;
+    uint16_t *heightMap;
+    uint16_t *pathfindHeightMap;
 private:
 
 		// to temporarily hold the pathfind heightmap loaded from binary
 		// (as we cannot apply that immediately or building/terr.obj. heights would be incorrect)
-		WORD *precalcedPathfindHeightMap;
+		uint16_t *precalcedPathfindHeightMap;
 
     IStorm3D_Terrain *terrain;
 
 // for efficiency
 public:
-    WORD *obstacleHeightMap;
+    uint16_t *obstacleHeightMap;
 private:
 
 		CoverMap *coverMap;

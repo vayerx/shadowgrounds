@@ -472,7 +472,7 @@ void Storm3D_Mesh::ReBuild()
 
 	// Select format for vertexbuffer
 	int size=sizeof(VXFORMAT_TC2);
-	DWORD fvf=FVF_VXFORMAT_TC2;
+	uint32_t fvf=FVF_VXFORMAT_TC2;
 
 	if(bone_weights)
 	{

@@ -46,7 +46,7 @@ struct HelperVisualizationData
 	{
 	}
 
-	boost::shared_ptr<IStorm3D_Line> createNewLine(DWORD color)
+	boost::shared_ptr<IStorm3D_Line> createNewLine(uint32_t color)
 	{
 		boost::shared_ptr<IStorm3D_Line> line(storm.storm->CreateNewLine(), LineDeleter<IStorm3D_Line>(storm));
 		line->SetThickness(.25f);
@@ -65,7 +65,7 @@ struct HelperVisualizationData
 		return VC3(pointPosition.x, height + .2f, pointPosition.y);
 	}
 
-	void createCross(const VC2 &pointPosition, float size, DWORD color)
+	void createCross(const VC2 &pointPosition, float size, uint32_t color)
 	{
 		//float height = storm.terrain->GetHeightAt(pointPosition);
 		//VC3 position(pointPosition.x, height + .2f, pointPosition.y);
@@ -104,7 +104,7 @@ void HelperVisualization::visualize(const UnitHelpers &helpers, int activeIndex,
 
 	for(int i = 0; i < helpers.getHelperAmount(); ++i)
 	{
-		DWORD color = (i == activeIndex) ? 0xFFFF0000 : 0xFFAA0000;
+		uint32_t color = (i == activeIndex) ? 0xFFFF0000 : 0xFFAA0000;
 
 		VC2 startPoint = unitPosition;
 

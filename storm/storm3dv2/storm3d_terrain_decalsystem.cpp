@@ -49,12 +49,12 @@ using namespace frozenbyte::storm;
 	{
 		VC3 position;
 		VC3 normal;
-		DWORD color;
+		uint32_t color;
 		VC2 texcoords;
 		VC2 texcoords2;
 
 		// Constructor
-		VXFORMAT_DECAL(const VC3 &position_, const VC3 &normal_, DWORD color_, const VC2 &texcoords_, const VC2 &texcoords2_)
+		VXFORMAT_DECAL(const VC3 &position_, const VC3 &normal_, uint32_t color_, const VC2 &texcoords_, const VC2 &texcoords2_)
 		:	position(position_),
 			normal(normal_),
 			color(color_),
@@ -79,7 +79,7 @@ using namespace frozenbyte::storm;
 
 		VC3 normal;
 		VC3 vertices[4];
-		mutable DWORD vertexColor;
+		mutable uint32_t vertexColor;
 
 		bool deleted;
 		Tree::Entity *entity;
@@ -701,9 +701,9 @@ struct Storm3D_TerrainDecalSystem::Data
 					color.g += factor * (1.f - color.g);
 					color.b += factor * (1.f - color.b);
 
-					DWORD vertexColor = color.GetAsD3DCompatibleARGB() & 0x00FFFFFF;
+					uint32_t vertexColor = color.GetAsD3DCompatibleARGB() & 0x00FFFFFF;
 
-					DWORD oldColor = decal.vertexColor;
+					uint32_t oldColor = decal.vertexColor;
 					decal.vertexColor = vertexColor;
 					decal.insert(buffer);
 					decal.vertexColor = oldColor;

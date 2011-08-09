@@ -94,7 +94,7 @@ struct TerrainColorMap::Data
 
 //storm.scene->RenderScene(true);
 storm.scene->RenderScene(false);
-DWORD colorValue = storm.storm->getScreenColorValue(VC2(.1f, .1f));
+uint32_t colorValue = storm.storm->getScreenColorValue(VC2(.1f, .1f));
 unsigned char r = unsigned char((colorValue & 0x00FF0000) >> 16);
 unsigned char g = unsigned char((colorValue & 0x0000FF00) >> 8);
 unsigned char b = unsigned char((colorValue & 0x000000FF));
@@ -135,11 +135,11 @@ pixel.color = TColor<unsigned char> (r, g, b);
 		int b = 0;
 
 		VC2I bufferSize = screenBuffer.getSize();
-		const vector<DWORD> &buffer = screenBuffer.getBuffer();
+		const vector<uint32_t> &buffer = screenBuffer.getBuffer();
 
 		for(unsigned int i = 0; i < buffer.size(); ++i)
 		{
-			DWORD value = buffer[i];
+			uint32_t value = buffer[i];
 
 			r += (value & 0x00FF0000) >> 16;
 			g += (value & 0x0000FF00) >> 8;
@@ -187,14 +187,14 @@ pixel.color = TColor<unsigned char> (r, g, b);
 			m = storm.storm->CreateNewMaterial("..");
 		m->SetBaseTexture(t);
 
-		scoped_array<DWORD> buffer(new DWORD[size.x * size.y]);
+		scoped_array<uint32_t> buffer(new uint32_t[size.x * size.y]);
 		for(int y = 0; y < size.y; ++y)
 		for(int x = 0; x < size.x; ++x)
 		{
 			int index = y * size.x + x;
 			Pixel &pixel = values[index];
 
-			DWORD value = (pixel.color.r << 16) | (pixel.color.g << 8) | (pixel.color.b);
+			uint32_t value = (pixel.color.r << 16) | (pixel.color.g << 8) | (pixel.color.b);
 			buffer[index] = value;
 		}
 

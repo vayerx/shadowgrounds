@@ -202,7 +202,7 @@ public:
 	// Heightmap stuff (Heightmap size must be 2^x)
 	// NOTE: unlike in previous version this copies heightmap to terrainengine,
 	// so you can delete your own copy right after calling this method.
-	virtual void SetHeightMap(WORD *map,const VC2I &map_size,const VC3 &real_size,WORD *forcemap = 0)=0;
+	virtual void SetHeightMap(uint16_t *map,const VC2I &map_size,const VC3 &real_size,uint16_t *forcemap = 0)=0;
 
 	// Editing
 	virtual void Paint(const VC2 &position,float brush_radius,int texnum, int max_change = 255, int max_value = 255)=0;
@@ -217,13 +217,13 @@ public:
 		bool below = false) = 0;
 
 	// Object group visibility (new)
-	virtual void SetObjectGroupVisibilityRange(BYTE group_id,float range)=0;
+	virtual void SetObjectGroupVisibilityRange(uint8_t group_id,float range)=0;
 
 	// Models in terrain
 	// Copies of models in terrain (grass, plants, trees etc)
 	// New feature: group. You can create different object groups with this
 	// for example trees (big objects) would be one group and grass/plants/rocks (small objects) other.
-	virtual void AddModelCopy(IStorm3D_Model *model,const VC3 &position,const QUAT &rotation,BYTE group_id=0)=0;
+	virtual void AddModelCopy(IStorm3D_Model *model,const VC3 &position,const QUAT &rotation,uint8_t group_id=0)=0;
 	virtual VC3 RemoveModelCopy(int model_id, const VC3 &position)=0;
 
 	// Sunlight
@@ -231,22 +231,22 @@ public:
 
 	// Test collision etc
 	virtual float GetHeightAt(const VC2 &position) const=0;
-	virtual BYTE GetTextureAmountAt(int texture,const VC2 &position) const=0;
+	virtual uint8_t GetTextureAmountAt(int texture,const VC2 &position) const=0;
 	virtual void RayTrace(const VC3 &position,const VC3 &direction_normalized,float ray_length,Storm3D_CollisionInfo &rti, ObstacleCollisionInfo &oci, bool accurate = false, bool lineOfSight = false) const=0;
 
-	virtual WORD *GetHeightmap() const=0;
+	virtual uint16_t *GetHeightmap() const=0;
 	virtual void SaveColorMap(const char *fname) const = 0;
 
 	virtual void SaveTerrain(const char *fname) const = 0;
 	virtual void LoadTerrain(const char *fname) = 0;
 
-	virtual void SetObstacleHeightmap(WORD *obstacleHeightmap)=0;
+	virtual void SetObstacleHeightmap(uint16_t *obstacleHeightmap)=0;
 
 	// Recreate raytrace optimization map.
 	virtual void RecreateCollisionMap()=0;
 
 	// Object copy handling
-	virtual ICreate<IStorm3D_Terrain_ObjectCopyHandle*> *GetObjectListFromBlockAtPosition(const VC2 &position,BYTE group_id=0)=0;	// Gets block at position, and returns it's objectlist
+	virtual ICreate<IStorm3D_Terrain_ObjectCopyHandle*> *GetObjectListFromBlockAtPosition(const VC2 &position,uint8_t group_id=0)=0;	// Gets block at position, and returns it's objectlist
 	virtual void RemoveObjectCopy(Iterator<IStorm3D_Terrain_ObjectCopyHandle*> *objectcopy,const VC2 &position)=0;					// Use the same position as with GetObjectListFromBlockAtPosition
 
 	// Virtual destructor (delete with this in v3)

@@ -26,9 +26,9 @@ public:
 	TColor(const A f[3]) : r(f[0]),g(f[1]),b(f[2]) {}
 
 	// Functions (these do not modify this color)
-	DWORD GetAsD3DCompatibleARGB() const
+	uint32_t GetAsD3DCompatibleARGB() const
 	{
-		return ((DWORD)((((255)&0xff)<<24)|((((int)(b*255.0f))&0xff)<<16)|((((int)(g*255.0f))&0xff)<<8)|(((int)(r*255.0f))&0xff)));
+		return ((uint32_t)((((255)&0xff)<<24)|((((int)(b*255.0f))&0xff)<<16)|((((int)(g*255.0f))&0xff)<<8)|(((int)(r*255.0f))&0xff)));
 	}
 
 	TColor GetClamped() const			// Forces all colors in range [0,1]	

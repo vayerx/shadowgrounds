@@ -2311,7 +2311,7 @@ struct ParticleModeData
 	void tick() {
 
 		static int nClicks = 0;
-		static DWORD oldTime = timeGetTime();
+		static uint32_t oldTime = timeGetTime();
 
 		sysDlg.update();
 		
@@ -2404,7 +2404,7 @@ struct ParticleModeData
 
 		}
 		
-		DWORD time = timeGetTime();
+		uint32_t time = timeGetTime();
 		int step = time - oldTime;
 		oldTime = time;
 

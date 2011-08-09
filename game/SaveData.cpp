@@ -7,14 +7,14 @@
 namespace game
 {
 
-  SaveData::SaveData(int id, int size, BYTE *data, int childAmount, 
+  SaveData::SaveData(int id, int size, uint8_t *data, int childAmount, 
     GameObject **children)
   {
     this->id = id;
     this->size = size;
     if (data != NULL)
     {
-      this->data = new BYTE[size];
+      this->data = new uint8_t[size];
       memcpy(this->data, data, size);
     } else {
       this->data = NULL;

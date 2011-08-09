@@ -93,7 +93,7 @@ void Storm3D_Font::AddTexture(IStorm3D_Texture *itex)
 	if (letter_amt>0)
 	{
 		letter_characters=new char[letter_amt];
-		letter_width=new BYTE[letter_amt];
+		letter_width=new uint8_t[letter_amt];
 	}
 }
 
@@ -123,7 +123,7 @@ void Storm3D_Font::SetTextureRowsAndColums(int rows,int columns)
 	{
     // CHANGED: size + 1, so we can fit null term. char there
 		letter_characters=new char[letter_amt + 1];
-		letter_width=new BYTE[letter_amt + 1];
+		letter_width=new uint8_t[letter_amt + 1];
 	}
 }
 
@@ -132,7 +132,7 @@ void Storm3D_Font::SetTextureRowsAndColums(int rows,int columns)
 	\param characters
 	\param _letter_width
 */
-void Storm3D_Font::SetCharacters(const char *characters,BYTE *_letter_width)
+void Storm3D_Font::SetCharacters(const char *characters,uint8_t *_letter_width)
 {
 	// Calculate complete letter amount
 	int letter_amt=texture_amount*tex_letter_rows*tex_letter_columns;
@@ -150,7 +150,7 @@ void Storm3D_Font::SetCharacters(const char *characters,BYTE *_letter_width)
 		}
 				
 		memcpy(letter_characters,characters,sizeof(char)*slen);
-		memcpy(letter_width,_letter_width,sizeof(BYTE)*slen);
+		memcpy(letter_width,_letter_width,sizeof(uint8_t)*slen);
 		letter_characters[slen] = '\0';
 		letter_width[slen] = 0;
 	}

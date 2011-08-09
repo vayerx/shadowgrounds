@@ -41,12 +41,12 @@ File structure
 struct S3D_HEADER
 {
 	char id[4];					// identifier ("S3D5")
-	WORD num_textures;
-	WORD num_materials;
-	WORD num_objects;
-	WORD num_lights;
-	WORD num_helpers;	
-	WORD num_bones;
+	uint16_t num_textures;
+	uint16_t num_materials;
+	uint16_t num_objects;
+	uint16_t num_lights;
+	uint16_t num_helpers;	
+	uint16_t num_bones;
 
 	S3D_HEADER()
 	:	num_textures(0),
@@ -64,10 +64,10 @@ struct S3D_HEADER
 struct S3D_TEXTURE
 {
 	std::string filename;
-	DWORD identification;		// usually 0
-	WORD start_frame;			// for videotextures
-	WORD framechangetime;		// for videotextures
-	BYTE dynamic;				// 0=not dynamic, 1=basic dynamic, 2=cube dynamic
+	uint32_t identification;		// usually 0
+	uint16_t start_frame;			// for videotextures
+	uint16_t framechangetime;		// for videotextures
+	uint8_t dynamic;				// 0=not dynamic, 1=basic dynamic, 2=cube dynamic
 
 	S3D_TEXTURE()
 	:	identification(0),
@@ -188,14 +188,14 @@ struct S3D_OBJECT
 /*struct S3D_OBJECT_LOD
 {
 	// Removed vertexes in v2.1. Now LOD's contain only faces
-	WORD face_amount;		// number of following FACEs
+	uint16_t face_amount;		// number of following FACEs
 };*/
 
 
 
 struct S3D_FACE
 {
-	WORD vertex[3];
+	uint16_t vertex[3];
 	//short int material_index;	// Face's material index (in this file, -1 if not used)	
 };
 
@@ -206,7 +206,7 @@ struct S3D_VERTEX
 	// psd: smoothing & texcoords 2 removed
 	float position[3];
 	float normal[3];
-//	WORD smoothing_groups[2];	// for sharp edges (0=not grouped -> always smooth)
+//	uint16_t smoothing_groups[2];	// for sharp edges (0=not grouped -> always smooth)
 	float texturecoords[2];
 	float texturecoords2[2];
 };
@@ -278,10 +278,10 @@ struct S3D_LIGHT
 
 	int keyframe_endtime;	// Keyframe animation end time (loops at 0)
 
-	WORD poskey_amount;		// number of following POSITION KEYs
-	WORD dirkey_amount;		// number of following DIRECTION KEYs
-	WORD lumkey_amount;		// number of following LIGHTLUM KEYs
-	WORD conekey_amount;	// number of following LIGHTCONE KEYs
+	uint16_t poskey_amount;		// number of following POSITION KEYs
+	uint16_t dirkey_amount;		// number of following DIRECTION KEYs
+	uint16_t lumkey_amount;		// number of following LIGHTLUM KEYs
+	uint16_t conekey_amount;	// number of following LIGHTCONE KEYs
 
 	S3D_LIGHT()
 	:	poskey_amount(0),
@@ -307,9 +307,9 @@ struct S3D_HELPER
 
 	int keyframe_endtime;	// Keyframe animation end time (loops at 0)
 
-	WORD poskey_amount;		// number of following POSITIONKEYs
-	WORD o1key_amount;		// number of following other KEYs	(direction, size, radius)
-	WORD o2key_amount;		// number of following other2 KEYs	(upvector)
+	uint16_t poskey_amount;		// number of following POSITIONKEYs
+	uint16_t o1key_amount;		// number of following other KEYs	(direction, size, radius)
+	uint16_t o2key_amount;		// number of following other2 KEYs	(upvector)
 
 	S3D_HELPER()
 	:	poskey_amount(0),

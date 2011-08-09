@@ -755,17 +755,17 @@ bool Storm3D_Model::LoadS3D(const char *filename)
 	}
 
 	// Read rest of the header
-	filesystem::fb_fread(&header.num_textures, sizeof(WORD), 1, f);
-	filesystem::fb_fread(&header.num_materials, sizeof(WORD), 1, f);
-	filesystem::fb_fread(&header.num_objects, sizeof(WORD), 1, f);
-	filesystem::fb_fread(&header.num_lights, sizeof(WORD), 1, f);
-	filesystem::fb_fread(&header.num_helpers, sizeof(WORD), 1, f);
+	filesystem::fb_fread(&header.num_textures, sizeof(uint16_t), 1, f);
+	filesystem::fb_fread(&header.num_materials, sizeof(uint16_t), 1, f);
+	filesystem::fb_fread(&header.num_objects, sizeof(uint16_t), 1, f);
+	filesystem::fb_fread(&header.num_lights, sizeof(uint16_t), 1, f);
+	filesystem::fb_fread(&header.num_helpers, sizeof(uint16_t), 1, f);
 
 	if(s3d_version <= 7)
 	{
 		// Bones no longer here
-		WORD foo;
-		filesystem::fb_fread(&foo, sizeof(WORD), 1, f);
+		uint16_t foo;
+		filesystem::fb_fread(&foo, sizeof(uint16_t), 1, f);
 	}
 	else
 	{
@@ -803,10 +803,10 @@ bool Storm3D_Model::LoadS3D(const char *filename)
 		if(s3d_version >= 6)
 		{
 			tex.filename = LoadStringFromFile(f);
-			filesystem::fb_fread(&tex.identification, sizeof(DWORD), 1, f);
-			filesystem::fb_fread(&tex.start_frame, sizeof(WORD), 1, f);
-			filesystem::fb_fread(&tex.framechangetime, sizeof(WORD), 1, f);
-			filesystem::fb_fread(&tex.dynamic, sizeof(BYTE), 1, f);
+			filesystem::fb_fread(&tex.identification, sizeof(uint32_t), 1, f);
+			filesystem::fb_fread(&tex.start_frame, sizeof(uint16_t), 1, f);
+			filesystem::fb_fread(&tex.framechangetime, sizeof(uint16_t), 1, f);
+			filesystem::fb_fread(&tex.dynamic, sizeof(uint8_t), 1, f);
 		}
 		
 		// Generate path+texfilename (loads textures from the same path as model)
@@ -1024,17 +1024,17 @@ bool Storm3D_Model::LoadS3D(const char *filename)
 				filesystem::fb_fread(&is_volume_fog, sizeof(bool), 1, f);
 
 				filesystem::fb_fread(&obj.is_mirror, sizeof(bool), 1, f);
-				filesystem::fb_fread(&obj.shadow_level, sizeof(BYTE), 1, f);
+				filesystem::fb_fread(&obj.shadow_level, sizeof(uint8_t), 1, f);
 				filesystem::fb_fread(&obj.keyframe_endtime, sizeof(int), 1, f);
-				filesystem::fb_fread(&obj.lod_amount, sizeof(BYTE), 1, f);
-				filesystem::fb_fread(&obj.poskey_amount, sizeof(WORD), 1, f);
-				filesystem::fb_fread(&obj.rotkey_amount, sizeof(WORD), 1, f);
-				filesystem::fb_fread(&obj.scalekey_amount, sizeof(WORD), 1, f);
-				filesystem::fb_fread(&obj.meshkey_amount, sizeof(WORD), 1, f);
+				filesystem::fb_fread(&obj.lod_amount, sizeof(uint8_t), 1, f);
+				filesystem::fb_fread(&obj.poskey_amount, sizeof(uint16_t), 1, f);
+				filesystem::fb_fread(&obj.rotkey_amount, sizeof(uint16_t), 1, f);
+				filesystem::fb_fread(&obj.scalekey_amount, sizeof(uint16_t), 1, f);
+				filesystem::fb_fread(&obj.meshkey_amount, sizeof(uint16_t), 1, f);
 			}
 
-			filesystem::fb_fread(&obj.vertex_amount, sizeof(WORD), 1, f);
-			filesystem::fb_fread(&obj.face_amount, sizeof(WORD), 1, f);
+			filesystem::fb_fread(&obj.vertex_amount, sizeof(uint16_t), 1, f);
+			filesystem::fb_fread(&obj.face_amount, sizeof(uint16_t), 1, f);
 
 			originalVertexAmount = obj.vertex_amount;
 			originalFaceAmount = obj.face_amount;
@@ -1334,8 +1334,8 @@ bool Storm3D_Model::LoadS3D(const char *filename)
 
 			for(int j = 1; j < IStorm3D_Mesh::LOD_AMOUNT; ++j)
 			{
-				WORD faceAmount = 0;
-				filesystem::fb_fread(&faceAmount, sizeof(WORD), 1, f);
+				uint16_t faceAmount = 0;
+				filesystem::fb_fread(&faceAmount, sizeof(uint16_t), 1, f);
 
 				Storm3D_Face *buffer = new Storm3D_Face[faceAmount];
 				for(int i = 0; i < faceAmount; ++i)
@@ -1564,10 +1564,10 @@ bool Storm3D_Model::LoadS3D(const char *filename)
 			filesystem::fb_fread(&lgt.multiplier, sizeof(float), 1, f);
 			filesystem::fb_fread(&lgt.decay, sizeof(float), 1, f);
 			filesystem::fb_fread(&lgt.keyframe_endtime, sizeof(int), 1, f);
-			filesystem::fb_fread(&lgt.poskey_amount, sizeof(WORD), 1, f);
-			filesystem::fb_fread(&lgt.dirkey_amount, sizeof(WORD), 1, f);
-			filesystem::fb_fread(&lgt.lumkey_amount, sizeof(WORD), 1, f);
-			filesystem::fb_fread(&lgt.conekey_amount, sizeof(WORD), 1, f);
+			filesystem::fb_fread(&lgt.poskey_amount, sizeof(uint16_t), 1, f);
+			filesystem::fb_fread(&lgt.dirkey_amount, sizeof(uint16_t), 1, f);
+			filesystem::fb_fread(&lgt.lumkey_amount, sizeof(uint16_t), 1, f);
+			filesystem::fb_fread(&lgt.conekey_amount, sizeof(uint16_t), 1, f);
 		}
 	}
 
@@ -1587,9 +1587,9 @@ bool Storm3D_Model::LoadS3D(const char *filename)
 			filesystem::fb_fread(help.other, sizeof(float), 3, f);
 			filesystem::fb_fread(help.other2, sizeof(float), 3, f);
 			filesystem::fb_fread(&help.keyframe_endtime, sizeof(int), 1, f);
-			filesystem::fb_fread(&help.poskey_amount, sizeof(WORD), 1, f);
-			filesystem::fb_fread(&help.o1key_amount, sizeof(WORD), 1, f);
-			filesystem::fb_fread(&help.o2key_amount, sizeof(WORD), 1, f);
+			filesystem::fb_fread(&help.poskey_amount, sizeof(uint16_t), 1, f);
+			filesystem::fb_fread(&help.o1key_amount, sizeof(uint16_t), 1, f);
+			filesystem::fb_fread(&help.o2key_amount, sizeof(uint16_t), 1, f);
 
 			// the haxored hard vertex rotation...
 			// -- jpk
@@ -1850,12 +1850,12 @@ bool Storm3D_Model::LoadBones(const char *filename)
 		filesystem::fb_fread(&other2, sizeof(float), 3, fp);
 
 		int end_time;
-		WORD foo;
+		uint16_t foo;
 
 		filesystem::fb_fread(&end_time, sizeof(int), 1, fp);
-		filesystem::fb_fread(&foo, sizeof(WORD), 1 ,fp);
-		filesystem::fb_fread(&foo, sizeof(WORD), 1 ,fp);
-		filesystem::fb_fread(&foo, sizeof(WORD), 1 ,fp);
+		filesystem::fb_fread(&foo, sizeof(uint16_t), 1 ,fp);
+		filesystem::fb_fread(&foo, sizeof(uint16_t), 1 ,fp);
+		filesystem::fb_fread(&foo, sizeof(uint16_t), 1 ,fp);
 
 		IStorm3D_Helper *helper = 0;
 		if(helper_type == IStorm3D_Helper::HTYPE_CAMERA)

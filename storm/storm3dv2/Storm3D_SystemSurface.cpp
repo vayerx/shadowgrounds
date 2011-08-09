@@ -89,7 +89,7 @@ void Storm3D_SystemSurface::Fix()
 }
 
 
-BYTE *Storm3D_SystemSurface::GetDataStart()
+uint8_t *Storm3D_SystemSurface::GetDataStart()
 {
 	return data;
 }
@@ -551,7 +551,7 @@ void Storm3D_SystemSurface::RenderFaceList(Storm3D_Scene *scene,D3DMATRIX worldm
 							if ((xe>0)&&(xs<size))
 							for (int xx=xs;xx<=xe;xx++)
 							{
-								BYTE z=(ce>>16);
+								uint8_t z=(ce>>16);
 								if (data[yp+xx]>z) data[yp+xx]=z;
 								ce+=zp;
 							}

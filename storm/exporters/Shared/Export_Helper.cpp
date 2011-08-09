@@ -92,14 +92,14 @@ void Helper::writeToFile(FILE *fp) const
 	fwrite(&o1, sizeof(float), 3, fp);
 
 	int keyframeEnd = 0;
-	WORD keyAmount = 0;
+	uint16_t keyAmount = 0;
 
 	fwrite(&keyframeEnd, sizeof(int), 1, fp);
 
 	// Position/rotation/scale keys
-	fwrite(&keyAmount, sizeof(WORD), 1, fp);
-	fwrite(&keyAmount, sizeof(WORD), 1, fp);
-	fwrite(&keyAmount, sizeof(WORD), 1, fp);
+	fwrite(&keyAmount, sizeof(uint16_t), 1, fp);
+	fwrite(&keyAmount, sizeof(uint16_t), 1, fp);
+	fwrite(&keyAmount, sizeof(uint16_t), 1, fp);
 }
 
 bool operator < (const Helper &lhs, const Helper &rhs)

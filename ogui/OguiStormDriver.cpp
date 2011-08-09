@@ -604,7 +604,7 @@ IOguiFont *OguiStormDriver::LoadFont(const char *filename)
 		}
 
 		char *chrdef = new char[bufsize];
-		BYTE *chrsize = new BYTE[bufsize];
+		uint8_t *chrsize = new uint8_t[bufsize];
 		for (int i = 0; i < bufsize; i++)
 		{
 			chrdef[i] = '\0';

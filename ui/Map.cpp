@@ -184,8 +184,8 @@ namespace {
 				return;
 			}
 
-			DWORD bytesRead = 0;
-			DWORD requestAmount = RAW_SIZE - offset;
+			uint32_t bytesRead = 0;
+			uint32_t requestAmount = RAW_SIZE - offset;
 			if(requestAmount > MAX_READ_CHUNK)
 				requestAmount = MAX_READ_CHUNK;
 
@@ -194,7 +194,7 @@ namespace {
 
 			if(!readResult)
 			{
-				DWORD errorCode = GetLastError();
+				uint32_t errorCode = GetLastError();
 
 				if(errorCode == ERROR_HANDLE_EOF)
 				{
@@ -268,7 +268,7 @@ namespace {
 
 		HANDLE fileHandle = CreateFile(fileName.c_str(), GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
 		OVERLAPPED overlapped = { 0 };
-		DWORD bytesRead = 0;
+		uint32_t bytesRead = 0;
 
 		for(;;)
 		{
@@ -580,9 +580,9 @@ namespace {
 						unsigned char b = bi;
 
 
-						//DWORD value = r << 16 | g << 8 | b | (a << 24);
-						DWORD alpha = 0xAA000000;
-						DWORD value = r << 16 | g << 8 | b | alpha;
+						//uint32_t value = r << 16 | g << 8 | b | (a << 24);
+						uint32_t alpha = 0xAA000000;
+						uint32_t value = r << 16 | g << 8 | b | alpha;
 						colorBuffer[(info.height - y - 1) * info.width + x] = value;
 					}
 				}

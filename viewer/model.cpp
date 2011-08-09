@@ -286,7 +286,7 @@ void Model::reload(const editor::Dialog &dialog)
 			IStorm3D_Texture *t = data->storm.storm->CreateNewTexture("missing.dds");
 			int textureIndex = data->storm.terrain->addTerrainTexture(*t);
 
-			DWORD buffer[32*32] = { 0 };
+			uint32_t buffer[32*32] = { 0 };
 			for(int i = 0; i < 32*32; ++i)
 				buffer[i] = 0x10101010;
 

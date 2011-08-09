@@ -495,7 +495,7 @@ struct TerrainLightMap::Data
 		int yBlocks = storm.heightmapResolution.y / IStorm3D_Terrain::BLOCK_SIZE;
 		int xSize = IStorm3D_Terrain::BLOCK_SIZE * TEXTURE_SIZE_FACTOR;
 		int ySize = IStorm3D_Terrain::BLOCK_SIZE * TEXTURE_SIZE_FACTOR;
-		vector<DWORD> buffer(xSize * ySize);
+		vector<uint32_t> buffer(xSize * ySize);
 
 		for(int yb = 0; yb < yBlocks; ++yb)
 		for(int xb = 0; xb < xBlocks; ++xb)
@@ -880,7 +880,7 @@ struct TerrainLightMap::Data
 		{
 			++j;
 
-			scoped_array<DWORD> buffer(new DWORD[size.x * size.y]);
+			scoped_array<uint32_t> buffer(new uint32_t[size.x * size.y]);
 			for(int y = 0; y < size.y; ++y)
 			for(int x = 0; x < size.x; ++x)
 			{
@@ -891,7 +891,7 @@ struct TerrainLightMap::Data
 				if(j % 2)
 					col = pixel.light;
 
-				DWORD value = (col.r << 16) | (col.g << 8) | (col.b);
+				uint32_t value = (col.r << 16) | (col.g << 8) | (col.b);
 				buffer[index] = value;
 			}
 

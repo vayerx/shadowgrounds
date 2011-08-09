@@ -880,9 +880,9 @@ struct TerrainData
 
 	const util::AreaMap *areaMap;
 
-	boost::scoped_array<WORD> heightMap;
-	boost::scoped_array<WORD> obstacleMap;
-	boost::scoped_array<WORD> forceMap;
+	boost::scoped_array<uint16_t> heightMap;
+	boost::scoped_array<uint16_t> obstacleMap;
+	boost::scoped_array<uint16_t> forceMap;
 	
 	VC2I mapSize;
 	VC3 realSize;
@@ -1482,7 +1482,7 @@ static util::ObjectDurabilityParser durp;
 		if(version <= 2)
 			return;
 
-		boost::scoped_array<WORD> newArr (new WORD[mapSize.x * mapSize.y]);
+		boost::scoped_array<uint16_t> newArr (new uint16_t[mapSize.x * mapSize.y]);
 		heightMap.swap(newArr);
 
 		// NOTICE: this obstaclemap thing is totally fucked up!
@@ -1491,10 +1491,10 @@ static util::ObjectDurabilityParser durp;
 		#define INCORRECT_TERRAIN_OBST_MAP_AREA_MULT 16
 		//#define CORRECT_TERRAIN_OBST_MAP_AREA_MULT (GAMEMAP_HEIGHTMAP_MULTIPLIER*GAMEMAP_HEIGHTMAP_MULTIPLIER * GAMEMAP_PATHFIND_ACCURACY*GAMEMAP_PATHFIND_ACCURACY)
 
-		boost::scoped_array<WORD> newObstacleMap(new WORD[INCORRECT_TERRAIN_OBST_MAP_AREA_MULT * mapSize.x * mapSize.y]);
+		boost::scoped_array<uint16_t> newObstacleMap(new uint16_t[INCORRECT_TERRAIN_OBST_MAP_AREA_MULT * mapSize.x * mapSize.y]);
 		obstacleMap.swap(newObstacleMap);
 
-		boost::scoped_array<WORD> newForceMap(new WORD[GAMEMAP_HEIGHTMAP_MULTIPLIER*GAMEMAP_HEIGHTMAP_MULTIPLIER * mapSize.x * mapSize.y]);
+		boost::scoped_array<uint16_t> newForceMap(new uint16_t[GAMEMAP_HEIGHTMAP_MULTIPLIER*GAMEMAP_HEIGHTMAP_MULTIPLIER * mapSize.x * mapSize.y]);
 		forceMap.swap(newForceMap);
 
 		stream.read(heightMap.get(), mapSize.x * mapSize.y);
@@ -2106,7 +2106,7 @@ static util::ObjectDurabilityParser durp;
 		}
 
 		{
-			std::vector<DWORD> weights(BLOCK_SIZE * BLOCK_SIZE);
+			std::vector<uint32_t> weights(BLOCK_SIZE * BLOCK_SIZE);
 
 			std::map<int, std::vector<BlendPass> >::iterator it = blendings.begin();
 			for(; it != blendings.end(); ++it)
@@ -4041,17 +4041,17 @@ void Terrain::ForcemapHeight(const Vector2D &position, float radius, bool above,
 	data->terrain->forcemapHeight(position, radius, above, below);
 }
 
-WORD *Terrain::GetHeightMap()
+uint16_t *Terrain::GetHeightMap()
 {
 	return data->heightMap.get();
 }
 
-WORD *Terrain::GetDoubleHeightMap()
+uint16_t *Terrain::GetDoubleHeightMap()
 {
 	return data->terrain->getCollisionHeightmap();
 }
 
-WORD *Terrain::GetForceMap()
+uint16_t *Terrain::GetForceMap()
 {
 	return data->forceMap.get();
 }

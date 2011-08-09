@@ -76,7 +76,7 @@ void Storm3D_Scene_PicList_Font::Render()
 	color *= colorFactor;
 	color.Clamp();
 
-	DWORD col = COLOR_RGBA(int(color.r * 255), int(color.g * 255), int(color.b * 255), int(alpha * 255));
+	uint32_t col = COLOR_RGBA(int(color.r * 255), int(color.g * 255), int(color.b * 255), int(alpha * 255));
 	glEnable(GL_BLEND);
 
 	if(font->font)

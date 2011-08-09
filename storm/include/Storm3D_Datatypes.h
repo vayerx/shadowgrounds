@@ -76,7 +76,7 @@ public:
 		const VC3 &_normal,
 		const VC2 &_texturecoordinates=VC2(0,0),
 		const VC2 &_texturecoordinates2=VC2(0,0),
-		const WORD _smoothing_groups[2]=0);
+		const uint16_t _smoothing_groups[2]=0);
 };
 
 

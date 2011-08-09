@@ -43,7 +43,7 @@ class Storm3D_Adapter
 		CAPS_PS20    =0x00008000
 	};
 
-	DWORD caps;					// Adapter caps
+	uint32_t caps;					// Adapter caps
 
 	int multisample;			// Multisample antialiasing level
 	int max_anisotropy;		// Max anisotropy level

@@ -36,7 +36,7 @@ public:
 
 		int mLockedKey;
 		std::vector<Key*> keys;
-		DWORD color;
+		uint32_t color;
 		std::vector<Channel*> linkedChannels;
 
 
@@ -169,7 +169,7 @@ public:
 			color = RGB(r, g, b);
 		}
 
-		DWORD getColor() {
+		uint32_t getColor() {
 			return color;
 		}
 		

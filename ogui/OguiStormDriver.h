@@ -81,7 +81,7 @@ public:
   COL col;
   int amount;
   char *chrdef;
-  BYTE *chrsize;  // x/64 part of chrwidth
+  uint8_t *chrsize;  // x/64 part of chrwidth
   
   int chrwidth;
   int chrheight;

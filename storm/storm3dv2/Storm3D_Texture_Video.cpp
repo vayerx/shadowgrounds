@@ -74,8 +74,8 @@ Storm3D_Texture_Video::~Storm3D_Texture_Video()
 void Storm3D_Texture_Video::AnimateVideo()
 {
 	// Calculate time difference
-	DWORD time_now=SDL_GetTicks();
-	DWORD time_dif=time_now-last_time;
+	uint32_t time_now=SDL_GetTicks();
+	uint32_t time_dif=time_now-last_time;
 	// added use of timing factor
 	// --jpk
 	if (this->Storm3D2->timeFactor != 1.0f)

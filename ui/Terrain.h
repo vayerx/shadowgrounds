@@ -18,7 +18,7 @@ class IStorm3D;
 class IStorm3D_Scene;
 class IStorm3D_Model;
 class IStorm3D_Terrain;
-typedef unsigned short WORD;
+typedef unsigned short uint16_t;
 
 namespace game
 {
@@ -98,9 +98,9 @@ public:
 	IStorm3D_Terrain *GetTerrain();
 	bool ValidatePosition(const Vector2D &position, float radius = 1.f) const;
 
-	WORD *GetHeightMap();
-	WORD *GetDoubleHeightMap();
-	WORD *GetForceMap();
+	uint16_t *GetHeightMap();
+	uint16_t *GetDoubleHeightMap();
+	uint16_t *GetForceMap();
 
 	VC2I getHeightMapSize() const;
 	VC2 getTerrainSize() const;

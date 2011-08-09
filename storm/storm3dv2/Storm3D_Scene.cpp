@@ -148,8 +148,8 @@ void Storm3D_Scene::RenderSceneWithParams(bool flip,bool disable_hsr, bool updat
 	storm3d_dip_calls = 0;
 
 	// Calculate time difference
-	static DWORD last_time=SDL_GetTicks();
-	DWORD time_now=SDL_GetTicks();
+	static uint32_t last_time=SDL_GetTicks();
+	uint32_t time_now=SDL_GetTicks();
 	if (flip)
 	{
 		time_dif=time_now-last_time;
@@ -715,7 +715,7 @@ void Storm3D_Scene::renderRealScene(bool flip, bool render_mirrored, Storm3D_Tex
 		for(unsigned int i = 0; i < debugTriangles.size(); ++i)
 		{
 			const Debug3 &d = debugTriangles[i];
-			DWORD color = d.color.GetAsD3DCompatibleARGB();
+			uint32_t color = d.color.GetAsD3DCompatibleARGB();
 			
 			buffer->color = color;
 			buffer->position = d.p1;
@@ -732,7 +732,7 @@ void Storm3D_Scene::renderRealScene(bool flip, bool render_mirrored, Storm3D_Tex
 		for(unsigned int i = 0; i < debugLines.size(); ++i)
 		{
 			const Debug2 &d = debugLines[i];
-			DWORD color = d.color.GetAsD3DCompatibleARGB();
+			uint32_t color = d.color.GetAsD3DCompatibleARGB();
 			
 			buffer->color = color;
 			buffer->position = d.p1;
@@ -746,7 +746,7 @@ void Storm3D_Scene::renderRealScene(bool flip, bool render_mirrored, Storm3D_Tex
 		for(unsigned int i = 0; i < debugPoints.size(); ++i)
 		{
 			const Debug1 &d = debugPoints[i];
-			DWORD color = d.color.GetAsD3DCompatibleARGB();
+			uint32_t color = d.color.GetAsD3DCompatibleARGB();
 			
 			buffer->color = color;
 			buffer->position = d.p1;

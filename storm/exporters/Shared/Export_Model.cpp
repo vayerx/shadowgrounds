@@ -175,7 +175,7 @@ void Model::saveToFile(const std::string &fileName, std::vector<std::string> obj
 	if(fp == 0)
 		return;
 
-	WORD objectAmount = 0;
+	uint16_t objectAmount = 0;
 	std::vector<std::vector<boost::shared_ptr<Object> > > saveObjects(objects.size());
 	std::vector<boost::shared_ptr<Object> > objectList = objects;
 
@@ -256,16 +256,16 @@ void Model::saveToFile(const std::string &fileName, std::vector<std::string> obj
 	fwrite("S3D0", 1, 4, fp);
 	fwrite(&version, 1, sizeof(int), fp);
 
-	WORD textureAmount = static_cast<WORD> (textures.size());
-	fwrite(&textureAmount, 1, sizeof(WORD), fp); // Texture amount
-	WORD materialAmount = static_cast<WORD> (usedMaterials.size());
-	fwrite(&materialAmount, 1, sizeof(WORD), fp); // Material amount
+	uint16_t textureAmount = static_cast<uint16_t> (textures.size());
+	fwrite(&textureAmount, 1, sizeof(uint16_t), fp); // Texture amount
+	uint16_t materialAmount = static_cast<uint16_t> (usedMaterials.size());
+	fwrite(&materialAmount, 1, sizeof(uint16_t), fp); // Material amount
 
-	fwrite(&objectAmount, 1, sizeof(WORD), fp); // Object amount
-	WORD lightAmount = 0;
-	fwrite(&lightAmount, 1, sizeof(WORD), fp); // Light amount
-	WORD helperAmount = static_cast<WORD> (helpers.size());
-	fwrite(&helperAmount, 1, sizeof(WORD), fp); // Helper amount
+	fwrite(&objectAmount, 1, sizeof(uint16_t), fp); // Object amount
+	uint16_t lightAmount = 0;
+	fwrite(&lightAmount, 1, sizeof(uint16_t), fp); // Light amount
+	uint16_t helperAmount = static_cast<uint16_t> (helpers.size());
+	fwrite(&helperAmount, 1, sizeof(uint16_t), fp); // Helper amount
 	fwrite(&boneId, 1, sizeof(int), fp); // Bone id
 
 	// Write textures

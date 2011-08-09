@@ -37,12 +37,12 @@ Storm3D_ParticleList::Storm3D_ParticleList(Storm3D *s2) :
 		D3DPOOL_DEFAULT,&dx8_vbuf);
 
 	// Create new indexbuffer
-	Storm3D2->D3DDevice->CreateIndexBuffer(sizeof(WORD)*list_size*6,
+	Storm3D2->D3DDevice->CreateIndexBuffer(sizeof(uint16_t)*list_size*6,
 		D3DUSAGE_WRITEONLY,D3DFMT_INDEX16,D3DPOOL_MANAGED,&dx8_ibuf);
 
 	// (Pre)Fill indexbuffer (optimization)
-	WORD *ip=NULL;
-	dx8_ibuf->Lock(0,sizeof(WORD)*list_size*6,(BYTE**)&ip,0);
+	uint16_t *ip=NULL;
+	dx8_ibuf->Lock(0,sizeof(uint16_t)*list_size*6,(uint8_t**)&ip,0);
 	if (ip)
 	{
 		int pos=0,pc=0;
@@ -88,8 +88,8 @@ void Storm3D_ParticleList::Render(Storm3D_Scene *scene,bool ismain,int time_dif)
 	int mpi=0;
 
 	// Lock vertex buffer
-	BYTE *vp;
-	dx8_vbuf->Lock(0,0,(BYTE**)&vp,D3DLOCK_DISCARD);
+	uint8_t *vp;
+	dx8_vbuf->Lock(0,0,(uint8_t**)&vp,D3DLOCK_DISCARD);
 	if (vp==NULL) return;
 
 	// Typecast (to simplify code)
@@ -189,7 +189,7 @@ void Storm3D_ParticleList::Render(Storm3D_Scene *scene,bool ismain,int time_dif)
 			// Aspect (BETA!... not yet)
 
 			// Calculate color
-			DWORD col;
+			uint32_t col;
 			if (particlelist[pt].lifetime>particlelist[pt].fadestart)
 			{
 				col=particlelist[pt].material->GetColor().GetAsD3DCompatibleARGB();
@@ -422,12 +422,12 @@ int Storm3D_ParticleList::Add(Storm3D_Particle *part)
 
 		// Create new indexbuffer (and delete old)
 		SAFE_RELEASE(dx8_ibuf);
-		Storm3D2->D3DDevice->CreateIndexBuffer(sizeof(WORD)*list_size*6,
+		Storm3D2->D3DDevice->CreateIndexBuffer(sizeof(uint16_t)*list_size*6,
 			D3DUSAGE_WRITEONLY,D3DFMT_INDEX16,D3DPOOL_MANAGED,&dx8_ibuf);
 
 		// (Pre)Fill indexbuffer (optimization)
-		WORD *ip=NULL;
-		dx8_ibuf->Lock(0,sizeof(WORD)*list_size*6,(BYTE**)&ip,0);
+		uint16_t *ip=NULL;
+		dx8_ibuf->Lock(0,sizeof(uint16_t)*list_size*6,(uint8_t**)&ip,0);
 		if (ip)
 		{
 			int pos=0,pc=0;

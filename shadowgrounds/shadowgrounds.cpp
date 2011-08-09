@@ -1049,7 +1049,7 @@ try {
 		fpsFont->AddTexture(texf);
 		fpsFont->SetTextureRowsAndColums(8, 8);
 		fpsFont->SetColor(COL(1,1,1));
-		BYTE chrsize[42];
+		uint8_t chrsize[42];
 		for (int i = 0; i < 41; i++) chrsize[i] = 64;
 		chrsize[41] = '\0';
 		fpsFont->SetCharacters("1234567890(),:ABCDEFGHIJKLMNOPQRSTUVWXYZ ", chrsize);
@@ -1237,13 +1237,13 @@ try {
 	// do the loop...
 
 	Timer::update();
-	DWORD startTime = Timer::getTime(); 
-	DWORD curTime = startTime;
-	DWORD curUnfactoredTime = startTime;
-	DWORD movementTime = startTime;
-	DWORD frameCountTime = startTime;
-	DWORD gameCountTime = startTime;
-	DWORD lastOguiUpdateTime = startTime;
+	uint32_t startTime = Timer::getTime();
+	uint32_t curTime = startTime;
+	uint32_t curUnfactoredTime = startTime;
+	uint32_t movementTime = startTime;
+	uint32_t frameCountTime = startTime;
+	uint32_t gameCountTime = startTime;
+	uint32_t lastOguiUpdateTime = startTime;
 	bool quitRequested = false;
 
 	int frames = 0;

@@ -326,11 +326,11 @@ int WINAPI WinMain(HINSTANCE hInstance,
   // do the loop...
 
   Timer::update();
-  DWORD startTime = Timer::getTime(); 
-  DWORD curTime = startTime;
-  DWORD movementTime = startTime;
-  DWORD frameCountTime = startTime;
-  DWORD lastOguiUpdateTime = startTime;
+  uint32_t startTime = Timer::getTime(); 
+  uint32_t curTime = startTime;
+  uint32_t movementTime = startTime;
+  uint32_t frameCountTime = startTime;
+  uint32_t lastOguiUpdateTime = startTime;
   bool quitRequested = false;
 
   int frames = 0;

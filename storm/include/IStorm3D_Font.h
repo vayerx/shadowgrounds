@@ -42,7 +42,7 @@ public:
 	// Use this after you have loaded all needed textures
 	// and set texture rows and columns. Otherwise font will
 	// not get all letters needed.
-	virtual void SetCharacters(const char *characters,BYTE *letter_width)=0;
+	virtual void SetCharacters(const char *characters,uint8_t *letter_width)=0;
 
 	// COL functions
 	virtual void SetColor(const COL &color)=0;

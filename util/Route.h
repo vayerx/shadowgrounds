@@ -6,15 +6,15 @@ struct WPoint {
 	int x,y;
 };
 
-extern WORD *HeightMapDebug;
+extern uint16_t *HeightMapDebug;
 
 class Router {
 
 private:
 
 	// Heightmap info
-	WORD *HeightMap;
-	WORD *MapCost;
+	uint16_t *HeightMap;
+	uint16_t *MapCost;
 	int Width,Height;
 
 	// Temporary variables
@@ -29,5 +29,5 @@ public:
 	int FindPath(int sx,int sy,int ex,int ey,int MaxHeight,
 		WPoint *PArray);
 
-	void SetHeightMap(WORD *Map,int Width,int Height);
+	void SetHeightMap(uint16_t *Map,int Width,int Height);
 };

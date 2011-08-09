@@ -759,7 +759,7 @@ bool Storm3D_SpotlightShared::setScissorRect(Storm3D_Camera &camera, const VC2I 
 	// Visualize scissor area
 	if(scene && visible)
 	{
-		static DWORD foo = GetTickCount();
+		static uint32_t foo = GetTickCount();
 		int dif = (GetTickCount() - foo) % 2000;
 		if(dif < 1000)
 			scene->Render2D_Picture(0, VC2(float(minX), float(minY)), VC2(float(maxX - minX), float(maxY - minY)), 0.5f, 0.f, 0, 0, 0, 0, false);

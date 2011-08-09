@@ -11,7 +11,7 @@ namespace game
     GameRequest();
     virtual ~GameRequest();
 
-    //virtual void processData(BYTE *data) = 0;
+    //virtual void processData(uint8_t *data) = 0;
 
     // executes this request (when it has become an order by master)
     virtual void execute();
@@ -21,7 +21,7 @@ namespace game
     int requestId;
     int executeTime;
     int dataSize;
-    BYTE *data;
+    uint8_t *data;
   };
 
 }

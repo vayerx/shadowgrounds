@@ -123,7 +123,7 @@ class Storm3D_Mesh : public IStorm3D_Mesh
 	GLuint vbuf;				// Vertexbuffer (in videomemory)
 	GLuint ibuf[LOD_AMOUNT];	// Indexbuffer (in videomemory)
 	int vbuf_vsize;
-	DWORD vbuf_fvf;
+	uint32_t vbuf_fvf;
 	
 	// Collision table
 	Storm3D_Mesh_CollisionTable collision;
@@ -152,7 +152,7 @@ public:
 	const Sphere &getBoundingSphere() const;
 	const AABB &getBoundingBox() const;
 	
-	DWORD GetFVF() const { return vbuf_fvf; }
+	uint32_t GetFVF() const { return vbuf_fvf; }
 	// When vertexes/faces are changed, buffers in videomemory must be rebuided.
 	void ReBuild();
 

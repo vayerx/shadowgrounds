@@ -400,7 +400,7 @@ struct Storm3D_TerrainLightManager::Data
 		for(; it != fakeLights.end(); ++it)
 		{
 			Storm3D_LightTexture &lightTexture = *it;
-			DWORD color = lightTexture.color.GetAsD3DCompatibleARGB();
+			uint32_t color = lightTexture.color.GetAsD3DCompatibleARGB();
 
 			float x1 = lightTexture.start.x * renderSize.x;
 			float y1 = renderSize.y - lightTexture.start.y * renderSize.y;

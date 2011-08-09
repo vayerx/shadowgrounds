@@ -19,7 +19,7 @@ void Storm3D_Model_Object::CreatePlane(float width,float height,int xsegs,int ys
 	verts[2]=Storm3D_Vertex(VC3(1,0,0),VC3(0,1,0),VC2(1,0));
 	verts[3]=Storm3D_Vertex(VC3(1,0,1),VC3(0,1,0),VC2(1,1));
 	SetVertexes(verts,4);
-	WORD ixs[4];
+	uint16_t ixs[4];
 	ixs[0]=0;
 	ixs[1]=1;
 	ixs[2]=2;
@@ -62,7 +62,7 @@ void Storm3D_Model_Object::CreatePlane(float width,float height,int xsegs,int ys
 	int ylen=ysegs+1;
 	float xadd=width/xsegs;
 	float yadd=height/ysegs;
-	for (y=0;y<ylen/2;y++)	// BETA: parittomalla viim. rivi jää pois (seg oltava pariton)
+	for (y=0;y<ylen/2;y++)	// BETA: parittomalla viim. rivi jï¿½ï¿½ pois (seg oltava pariton)
 	for (x=0;x<xlen*2;x++)
 	{
 		int tx=x/2;
@@ -124,7 +124,7 @@ void Storm3D_Model_Object::CreatePlane(float width,float height,int xsegs,int ys
 	//SetFaces(face,fi);
 
 	// Create faces
-	/*WORD *fs=new WORD[2*(xsegs+2)*ysegs];
+	/*uint16_t *fs=new uint16_t[2*(xsegs+2)*ysegs];
 	for (y=0;y<ysegs;y++)
 	for (x=0;x<(xsegs+2);x++)
 	{
@@ -147,7 +147,7 @@ void Storm3D_Model_Object::CreatePlane(float width,float height,int xsegs,int ys
 	}*/
 	
 	// Create faces
-	WORD *fs=new WORD[2*(xsegs+2)*ysegs];
+	uint16_t *fs=new uint16_t[2*(xsegs+2)*ysegs];
 	int dir=0;
 	for (y=0;y<ysegs;y++)
 	{
@@ -199,7 +199,7 @@ void Storm3D_Model_Object::CreatePlane(float width,float height,int xsegs,int ys
 
 	
 	// Create faces
-	/*WORD *fs=new WORD[2*(xsegs+2)*ysegs];
+	/*uint16_t *fs=new uint16_t[2*(xsegs+2)*ysegs];
 	int dir=0;
 	for (y=0;y<ysegs;y++)
 	{
@@ -248,7 +248,7 @@ void Storm3D_Model_Object::CreatePlane(float width,float height,int xsegs,int ys
 	}*/
 	
 
-	/*WORD *fs=new WORD[2*(xsegs+1)];
+	/*uint16_t *fs=new uint16_t[2*(xsegs+1)];
 	for (x=0;x<(xsegs+1);x++)
 	{
 		// Add 2 indexes in to the array
@@ -306,7 +306,7 @@ void Storm3D_Model_Object::CreateSphere(float radius,int rsegs,int hsegs,float r
 	int fi=0,vi=0;
 
 	// BETA!!!
-	/*BYTE tab[100][200];
+	/*uint8_t tab[100][200];
 	FILE *f;
 	f=fopen("st3d.bm","rb");
 	fread(tab,200,100,f);
@@ -358,7 +358,7 @@ void Storm3D_Model_Object::CreateSphere(float radius,int rsegs,int hsegs,float r
 	SetVertexes(vert,vi);
 
 	// Create faces
-	/*WORD *fs=new WORD[2*(rsegs+2)*hsegs];
+	/*uint16_t *fs=new uint16_t[2*(rsegs+2)*hsegs];
 	for (y=0;y<hsegs;y++)
 	for (x=0;x<(rsegs+2);x++)
 	{
@@ -383,7 +383,7 @@ void Storm3D_Model_Object::CreateSphere(float radius,int rsegs,int hsegs,float r
 	// Create faces
 	int xsegs=rsegs;
 	int ysegs=hsegs;
-	WORD *fs=new WORD[2*(xsegs+2)*ysegs];
+	uint16_t *fs=new uint16_t[2*(xsegs+2)*ysegs];
 	int dir=0;
 	for (y=0;y<ysegs;y++)
 	{
@@ -532,7 +532,7 @@ void Storm3D_Model_Object::CreateBox(float width,float length,float height,int x
 	SetVertexes(vert,vi);
 
 	// Create faces
-	/*WORD *fs=new WORD[2*(xsegs+2)*ysegs*6];
+	/*uint16_t *fs=new uint16_t[2*(xsegs+2)*ysegs*6];
 	int sx=(xsegs+1)*(ysegs+1);
 	for (side=0;side<6;side++)
 	{
@@ -566,7 +566,7 @@ void Storm3D_Model_Object::CreateBox(float width,float length,float height,int x
 	}*/
 	
 	// Create faces
-	WORD *fs=new WORD[2*(xsegs+2)*ysegs*6];
+	uint16_t *fs=new uint16_t[2*(xsegs+2)*ysegs*6];
 	int sx=(xsegs+1)*(ysegs+1);
 	for (side=0;side<6;side++)
 	{

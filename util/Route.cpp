@@ -7,13 +7,13 @@
 static int DirX[8]={1,0,-1,0,1,-1,-1,1};
 static int DirY[8]={0,-1,0,1,-1,-1,1,1};
 
-WORD *HeightMapDebug;
+uint16_t *HeightMapDebug;
 
 //******************************************************************
 // Sets heightmap
 //******************************************************************
 
-void Router::SetHeightMap(WORD *Map,int Width,int Height) 
+void Router::SetHeightMap(uint16_t *Map,int Width,int Height) 
 {
 	if (MapCost) delete MapCost;
 	MapCost=0;
@@ -22,7 +22,7 @@ void Router::SetHeightMap(WORD *Map,int Width,int Height)
 	this->Height=Height;
 	this->HeightMap=Map;
 
-	MapCost=new WORD[Width*Height];
+	MapCost=new uint16_t[Width*Height];
 }
 
 Router::Router()

@@ -23,7 +23,7 @@ class Storm3D_Font : public IStorm3D_Font
 	int tex_letter_rows;			// How many letters in a row (in texture)
 	int tex_letter_columns;			// How many letters in a column (in texture)
 	char *letter_characters;		// Letter characters in font (a,b,c,d... etc.)
-	BYTE *letter_width;				// Letter width (for each letter in font)
+	uint8_t *letter_width;				// Letter width (for each letter in font)
 
 	TTF_Font *font;
 	char *face;
@@ -47,7 +47,7 @@ public:
 	// Use this after you have loaded all needed textures
 	// and set texture rows and columns. Otherwise font will
 	// not get all letters needed.
-	void SetCharacters(const char *characters,BYTE *letter_width);
+	void SetCharacters(const char *characters,uint8_t *letter_width);
 
 	void SetFont(const char *face, int width, int height, bool bold, bool italic);
 	void ReleaseDynamicBuffers();

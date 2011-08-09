@@ -2,7 +2,7 @@
 #ifndef SAVEDATA_H
 #define SAVEDATA_H
 
-typedef unsigned char BYTE;
+typedef unsigned char uint8_t;
 
 namespace game
 {
@@ -13,7 +13,7 @@ namespace game
   class SaveData
   {
   public:
-    SaveData(int id, int size, BYTE *data, int childAmount = 0, 
+    SaveData(int id, int size, uint8_t *data, int childAmount = 0, 
       GameObject **children = NULL);
     ~SaveData();
 
@@ -21,7 +21,7 @@ namespace game
   // private:
     int id;
     int size;
-    BYTE *data;
+    uint8_t *data;
     GameObject **children;
   };
 

@@ -240,7 +240,7 @@ struct Storm3D_TerrainRendererData
 		colorEffectOffsetShader.createColorEffectOffsetPixelShader();
 		colorEffectOffsetShader_NoGamma.createColorEffectOffsetPixelShader_NoGamma();
 
-		DWORD *buffer = new DWORD[2048];
+		uint32_t *buffer = new uint32_t[2048];
 		for(int i = 0; i < 2048; ++i)
 			buffer[i] = COLOR_RGBA(i & 0xFF, (i & 0xFF00) >> 3, 0, 0);
 
@@ -251,7 +251,7 @@ struct Storm3D_TerrainRendererData
 
 		// Spot fade texture
 		{
-			DWORD *buffer = new DWORD[128];
+			uint32_t *buffer = new uint32_t[128];
 			for(int i = 0; i < 128; ++i)
 			{
 				int value = 255;
@@ -275,7 +275,7 @@ struct Storm3D_TerrainRendererData
 
 		// Fake spot fade texture
 		{
-			DWORD *buffer = new DWORD[128];
+			uint32_t *buffer = new uint32_t[128];
 			for(int i = 0; i < 128; ++i)
 			{
 				int value = 0;
@@ -296,7 +296,7 @@ struct Storm3D_TerrainRendererData
 
 		// Fake 2D texture
 		{
-			DWORD *buffer = new DWORD[4096];
+			uint32_t *buffer = new uint32_t[4096];
 			int pitch = 64;
 
 			float max = sqrtf(31*31 + 31*31);
@@ -328,7 +328,7 @@ struct Storm3D_TerrainRendererData
 
 		// No-fade texture
 		{
-			DWORD *buffer = new DWORD[128];
+			uint32_t *buffer = new uint32_t[128];
 			for(int i = 0; i < 128; ++i)
 			{
 				unsigned char c = 255;
@@ -343,7 +343,7 @@ struct Storm3D_TerrainRendererData
 
 		// Cone fade
 		{
-			DWORD *buffer = new DWORD[128];
+			uint32_t *buffer = new uint32_t[128];
 			for(int i = 0; i < 128; ++i)
 			{
 				int value = 255 - (i * 6);
@@ -1589,7 +1589,7 @@ void Storm3D_TerrainRenderer::renderTargets(Storm3D_Scene &scene)
 					else if(c < 1)
 						c = 1;
 
-					DWORD color = c << 24 | c << 16 | c << 8 | c;
+					uint32_t color = c << 24 | c << 16 | c << 8 | c;
 					VXFORMAT_2D buffer[4];
 					float x2 = float(data->renderSize.x);
 					float y2 = float(data->renderSize.y);
@@ -2272,7 +2272,7 @@ void Storm3D_TerrainRenderer::renderBase(Storm3D_Scene &scene)
 		glErrors();
 		float x2 = 300, y2 = 300;
 		VXFORMAT_2D buffer[4];
-		DWORD color = 0xFFFFFFFF;
+		uint32_t color = 0xFFFFFFFF;
 		buffer[0] = VXFORMAT_2D(VC3(0, y2, 1.f),  1.f, color, VC2(0.f, 1.f));
 		buffer[1] = VXFORMAT_2D(VC3(0, 0, 1.f),   1.f, color, VC2(0.f, 0.f));
 		buffer[2] = VXFORMAT_2D(VC3(x2, y2, 1.f), 1.f, color, VC2(1.f, 1.f));

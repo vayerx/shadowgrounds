@@ -273,7 +273,7 @@ struct MapWindow::Data : private IOguiButtonListener, private IOguiEffectListene
 			{
 				for(int x = 0; x < width; x++)
 				{
-					DWORD col = mapBuffer[y * width + x];
+					uint32_t col = mapBuffer[y * width + x];
 					mapBuffer[y * width + x] = col & 0x00FFFFFF;
 				}
 			}
@@ -707,7 +707,7 @@ struct MapWindow::Data : private IOguiButtonListener, private IOguiEffectListene
 					do
 					{
 						// get existing fog value
-						DWORD col = buffer[x];
+						uint32_t col = buffer[x];
 						int fog = (col & 0xFF000000) >> 24;
 
 						// compute new fog value (based on distance^2 from center)
@@ -1315,7 +1315,7 @@ struct MapWindow::Data : private IOguiButtonListener, private IOguiEffectListene
 				{
 					for(int x = 0; x < width; x++)
 					{
-						DWORD col = mapBuffer[y * width + x];
+						uint32_t col = mapBuffer[y * width + x];
 						unsigned char fog = (unsigned char)((col & 0xFF000000) >> 24);
 						unsigned char r = (unsigned char)((col & 0xFF0000) >> 16);
 						unsigned char g = (unsigned char)((col & 0xFF00) >> 8);
@@ -1542,7 +1542,7 @@ struct MapWindow::Data : private IOguiButtonListener, private IOguiEffectListene
 			{
 				for(int x = 0; x < width; x++)
 				{
-					DWORD col = mapBuffer[y * width + x];
+					uint32_t col = mapBuffer[y * width + x];
 					mapBuffer[y * width + x] = col | 0xFF000000;
 				}
 			}

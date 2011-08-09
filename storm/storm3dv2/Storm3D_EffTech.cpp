@@ -66,7 +66,7 @@ LPD3DXTECHNIQUE Storm3D_EffTech::GetBestTechniqueForEffect()
 
 	// Get best (=first) supported technique from effect
 	LPD3DXTECHNIQUE tech=NULL;
-	DWORD dw=0;
+	uint32_t dw=0;
 	do
 	{
 		// Release old

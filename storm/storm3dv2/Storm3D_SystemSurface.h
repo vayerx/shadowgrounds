@@ -31,7 +31,7 @@
 //------------------------------------------------------------------
 class Storm3D_SystemSurface
 {
-	BYTE *data;
+	uint8_t *data;
 	int size,sizesq;
 	int shift;
 
@@ -41,7 +41,7 @@ public:
 	void Fix();	// Fills clipping holes...
 	void RenderFaceList(Storm3D_Scene *scene,D3DMATRIX worldmx,Storm3D_Face *faces,Storm3D_Vertex *vertexes,int num_faces,int num_vertexes);
 
-	BYTE *GetDataStart();
+	uint8_t *GetDataStart();
 
 	Storm3D_SystemSurface(int size);	// size must be: 16 - 2048
 	~Storm3D_SystemSurface();

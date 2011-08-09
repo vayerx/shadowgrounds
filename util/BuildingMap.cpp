@@ -24,7 +24,7 @@
 #endif
 #include "../editor/align_units.h"
 
-#define BMAP_FLOODFILL_REACHABLE_BYTE 99
+#define BMAP_FLOODFILL_REACHABLE_uint8_t 99
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4786)
@@ -572,13 +572,13 @@ collisionInfo.hit = false;
     
 			// start filling from the corners of the map with byte 2
 			if (collisionMap[0][0] == 0)
-				collisionMap[0][0] = BMAP_FLOODFILL_REACHABLE_BYTE;
+				collisionMap[0][0] = BMAP_FLOODFILL_REACHABLE_uint8_t;
 			if (collisionMap[xResolution - 1][0] == 0)
-				collisionMap[xResolution - 1][0] = BMAP_FLOODFILL_REACHABLE_BYTE;
+				collisionMap[xResolution - 1][0] = BMAP_FLOODFILL_REACHABLE_uint8_t;
 			if (collisionMap[0][yResolution - 1] == 0)
-				collisionMap[0][yResolution - 1] = BMAP_FLOODFILL_REACHABLE_BYTE;
+				collisionMap[0][yResolution - 1] = BMAP_FLOODFILL_REACHABLE_uint8_t;
 			if (collisionMap[xResolution - 1][yResolution - 1] == 0)
-				collisionMap[xResolution - 1][yResolution - 1] = BMAP_FLOODFILL_REACHABLE_BYTE;
+				collisionMap[xResolution - 1][yResolution - 1] = BMAP_FLOODFILL_REACHABLE_uint8_t;
 
 			Logger::getInstance()->debug("BuildingMap::floodfillInteriors - Total number of entrance/door points follows:");
 			Logger::getInstance()->debug(int2str((int)doors.size()));
@@ -591,7 +591,7 @@ collisionInfo.hit = false;
 				if (x >= 0 && x < xResolution
 					&& y >= 0 && y < yResolution)
 				{
-					collisionMap[x][y] = BMAP_FLOODFILL_REACHABLE_BYTE;
+					collisionMap[x][y] = BMAP_FLOODFILL_REACHABLE_uint8_t;
 				} else {
 //#ifdef BUILDINGMAP_USE_OPTIONS
 					Logger::getInstance()->warning("BuildingMap::floodfillInteriors - Encountered door outside buildingmap area.");
@@ -599,7 +599,7 @@ collisionInfo.hit = false;
 				}
 			}
 
-			util::Floodfill::fillWithByte(BMAP_FLOODFILL_REACHABLE_BYTE, 0, xResolution, yResolution, &mapper, false, false);
+			util::Floodfill::fillWithByte(BMAP_FLOODFILL_REACHABLE_uint8_t, 0, xResolution, yResolution, &mapper, false, false);
 			
 			// now we have byte 99 on reachable areas, byte 0 left to interior
 			// unreachable areas. now "invert" by converting 0 -> 1 and 2 -> 0.
@@ -609,7 +609,7 @@ collisionInfo.hit = false;
 			{
 				if (collisionMap[x][y] == 0)
 					collisionMap[x][y] = 2;
-				else if (collisionMap[x][y] == BMAP_FLOODFILL_REACHABLE_BYTE)
+				else if (collisionMap[x][y] == BMAP_FLOODFILL_REACHABLE_uint8_t)
 					collisionMap[x][y] = 0;
 			}
 		}

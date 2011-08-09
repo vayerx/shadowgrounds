@@ -83,9 +83,9 @@ void Storm3D_Mesh_Animation::AddNewMeshKeyFrame(int time,const Storm3D_Vertex *v
 void Storm3D_Mesh_Animation::Apply(Storm3D_Scene *scene,int time_now)
 {
 	// Calculate time difference
-	/*static DWORD dlast_time=SDL_GetTicks();
-	DWORD dtime_now=SDL_GetTicks();
-	DWORD dtime_dif=dtime_now-dlast_time;
+	/*static uint32_t dlast_time=SDL_GetTicks();
+	uint32_t dtime_now=SDL_GetTicks();
+	uint32_t dtime_dif=dtime_now-dlast_time;
 	dlast_time=dtime_now;*/
 
 	// Is the mesh mesh animated?

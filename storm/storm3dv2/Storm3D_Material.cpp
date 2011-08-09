@@ -742,7 +742,7 @@ void Storm3D_Material::ChangeBumpHeight(float _bumpheight)
 	returns false. (=all passes rendered).
 	\return false = this was last pass; true = new pass must be rendered
 */
-bool Storm3D_Material::Apply(Storm3D_Scene *scene,int pass,DWORD fvf,D3DMATRIX *mtx)
+bool Storm3D_Material::Apply(Storm3D_Scene *scene,int pass,uint32_t fvf,D3DMATRIX *mtx)
 {
 	/*
 	Basic config:
@@ -1277,7 +1277,7 @@ void Storm3D_Material::ApplyBase2TextureOnly()
 	\param fvf vertex format
 	\param mat matrix
 */
-void Storm3D_Material::ApplyBaseTextureExtOnly_NoAlphaSort(Storm3D_Scene *scene,DWORD fvf,D3DMATRIX *mat)
+void Storm3D_Material::ApplyBaseTextureExtOnly_NoAlphaSort(Storm3D_Scene *scene,uint32_t fvf,D3DMATRIX *mat)
 {
 	if (texture_base)
 	{

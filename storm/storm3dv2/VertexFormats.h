@@ -41,11 +41,11 @@
 
 //#define f2int(x) ((int) ((x) * 255.0f))
 #define f2int(x) (x)
-#define mkDWORD(a, b, c, d) ( ((a) << 24) | ((b) << 16) | ((c) << 8) | ((d) << 0))
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN
-#define COLOR_RGBA(r, g, b, a) (mkDWORD(f2int((a)), f2int((b)), f2int((g)), f2int((r))))
+#define mkuint32_t(a, b, c, d) ( ((a) << 24) | ((b) << 16) | ((c) << 8) | ((d) << 0))
+#if SDL_uint8_tORDER == SDL_LIL_ENDIAN
+#define COLOR_RGBA(r, g, b, a) (mkuint32_t(f2int((a)), f2int((b)), f2int((g)), f2int((r))))
 #else
-#define COLOR_RGBA(r, g, b, a) (mkDWORD(f2int((r)), f2int((g)), f2int((b)), f2int((a))))
+#define COLOR_RGBA(r, g, b, a) (mkuint32_t(f2int((r)), f2int((g)), f2int((b)), f2int((a))))
 #endif
 
 // Basic - 0 texcoords
@@ -113,11 +113,11 @@ struct VXFORMAT_TC2
 struct VXFORMAT_DOT3_TC1
 {
     VC3 position;
-	DWORD lightvector;	// Light direction vector
+	uint32_t lightvector;	// Light direction vector
 	VC2 texcoords;
 
 	// Constructor
-	VXFORMAT_DOT3_TC1(VC3 _position,DWORD _lightvector,VC2 _texcoords) :
+	VXFORMAT_DOT3_TC1(VC3 _position,uint32_t _lightvector,VC2 _texcoords) :
 		position(_position),lightvector(_lightvector),texcoords(_texcoords)
 	{}
 
@@ -131,12 +131,12 @@ struct VXFORMAT_DOT3_TC1
 struct VXFORMAT_DOT3_TC2
 {
     VC3 position;
-	DWORD lightvector;	// Light direction vector
+	uint32_t lightvector;	// Light direction vector
 	VC2 texcoords;
 	VC2 texcoords2;
 
 	// Constructor
-	VXFORMAT_DOT3_TC2(VC3 _position,DWORD _lightvector,
+	VXFORMAT_DOT3_TC2(VC3 _position,uint32_t _lightvector,
 		VC2 _texcoords,VC2 _texcoords2) :
 		position(_position),lightvector(_lightvector),
 		texcoords(_texcoords),texcoords2(_texcoords2)
@@ -150,11 +150,11 @@ struct VXFORMAT_2D
 {
     VC3 position;
 	float rhw;
-	DWORD color;	// 32 bit color
+	uint32_t color;	// 32 bit color
 	VC2 texcoords;
 
 	// Constructor
-	VXFORMAT_2D(VC3 _position,float _rhw,DWORD _color,VC2 _texcoords) :
+	VXFORMAT_2D(VC3 _position,float _rhw,uint32_t _color,VC2 _texcoords) :
 		position(_position),rhw(_rhw),color(_color),texcoords(_texcoords)
 	{}
 
@@ -167,13 +167,13 @@ struct VXFORMAT_2D
 struct VXFORMAT_PART
 {
 	VC3 position;
-	DWORD color;	// 32 bit color
+	uint32_t color;	// 32 bit color
 	VC2 texcoords;
 
 	float pad[2];
 
 	// Constructor
-	VXFORMAT_PART(VC3 _position,DWORD _color,VC2 _texcoords) :
+	VXFORMAT_PART(VC3 _position,uint32_t _color,VC2 _texcoords) :
 		position(_position),color(_color),texcoords(_texcoords)
 	{}
 
@@ -204,10 +204,10 @@ struct VXFORMAT_POSCOLONLY_2D
 {
     VC3 position;
 	float rhw;
-	DWORD color;	// 32 bit color
+	uint32_t color;	// 32 bit color
 
 	// Constructor
-	VXFORMAT_POSCOLONLY_2D(VC3 _position,float _rhw,DWORD _color) :
+	VXFORMAT_POSCOLONLY_2D(VC3 _position,float _rhw,uint32_t _color) :
 		position(_position),rhw(_rhw),color(_color)
 	{}
 
@@ -221,12 +221,12 @@ struct VXFORMAT_POSCOLONLY_2D
 struct VXFORMAT_TERRAIN		// Only colored detail texture (no basetexture)
 {
 	VC3 position;
-	DWORD color;			// 32 bit color
+	uint32_t color;			// 32 bit color
 	VC2 texcoords1;			// Texturecoordinates for 2nd detail texture
 	VC2 texcoords2;			// Texturecoordinates for detail texture
 
 	// Constructor
-	VXFORMAT_TERRAIN(VC3 _position,DWORD _color,VC2 _texcoords1,VC2 _texcoords2) :
+	VXFORMAT_TERRAIN(VC3 _position,uint32_t _color,VC2 _texcoords1,VC2 _texcoords2) :
 		position(_position),color(_color),texcoords1(_texcoords1),
 		texcoords2(_texcoords2)
 	{}
@@ -257,11 +257,11 @@ struct VXFORMAT_BLEND
 {
 	VC3 position;
 	float rhw;
-	DWORD color;	// 32 bit color
+	uint32_t color;	// 32 bit color
 	VC2 texcoords;
 
 	// Constructor
-	VXFORMAT_BLEND(VC3 _position,float _rhw,DWORD _color,VC2 _texcoords) :
+	VXFORMAT_BLEND(VC3 _position,float _rhw,uint32_t _color,VC2 _texcoords) :
 		position(_position),rhw(_rhw),color(_color),texcoords(_texcoords)
 	{}
 
@@ -274,11 +274,11 @@ struct VXFORMAT_BLEND
 struct VXFORMAT_TOBJ
 {
     VC3 position;
-	DWORD color;
+	uint32_t color;
 	VC2 texcoords;
 
 	// Constructor
-	VXFORMAT_TOBJ(VC3 _position,DWORD _color,VC2 _texcoords) :
+	VXFORMAT_TOBJ(VC3 _position,uint32_t _color,VC2 _texcoords) :
 		position(_position),color(_color),texcoords(_texcoords)
 	{}
 
@@ -290,10 +290,10 @@ struct VXFORMAT_TOBJ
 struct VXFORMAT_PSD
 {
     VC3 position;
-    DWORD color;
+    uint32_t color;
 
 	// Constructor
-	VXFORMAT_PSD(VC3 _position,DWORD _color) :
+	VXFORMAT_PSD(VC3 _position,uint32_t _color) :
 		position(_position),color(_color)
 	{}
 	VXFORMAT_PSD() :

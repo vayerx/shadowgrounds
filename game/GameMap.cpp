@@ -167,7 +167,7 @@ namespace game
     delete colorMap;
   }
 
-  WORD *GameMap::getObstacleHeightMap()
+  uint16_t *GameMap::getObstacleHeightMap()
   {
     return obstacleHeightMap;
   }
@@ -195,7 +195,7 @@ namespace game
 		return "GameMap";
 	}
 
-  void GameMap::setData(WORD *heightMap, WORD *doubledMap, VC2I size, VC2 scaledSize, float scaledHeight,
+  void GameMap::setData(uint16_t *heightMap, uint16_t *doubledMap, VC2I size, VC2 scaledSize, float scaledHeight,
 		const char *vegeFilename)
   {
     // shared buffer! (now owned by this object)
@@ -246,7 +246,7 @@ namespace game
       delete [] obstacleHeightMap;
       obstacleHeightMap = NULL;
     }
-    obstacleHeightMap = new WORD[pathfindSizeX * pathfindSizeY];
+    obstacleHeightMap = new uint16_t[pathfindSizeX * pathfindSizeY];
     for (int i = 0; i < pathfindSizeX * pathfindSizeY; i++)
       obstacleHeightMap[i] = 0;
 
@@ -613,9 +613,9 @@ namespace game
     scaledSizeY = sizeY * scaleY;
     scaledSizeHeight = (sizeHeight * scaleHeight);
 
-    WORD *buf = new WORD[sizeX * sizeY];
+    uint16_t *buf = new uint16_t[sizeX * sizeY];
 
-    int got = fread(buf, sizeof(WORD), sizeY * sizeY, f);
+    int got = fread(buf, sizeof(uint16_t), sizeY * sizeY, f);
 
     fclose(f);
 

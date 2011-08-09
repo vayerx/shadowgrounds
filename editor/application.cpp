@@ -1114,7 +1114,7 @@ Storm3D_SurfaceInfo info = data->storm.storm->GetScreenSize();
 /*
 	IStorm3D_Texture *t = data->storm.storm->CreateNewTexture("missing.dds", TEXLOADFLAGS_NOCOMPRESS);
 	Storm3D_SurfaceInfo info = t->GetSurfaceInfo();
-	DWORD *buf = new DWORD[info.width * info.height];
+	uint32_t *buf = new uint32_t[info.width * info.height];
 	t->CopyTextureTo32BitSysMembuffer(buf);
 	delete[] buf;
 */

@@ -208,7 +208,7 @@ typedef struct {
 	typedef struct
 	{
 		int x,y;
-		DWORD col;
+		uint32_t col;
 	} vertex;
 	vertex *vertices;
 	int num_vertices;

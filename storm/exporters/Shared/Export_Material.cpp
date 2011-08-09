@@ -171,12 +171,12 @@ void Material::writeTexturesToFile(FILE *fp, std::vector<std::string> *saveTextu
 		fwrite(textureName.c_str(), 1, textureName.size() + 1, fp);
 
 		// Not used
-		DWORD dw0 = 0;
-		fwrite(&dw0, 1, sizeof(DWORD), fp); // ident
-		WORD w0 = 0;
-		fwrite(&w0, 1, sizeof(WORD), fp); // Anim params
-		fwrite(&w0, 1, sizeof(WORD), fp); // Anim params
-		BYTE b0 = 0;
+		uint32_t dw0 = 0;
+		fwrite(&dw0, 1, sizeof(uint32_t), fp); // ident
+		uint16_t w0 = 0;
+		fwrite(&w0, 1, sizeof(uint16_t), fp); // Anim params
+		fwrite(&w0, 1, sizeof(uint16_t), fp); // Anim params
+		uint8_t b0 = 0;
 		fwrite(&b0, 1, 1, fp); // Not dynamic
 	}
 }

@@ -1602,10 +1602,10 @@ void Storm3D_TerrainHeightmap::rayTrace(const VC3 &position, const VC3 &directio
 		int e;
 
 		// the generic skip mask
-		WORD skipObstacleMask;
+		uint16_t skipObstacleMask;
 		// and the more specific skip mask with specific expected value
-		WORD skipObstacle2Mask;
-		WORD skipObstacle2Value;
+		uint16_t skipObstacle2Mask;
+		uint16_t skipObstacle2Value;
 		if (lineOfSight)
 		{
 			skipObstacleMask = OBSTACLE_AREA_SEETHROUGH;

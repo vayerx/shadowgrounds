@@ -39,9 +39,9 @@ struct ColorMapData
 
 /*
   // 32 bit
-	boost::scoped_array<DWORD> array;
+	boost::scoped_array<uint32_t> array;
 */
-	boost::scoped_array<WORD> array;
+	boost::scoped_array<uint16_t> array;
 
 	ColorMapData(game::GameMap *gameMap_, const char *fileName, float scaleX, float scaleY, float scaledSizeX, float scaledSizeY)
 	:	gameMap(gameMap_),
@@ -64,7 +64,7 @@ struct ColorMapData
 			stream >> version;
 
 			stream >> resolution.x >> resolution.y;
-			boost::scoped_array<WORD> tempArray(new WORD[resolution.x * resolution.y]);
+			boost::scoped_array<uint16_t> tempArray(new uint16_t[resolution.x * resolution.y]);
 
 			for(int i = 0; i < resolution.x * resolution.y; ++i)
 			{
@@ -74,7 +74,7 @@ struct ColorMapData
 
 				stream >> r >> g >> b;
 
-				WORD color = ((r / 8) << 11) | ((g / 4) << 5) | (b / 8);
+				uint16_t color = ((r / 8) << 11) | ((g / 4) << 5) | (b / 8);
 				tempArray[i] = color;
 			}
 
@@ -88,8 +88,8 @@ struct ColorMapData
 			return;
 
 		// 32 bit
-		//boost::scoped_array<DWORD> tempArray(new DWORD[resolution.x * resolution.y]);
-		boost::scoped_array<WORD> tempArray(new WORD[resolution.x * resolution.y]);
+		//boost::scoped_array<uint32_t> tempArray(new uint32_t[resolution.x * resolution.y]);
+		boost::scoped_array<uint16_t> tempArray(new uint16_t[resolution.x * resolution.y]);
 
 		for(int y = 0; y < resolution.y; ++y)
 		for(int x = 0; x < resolution.x; ++x)
@@ -104,14 +104,14 @@ struct ColorMapData
 			fread(&g, 1, 1, fp);
 			fread(&r, 1, 1, fp);
 
-			DWORD color = (r << 16) | (g << 8) | b;
+			uint32_t color = (r << 16) | (g << 8) | b;
 			tempArray[y * 2048 + x] = color;
 			*/
 			fread(&r, 1, 1, fp);
 			fread(&g, 1, 1, fp);
 			fread(&b, 1, 1, fp);
 
-			WORD color = ((r / 8) << 11) | ((g / 4) << 5) | (b / 8);
+			uint16_t color = ((r / 8) << 11) | ((g / 4) << 5) | (b / 8);
 			tempArray[y * 2048 + x] = color;
 		}
 
@@ -203,24 +203,24 @@ COL ColorMap::getUnmultipliedColor(float x, float y) const
 
 	/*
 	// 32 bit
-	DWORD color = data->array[index];
+	uint32_t color = data->array[index];
 
 	int r = GetRValue(color);
 	int g = GetGValue(color);
 	int b = GetBValue(color);
 	*/
 
-	WORD color = data->array[index];
+	uint16_t color = data->array[index];
 	int b = (color & 31);
 	int g = ((color & 2047) >> 5);
 	int r = ((color & 65535) >> 11);
 
-	WORD color2 = data->array[index2];
+	uint16_t color2 = data->array[index2];
 	int b2 = (color2 & 31);
 	int g2 = ((color2 & 2047) >> 5);
 	int r2 = ((color2 & 65535) >> 11);
 
-	WORD color3 = data->array[index3];
+	uint16_t color3 = data->array[index3];
 	int b3 = (color3 & 31);
 	int g3 = ((color3 & 2047) >> 5);
 	int r3 = ((color3 & 65535) >> 11);

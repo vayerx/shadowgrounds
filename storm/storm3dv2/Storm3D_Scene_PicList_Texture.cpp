@@ -96,7 +96,7 @@ void Storm3D_Scene_PicList_Picture::Render()
 	VC3 pos(position.x,position.y,0);
 
 	// Create color (color+alpha)
-	DWORD col = 0xFFFFFFFF;
+	uint32_t col = 0xFFFFFFFF;
 	if(material)
 	{
 		COL c(1.f, 1.f, 1.f);
@@ -121,7 +121,7 @@ void Storm3D_Scene_PicList_Picture::Render()
 		}
 		for(int i = 0; i < customShape->numVertices; i++)
 		{
-			DWORD c = customShape->vertices[i].color;
+			uint32_t c = customShape->vertices[i].color;
 			int newAlpha = (int)((c >> 24) * alpha_mul);
 			c &= 0x00FFFFFF;
 			c |= (newAlpha & 0xFF) << 24;
@@ -260,8 +260,8 @@ void Storm3D_Scene_PicList_Picture3D::Render()
 		// Create color (color+alpha)
 		COL c=material->GetColor();
 		float newAlpha = (1-material->GetTransparency());
-		DWORD col=COLOR_RGBA((int)(c.r*255.0f),(int)(c.g*255.0f),(int)(c.b*255.0f),(int)(newAlpha*255.0f));
-		//DWORD col=COLOR_RGBA(c.r,c.g,c.b,newAlpha);
+		uint32_t col=COLOR_RGBA((int)(c.r*255.0f),(int)(c.g*255.0f),(int)(c.b*255.0f),(int)(newAlpha*255.0f));
+		//uint32_t col=COLOR_RGBA(c.r,c.g,c.b,newAlpha);
 		
 		// Create a quad
 		float hsx=size.x*0.5f;

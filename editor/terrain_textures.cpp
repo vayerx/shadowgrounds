@@ -89,7 +89,7 @@ namespace {
 
 			if(needCopy)
 			{
-				weightTexture->Copy32BitSysMembufferToTexture(reinterpret_cast<DWORD *> (&buffer[0]));
+				weightTexture->Copy32BitSysMembufferToTexture(reinterpret_cast<uint32_t *> (&buffer[0]));
 				needCopy = false;
 			}
 

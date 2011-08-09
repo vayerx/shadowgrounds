@@ -930,7 +930,7 @@ void Storm3D_FakeSpotlight::createBuffers(Storm3D &storm, int shadowQuality)
 	Storm3D_FakeSpotlight::Data::indexBuffer = new frozenbyte::storm::IndexBuffer();
 	{
 		Storm3D_FakeSpotlight::Data::indexBuffer->create(4, false);
-		WORD *pointer = Storm3D_FakeSpotlight::Data::indexBuffer->lock();
+		uint16_t *pointer = Storm3D_FakeSpotlight::Data::indexBuffer->lock();
 		
 		*pointer++ = 4;
 		*pointer++ = 0;

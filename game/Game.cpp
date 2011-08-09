@@ -4963,7 +4963,7 @@ gameUI->getTerrain()->calculateLighting();
 
 		const char *ver_buf = "SAVE1.0";
 		//int hdr_buf[5];
-		//BYTE *data_buf;
+		//uint8_t *data_buf;
 	
 		fwrite(ver_buf, sizeof(char), 8, f);
 
@@ -4989,7 +4989,7 @@ gameUI->getTerrain()->calculateLighting();
 
 		char ver_buf[8];
 		int hdr_buf[5];
-		BYTE *data_buf;
+		uint8_t *data_buf;
 
 		// would need a hashtable for this really
 		LinkedList parents = LinkedList();
@@ -5022,8 +5022,8 @@ gameUI->getTerrain()->calculateLighting();
 			if (datasize <= 0 || datasize > 99999999) abort();
 			if (datasize > 0)
 			{
-				data_buf = new BYTE[datasize];
-				if ((int)fread(data_buf, sizeof(BYTE), datasize, f) != datasize)
+				data_buf = new uint8_t[datasize];
+				if ((int)fread(data_buf, sizeof(uint8_t), datasize, f) != datasize)
 				{
 					// could not read whole data, got only a part of it
 					return false;

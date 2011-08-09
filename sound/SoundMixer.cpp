@@ -1761,7 +1761,7 @@ void SoundMixer::setSoundPosition(int soundHandle,
     return;
   }
   int mixedVolume = -5000 + ((playVolume[soundHandle] * 50) * volume) / 100;
-  // presuming DWORD = unsigned short
+  // presuming uint32_t = unsigned short    WTF?!
   // making a little position scaling...
   x /= 20;
   y /= 20;

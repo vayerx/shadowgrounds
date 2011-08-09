@@ -55,7 +55,7 @@ bool hiddencommand(const char *command, bool wait_process )
 	  //_cwait( &termstat, pidValue, _WAIT_CHILD );
 	if( wait_process )
 	{
-		DWORD excode = STILL_ACTIVE;
+		uint32_t excode = STILL_ACTIVE;
 		int failcount = 0;
 		while (excode == STILL_ACTIVE)
 		{

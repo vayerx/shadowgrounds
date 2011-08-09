@@ -71,7 +71,7 @@ void Storm3D_Mesh_LOD::SetFaceAmount(int num)
 	face_amount=num;
 
 	// Create new indexbuffer
-	/*Storm3D2->D3DDevice->CreateIndexBuffer(sizeof(WORD)*face_amount*3,
+	/*Storm3D2->D3DDevice->CreateIndexBuffer(sizeof(uint16_t)*face_amount*3,
 		D3DUSAGE_WRITEONLY,D3DFMT_INDEX16,D3DPOOL_MANAGED,&dx8_ibuf);*/
 
 	// Create new face buffer
@@ -99,12 +99,12 @@ void Storm3D_Mesh_LOD::BuildFromFaces(Storm3D_Face *ofaces,int face_num)
 	faces=new LodFace[face_amount];
 
 	// Create new indexbuffer
-	/*Storm3D2->D3DDevice->CreateIndexBuffer(sizeof(WORD)*face_amount*3,
+	/*Storm3D2->D3DDevice->CreateIndexBuffer(sizeof(uint16_t)*face_amount*3,
 		D3DUSAGE_WRITEONLY,D3DFMT_INDEX16,D3DPOOL_MANAGED,&dx8_ibuf);*/
 
 	// Copy data to indexbuffer
-	//WORD *ip=NULL;
-	//dx8_ibuf->Lock(0,sizeof(WORD)*face_amount*3,(BYTE**)&ip,0);
+	//uint16_t *ip=NULL;
+	//dx8_ibuf->Lock(0,sizeof(uint16_t)*face_amount*3,(uint8_t**)&ip,0);
 	//if (ip)
 	{
 		for(int i=0;i<face_amount;i++)
@@ -239,7 +239,7 @@ void Storm3D_Mesh_LOD::UpdateFaceAdjacency(int vertex_amount)
 	fstrip_len=0;
 
 	// Alloc memory (EXTRA MUCH;)
-	fstrip=new WORD[face_amount*5];
+	fstrip=new uint16_t[face_amount*5];
 
 	// Used poly list
 	bool *pused=new bool[face_amount];
@@ -399,8 +399,8 @@ void Storm3D_Mesh_LOD::UpdateVertices(Storm3D_Mesh *owner)
 	vx_update_needed=false;
 
 		// Copy data to vertexbuffer
-		BYTE *vp;
-		dx8_vbuf->Lock(0,0,(BYTE**)&vp,0);
+		uint8_t *vp;
+		dx8_vbuf->Lock(0,0,(uint8_t**)&vp,0);
 		if (vp==NULL) return;
 
 		if (owner->material)
@@ -497,8 +497,8 @@ void Storm3D_Mesh_LOD::UpdateDOT3LightVectors(Storm3D_Mesh *owner,Storm3D_Scene_
 	if (!lgt) return;
 
 	// Lock vertex buffer
-	BYTE *dpt;
-	if (FAILED(dx8_vbuf->Lock(0,0,(BYTE**)&dpt,0))) return;
+	uint8_t *dpt;
+	if (FAILED(dx8_vbuf->Lock(0,0,(uint8_t**)&dpt,0))) return;
 
 	// Typecast
 	VXFORMAT_DOT3_TC1 *vxp=(VXFORMAT_DOT3_TC1*)dpt;
@@ -601,7 +601,7 @@ void Storm3D_Mesh_LOD::OptimizeAndBuildBuffers(Storm3D_Mesh *owner)
 
 	// Alloc LODs reindex vertex array
 	SAFE_DELETE_ARRAY(vx_reindex);
-	vx_reindex=new WORD[lod_vertex_amount];
+	vx_reindex=new uint16_t[lod_vertex_amount];
 
 	// Fill reindex array
 	for (int vx=0;vx<owner->vertex_amount;vx++)
@@ -609,12 +609,12 @@ void Storm3D_Mesh_LOD::OptimizeAndBuildBuffers(Storm3D_Mesh *owner)
 
 	// Create new indexbuffer
 	SAFE_RELEASE(dx8_ibuf)
-	owner->Storm3D2->D3DDevice->CreateIndexBuffer(sizeof(WORD)*face_amount*3,
+	owner->Storm3D2->D3DDevice->CreateIndexBuffer(sizeof(uint16_t)*face_amount*3,
 		D3DUSAGE_WRITEONLY,D3DFMT_INDEX16,D3DPOOL_MANAGED,&dx8_ibuf);
 
 	// Copy data to indexbuffer
-	WORD *ip=NULL;
-	dx8_ibuf->Lock(0,sizeof(WORD)*face_amount*3,(BYTE**)&ip,0);
+	uint16_t *ip=NULL;
+	dx8_ibuf->Lock(0,sizeof(uint16_t)*face_amount*3,(uint8_t**)&ip,0);
 	if (ip)
 	{
 		for(int i=0;i<face_amount;i++)
@@ -687,7 +687,7 @@ void Storm3D_Mesh_LOD::OptimizeAndBuildBuffers(Storm3D_Mesh *owner)
 			// Take the edges which are not using this vertex...
 			if (vxn==faces[ll->data].vertex_index[0])
 			{
-				//edgelist... jatka tästä!
+				//edgelist... jatka tï¿½stï¿½!
 			}
 		}
 

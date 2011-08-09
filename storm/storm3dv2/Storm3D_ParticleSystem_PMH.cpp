@@ -119,7 +119,7 @@ int Storm3D_ParticleSystem::QuadArray::lock(VXFORMAT_PART *pointer, int particle
 	
 	GLuint stride = sizeof(VXFORMAT_PART);
 	D3DXMATRIX mv = scene->camera.GetViewMatrix();
-	DWORD c0 = 0;
+	uint32_t c0 = 0;
 	// these two need to be inverted for quad particles to show up correctly
 	// reflection matrix wrong?
 	mv.m[1][1] = -mv.m[1][1];
@@ -203,10 +203,10 @@ int Storm3D_ParticleSystem::QuadArray::lock(VXFORMAT_PART *pointer, int particle
 			
 		}
 		// colors were bgra
-		c0 = (((DWORD)(p.alpha * 255.0f) &0xff) << 24) |
-			(((DWORD)(factor.b * p.color.b * 255.0f) &0xff) << 16) |
-			(((DWORD)(factor.g * p.color.g * 255.0f) &0xff) << 8) |
-			(((DWORD)(factor.r * p.color.r * 255.0f) &0xff) );
+		c0 = (((uint32_t)(p.alpha * 255.0f) &0xff) << 24) |
+			(((uint32_t)(factor.b * p.color.b * 255.0f) &0xff) << 16) |
+			(((uint32_t)(factor.g * p.color.g * 255.0f) &0xff) << 8) |
+			(((uint32_t)(factor.r * p.color.r * 255.0f) &0xff) );
 	
 		*((GLuint*)colors) = c0; colors += stride;
 		*((GLuint*)colors) = c0; colors += stride;
@@ -286,16 +286,16 @@ void Storm3D_ParticleSystem::QuadArray::render(Storm3D* Storm3D2, Storm3D_Scene*
 
 	D3DXMATRIX mv = scene->camera.GetViewMatrix();
 
-	DWORD c0;
+	uint32_t c0;
 
 	for(int i = 0; i < m_numParts; i++) {
 	
 		Storm3D_PointParticle& p = m_parts[i];
 
-		c0 = (((DWORD)(p.alpha * 255.0f) &0xff) << 24) |
-			(((DWORD)(p.color.r * 255.0f) &0xff) << 16) |
-			(((DWORD)(p.color.g * 255.0f) &0xff) << 8) |
-			(((DWORD)(p.color.b * 255.0f) &0xff) );
+		c0 = (((uint32_t)(p.alpha * 255.0f) &0xff) << 24) |
+			(((uint32_t)(p.color.r * 255.0f) &0xff) << 16) |
+			(((uint32_t)(p.color.g * 255.0f) &0xff) << 8) |
+			(((uint32_t)(p.color.b * 255.0f) &0xff) );
 
 		float sa = sinf(p.angle);
 		float ca = cosf(p.angle);
@@ -434,9 +434,9 @@ float computeConstantScale(const Vector& pos, const D3DXMATRIX& view, const D3DX
 
 void computeScreenQuad(
 					   const D3DXMATRIX& inverseview, const D3DXMATRIX& view, const D3DXMATRIX& proj,
-					   BYTE* verts, BYTE* colors, DWORD stride, 
-					   const Vector& p0, DWORD col0, float size0, 
-					   const Vector& p1, DWORD col1, float size1, bool constantsize) 
+					   uint8_t* verts, uint8_t* colors, uint32_t stride, 
+					   const Vector& p0, uint32_t col0, float size0, 
+					   const Vector& p1, uint32_t col1, float size1, bool constantsize) 
 {
 	// Compute delta in camera space
 	Vector Delta;
@@ -462,10 +462,10 @@ void computeScreenQuad(
 	// Output color if needed
 	if(colors)
 	{
-		*((DWORD*)colors) = col0; colors+=stride;	
-		*((DWORD*)colors) = col0; colors+=stride;	
-		*((DWORD*)colors) = col1; colors+=stride;	
-		*((DWORD*)colors) = col1; colors+=stride;	
+		*((uint32_t*)colors) = col0; colors+=stride;	
+		*((uint32_t*)colors) = col0; colors+=stride;	
+		*((uint32_t*)colors) = col1; colors+=stride;	
+		*((uint32_t*)colors) = col1; colors+=stride;	
 	}
 	
 }
@@ -519,8 +519,8 @@ int Storm3D_ParticleSystem::LineArray::lock(VXFORMAT_PART *pointer, int particle
 		frameHeight = 1.0f / m_animInfo.textureVSubDivs;
 	}
 
-	DWORD c0 = 0;
-	DWORD c1 = 0;
+	uint32_t c0 = 0;
+	uint32_t c1 = 0;
 	GLubyte *verts = (GLubyte*)&vp[0].position;
 	GLubyte *uvs = (GLubyte*)&vp[0].texcoords;
 	GLubyte *colors = (GLubyte*)&vp[0].color;
@@ -537,15 +537,15 @@ int Storm3D_ParticleSystem::LineArray::lock(VXFORMAT_PART *pointer, int particle
 		Storm3D_LineParticle& p = m_parts[i];
 
 		// colors were bgra
-		c0 = (((DWORD)(p.alpha[0] * 255.0f) &0xff) << 24) |
-			(((DWORD)(factor.b * p.color[0].b * 255.0f) &0xff) << 16) |
-			(((DWORD)(factor.g * p.color[0].g * 255.0f) &0xff) << 8) |
-			(((DWORD)(factor.r * p.color[0].r * 255.0f) &0xff) );
+		c0 = (((uint32_t)(p.alpha[0] * 255.0f) &0xff) << 24) |
+			(((uint32_t)(factor.b * p.color[0].b * 255.0f) &0xff) << 16) |
+			(((uint32_t)(factor.g * p.color[0].g * 255.0f) &0xff) << 8) |
+			(((uint32_t)(factor.r * p.color[0].r * 255.0f) &0xff) );
 
-		c1 = (((DWORD)(p.alpha[1] * 255.0f) &0xff) << 24) |
-			(((DWORD)(factor.b * p.color[1].b * 255.0f) &0xff) << 16) |
-			(((DWORD)(factor.g * p.color[1].g * 255.0f) &0xff) << 8) |
-			(((DWORD)(factor.r * p.color[1].r * 255.0f) &0xff) );
+		c1 = (((uint32_t)(p.alpha[1] * 255.0f) &0xff) << 24) |
+			(((uint32_t)(factor.b * p.color[1].b * 255.0f) &0xff) << 16) |
+			(((uint32_t)(factor.g * p.color[1].g * 255.0f) &0xff) << 8) |
+			(((uint32_t)(factor.r * p.color[1].r * 255.0f) &0xff) );
 
 		line_utils::computeScreenQuad(inview, view, proj, verts, colors, stride,
 			p.position[0], c0, p.size[0],
@@ -642,7 +642,7 @@ void Storm3D_ParticleSystem::LineArray::render(Storm3D* Storm3D2, Storm3D_Scene*
 		frameHeight = 1.0f / m_animInfo.textureVSubDivs;
 	}
 
-	DWORD c0,c1;
+	uint32_t c0,c1;
 
 	GLubyte* verts = (GLubyte*)&vp[0].position;
 	GLubyte* uvs = (GLubyte*)&vp[0].texcoords;
@@ -661,15 +661,15 @@ void Storm3D_ParticleSystem::LineArray::render(Storm3D* Storm3D2, Storm3D_Scene*
 	{
 		Storm3D_LineParticle& p = m_parts[i];
 		
-		c0 = (((DWORD)(p.alpha[0] * 255.0f) &0xff) << 24) |
-			(((DWORD)(p.color[0].r * 255.0f) &0xff) << 16) |
-			(((DWORD)(p.color[0].g * 255.0f) &0xff) << 8) |
-			(((DWORD)(p.color[0].b * 255.0f) &0xff) );
+		c0 = (((uint32_t)(p.alpha[0] * 255.0f) &0xff) << 24) |
+			(((uint32_t)(p.color[0].r * 255.0f) &0xff) << 16) |
+			(((uint32_t)(p.color[0].g * 255.0f) &0xff) << 8) |
+			(((uint32_t)(p.color[0].b * 255.0f) &0xff) );
 
-		c1 = (((DWORD)(p.alpha[1] * 255.0f) &0xff) << 24) |
-			(((DWORD)(p.color[1].r * 255.0f) &0xff) << 16) |
-			(((DWORD)(p.color[1].g * 255.0f) &0xff) << 8) |
-			(((DWORD)(p.color[1].b * 255.0f) &0xff) );
+		c1 = (((uint32_t)(p.alpha[1] * 255.0f) &0xff) << 24) |
+			(((uint32_t)(p.color[1].r * 255.0f) &0xff) << 16) |
+			(((uint32_t)(p.color[1].g * 255.0f) &0xff) << 8) |
+			(((uint32_t)(p.color[1].b * 255.0f) &0xff) );
 
 		line_utils::computeScreenQuad(inview, view, proj, verts, colors, stride,
 			p.position[0], c0, p.size[0],

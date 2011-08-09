@@ -466,7 +466,7 @@ public:
 			ambient.g = min(255.f, ambient.g);
 			ambient.b = min(255.f, ambient.b);
 
-			DWORD val = RGB(ambient.r, ambient.g, ambient.b);
+			uint32_t val = RGB(ambient.r, ambient.g, ambient.b);
 			shared.setColor(val);
 		}
 	}

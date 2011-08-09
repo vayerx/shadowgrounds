@@ -1060,7 +1060,7 @@ void Storm3D_Texture::CopyTextureTo32BitSysMembuffer(Uint32 *sysbuffer)
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void Storm3D_Texture::CopyTextureTo8BitSysMembuffer(BYTE *sysbuffer)
+void Storm3D_Texture::CopyTextureTo8BitSysMembuffer(uint8_t *sysbuffer)
 {
 	// Not used anywhere
 	igios_unimplemented();

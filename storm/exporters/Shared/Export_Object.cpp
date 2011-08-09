@@ -516,13 +516,13 @@ void Object::writeToFile(FILE *fp, const FBMatrix &tm, const FBMatrix &pivotTm, 
 		const std::vector<Face> &lodFaces = lod.getFaceBuffer(0);
 
 		int vertexAmountInt = lodVertices.size();
-		WORD vertexAmount = static_cast<WORD> (lodVertices.size());
-		WORD faceAmount = static_cast<WORD> (lodFaces.size());
+		uint16_t vertexAmount = static_cast<uint16_t> (lodVertices.size());
+		uint16_t faceAmount = static_cast<uint16_t> (lodFaces.size());
 
 		char hasLods = 0; //generateLods;
 
-		fwrite(&vertexAmount, sizeof(WORD), 1, fp); // vertex count
-		fwrite(&faceAmount, sizeof(WORD), 1, fp); // face count
+		fwrite(&vertexAmount, sizeof(uint16_t), 1, fp); // vertex count
+		fwrite(&faceAmount, sizeof(uint16_t), 1, fp); // face count
 		fwrite(&hasLods, sizeof(char), 1, fp); // lod info
 		fwrite(&hasWeights, sizeof(char), 1, fp); // vertex weights
 
@@ -549,26 +549,26 @@ void Object::writeToFile(FILE *fp, const FBMatrix &tm, const FBMatrix &pivotTm, 
 		for(int j = 0; int(j) < lod.getFaceBufferCount(); ++j)
 		{
 			const std::vector<Face> &lodFaces = lod.getFaceBuffer(j);
-			WORD faceCount = lodFaces.size();
+			uint16_t faceCount = lodFaces.size();
 
 			if(j > 0)
 			{
-				fwrite(&faceCount, sizeof(WORD), 1, fp);
+				fwrite(&faceCount, sizeof(uint16_t), 1, fp);
 			}
 
 			for(unsigned int i = 0; i < faceAmount; ++i)
 			for(unsigned int k = 0; k < 3; ++k)
 			{
 				const Face &face = lodFaces[i];
-				WORD vertexIndex = WORD(face.getVertexIndex(k));
+				uint16_t vertexIndex = uint16_t(face.getVertexIndex(k));
 
 				int a = face.getVertexIndex(k);
 				int b = int(lodVertices.size());
 				assert(face.getVertexIndex(k) < int(lodVertices.size()));
 				assert(vertexIndex >= 0 && vertexIndex < vertexAmount);
 
-				WORD index = vertexIndex;
-				fwrite(&index, sizeof(WORD), 1, fp);
+				uint16_t index = vertexIndex;
+				fwrite(&index, sizeof(uint16_t), 1, fp);
 			}
 		}
 

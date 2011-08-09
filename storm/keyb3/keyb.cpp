@@ -1263,8 +1263,8 @@ void DestroyDInput()
 //-----------------------------------------------------------------------------
 void Keyb3_UpdateDevices_Optimized(int time)
 {
-	static DWORD timelastupd=timeGetTime()-1000;
-	DWORD timenow=timeGetTime();
+	static uint32_t timelastupd=timeGetTime()-1000;
+	uint32_t timenow=timeGetTime();
 
 	// P‰ivitet‰‰n vain jos haluttu aika kulunut viime p‰ivityksest‰
 	if ((timenow-timelastupd)>(UINT)time)
@@ -1921,7 +1921,7 @@ void Keyb3_SetActive(int on)
 // Keyb3_Init()
 // Laittaa DirectInputin p‰‰lle, sek‰ alustaa kaikki ohjaindevicet
 //-----------------------------------------------------------------------------
-int Keyb3_Init(HWND hw,DWORD caps)
+int Keyb3_Init(HWND hw, uint32_t caps)
 {
 	// Otetaan talteen Hwindow
 	MGHwnd=hw;

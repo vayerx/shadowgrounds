@@ -376,7 +376,7 @@ namespace {
 			fog.start = getSliderValue(dialog, IDC_FOG_END) * 0.5f - 10.f;
 			fog.end = getSliderValue(dialog, IDC_FOG_START) * 0.5f - 10.f;
 
-			DWORD color = fogColorComponent.getColor();
+			uint32_t color = fogColorComponent.getColor();
 			float r = GetRValue(color) / 255.f;
 			float g = GetGValue(color) / 255.f;
 			float b = GetBValue(color) / 255.f;
@@ -1157,7 +1157,7 @@ void SceneMode::doExport(Exporter &exporter) const
 		bool enabled = IsDlgButtonChecked(data->sharedData.dialog.getWindowHandle(), IDC_FOG_ENABLED) == BST_CHECKED;
 		float start = getSliderValue(data->sharedData.dialog, IDC_FOG_END) * 0.5f - 10.f;
 		float end = getSliderValue(data->sharedData.dialog, IDC_FOG_START) * 0.5f - 10.f;
-		DWORD color = data->sharedData.fogColorComponent.getColor();
+		uint32_t color = data->sharedData.fogColorComponent.getColor();
 		unsigned char r = GetRValue(color);
 		unsigned char g = GetGValue(color);
 		unsigned char b = GetBValue(color);

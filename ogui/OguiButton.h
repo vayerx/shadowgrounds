@@ -173,7 +173,7 @@ public:
 	struct Vertex
 	{
 		int x,y;
-		DWORD color;
+		uint32_t color;
 	};
 	void SetCustomShape(Vertex *vertices, int numVertices);
 

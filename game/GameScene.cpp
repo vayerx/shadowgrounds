@@ -1631,14 +1631,14 @@ namespace game
 			if (gameMap->isObstacleAndAreaMapLoaded())
 				return;
 
-			WORD *forcemap = terrain->GetForceMap();
+			uint16_t *forcemap = terrain->GetForceMap();
 
 			// forcemap size
 			int fsizex = gameMap->getHeightmapSizeX();
 			int fsizey = gameMap->getHeightmapSizeY();
 			// need to save the old forcemap temporarely, so we can clear
 			// it during this building addition...
-			WORD *oldforcemap = new WORD[fsizex * fsizey];
+			uint16_t *oldforcemap = new uint16_t[fsizex * fsizey];
 			for (int ofi = 0; ofi < fsizex * fsizey; ofi++)
 			{
 				oldforcemap[ofi] = forcemap[ofi];

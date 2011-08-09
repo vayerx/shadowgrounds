@@ -85,7 +85,7 @@ namespace {
 		CComPtr<ID3DXPMesh> lodMesh;
 
 		D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE];
-		boost::scoped_array<DWORD> adjacency;
+		boost::scoped_array<uint32_t> adjacency;
 
 	public:
 		Mesh(IDirect3DDevice9 &device_)
@@ -146,7 +146,7 @@ namespace {
 				basicMesh->UnlockVertexBuffer();
 			}
 
-			boost::scoped_array<DWORD> adjacency(new DWORD[3 * faces.size()]);
+			boost::scoped_array<uint32_t> adjacency(new uint32_t[3 * faces.size()]);
 			basicMesh->GenerateAdjacency(0.001f, adjacency.get());
 
 			cleanedMesh = basicMesh;

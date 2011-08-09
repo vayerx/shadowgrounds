@@ -96,7 +96,7 @@ private:
 	MTYPE multitexture_type;
 
 	// Shader handle (v3)
-	DWORD shader_handle;
+	uint32_t shader_handle;
 
 	VC2 scrollSpeed1;
 	VC2 scrollOffset1;
@@ -119,11 +119,11 @@ public:
 	void UpdateAlphaType();
 
 	// Apply
-	bool Apply(Storm3D_Scene *scene,int pass,DWORD fvf,D3DMATRIX *mat);
+	bool Apply(Storm3D_Scene *scene,int pass,uint32_t fvf,D3DMATRIX *mat);
 	void ApplyBaseTextureOnly();
 	void ApplyBase2TextureOnly();
 	void ApplyBaseTextureExtOnly();
-	void ApplyBaseTextureExtOnly_NoAlphaSort(Storm3D_Scene *scene,DWORD fvf,D3DMATRIX *mat);
+	void ApplyBaseTextureExtOnly_NoAlphaSort(Storm3D_Scene *scene,uint32_t fvf,D3DMATRIX *mat);
 
 	// Name stuff
 	const char *GetName();

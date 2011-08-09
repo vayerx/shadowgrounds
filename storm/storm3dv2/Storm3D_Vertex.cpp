@@ -18,7 +18,7 @@
 //------------------------------------------------------------------
 Storm3D_Vertex::Storm3D_Vertex(const VC3 &_position,const VC3 &_normal,
 		const VC2 &_texturecoordinates,const VC2 &_texturecoordinates2,
-		const WORD smoothing_groups[2]) :
+		const uint16_t smoothing_groups[2]) :
 	position(_position),
 	normal(_normal),
 	texturecoordinates(_texturecoordinates),

@@ -287,7 +287,7 @@ void Storm3D_Scene_LightHandler::RenderLensFlares(Storm3D_Scene *scene)
 					float hsizey=(lfl->glow_size/rz)*ss.height;
 
 					// Create color (color+alpha)
-					DWORD col=lgt->GetColor().GetAsD3DCompatibleARGB();
+					uint32_t col=lgt->GetColor().GetAsD3DCompatibleARGB();
 
 					// Apply the texture
 					lfl->tex_glow->Apply(0);
@@ -332,7 +332,7 @@ void Storm3D_Scene_LightHandler::RenderLensFlares(Storm3D_Scene *scene)
 					float hsizey=(lfl->ring_size/rz)*sizemul*height;
 
 					// Create color (color+alpha)
-					DWORD col=(lgt->GetColor()*0.5f).GetAsD3DCompatibleARGB();
+					uint32_t col=(lgt->GetColor()*0.5f).GetAsD3DCompatibleARGB();
 
 					// Apply the texture
 					lfl->tex_ring->Apply(0);
@@ -363,7 +363,7 @@ void Storm3D_Scene_LightHandler::RenderLensFlares(Storm3D_Scene *scene)
 					}
 				}*/
 
-					// Renderoidaan ympyrät (pienet)
+					// Renderoidaan ympyrï¿½t (pienet)
 					/*if (lflare[dxlight_handle[lg].owner->lensflare].pic_circle>=0)
 					for (float f=-2.3f;f<2.5f;f+=0.7f)
 					{
