@@ -190,16 +190,16 @@ namespace game
     void setMissionId(const char *missionid);
     const char *getMissionId();
 
-    void setCurrentMission(char *missionfile);
-    void setSuccessMission(char *missionfile);
-    void setFailureMission(char *missionfile);
+    void setCurrentMission(const char *missionfile);
+    void setSuccessMission(const char *missionfile);
+    void setFailureMission(const char *missionfile);
 
     void setBuildingsScript(char *scriptname);
     void setSectionScript(char *scriptname);
 
-    char *getCurrentMission();
-    char *getSuccessMission();
-    char *getFailureMission();
+    const char *getCurrentMission();
+    const char *getSuccessMission();
+    const char *getFailureMission();
 
 		GameProfiles *getGameProfiles() { return profiles; }
 
@@ -364,11 +364,11 @@ namespace game
     bool multiplayer;
 		bool cooperative;
 
-    char *currentMission;
-    char *nextMissionOnSuccess;
-    char *nextMissionOnFailure;
+    std::string currentMission;
+    std::string nextMissionOnSuccess;
+    std::string nextMissionOnFailure;
     char *script;
-		char *missionId;
+    std::string missionId;
 
 		GameProfiles *profiles;
 

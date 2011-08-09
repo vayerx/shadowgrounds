@@ -59,7 +59,7 @@ namespace game
     delete [] buf;
   }
 
-  void MissionParser::parseMission(Game *game, char *filename, int section)
+  void MissionParser::parseMission(Game *game, const char *filename, int section)
   {
 		if (filename == NULL)
 			return;

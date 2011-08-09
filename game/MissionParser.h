@@ -30,7 +30,7 @@ namespace game
     ~MissionParser();
 
     // each mission as it's own data file? sounds great ;)
-    void parseMission(Game *game, char *filename, int section);
+    void parseMission(Game *game, const char *filename, int section);
 
   private:
     void error(const char *err, int linenum, bool isError = true);

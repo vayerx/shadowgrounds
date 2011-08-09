@@ -384,8 +384,6 @@ namespace {
 
 		currentMap = NULL;
 
-		currentMission = NULL;
-
 		const char *mdefs = SimpleOptions::getString(DH_OPT_S_GAME_MISSIONDEFS);
 		assert(mdefs != NULL);
 		if (mdefs == NULL)
@@ -413,14 +411,11 @@ namespace {
 		} else {
 			Logger::getInstance()->error("Game - Could not open missiondefs file.");
 		}
-		if (currentMission == NULL)
+		if (currentMission.empty())
 		{
 			Logger::getInstance()->error("Game - Missing firstmission definition.");
 			assert(!"No firstmission defined");
 		}
-
-		nextMissionOnSuccess = NULL;
-		nextMissionOnFailure = NULL;
 
 		missionStartTime = 0;
 		pauseStartTime = 0;
@@ -430,7 +425,6 @@ namespace {
 		lastSaveNumber = 0;
 
 		script = NULL;
-		missionId = NULL;
 		buildingsScript = NULL;
 		sectionScript = NULL;
 
@@ -638,22 +632,10 @@ namespace {
 
 		setPendingLoad(NULL);
 
-		if (currentMission != NULL)
-		{
-			delete [] currentMission;
-			currentMission = NULL;
-		}
-
 		if (script != NULL)
 		{
 			delete [] script;
 			script = NULL;
-		}
-
-		if (missionId != NULL)
-		{
-			delete [] missionId;
-			missionId = NULL;
 		}
 
 		if (buildingsScript != NULL)
@@ -779,11 +761,6 @@ namespace {
 			temporarySaveBuffer = NULL;
 		}
 
-		delete[] nextMissionOnSuccess;
-		nextMissionOnSuccess = 0;
-		delete[] nextMissionOnFailure;
-		nextMissionOnFailure = 0;
-
 #ifdef PROJECT_SURVIVOR
 		if(bonusManager)
 		{
@@ -847,7 +824,7 @@ namespace {
 		gameScripting->runMissionScript("user_autoexec", "runbefore");
 
 		MissionParser mp = MissionParser();
-		mp.parseMission(this, currentMission, 
+		mp.parseMission(this, currentMission.c_str(), 
 			MISSIONPARSER_SECTION_BEFORE);
 
 		if (sectionScript != NULL)
@@ -1464,9 +1441,9 @@ Logger::getInstance()->error(int2str(projAmount));
 
 // HACK:...loading screen?????????????????
 {
-char *foocrap = this->missionId;
-char *foocrap2 = this->currentMission;
-std::string fooid = std::string(this->nextMissionOnSuccess);
+std::string foocrap = this->missionId;
+std::string foocrap2 = this->currentMission;
+std::string fooid = this->nextMissionOnSuccess;
 
 // HACK: some real crap here!
 // FIX: less crap now
@@ -1478,9 +1455,8 @@ const size_t s1 = fooid.find_last_of("/");
 const size_t s2 = fooid.find_last_of("_");
 const size_t start = std::max(s1, s2);
 #endif
-std::string tmp = fooid.substr(start + 1, end - start - 1);
 
-this->missionId = (char *)tmp.c_str();
+this->missionId = fooid.substr(start + 1, end - start - 1);
 this->currentMission = this->nextMissionOnSuccess;
 
 gameUI->openLoadingWindow(singlePlayerNumber);
@@ -1489,8 +1465,8 @@ gameUI->openLoadingWindow(singlePlayerNumber);
 // inside PhysX when deleting game physics
 saveGame(strPrintf("%d", (lastSaveNumber + 1)).c_str());
 
-this->missionId = foocrap;
-this->currentMission = foocrap2;
+this->missionId.swap(foocrap);
+this->currentMission.swap(foocrap2);
 }
 
 							gameScripting->setGlobalIntVariableValue("save_requested", 1);
@@ -1600,7 +1576,7 @@ this->currentMission = foocrap2;
 					SHOW_LOADING_BAR(25);
 
 					MissionParser mp = MissionParser();
-					mp.parseMission(this, currentMission, 
+					mp.parseMission(this, currentMission.c_str(), 
 						MISSIONPARSER_SECTION_AFTER);
 
 #ifdef LEGACY_FILES
@@ -1656,7 +1632,7 @@ this->currentMission = foocrap2;
 					AniManager::createInstance(gameScripting);
 					// end of script cleanup
 
-					mp.parseMission(this, currentMission, 
+					mp.parseMission(this, currentMission.c_str(), 
 						MISSIONPARSER_SECTION_BEFORE);
 
 #ifdef LEGACY_FILES
@@ -1733,7 +1709,7 @@ this->currentMission = foocrap2;
 						}
 						MissionParser mp = MissionParser();
 
-						mp.parseMission(this, currentMission, 
+						mp.parseMission(this, currentMission.c_str(), 
 							MISSIONPARSER_SECTION_COMBAT);
 
 						SHOW_LOADING_BAR(25);
@@ -2388,7 +2364,7 @@ gameUI->getTerrain()->calculateLighting();
 
 		for (int stats = 0; stats < MAX_PLAYERS_PER_CLIENT; stats++)
 		{
-			game::GameStats::instances[stats]->start(this->missionId);
+			game::GameStats::instances[stats]->start(this->missionId.c_str());
 		}
 
 		if (SimpleOptions::getBool(DH_OPT_B_PHYSICS_ENABLED))
@@ -2569,8 +2545,8 @@ gameUI->getTerrain()->calculateLighting();
 			if (dontLoadMainMenu)
 			{
 				dontLoadMainMenu = false;
-				char *foocrap = this->missionId;
-				std::string fooid = std::string(this->nextMissionOnSuccess);
+				std::string foocrap = this->missionId;
+				std::string fooid = this->nextMissionOnSuccess;
 
 				// HACK: some real crap here!
 				// FIX: less crap now
@@ -2582,11 +2558,10 @@ gameUI->getTerrain()->calculateLighting();
 				const size_t s2 = fooid.find_last_of("_");
 				const size_t start = std::max(s1, s2);
 #endif
-				std::string tmp = fooid.substr(start + 1, end - start - 1);
-				this->missionId = (char *)tmp.c_str();      /// @todo OMFG WTF???!!!!11eleven
-				
+				this->missionId = fooid.substr(start + 1, end - start - 1);
+
 				gameUI->openLoadingWindow(singlePlayerNumber);
-				this->missionId = foocrap;
+				this->missionId.swap(foocrap);
 			} else {
 				gameUI->openLoadingWindow(singlePlayerNumber);
 			}
@@ -4028,21 +4003,14 @@ gameUI->getTerrain()->calculateLighting();
 
   void Game::setMissionId(const char *missionid_)
 	{
-		if (missionId != NULL)
-		{
-			delete [] missionId;
-			missionId = NULL;
-		}
-		if (missionid_ != NULL)
-		{
-			missionId = new char[strlen(missionid_) + 1];
-			strcpy(missionId, missionid_);
-		}
+        missionId.clear();
+        if (missionid_)
+            missionId = missionid_;
 	}
 
   const char *Game::getMissionId()
 	{
-		return this->missionId;
+		return this->missionId.c_str();
 	}
 
 
@@ -4108,46 +4076,25 @@ gameUI->getTerrain()->calculateLighting();
 		return pendingLoad;
 	}
 
-	void Game::setCurrentMission(char *missionfile)
+	void Game::setCurrentMission(const char *missionfile)
 	{
-		if (currentMission != NULL)
-		{
-			delete [] currentMission;
-			currentMission = NULL;
-		}
-		if (missionfile != NULL)
-		{
-			currentMission = new char[strlen(missionfile) + 1];
-			strcpy(currentMission, missionfile);
-		}
+        currentMission.clear();
+        if (missionfile)
+            currentMission = missionfile;
 	}
 
-	void Game::setSuccessMission(char *missionfile)
+	void Game::setSuccessMission(const char *missionfile)
 	{
-		if (nextMissionOnSuccess != NULL)
-		{
-			delete [] nextMissionOnSuccess;
-			nextMissionOnSuccess = NULL;
-		}
-		if (missionfile != NULL)
-		{
-			nextMissionOnSuccess = new char[strlen(missionfile) + 1];
-			strcpy(nextMissionOnSuccess, missionfile);
-		}
+        nextMissionOnSuccess.clear();
+        if (missionfile)
+            nextMissionOnSuccess = missionfile;
 	}
 
-	void Game::setFailureMission(char *missionfile)
+	void Game::setFailureMission(const char *missionfile)
 	{
-		if (nextMissionOnFailure != NULL)
-		{
-			delete [] nextMissionOnFailure;
-			nextMissionOnFailure = NULL;
-		}
-		if (missionfile != NULL)
-		{
-			nextMissionOnFailure = new char[strlen(missionfile) + 1];
-			strcpy(nextMissionOnFailure, missionfile);
-		}
+        nextMissionOnFailure.clear();
+        if (missionfile)
+            nextMissionOnFailure = missionfile;
 	}
 
 	void Game::requestEndCombat()
@@ -4166,19 +4113,19 @@ gameUI->getTerrain()->calculateLighting();
 		}
 	}
 
-	char *Game::getCurrentMission()
+	const char *Game::getCurrentMission()
 	{
-		return currentMission;
+		return currentMission.c_str();
 	}
 
-	char *Game::getSuccessMission()
+	const char *Game::getSuccessMission()
 	{
-		return nextMissionOnSuccess;
+		return nextMissionOnSuccess.c_str();
 	}
 
-	char *Game::getFailureMission()
+	const char *Game::getFailureMission()
 	{
-		return nextMissionOnFailure;
+		return nextMissionOnFailure.c_str();
 	}
 
 	void Game::setCinematicScriptProcess(char *script)
