@@ -1210,7 +1210,7 @@ namespace game
 		{
 			Logger::getInstance()->warning("GameScripting::startUnitScript - Script not loaded or does not exist.");
 			Logger::getInstance()->debug(script);
-			assert(!"startUnitScript - No such script.");
+			//! @todo assert(!"startUnitScript - No such script.");
 			return NULL;
 		}
 
