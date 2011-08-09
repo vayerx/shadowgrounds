@@ -81,10 +81,10 @@ public:
 	~Storm3D_Light_Directional();
 
 	// Change params
-	void SetColor(COL &_color);
+	void SetColor(const COL &_color);
 	void SetMultiplier(float _multiplier);
 	void SetDecay(float _decay);
-	void SetDirection(VC3 &_direction);
+	void SetDirection(const VC3 &_direction);
 
 	// Get params
 	COL &GetColor();
@@ -145,10 +145,10 @@ public:
 	~Storm3D_Light_Point();
 
 	// Change params
-	void SetColor(COL &_color);
+	void SetColor(const COL &_color);
 	void SetMultiplier(float _multiplier);
 	void SetDecay(float _decay);
-	void SetPosition(VC3 &_position);
+	void SetPosition(const VC3 &_position);
 	void SetLensFlare(IStorm3D_LensFlare *_lflare);
 
 	// Get params
@@ -219,12 +219,12 @@ public:
 	~Storm3D_Light_Spot();
 
 	// Change params
-	void SetColor(COL &_color);
+	void SetColor(const COL &_color);
 	void SetMultiplier(float _multiplier);
 	void SetDecay(float _decay);
-	void SetPosition(VC3 &_position);
+	void SetPosition(const VC3 &_position);
 	void SetLensFlare(IStorm3D_LensFlare *_lflare);
-	void SetDirection(VC3 &_direction);
+	void SetDirection(const VC3 &_direction);
 	void SetCones(float inner,float outer);
 
 	// Get params

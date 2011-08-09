@@ -17,7 +17,7 @@ namespace game
   }
 
 
-  SaveData *AmmoPackObject::getSaveData()
+  SaveData *AmmoPackObject::getSaveData() const
   {
     // TODO
     return NULL;

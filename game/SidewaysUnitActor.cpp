@@ -72,7 +72,7 @@ frozenbyte::ai::Path *SidewaysUnitActor::solvePath(Unit *unit, const VC3 &startP
 }
 
 
-bool SidewaysUnitActor::setPathTo(Unit *unit, VC3 &destination_)
+bool SidewaysUnitActor::setPathTo(Unit *unit, const VC3 &destination_)
 {
 	VC3 destination = destination_;
 	frozenbyte::ai::Path *path = solvePath(unit, unit->getPosition(), destination);

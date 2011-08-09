@@ -17,7 +17,7 @@ namespace game
 
     AmmoPackObject();
 
-    virtual SaveData *getSaveData();
+    virtual SaveData *getSaveData() const;
 
     int getReloadPrice();
     void reload();

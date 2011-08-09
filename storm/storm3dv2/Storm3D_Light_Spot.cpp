@@ -101,7 +101,7 @@ void Storm3D_Light_Spot::Apply(int num)
 //------------------------------------------------------------------
 // Storm3D_Light_Spot::SetColor
 //------------------------------------------------------------------
-void Storm3D_Light_Spot::SetColor(COL &_color)
+void Storm3D_Light_Spot::SetColor(const COL &_color)
 {
 	color=_color;
 }
@@ -111,7 +111,7 @@ void Storm3D_Light_Spot::SetColor(COL &_color)
 //------------------------------------------------------------------
 // Storm3D_Light_Spot::SetPosition
 //------------------------------------------------------------------
-void Storm3D_Light_Spot::SetPosition(VC3 &_position)
+void Storm3D_Light_Spot::SetPosition(const VC3 &_position)
 {
 	position=_position;
 	update_globals=true;
@@ -214,7 +214,7 @@ IStorm3D_LensFlare *Storm3D_Light_Spot::GetLensFlare()
 //------------------------------------------------------------------
 // Storm3D_Light_Spot::SetDirection
 //------------------------------------------------------------------
-void Storm3D_Light_Spot::SetDirection(VC3 &_direction)
+void Storm3D_Light_Spot::SetDirection(const VC3 &_direction)
 {
 	direction=_direction;
 	update_globals=true;
