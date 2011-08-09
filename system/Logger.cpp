@@ -58,10 +58,13 @@ void Logger::cleanInstance()
 
 Logger::Logger(const char *logfile)
 {
-	//logLevel = LOGGER_LEVEL_DEBUG;
-	//listenerLogLevel = LOGGER_LEVEL_DEBUG;
+#ifdef _DEBUG
+	logLevel = LOGGER_LEVEL_DEBUG;
+	listenerLogLevel = LOGGER_LEVEL_DEBUG;
+#else
 	logLevel = LOGGER_LEVEL_NONE;
 	listenerLogLevel = LOGGER_LEVEL_NONE;
+#endif
 	listener = NULL;
 	file = NULL;
 	filename = new char[strlen(logfile) + 1];
