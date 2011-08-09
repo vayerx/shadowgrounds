@@ -35,6 +35,7 @@
 
 #include <vector>
 #include <string>
+#include <stdexcept>
 
 using namespace frozenbyte;
 
@@ -119,22 +120,21 @@ namespace game
       return;
     }
 
-    char *buf;
-
     //fseek(f, 0, SEEK_END);
     //int size = ftell(f);
     //fseek(f, 0, SEEK_SET);
     const size_t size = filesystem::fb_fsize(f);
 
-    buf = new char[size + 1];
-    const size_t datalen = filesystem::fb_fread(buf, sizeof(char), size, f);
-    buf[datalen] = '\0';
+    std::vector<char> buf;
+    buf.resize(size + 1);
+    const size_t datalen = filesystem::fb_fread(&buf[0], sizeof(char), size, f);
+    buf.at(datalen) = '\0';
 
 		if (strlen(filename) > 4
 			&& (strcmp(&filename[strlen(filename) - 4], ".dhu") == 0
 			|| strcmp(&filename[strlen(filename) - 4], ".DHU") == 0))
 		{
-			util::UberCrypt::decrypt(buf, datalen);
+			util::UberCrypt::decrypt(&buf[0], datalen);
 		}
 
     PartType *parsePart = NULL;
@@ -145,9 +145,7 @@ namespace game
     bool stateAwait = false;  // when expecting to change state + 1
 
     int lineNumber = 1;
-    size_t lastpos = 0;
-    size_t i;
-    for (i = 0; i < datalen; i++)
+    for (ssize_t i = 0, lastpos = 0; i < ssize_t(datalen); i++)
     {
       if (buf[i] == '\r' || buf[i] == '\n')
       {
@@ -158,7 +156,7 @@ namespace game
         buf[i] = '\0';
 
         // remove trailing spaces
-        for (size_t j = i - 1; j >= lastpos; j--)
+        for (ssize_t j = i - 1; j >= lastpos; j--)
         {
           if (buf[j] == ' ' || buf[j] == '\t')  
             buf[j] = '\0';
@@ -308,13 +306,13 @@ namespace game
             if (!lineok)
             {
               int hasEqual = -1;
-              for (size_t j = lastpos; j < i; j++)
+              for (ssize_t j = lastpos; j < i; j++)
               {
                 if (buf[j] == '=') 
                 { 
                   buf[j] = '\0';
 									// trim left side of equal sign
-									for (size_t backtrim = j-1; backtrim >= lastpos; backtrim--)
+									for (ssize_t backtrim = j-1; backtrim >= lastpos; backtrim--)
 									{
 										if (buf[backtrim] == ' ' || buf[backtrim] == '\t')
 										{
@@ -402,8 +400,6 @@ namespace game
         lastpos = i + 1;
       }
     }
-
-    delete [] buf;
 
     filesystem::fb_fclose(f);
 
