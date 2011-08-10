@@ -237,7 +237,7 @@ IF( CMAKE_COMPILER_IS_GNUCXX )
                                     -Wno-unused-parameter -Wno-unused-variable  # TODO
     )
     SET( CMAKE_CXX_FLAGS_DEBUG      "-O0 -g" )     # ( waiting for COMPILE_OPTIONS_<CONFIG> )
-    SET( CMAKE_CXX_FLAGS_RELEASE    "-O2" )        # ( waiting for COMPILE_OPTIONS_<CONFIG> )
+    SET( CMAKE_CXX_FLAGS_RELEASE    "-O2 -fno-strict-aliasing" )        # ( waiting for COMPILE_OPTIONS_<CONFIG> )
 ELSE( CMAKE_COMPILER_IS_GNUCXX )
     MESSAGE( "WARNING: using default options for non-GCC compiler" )
 ENDIF( CMAKE_COMPILER_IS_GNUCXX )
