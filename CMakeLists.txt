@@ -66,6 +66,24 @@ ELSE ( ENABLE_PHYSX )
 ENDIF ( ENABLE_PHYSX )
 
 
+IF( NOT SHADOWGROUNDS_DATA_PATH )
+    IF ( UNIX )
+        SET (SHADOWGROUNDS_DATA_PATH /usr/share/games/shadowgrounds/ )
+    ELSE ( UNIX )
+        MESSAGE( "WARNING: SHADOWGROUNDS_DATA_PATH is undefined" )
+    ENDIF ( UNIX )
+    SET( SHADOWGROUNDS_DATA_PATH ${SHADOWGROUNDS_DATA_PATH} CACHE PATH "Path to Shadowgrounds data files" FORCE )
+ENDIF( NOT SHADOWGROUNDS_DATA_PATH )
+
+IF( NOT SURVIVOR_DATA_PATH )
+    IF ( UNIX )
+        SET (SURVIVOR_DATA_PATH /usr/share/games/survivor/ )
+    ELSE ( UNIX )
+        MESSAGE( "WARNING: SURVIVOR_DATA_PATH is undefined" )
+    ENDIF ( UNIX )
+    SET( SURVIVOR_DATA_PATH ${SURVIVOR_DATA_PATH} CACHE PATH "Path to Shadowgrounds Survivor data files" FORCE )
+ENDIF( NOT SURVIVOR_DATA_PATH )
+
 # Build source list from module name and path prefix
 MACRO( CompileSrcList module prefix )
     FOREACH( item ${ARGN} )
@@ -304,12 +322,12 @@ MACRO( AddShadowgroundsBinary name defines )
     TARGET_LINK_LIBRARIES( ${name} ${GLOBAL_LIBRARIES} )
 ENDMACRO( AddShadowgroundsBinary )
 
-AddShadowgroundsBinary( shadowgrounds "PROJECT_SHADOWGROUNDS"
+AddShadowgroundsBinary( shadowgrounds "PROJECT_SHADOWGROUNDS=1;GAMEDATA_PATH=\"${SHADOWGROUNDS_DATA_PATH}\""
     shadowgrounds/shadowgrounds.cpp
     shadowgrounds/version.cpp
 )
 
-AddShadowgroundsBinary( survivor "PROJECT_SURVIVOR"
+AddShadowgroundsBinary( survivor "PROJECT_SURVIVOR=1;GAMEDATA_PATH=${SURVIVOR_DATA_PATH}"
     survivor/survivor.cpp
     survivor/ui_credits_text.cpp
     survivor/version.cpp

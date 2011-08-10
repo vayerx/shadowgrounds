@@ -229,7 +229,7 @@ static void print_version()
   printf("Shadowgrounds for Linux version 1.5.0\n");
 }
 
-void parse_commandline(int argc, char *argv[], int *windowed, bool *compile, bool *exit, bool *sound)
+void parse_commandline(int argc, char *argv[], int *windowed, bool *compile, bool *exit, bool *sound, std::string& data)
 {
 	using namespace boost::program_options;
 	options_description visible;
@@ -239,6 +239,7 @@ void parse_commandline(int argc, char *argv[], int *windowed, bool *compile, boo
 		("windowed,w",  "Run the game windowed")
 		("fullscreen,f","Run the game fullscreen")
 		("nosound,s",   "Do not access the sound card")
+		("data,d",      value(&data)->default_value(GAMEDATA_PATH)->required(), "Path to game data directory")
 	;
 	options_description hidden;
 	hidden.add_options()
@@ -264,14 +265,16 @@ void parse_commandline(int argc, char *argv[], int *windowed, bool *compile, boo
 	}
 
 	*sound = vm.count("nosound") == 0;
-	*windowed = vm.count("windowed") > 0 && vm.count("fullscreen") == 0;
-	if (vm.count("compileonly"))
-		*windowed = *compile = true;
+	if (vm.count("windowed") || vm.count("fullscreen") || vm.count("compileonly") )
+	{
+		*windowed = vm.count("windowed") && vm.count("fullscreen") == 0;
+		if (vm.count("compileonly"))
+			*windowed = *compile = true;
+	}
 
 	if (vm.count("game-options"))
 	{
 		std::vector<std::string> gameOpt(vm["game-options"].as< std::vector<std::string> >());
-		// std::copy(gameOpt.begin(), gameOpt.end(), std::ostream_iterator<std::string>(std::cout, "\n"));
 		for (std::vector<std::string>::const_iterator iopt = gameOpt.begin(); iopt != gameOpt.end(); ++iopt)
 		{
 			const size_t pos = iopt->find('=');
@@ -281,7 +284,6 @@ void parse_commandline(int argc, char *argv[], int *windowed, bool *compile, boo
 				GameOption *opt = GameOptionManager::getInstance()->getOptionByName(key.c_str());
 				if (opt != NULL)
 				{
-					std::cout << "key=" << key << ", value=" << value << std::endl;
 					Logger::getInstance()->debug("Option value given at command line.");
 					Logger::getInstance()->debug(key.c_str());
 					Logger::getInstance()->debug(value.c_str());
@@ -527,18 +529,36 @@ try {
 	Logger::createInstanceForLogfile(path.c_str());
 
 	setsighandler();
+
+	int windowedMode = -1;
+	bool compileOnly = false;
+	bool exit = false;
+	bool soundCmdOn = true;
+	std::string gamedataPath;
+	parse_commandline(argc, argv, &windowedMode, &compileOnly, &exit, &soundCmdOn, gamedataPath);
+	if (exit)
+		return 0;
+
 	{
 		// change working dir to the directory where the binary is located in
 #ifndef WIN32
-		std::string path = get_path(argv[0]);
-		if (path != "" && path != "./") {
-			char wd[256];
-			if (getcwd(wd, 256) == wd) {
-				std::string cwd = wd + std::string("/") + path;
-				chdir(cwd.c_str());
-			} else {
-				fprintf(stderr, "Couldn't get current working directory.\n");
-				return -1;
+		if (!gamedataPath.empty())
+		{
+			if (chdir(gamedataPath.c_str()))
+				std::cerr << "Couldn't change directory to " << gamedataPath << std::endl;
+		}
+		else
+		{
+			std::string path = get_path(argv[0]);
+			if (path != "" && path != "./") {
+				char wd[256];
+				if (getcwd(wd, 256) == wd) {
+					std::string cwd = wd + std::string("/") + path;
+					chdir(cwd.c_str());
+				} else {
+					fprintf(stderr, "Couldn't get current working directory.\n");
+					return -1;
+				}
 			}
 		}
 #endif
@@ -716,10 +736,11 @@ try {
 	editor::EditorParser main_config;
 	filesystem::InputStream configFile = filesystem::FilePackageManager::getInstance().getFile("Config/main.txt");
 	configFile >> main_config;
-
+	
 	GameOptionManager::getInstance()->load();
 	atexit(&GameConfigs::cleanInstance);
 	atexit(&GameOptionManager::cleanInstance);
+
 	/*
 	if (checksumfailure)
 	{
@@ -740,22 +761,12 @@ try {
 	}
 	*/
 
-
-	int windowedMode = -1;
-	bool compileOnly = false;
-	bool exit = false;
-	bool soundCmdOn = true;
-
 	if (windowedMode == -1) {
-		if (SimpleOptions::getBool(DH_OPT_B_WINDOWED)) windowedMode = true;
-		else windowedMode = false;
+		windowedMode = SimpleOptions::getBool(DH_OPT_B_WINDOWED);
 	} else {
 		SimpleOptions::setBool(DH_OPT_B_WINDOWED, windowedMode);
 		GameOptionManager::getInstance()->save();
 	}
-
-	parse_commandline(argc, argv, &windowedMode, &compileOnly, &exit, &soundCmdOn);
-	if (exit) return 0;
 
 	//if (!windowedMode)
 	//{
@@ -906,7 +917,7 @@ try {
 		Logger::getInstance()->error(error.c_str());
 
 #ifdef LINUX
-        sysFatalError("Renderer initialization failure.\nSee the log for details.");
+		sysFatalError("Renderer initialization failure.\nSee the log for details.");
 #endif  // LINUX
 		// Linux version sometimes blows up here if initialization failed
 		delete s3d;
@@ -972,7 +983,7 @@ try {
 		IStorm3D_Material *m = s3d->CreateNewMaterial("Load screen");
 		m->SetBaseTexture(t);
 
-        Storm3D_SurfaceInfo surfinfo = s3d->GetScreenSize();
+		Storm3D_SurfaceInfo surfinfo = s3d->GetScreenSize();
 	
 		disposable_scene->Render2D_Picture(m, Vector2D(0,0), Vector2D((float)surfinfo.width-1,(float)surfinfo.height-1));
 		disposable_scene->RenderScene();
