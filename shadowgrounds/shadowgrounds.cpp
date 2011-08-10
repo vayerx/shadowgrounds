@@ -110,12 +110,13 @@
 
 #include <boost/program_options.hpp>
 #include <iostream>
+#include <cstdlib>
 
 using namespace game;
 using namespace ui;
 using namespace sfx;
 using namespace frozenbyte;
-
+namespace opt = boost::program_options;
 
 
 // TEMP!!!
@@ -229,7 +230,7 @@ static void print_version()
   printf("Shadowgrounds for Linux version 1.5.0\n");
 }
 
-void parse_commandline(int argc, char *argv[], int *windowed, bool *compile, bool *exit, bool *sound, std::string& data)
+void parse_commandline(int argc, char *argv[], opt::variables_map &vm)
 {
 	using namespace boost::program_options;
 	options_description visible;
@@ -239,7 +240,7 @@ void parse_commandline(int argc, char *argv[], int *windowed, bool *compile, boo
 		("windowed,w",  "Run the game windowed")
 		("fullscreen,f","Run the game fullscreen")
 		("nosound,s",   "Do not access the sound card")
-		("data,d",      value(&data)->default_value(GAMEDATA_PATH)->required(), "Path to game data directory")
+		("data,d",      value<std::string>()->default_value(GAMEDATA_PATH)->required(), "Path to game-data directory")
 	;
 	options_description hidden;
 	hidden.add_options()
@@ -249,27 +250,18 @@ void parse_commandline(int argc, char *argv[], int *windowed, bool *compile, boo
 	pdesc.add("game-options", -1);
 	options_description desc;
 	desc.add(visible).add(hidden);
-	variables_map vm;
 	store(command_line_parser(argc, argv).options(desc).positional(pdesc).run(), vm);
 	notify(vm);
 
 	if (vm.count("help"))
 	{
 		std::cout << visible;
-		*exit = true;
+		exit(EXIT_SUCCESS);
 	}
 	if (vm.count("version"))
 	{
 		print_version();
-		*exit = true;
-	}
-
-	*sound = vm.count("nosound") == 0;
-	if (vm.count("windowed") || vm.count("fullscreen") || vm.count("compileonly") )
-	{
-		*windowed = vm.count("windowed") && vm.count("fullscreen") == 0;
-		if (vm.count("compileonly"))
-			*windowed = *compile = true;
+		exit(EXIT_SUCCESS);
 	}
 
 	if (vm.count("game-options"))
@@ -530,18 +522,22 @@ try {
 
 	setsighandler();
 
-	int windowedMode = -1;
-	bool compileOnly = false;
-	bool exit = false;
-	bool soundCmdOn = true;
-	std::string gamedataPath;
-	parse_commandline(argc, argv, &windowedMode, &compileOnly, &exit, &soundCmdOn, gamedataPath);
-	if (exit)
-		return 0;
+	opt::variables_map vm;
+	parse_commandline(argc, argv, vm);
+
+	const bool soundCmdOn = (vm.count("nosound") == 0);
+	int windowedMode = -1, compileOnly = false;
+	if (vm.count("windowed") || vm.count("fullscreen") || vm.count("compileonly") )
+	{
+		windowedMode = vm.count("windowed") && vm.count("fullscreen") == 0;
+		if (vm.count("compileonly"))
+			windowedMode = compileOnly = true;
+	}
 
 	{
 		// change working dir to the directory where the binary is located in
 #ifndef WIN32
+		const std::string &gamedataPath = vm["data"].as<std::string>();
 		if (!gamedataPath.empty())
 		{
 			if (chdir(gamedataPath.c_str()))
@@ -557,7 +553,7 @@ try {
 					chdir(cwd.c_str());
 				} else {
 					fprintf(stderr, "Couldn't get current working directory.\n");
-					return -1;
+					return EXIT_FAILURE;
 				}
 			}
 		}
@@ -630,13 +626,16 @@ try {
 	// bool show_terrain_mem_info = false;
 
 	if (SDL_Init(SDL_INIT_VIDEO) < 0 || !SDL_GetVideoInfo())
-		return 0;   // FIXME: give error msg
+	{
+		std::cerr << "SDL initialization failed" << std::endl;
+		return EXIT_FAILURE;
+	}
 	atexit(&SDL_Quit);
 
 	if (Sound_Init() == 0)
 	{
 		igiosErrorMessage("SDL_Sound initialization failure.");
-		return 0;
+		return EXIT_FAILURE;
 	}
 
 	Timer::init();
@@ -747,7 +746,7 @@ try {
 		Logger::getInstance()->error("Checksum mismatch.");
 		MessageBox(0,"Checksum mismatch or required data missing.\nMake sure you have all the application files properly installed.\n\nContact Frozenbyte for more info.","Error",MB_OK); 
 		assert(!"Checksum mismatch");
-		return 0;
+		return EXIT_FAILURE;
 	}
 	*/
 	/*
@@ -757,7 +756,7 @@ try {
 		MessageBox(0,"Version mismatch or required data missing.\nMake sure you have all the application files properly installed.\n\nSee game website for more info.","Error",MB_OK); 
 		assert(!"Version data incorrect");
 		abort();
-		return 0;
+		return EXIT_FAILURE;
 	}
 	*/
 
@@ -923,7 +922,7 @@ try {
 		delete s3d;
 		s3d = 0;
 
-		return 0;
+		return EXIT_FAILURE;
 	}
 
 	OptionApplier::applyGammaOptions(s3d);
@@ -1690,6 +1689,6 @@ try {
 		fprintf(stderr, "Caught unknown exception.\n");
 	}
 
-	return 0;
+	return EXIT_SUCCESS;
 }
  
