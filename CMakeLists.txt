@@ -20,6 +20,8 @@ FIND_PACKAGE( GTK2 REQUIRED )
 FIND_PACKAGE( ZLIB REQUIRED )
 FIND_PACKAGE( OpenAL REQUIRED )
 
+OPTION( ENABLE_PHYSX "Enable NVIDIA PhysX SDK" OFF )
+
 SET( GLOBAL_INCLUDE_DIRS
     ${Boost_INCLUDE_DIRS}
     ${SDL_INCLUDE_DIR}
@@ -50,6 +52,19 @@ INCLUDE_DIRECTORIES( BEFORE SYSTEM
     storm/include
     storm/keyb3
 )
+
+# List of all libraries
+SET ( SG_MODULES container convert editor filesystem game ogui sound system ui util storm particlesystem )
+
+
+OPTION( ENABLE_PHYSX "Enable NVIDIA PhysX SDK" OFF )
+IF ( ENABLE_PHYSX )
+    SET ( SG_MODULES physics ${SG_MODULES} )
+    ADD_DEFINITIONS( -DPHYSICS_PHYSX )
+ELSE ( ENABLE_PHYSX )
+    ADD_DEFINITIONS( -DPHYSICS_NONE )
+ENDIF ( ENABLE_PHYSX )
+
 
 # Build source list from module name and path prefix
 MACRO( CompileSrcList module prefix )
@@ -105,8 +120,11 @@ CompileSrcList( game game
 CompileSrcList( game game/physics
     AbstractPhysicsObject.cpp BoxPhysicsObject.cpp CapsulePhysicsObject.cpp ConvexPhysicsObject.cpp gamephysics.cpp
     PhysicsContactDamageManager.cpp PhysicsContactEffectManager.cpp PhysicsContactSoundManager.cpp
-    PhysicsContactUtils.cpp RackPhysicsObject.cpp StaticPhysicsObject.cpp physics_none.cpp
+    PhysicsContactUtils.cpp RackPhysicsObject.cpp StaticPhysicsObject.cpp 
 )
+IF ( ENABLE_PHYSX )
+    CompileSrcList( game game/physics physics_none.cpp )
+ENDIF ( ENABLE_PHYSX )
 
 CompileSrcList( game game/scripting
     AnimationScripting.cpp CameraScripting.cpp CinematicScripting.cpp DecorScripting.cpp DevScripting.cpp
@@ -127,12 +145,22 @@ CompileSrcList( particlesystem particle_editor2
     particleforces.cpp particlesystem.cpp particlesystemmanager.cpp pointarrayparticlesystem.cpp
     sprayparticlesystem.cpp vectortrack.cpp
 )
+IF ( ENABLE_PHYSX )
+    CompileSrcList( particlesystem particle_editor2 ParticlePhysics.cpp )
+ENDIF ( ENABLE_PHYSX )
+
 
 CompileSrcList( ogui ogui
     Ogui.cpp OguiButton.cpp OguiButtonEvent.cpp OguiButtonStyle.cpp OguiCheckBox.cpp OguiEffectEvent.cpp
     OguiException.cpp OguiFormattedCommandImg.cpp OguiFormattedCommandImpl.cpp OguiFormattedText.cpp
     OguiLocaleWrapper.cpp OguiSelectList.cpp OguiSelectListEvent.cpp OguiSelectListStyle.cpp OguiSlider.cpp
     OguiStormDriver.cpp OguiTextLabel.cpp OguiTypeEffectListener.cpp OguiWindow.cpp orvgui2.cpp OguiAligner.cpp
+)
+
+CompileSrcList( physics physics
+    actor_base.cpp box_actor.cpp capsule_actor.cpp car_actor.cpp convex_actor.cpp cooker.cpp file_stream.cpp
+    fluid.cpp heightmap_actor.cpp joint_base.cpp physics_lib.cpp rack_actor.cpp spherical_joint.cpp
+    static_mesh_actor.cpp visualizer.cpp
 )
 
 CompileSrcList( sound sound
@@ -243,26 +271,23 @@ ELSE( CMAKE_COMPILER_IS_GNUCXX )
 ENDIF( CMAKE_COMPILER_IS_GNUCXX )
 
 # Set default build options
-MACRO( SetShadowgroundsProperties name flags )
+MACRO( SetShadowgroundsProperties name flags defines )
     SET_TARGET_PROPERTIES( ${name} PROPERTIES
-        COMPILE_FLAGS               "-DPHYSICS_NONE ${flags} ${SG_WARNINGS}"
-        COMPILE_DEFINITIONS_DEBUG   "_DEBUG=1"
-        COMPILE_DEFINITIONS_RELEASE "NDEBUG=1"
+        COMPILE_FLAGS               "${SG_WARNINGS} ${flags}"
+        COMPILE_DEFINITIONS_DEBUG   "_DEBUG=1;${defines}"
+        COMPILE_DEFINITIONS_RELEASE "NDEBUG=1;${defines}"
     )
 ENDMACRO( SetShadowgroundsProperties )
 
 # Register executable
-MACRO( AddShadowgroundsBinary name flags )
+MACRO( AddShadowgroundsBinary name defines )
     ADD_EXECUTABLE( ${name} ${ARGN} )
     INCLUDE_DIRECTORIES( ${name} )
-    SetShadowgroundsProperties( ${name} "-include ${PROJECT_SOURCE_DIR}/${name}/configuration.h ${flags}" )
+    SetShadowgroundsProperties( ${name} "-include ${PROJECT_SOURCE_DIR}/${name}/configuration.h" "${defines}")
 
-    FOREACH( mod    container convert editor filesystem game ogui sound system ui util storm particlesystem )
-        # IF ( NOT ${mod}_sources )
-        #     AUX_SOURCE_DIRECTORY( ${mod} ${mod}_sources )
-        # ENDIF ( NOT ${mod}_sources )
+    FOREACH( mod ${SG_MODULES})
         ADD_LIBRARY( ${name}_${mod} STATIC ${${mod}_sources} )
-        SetShadowgroundsProperties( ${name}_${mod} "-include ${PROJECT_SOURCE_DIR}/${name}/configuration.h ${flags}" )
+        SetShadowgroundsProperties( ${name}_${mod} "-include ${PROJECT_SOURCE_DIR}/${name}/configuration.h" "${defines}")
         TARGET_LINK_LIBRARIES( ${name} ${name}_${mod} )
     ENDFOREACH( mod )
 
@@ -279,12 +304,12 @@ MACRO( AddShadowgroundsBinary name flags )
     TARGET_LINK_LIBRARIES( ${name} ${GLOBAL_LIBRARIES} )
 ENDMACRO( AddShadowgroundsBinary )
 
-AddShadowgroundsBinary( shadowgrounds "-DPROJECT_SHADOWGROUNDS"
+AddShadowgroundsBinary( shadowgrounds "PROJECT_SHADOWGROUNDS"
     shadowgrounds/shadowgrounds.cpp
     shadowgrounds/version.cpp
 )
 
-AddShadowgroundsBinary( survivor "-DPROJECT_SURVIVOR"
+AddShadowgroundsBinary( survivor "PROJECT_SURVIVOR"
     survivor/survivor.cpp
     survivor/ui_credits_text.cpp
     survivor/version.cpp
