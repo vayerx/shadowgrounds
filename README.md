@@ -30,7 +30,7 @@ Only 64-bit Linux version is being developed/supported by now, however Shadowgro
 
 External dependencies:
 
-* Boost 1.37
+* Boost 1.42
 * SDL (core, sound, image, ttf)
 * OpenGL
 * OpenAL

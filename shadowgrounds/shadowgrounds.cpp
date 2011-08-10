@@ -108,6 +108,9 @@
 
 #include "../util/crc32.h"
 
+#include <boost/program_options.hpp>
+#include <iostream>
+
 using namespace game;
 using namespace ui;
 using namespace sfx;
@@ -221,110 +224,87 @@ namespace {
 
 /* --------------------------------------------------------- */
 
-static void print_help()
-{
-  printf("Usage: shadowgrounds [options]\n"												\
-			"\t[-h | --help]         Display this help message\n"	\
-			"\t[-v | --version]      Display the game version\n"		\
-			"\t[-w | --windowed]     Run the game windowed\n"			\
-			"\t[-f | --fullscreen]   Run the game fullscreen\n"			\
-			"\t[-s | --nosound]      Do not access the sound card\n");//
-			//"\t[-g | --withgl] [x]   Use [x] instead of /usr/lib/libGL.so.1 for OpenGL\n");
-}
-
 static void print_version()
 {
   printf("Shadowgrounds for Linux version 1.5.0\n");
 }
 
-void parse_commandline(const char *cmdline, int *windowed, bool *compile, bool *exit, bool *sound)
+void parse_commandline(int argc, char *argv[], int *windowed, bool *compile, bool *exit, bool *sound)
 {
-	if (cmdline != NULL)
+	using namespace boost::program_options;
+	options_description visible;
+	visible.add_options()
+		("help,h",      "Display this help message")
+		("version,v",   "Display the game version")
+		("windowed,w",  "Run the game windowed")
+		("fullscreen,f","Run the game fullscreen")
+		("nosound,s",   "Do not access the sound card")
+	;
+	options_description hidden;
+	hidden.add_options()
+		("game-options", value< std::vector<std::string> >(), "Additional game options")
+	;
+	positional_options_description pdesc;
+	pdesc.add("game-options", -1);
+	options_description desc;
+	desc.add(visible).add(hidden);
+	variables_map vm;
+	store(command_line_parser(argc, argv).options(desc).positional(pdesc).run(), vm);
+	notify(vm);
+
+	if (vm.count("help"))
 	{
-		// TODO: proper command line parsing 
-		// (parse -option=value pairs?)
-		int cmdlineLen = strlen(cmdline);
-		char *parseBuf = new char[cmdlineLen + 1];
-		strcpy(parseBuf, cmdline);
-		int i;
+		std::cout << visible;
+		*exit = true;
+	}
+	if (vm.count("version"))
+	{
+		print_version();
+		*exit = true;
+	}
 
-		for (i = 0; i < cmdlineLen; i++)
-		{
-			if (parseBuf[i] == '=')
-				parseBuf[i] = '\0';
-			if (parseBuf[i] == ' ')
-				parseBuf[i] = '\0';
-		}
+	*sound = vm.count("nosound") == 0;
+	*windowed = vm.count("windowed") > 0 && vm.count("fullscreen") == 0;
+	if (vm.count("compileonly"))
+		*windowed = *compile = true;
 
-		for (i = 0; i < cmdlineLen; )
+	if (vm.count("game-options"))
+	{
+		std::vector<std::string> gameOpt(vm["game-options"].as< std::vector<std::string> >());
+		// std::copy(gameOpt.begin(), gameOpt.end(), std::ostream_iterator<std::string>(std::cout, "\n"));
+		for (std::vector<std::string>::const_iterator iopt = gameOpt.begin(); iopt != gameOpt.end(); ++iopt)
 		{
-			if (parseBuf[i++] == '-')
+			const size_t pos = iopt->find('=');
+			if (pos && pos != std::string::npos && iopt->find('=', pos + 1) == std::string::npos)
 			{
-				if (strcmp(&parseBuf[i], "nosound") == 0 || strcmp(&parseBuf[i], "s") == 0) {
-				  Logger::getInstance()->info("No sound command line parameter given.");
-				  *sound = false;
-				}
-				else if (strcmp(&parseBuf[i], "help") == 0 || strcmp(&parseBuf[i], "h") == 0) {
-				  print_help();
-				  *exit = true;
-				}
-				else if (strcmp(&parseBuf[i], "version") == 0 || strcmp(&parseBuf[i], "v") == 0) {
-				  print_version();
-				  *exit = true;
-				}
-				else if (strcmp(&parseBuf[i], "windowed") == 0 || strcmp(&parseBuf[i], "w") == 0)
-				{
-					Logger::getInstance()->info("Windowed mode command line parameter given.");
-					*windowed = true;
-				}
-				else if (strcmp(&parseBuf[i], "fullscreen") == 0 || strcmp(&parseBuf[i], "f") == 0)
-				{
-					Logger::getInstance()->info("Fullscreen mode command line parameter given.");
-					*windowed = false;
-				}
-				else if (strcmp(&parseBuf[i], "compileonly") == 0)
-				{
-					Logger::getInstance()->info("Compileonly command line parameter given.");
-					*windowed = true;
-					*compile = true;
-				}
-				GameOption *opt = GameOptionManager::getInstance()->getOptionByName(&parseBuf[i]);
+				const std::string &key = iopt->substr(0, pos), &value = iopt->substr(pos + 1);
+				GameOption *opt = GameOptionManager::getInstance()->getOptionByName(key.c_str());
 				if (opt != NULL)
 				{
-					int j = i + strlen(&parseBuf[i]);
-					j += 1;
-					if (j > cmdlineLen)
-						j = cmdlineLen;
-
+					std::cout << "key=" << key << ", value=" << value << std::endl;
 					Logger::getInstance()->debug("Option value given at command line.");
-					Logger::getInstance()->debug(&parseBuf[i]);
-					Logger::getInstance()->debug(&parseBuf[j]);
+					Logger::getInstance()->debug(key.c_str());
+					Logger::getInstance()->debug(value.c_str());
 
 					if (opt->getVariableType() == IScriptVariable::VARTYPE_STRING)
 					{
-						opt->setStringValue(&parseBuf[j]);
+						opt->setStringValue(value.c_str());
 					}
 					else if (opt->getVariableType() == IScriptVariable::VARTYPE_INT)
 					{
-						opt->setIntValue(str2int(&parseBuf[j]));
+						opt->setIntValue(str2int(value.c_str()));
 					}
 					else if (opt->getVariableType() == IScriptVariable::VARTYPE_FLOAT)
 					{
-						opt->setFloatValue((float)atof(&parseBuf[j]));
+						opt->setFloatValue((float)atof(value.c_str()));
 					}
 					else if (opt->getVariableType() == IScriptVariable::VARTYPE_BOOLEAN)
 					{
-						if (parseBuf[j] == '\0'
-							|| str2int(&parseBuf[j]) != 0)
-							opt->setBooleanValue(true);
-						else
-							opt->setBooleanValue(false);
+						opt->setBooleanValue(value.empty() || str2int(value.c_str()) != 0);
 					}
 				}
 			}
 		}
-
-		delete [] parseBuf;
 	}
 }
 
@@ -766,11 +746,6 @@ try {
 	bool exit = false;
 	bool soundCmdOn = true;
 
-	std::string cmdline;
-	for (int i = 1; i < argc; i++) {
-		cmdline.append(argv[i]);
-		if (i != argc) cmdline.append(" ");
-	}
 	if (windowedMode == -1) {
 		if (SimpleOptions::getBool(DH_OPT_B_WINDOWED)) windowedMode = true;
 		else windowedMode = false;
@@ -779,7 +754,7 @@ try {
 		GameOptionManager::getInstance()->save();
 	}
 
-	parse_commandline(cmdline.c_str(), &windowedMode, &compileOnly, &exit, &soundCmdOn);
+	parse_commandline(argc, argv, &windowedMode, &compileOnly, &exit, &soundCmdOn);
 	if (exit) return 0;
 
 	//if (!windowedMode)
