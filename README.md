@@ -17,10 +17,10 @@ Notes
 
 Shadowgrounds specific code is under /shadowgrounds, and Shadowgrounds Survivor under /survivor.<br/>
 Shadowgrounds does not use PhysX, but Shadowgrounds Survivor does.<br/>
-PhysX SDK can be obtained from NVIDIA - see http://developer.nvidia.com/physx/ or
-http://supportcenteronline.com/ics/support/default.asp?deptID=1949<br/>
-More PhysX help: http://physxinfo.com/news/901/how-to-register-developer-account-to-get-physx-sdk-access/
-and http://knol.google.com/k/introduction-to-the-nvidia-physx-api<br/>
+PhysX SDK can be obtained from NVIDIA [here](http://developer.nvidia.com/physx/) or
+[here](http://supportcenteronline.com/ics/support/default.asp?deptID=1949)<br/>
+More PhysX help: [How to register developer account](http://physxinfo.com/news/901/how-to-register-developer-account-to-get-physx-sdk-access/)
+and [NVIDIA PhysX API](http://knol.google.com/k/introduction-to-the-nvidia-physx-api).<br/>
 
 To get the game assets, you need a copy of each game.
 
@@ -49,10 +49,8 @@ Checkouting and building is simple (Linux):
     cmake -DCMAKE_BUILD_TYPE=Release ..
     make
 
-Make supports two targets: `shadowgrounds` and `survivor` (both are build by default).
-
-Location of data-files (`data*.fbz`, `data/`, `survivor/`) can be specified by {SHADOWGROUNDS,SURVIVOR}\_DATA\_PATH/CMAKE\_DATA\_PATH variables in cmake configuration or by `--data` command-line argument.
-
+Make supports two targets: `shadowgrounds` and `survivor` (both are build by default).<br/>
+Location of data-files (`data*.fbz`, `data/`, `survivor/`) can be specified by {SHADOWGROUNDS,SURVIVOR}\_DATA\_PATH/CMAKE\_DATA\_PATH variables in cmake configuration or by `--data` command-line argument.<br/>
 Shadowgroun live-ebuilds for Gentoo Linux are available at [vayerx overlay](http://github.com/vayerx/vayerx-gentoo/) as `games-action/shadowgrounds`.
 
 
