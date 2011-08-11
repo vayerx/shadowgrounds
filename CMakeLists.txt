@@ -1,7 +1,7 @@
 # TODO split CMakeLists.txt
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-PROJECT(shadowgrounds)
+CMAKE_MINIMUM_REQUIRED( VERSION 2.8 )
+PROJECT( shadowgrounds )
 
 SET( CMAKE_VERBOSE_MAKEFILE  OFF )
 
@@ -53,6 +53,12 @@ INCLUDE_DIRECTORIES( BEFORE SYSTEM
     storm/keyb3
 )
 
+
+IF( NOT CMAKE_BUILD_TYPE )
+    SET( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: Debug Release Gentoo." FORCE )
+ENDIF( NOT CMAKE_BUILD_TYPE )
+
+
 # List of all libraries
 SET ( SG_MODULES container convert editor filesystem game ogui sound system ui util storm particlesystem )
 
@@ -66,23 +72,22 @@ ELSE ( ENABLE_PHYSX )
 ENDIF ( ENABLE_PHYSX )
 
 
-IF( NOT SHADOWGROUNDS_DATA_PATH )
+IF ( NOT CMAKE_DATA_PATH )
     IF ( UNIX )
-        SET (SHADOWGROUNDS_DATA_PATH /usr/share/games/shadowgrounds/ )
-    ELSE ( UNIX )
-        MESSAGE( "WARNING: SHADOWGROUNDS_DATA_PATH is undefined" )
+        SET( CMAKE_DATA_PATH "/usr/share/games" )
+    ELSEIF ( NOT SHADOWGROUNDS_DATA_PATH OR NOT SURVIVOR_DATA_PATH )
+        MESSAGE( FATAL_ERROR "Neither {SHADOWGROUNDS,SURVIVOR}_DATA_PATH nor CMAKE_DATA_PATH is defined" )
     ENDIF ( UNIX )
-    SET( SHADOWGROUNDS_DATA_PATH ${SHADOWGROUNDS_DATA_PATH} CACHE PATH "Path to Shadowgrounds data files" FORCE )
+ENDIF ( NOT CMAKE_DATA_PATH)
+
+IF( NOT SHADOWGROUNDS_DATA_PATH )
+    SET( SHADOWGROUNDS_DATA_PATH "${CMAKE_DATA_PATH}/shadowgrounds" CACHE PATH "Path to Shadowgrounds data files" FORCE )
 ENDIF( NOT SHADOWGROUNDS_DATA_PATH )
 
 IF( NOT SURVIVOR_DATA_PATH )
-    IF ( UNIX )
-        SET (SURVIVOR_DATA_PATH /usr/share/games/survivor/ )
-    ELSE ( UNIX )
-        MESSAGE( "WARNING: SURVIVOR_DATA_PATH is undefined" )
-    ENDIF ( UNIX )
-    SET( SURVIVOR_DATA_PATH ${SURVIVOR_DATA_PATH} CACHE PATH "Path to Shadowgrounds Survivor data files" FORCE )
+    SET( SURVIVOR_DATA_PATH "${CMAKE_DATA_PATH}/survivor" CACHE PATH "Path to Shadowgrounds Survivor data files" FORCE )
 ENDIF( NOT SURVIVOR_DATA_PATH )
+
 
 # Build source list from module name and path prefix
 MACRO( CompileSrcList module prefix )
@@ -282,8 +287,9 @@ IF( CMAKE_COMPILER_IS_GNUCXX )
 
                                     -Wno-unused-parameter -Wno-unused-variable  # TODO
     )
-    SET( CMAKE_CXX_FLAGS_DEBUG      "-O0 -g" )     # ( waiting for COMPILE_OPTIONS_<CONFIG> )
-    SET( CMAKE_CXX_FLAGS_RELEASE    "-O2 -fno-strict-aliasing" )        # ( waiting for COMPILE_OPTIONS_<CONFIG> )
+    SET( CMAKE_CXX_FLAGS_DEBUG      "-O0 -g" )                  # ( waiting for COMPILE_OPTIONS_<CONFIG> )
+    SET( CMAKE_CXX_FLAGS_RELEASE    "-O2" )                     # ( waiting for COMPILE_OPTIONS_<CONFIG> )
+    SET( CMAKE_CXX_FLAGS            "-fno-strict-aliasing" )
 ELSE( CMAKE_COMPILER_IS_GNUCXX )
     MESSAGE( "WARNING: using default options for non-GCC compiler" )
 ENDIF( CMAKE_COMPILER_IS_GNUCXX )
@@ -292,8 +298,10 @@ ENDIF( CMAKE_COMPILER_IS_GNUCXX )
 MACRO( SetShadowgroundsProperties name flags defines )
     SET_TARGET_PROPERTIES( ${name} PROPERTIES
         COMPILE_FLAGS               "${SG_WARNINGS} ${flags}"
-        COMPILE_DEFINITIONS_DEBUG   "_DEBUG=1;${defines}"
-        COMPILE_DEFINITIONS_RELEASE "NDEBUG=1;${defines}"
+        COMPILE_DEFINITIONS         "${defines}"
+        COMPILE_DEFINITIONS_DEBUG   "_DEBUG=1"
+        COMPILE_DEFINITIONS_RELEASE "NDEBUG=1"
+        COMPILE_DEFINITIONS_GENTOO  "NDEBUG=1"
     )
 ENDMACRO( SetShadowgroundsProperties )
 
@@ -301,11 +309,11 @@ ENDMACRO( SetShadowgroundsProperties )
 MACRO( AddShadowgroundsBinary name defines )
     ADD_EXECUTABLE( ${name} ${ARGN} )
     INCLUDE_DIRECTORIES( ${name} )
-    SetShadowgroundsProperties( ${name} "-include ${PROJECT_SOURCE_DIR}/${name}/configuration.h" "${defines}")
+    SetShadowgroundsProperties( ${name} "-include ${PROJECT_SOURCE_DIR}/${name}/configuration.h" "${defines}" )
 
     FOREACH( mod ${SG_MODULES})
         ADD_LIBRARY( ${name}_${mod} STATIC ${${mod}_sources} )
-        SetShadowgroundsProperties( ${name}_${mod} "-include ${PROJECT_SOURCE_DIR}/${name}/configuration.h" "${defines}")
+        SetShadowgroundsProperties( ${name}_${mod} "-include ${PROJECT_SOURCE_DIR}/${name}/configuration.h" "${defines}" )
         TARGET_LINK_LIBRARIES( ${name} ${name}_${mod} )
     ENDFOREACH( mod )
 
@@ -327,7 +335,7 @@ AddShadowgroundsBinary( shadowgrounds "PROJECT_SHADOWGROUNDS=1;GAMEDATA_PATH=\"$
     shadowgrounds/version.cpp
 )
 
-AddShadowgroundsBinary( survivor "PROJECT_SURVIVOR=1;GAMEDATA_PATH=${SURVIVOR_DATA_PATH}"
+AddShadowgroundsBinary( survivor "PROJECT_SURVIVOR=1;GAMEDATA_PATH=\"${SURVIVOR_DATA_PATH}\""
     survivor/survivor.cpp
     survivor/ui_credits_text.cpp
     survivor/version.cpp
