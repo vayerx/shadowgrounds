@@ -101,7 +101,7 @@ Somewhere in future, huge tasks:
 * Game data under Creative Commons license.
 * Blackjack and hookers.
 
-**As long as <strike>I hate tabs</strike> there is already mix of tabs and spaces, all source code will be reformatted with `uncrustify`.** If you are going to contribute, please contact me before forking.
+**As long as <strike>I hate tabs and</strike> there is already mix of tabs and spaces, all source code will be reformatted with `uncrustify`.** If you are going to contribute, please contact me before forking.
 
 
 Special Notes
