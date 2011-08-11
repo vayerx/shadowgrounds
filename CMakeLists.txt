@@ -2,8 +2,15 @@
 
 CMAKE_MINIMUM_REQUIRED( VERSION 2.8 )
 PROJECT( shadowgrounds )
+SET( CPACK_PACKAGE_VERSION_MAJOR    1 )
+SET( CPACK_PACKAGE_VERSION_MINOR    0 )
+SET( CPACK_PACKAGE_VERSION_PATCH    1 )
 
 SET( CMAKE_VERBOSE_MAKEFILE  OFF )
+
+# ------------------------------------------------
+#  Libraries
+# ------------------------------------------------
 
 SET( Boost_USE_STATIC_LIBS   OFF )
 SET( Boost_USE_MULTITHREADED ON )
@@ -19,8 +26,6 @@ FIND_PACKAGE( OpenGL REQUIRED )
 FIND_PACKAGE( GTK2 REQUIRED )
 FIND_PACKAGE( ZLIB REQUIRED )
 FIND_PACKAGE( OpenAL REQUIRED )
-
-OPTION( ENABLE_PHYSX "Enable NVIDIA PhysX SDK" OFF )
 
 SET( GLOBAL_INCLUDE_DIRS
     ${Boost_INCLUDE_DIRS}
@@ -53,15 +58,19 @@ INCLUDE_DIRECTORIES( BEFORE SYSTEM
     storm/keyb3
 )
 
+# List of all libraries
+SET ( SG_MODULES container convert editor filesystem game ogui sound system ui util storm particlesystem )
+
+
 
 IF( NOT CMAKE_BUILD_TYPE )
     SET( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: Debug Release Gentoo." FORCE )
 ENDIF( NOT CMAKE_BUILD_TYPE )
 
 
-# List of all libraries
-SET ( SG_MODULES container convert editor filesystem game ogui sound system ui util storm particlesystem )
-
+# ------------------------------------------------
+#  Options
+# ------------------------------------------------
 
 OPTION( ENABLE_PHYSX "Enable NVIDIA PhysX SDK" OFF )
 IF ( ENABLE_PHYSX )
@@ -88,6 +97,10 @@ IF( NOT SURVIVOR_DATA_PATH )
     SET( SURVIVOR_DATA_PATH "${CMAKE_DATA_PATH}/survivor" CACHE PATH "Path to Shadowgrounds Survivor data files" FORCE )
 ENDIF( NOT SURVIVOR_DATA_PATH )
 
+
+# ------------------------------------------------
+#  Source code
+# ------------------------------------------------
 
 # Build source list from module name and path prefix
 MACRO( CompileSrcList module prefix )
@@ -264,6 +277,10 @@ CompileSrcList( util util
     TextFinder.cpp TextureCache.cpp TextureSwitcher.cpp UberCrypt.cpp UnicodeConverter.cpp
 )
 
+# ------------------------------------------------
+#  Build options
+# ------------------------------------------------
+
 # minor macro for strings concatination
 MACRO( CompileList result )
     FOREACH( item ${ARGN} )
@@ -294,6 +311,16 @@ ELSE( CMAKE_COMPILER_IS_GNUCXX )
     MESSAGE( "WARNING: using default options for non-GCC compiler" )
 ENDIF( CMAKE_COMPILER_IS_GNUCXX )
 
+# some files must be compiled unoptimized (gcc bug?)
+IF( CMAKE_COMPILER_IS_GNUCXX )
+SET_SOURCE_FILES_PROPERTIES(
+    storm/storm3dv2/Storm3D_Mesh_CollisionTable.cpp
+    util/LipsyncManager.cpp
+    PROPERTIES  COMPILE_FLAGS   "-O0"
+)
+ENDIF( CMAKE_COMPILER_IS_GNUCXX )
+
+
 # Set default build options
 MACRO( SetShadowgroundsProperties name flags defines )
     SET_TARGET_PROPERTIES( ${name} PROPERTIES
@@ -305,7 +332,11 @@ MACRO( SetShadowgroundsProperties name flags defines )
     )
 ENDMACRO( SetShadowgroundsProperties )
 
-# Register executable
+
+# ------------------------------------------------
+#  Applications
+# ------------------------------------------------
+
 MACRO( AddShadowgroundsBinary name defines )
     ADD_EXECUTABLE( ${name} ${ARGN} )
     INCLUDE_DIRECTORIES( ${name} )
@@ -341,11 +372,35 @@ AddShadowgroundsBinary( survivor "PROJECT_SURVIVOR=1;GAMEDATA_PATH=\"${SURVIVOR_
     survivor/version.cpp
 )
 
-# some files must be compiled unoptimized (gcc bug?)
-IF( CMAKE_COMPILER_IS_GNUCXX )
-    SET_SOURCE_FILES_PROPERTIES(
-        storm/storm3dv2/Storm3D_Mesh_CollisionTable.cpp
-        util/LipsyncManager.cpp
-        PROPERTIES  COMPILE_FLAGS   "-O0"
-    )
-ENDIF( CMAKE_COMPILER_IS_GNUCXX )
+
+# ------------------------------------------------
+#  Installation
+# ------------------------------------------------
+
+FOREACH( game shadowgrounds survivor )
+INSTALL(
+    TARGETS         ${game}
+    COMPONENT       ${game}
+    PERMISSIONS     OWNER_READ OWNER_WRITE OWNER_EXECUTE  GROUP_READ GROUP_EXECUTE
+    DESTINATION     .
+    #CONFIGURATIONS  Release Gentoo
+)
+ENDFOREACH( game )
+
+
+# ------------------------------------------------
+#  Packaging
+# ------------------------------------------------
+
+SET( CPACK_PACKAGE_DESCRIPTION_SUMMARY  "3rd person alien shooter.")
+SET( CPACK_PACKAGE_VERSION              ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR} )
+SET( CPACK_GENERATOR                    "TGZ;STGZ" )
+SET( CPACK_SOURCE_GENERATOR             "TGZ" )
+SET( CPACK_PACKAGE_NAME                 "Shadowgrounds" )
+SET( CPACK_PACKAGE_VENDOR               "Frozenbyte, Alternative Games, vayerx" )
+SET( CPACK_PACKAGE_FILE_NAME            "shadowgrounds-${CPACK_PACKAGE_VERSION}_${CMAKE_SYSTEM_PROCESSOR}" )
+SET( CPACK_SOURCE_PACKAGE_FILE_NAME     "shadowgrounds-${CPACK_PACKAGE_VERSION}-src" )
+SET( CPACK_RESOURCE_FILE_LICENSE        ${PROJECT_SOURCE_DIR}/LICENSE.txt )
+SET( CPACK_INCLUDE_TOPLEVEL_DIRECTORY   0 )
+SET( CPACK_SOURCE_IGNORE_FILES          "/build/;/data/;data.*\\.fbz;/.*\\.kdev.*;/\\.git/;.*~;.*\\.orig.*;/.*\\.log" )
+INCLUDE( CPack )

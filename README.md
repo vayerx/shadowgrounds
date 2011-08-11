@@ -51,7 +51,7 @@ Checkouting and building is simple (Linux):
 
 Make supports two targets: `shadowgrounds` and `survivor` (both are build by default).<br/>
 Location of data-files (`data*.fbz`, `data/`, `survivor/`) can be specified by {SHADOWGROUNDS,SURVIVOR}\_DATA\_PATH/CMAKE\_DATA\_PATH variables in cmake configuration or by `--data` command-line argument.<br/>
-Shadowgroun live-ebuilds for Gentoo Linux are available at [vayerx overlay](http://github.com/vayerx/vayerx-gentoo/) as `games-action/shadowgrounds`.
+Shadowgrounds live-ebuilds for Gentoo Linux are available at [vayerx overlay](http://github.com/vayerx/vayerx-gentoo/) as `games-action/shadowgrounds`.
 
 
 Alternative (original) make-only build:
