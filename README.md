@@ -1,13 +1,15 @@
 SHADOWGROUNDS
 =============
 
-SHADOWGROUNDS is an epic action experience combining modern technology with addictive playability.
+**Shadowgrounds** is an epic fight between human and aliens.
 
 * Devastating weapons and extensive weapon upgrades
 * Realistic lighting effects
 * 11 exciting missions taking place on various battlegrounds
 * Thrilling sound effects and acclaimed soundtrack
 * Old-school attitude, modern graphics (including the awesome flamethrower!)
+
+**Shadowgrounds Survivor** is a story of three survivors who join forces with the last remaining human resistance in the heated battle against the ongoing alien onslaught.
 
 
 Notes
@@ -47,9 +49,11 @@ Checkouting and building is simple (Linux):
     cmake -DCMAKE_BUILD_TYPE=Release ..
     make
 
-Data-files (`data1.fbz`, `data/` for Shadowgrounds) should be located at the current working directory.
+Make supports two targets: `shadowgrounds` and `survivor` (both are build by default).
+Location of data-files (`data*.fbz`, `data/`, `survivor/`) can be specified by {SHADOWGROUNDS,SURVIVOR}\_DATA\_PATH/CMAKE\_DATA\_PATH variables in cmake configuration or by `--data` command-line argument.
+Shadowgroun live-ebuilds for Gentoo Linux are available at [vayerx overlay](http://github.com/vayerx/vayerx-gentoo/) as `games-action/shadowgrounds`.
 
-Alternative (original) build:
+Alternative (original) make-only build:
 
     # need to create libunzip.a
     # once only
@@ -75,6 +79,26 @@ Alternative (original) build:
 
 
 Make-only build won't be supported in favor of Cmake.
+
+
+Roadmap
+-------
+
+Near future, small tasks:
+
+* Merge of Shadowgrounds/Survivor code (build system, configuration options, startup code).
+* PhysX support (provided NVIDIA will resume Linux support).
+* Source code validation and cleanup, auto-tests.
+* Linux packaging (deb, rpm, ebuild).
+
+Somewhere in future, huge tasks:
+
+* Open-source physics library (Bullet?).
+* Level editor for Linux.
+* Game data under Creative Commons license.
+* Blackjack and hookers.
+
+**As long as <strike>I hate tabs</strike> there is mix of tabs and spaces, all source code will be reformated with `uncrustify`.** If you are going to contribute, please contact me before forking.
 
 
 Special Notes
