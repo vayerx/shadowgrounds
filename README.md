@@ -22,84 +22,10 @@ PhysX SDK can be obtained from NVIDIA [here](http://developer.nvidia.com/physx/)
 More PhysX help: [How to register developer account](http://physxinfo.com/news/901/how-to-register-developer-account-to-get-physx-sdk-access/)
 and [NVIDIA PhysX API](http://knol.google.com/k/introduction-to-the-nvidia-physx-api).<br/>
 
+External dependecies and build process are described [here](http://github.com/vayerx/shadowgrounds/wiki/Build).<br/>
+If you are going to contribute, please take a look at the [Roadmap](http://github.com/vayerx/shadowgrounds/wiki/Roadmap) and contact me before forking.
+
 To get the game assets, you need a copy of each game.
-
-
-Building
---------
-
-Only 64-bit Linux version is being developed/supported by now, however Shadowgrounds are supposed to be working on Windows/Linux/Mac. Any assistance is welcomed.
-
-External dependencies:
-
-* Boost 1.42
-* SDL (core, sound, image, ttf)
-* OpenGL
-* OpenAL
-* GTK2
-* ZLIB
-
-PhysX SDK isn't supported yet.
-
-Checkouting and building is simple (Linux):
-
-    git clone git://github.com/vayerx/shadowgrounds.git
-    mkdir shadowgrounds/build
-    cd shadowgrounds/build
-    cmake -DCMAKE_BUILD_TYPE=Release ..
-    make
-
-Make supports two targets: `shadowgrounds` and `survivor` (both are build by default).<br/>
-Location of data-files (`data*.fbz`, `data/`, `survivor/`) can be specified by {SHADOWGROUNDS,SURVIVOR}\_DATA\_PATH/CMAKE\_DATA\_PATH variables in cmake configuration or by `--data` command-line argument.<br/>
-Shadowgrounds live-ebuilds for Gentoo Linux are available at [vayerx overlay](http://github.com/vayerx/vayerx-gentoo/) as `games-action/shadowgrounds`.
-
-
-Alternative (original) make-only build:
-
-    # need to create libunzip.a
-    # once only
-    # should integrate to build system
-    # but unzip is old shit C code and g++ barfs on it
-    cd filesystem/detail
-    gcc -c -o ioapi.o -O ioapi.c
-    gcc -c -o unzip.o -O unzip.c
-    ar r libunzip.a ioapi.o unzip.o
-    ranlib libunzip.a
-    mv libunzip.a ../../binaries/
-    cd ../..
-
-    cd binaries
-    cp example.mk local.mk
-    # Edit local.mk to suit your tastes.
-
-    # Create necessary subdirectories. Only needed the first time and when directory structure changes
-    make bindirs
-
-    # The build system is parallel build safe, add -j<n> if you like
-    make
-
-
-Make-only build won't be supported in favor of Cmake.
-
-
-Roadmap
--------
-
-Near future, small tasks:
-
-* Merge of Shadowgrounds/Survivor code (build system, configuration options, startup code).
-* PhysX support (provided NVIDIA will resume Linux support).
-* Source code validation and cleanup, auto-tests.
-* Linux packaging (deb, rpm, ebuild).
-
-Somewhere in future, huge tasks:
-
-* Open-source physics library (Bullet?).
-* Level editor for Linux.
-* Game data under Creative Commons license.
-* Blackjack and hookers.
-
-**As long as <strike>I hate tabs and</strike> there is already mix of tabs and spaces, all source code will be reformatted with `uncrustify`.** If you are going to contribute, please contact me before forking.
 
 
 Special Notes
