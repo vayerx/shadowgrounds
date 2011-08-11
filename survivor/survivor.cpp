@@ -113,12 +113,15 @@
 
 #include "../util/crc32.h"
 
+#include <boost/program_options.hpp>
+#include <iostream>
+#include <cstdlib>
 
 using namespace game;
 using namespace ui;
 using namespace sfx;
 using namespace frozenbyte;
-
+namespace opt = boost::program_options;
 
 
 // TEMP!!!
@@ -194,111 +197,84 @@ namespace {
 
 /* --------------------------------------------------------- */
 
-static void print_help()
-{
-  printf("Usage: survivor [options]\n"												\
-			"\t[-h | --help]         Display this help message\n"	\
-			"\t[-v | --version]      Display the game version\n"		\
-			"\t[-w | --windowed]     Run the game windowed\n"			\
-			"\t[-f | --fullscreen]   Run the game fullscreen\n"			\
-			"\t[-s | --nosound]      Do not access the sound card\n");//
-			//"\t[-g | --withgl] [x]   Use [x] instead of /usr/lib/libGL.so.1 for OpenGL\n");
-}
 
 static void print_version()
 {
   printf("Shadowgrounds Survivor for Linux version 1.0.0\n");
 }
 
-void parse_commandline(const char *cmdline, int *windowed, bool *compile, bool *exit, bool *sound)
+void parse_commandline(int argc, char *argv[], opt::variables_map &vm)
 {
-	if (cmdline != NULL)
+	using namespace boost::program_options;
+	options_description visible;
+	visible.add_options()
+		("help,h",      "Display this help message")
+		("version,v",   "Display the game version")
+		("windowed,w",  "Run the game windowed")
+		("fullscreen,f","Run the game fullscreen")
+		("nosound,s",   "Do not access the sound card")
+		("nomouse,m",   "Disable mouse")
+		("nokeyboard,k","Disable keyboard")
+		("nojoystick,j","Disable joystick")
+		("data,d",      value<std::string>()->default_value(GAMEDATA_PATH)->required(), "Path to game-data directory")
+	;
+	options_description hidden;
+	hidden.add_options()
+		("game-options", value< std::vector<std::string> >(), "Additional game options")
+	;
+	positional_options_description pdesc;
+	pdesc.add("game-options", -1);
+	options_description desc;
+	desc.add(visible).add(hidden);
+	store(command_line_parser(argc, argv).options(desc).positional(pdesc).run(), vm);
+	notify(vm);
+
+	if (vm.count("help"))
 	{
-		// TODO: proper command line parsing 
-		// (parse -option=value pairs?)
-		int cmdlineLen = strlen(cmdline);
-		char *parseBuf = new char[cmdlineLen + 1];
-		strcpy(parseBuf, cmdline);
-		int i;
+		std::cout << visible;
+		exit(EXIT_SUCCESS);
+	}
+	if (vm.count("version"))
+	{
+		print_version();
+		exit(EXIT_SUCCESS);
+	}
 
-		for (i = 0; i < cmdlineLen; i++)
+	if (vm.count("game-options"))
+	{
+		std::vector<std::string> gameOpt(vm["game-options"].as< std::vector<std::string> >());
+		for (std::vector<std::string>::const_iterator iopt = gameOpt.begin(); iopt != gameOpt.end(); ++iopt)
 		{
-			if (parseBuf[i] == '=')
-				parseBuf[i] = '\0';
-			if (parseBuf[i] == ' ')
-				parseBuf[i] = '\0';
-		}
-
-		for (i = 0; i < cmdlineLen; i++)
-		{
-			if (parseBuf[i] == '-')
+			const size_t pos = iopt->find('=');
+			if (pos && pos != std::string::npos && iopt->find('=', pos + 1) == std::string::npos)
 			{
-				i++;
-				if (strcmp(&parseBuf[i], "nosound") == 0 || strcmp(&parseBuf[i], "s") == 0) {
-				  Logger::getInstance()->info("No sound command line parameter given.");
-				  *sound = false;
-				}
-				else if (strcmp(&parseBuf[i], "help") == 0 || strcmp(&parseBuf[i], "h") == 0) {
-				  print_help();
-				  *exit = true;
-				}
-				else if (strcmp(&parseBuf[i], "version") == 0 || strcmp(&parseBuf[i], "v") == 0) {
-				  print_version();
-				  *exit = true;
-				}
-				else if (strcmp(&parseBuf[i], "windowed") == 0 || strcmp(&parseBuf[i], "w") == 0)
-				{
-					Logger::getInstance()->info("Windowed mode command line parameter given.");
-					*windowed = true;
-				}
-				else if (strcmp(&parseBuf[i], "fullscreen") == 0 || strcmp(&parseBuf[i], "f") == 0)
-				{
-					Logger::getInstance()->info("Fullscreen mode command line parameter given.");
-					*windowed = false;
-				}
-				else if (strcmp(&parseBuf[i], "compileonly") == 0)
-				{
-					Logger::getInstance()->info("Compileonly command line parameter given.");
-					*windowed = true;
-					*compile = true;
-				}
-				GameOption *opt = GameOptionManager::getInstance()->getOptionByName(&parseBuf[i]);
+				const std::string &key = iopt->substr(0, pos), &value = iopt->substr(pos + 1);
+				GameOption *opt = GameOptionManager::getInstance()->getOptionByName(key.c_str());
 				if (opt != NULL)
 				{
-					int j = i + strlen(&parseBuf[i]);
-					j += 1;
-					if (j > cmdlineLen)
-						j = cmdlineLen;
-
 					Logger::getInstance()->debug("Option value given at command line.");
-					Logger::getInstance()->debug(&parseBuf[i]);
-					Logger::getInstance()->debug(&parseBuf[j]);
+					Logger::getInstance()->debug(key.c_str());
+					Logger::getInstance()->debug(value.c_str());
 
 					if (opt->getVariableType() == IScriptVariable::VARTYPE_STRING)
 					{
-						opt->setStringValue(&parseBuf[j]);
+						opt->setStringValue(value.c_str());
 					}
 					else if (opt->getVariableType() == IScriptVariable::VARTYPE_INT)
 					{
-						opt->setIntValue(str2int(&parseBuf[j]));
+						opt->setIntValue(str2int(value.c_str()));
 					}
 					else if (opt->getVariableType() == IScriptVariable::VARTYPE_FLOAT)
 					{
-						opt->setFloatValue((float)atof(&parseBuf[j]));
+						opt->setFloatValue((float)atof(value.c_str()));
 					}
 					else if (opt->getVariableType() == IScriptVariable::VARTYPE_BOOLEAN)
 					{
-						if (parseBuf[j] == '\0'
-							|| str2int(&parseBuf[j]) != 0)
-							opt->setBooleanValue(true);
-						else
-							opt->setBooleanValue(false);
+						opt->setBooleanValue(value.empty() || str2int(value.c_str()) != 0);
 					}
 				}
 			}
 		}
-
-		delete [] parseBuf;
 	}
 }
 
@@ -933,18 +909,40 @@ int main(int argc, char *argv[]) {
 	Logger::createInstanceForLogfile(path.c_str());
 
 	setsighandler();
+
+	opt::variables_map vm;
+	parse_commandline(argc, argv, vm);
+
+	const bool soundCmdOn = (vm.count("nosound") == 0);
+	int windowedMode = -1, compileOnly = false;
+	if (vm.count("windowed") || vm.count("fullscreen") || vm.count("compileonly") )
+	{
+		windowedMode = vm.count("windowed") && vm.count("fullscreen") == 0;
+		if (vm.count("compileonly"))
+			windowedMode = compileOnly = true;
+	}
+
 	{
 		// change working dir to the directory where the binary is located in
 #ifndef WIN32
-		std::string path = get_path(argv[0]);
-		if (path != "" && path != "./") {
-			char wd[256];
-			if (getcwd(wd, 256) == wd) {
-				std::string cwd = wd + std::string("/") + path;
-				chdir(cwd.c_str());
-			} else {
-				fprintf(stderr, "Couldn't get current working directory.\n");
-				return -1;
+		const std::string &gamedataPath = vm["data"].as<std::string>();
+		if (!gamedataPath.empty())
+		{
+			if (chdir(gamedataPath.c_str()))
+				std::cerr << "Couldn't change directory to " << gamedataPath << std::endl;
+		}
+		else
+		{
+			std::string path = get_path(argv[0]);
+			if (path != "" && path != "./") {
+				char wd[256];
+				if (getcwd(wd, 256) == wd) {
+					std::string cwd = wd + std::string("/") + path;
+					chdir(cwd.c_str());
+				} else {
+					fprintf(stderr, "Couldn't get current working directory.\n");
+					return EXIT_FAILURE;
+				}
 			}
 		}
 #endif
@@ -1026,13 +1024,16 @@ int main(int argc, char *argv[]) {
 	// bool show_terrain_mem_info = false;
 
 	if (SDL_Init(SDL_INIT_VIDEO) < 0 || !SDL_GetVideoInfo())
-		return 0;   // FIXME: give error msg
+	{
+		std::cerr << "SDL initialization failed" << std::endl;
+		return EXIT_FAILURE;
+	}
 	atexit(&SDL_Quit);
 
 	if (Sound_Init() == 0)
 	{
 		igiosErrorMessage("SDL_Sound initialization failure.");
-		return 0;
+		return EXIT_FAILURE;
 	}
 
 	Timer::init();
@@ -1112,13 +1113,14 @@ int main(int argc, char *argv[]) {
 	GameOptionManager::getInstance()->load();
 	atexit(&GameConfigs::cleanInstance);
 	atexit(&GameOptionManager::cleanInstance);
+
 	/*
 	if (checksumfailure)
 	{
 		Logger::getInstance()->error("Checksum mismatch.");
 		MessageBox(0,"Checksum mismatch or required data missing.\nMake sure you have all the application files properly installed.\n\nContact Frozenbyte for more info.","Error",MB_OK); 
 		assert(!"Checksum mismatch");
-		return 0;
+		return EXIT_FAILURE;
 	}
 	*/
 
@@ -1128,26 +1130,12 @@ int main(int argc, char *argv[]) {
 		igiosErrorMessage("Required data missing.\nMake sure you have all the application files properly installed.\n\nSee game website for more info.");
 		assert(!"Version data incorrect");
 		abort();
-		return 0;
+		return EXIT_FAILURE;
 	}
 
-
-	int windowedMode = -1;
-	bool compileOnly = false;
-	bool exit = false;
-	bool soundCmdOn = true;
-
-	std::string cmdline;
-	for (int i = 1; i < argc; i++) {
-		cmdline.append(argv[i]);
-		if (i != argc) cmdline.append(" ");
-	}
-	parse_commandline(cmdline.c_str(), &windowedMode, &compileOnly, &exit, &soundCmdOn);
-	if (exit) return 0;
 
 	if (windowedMode == -1) {
-		if (SimpleOptions::getBool(DH_OPT_B_WINDOWED)) windowedMode = true;
-		else windowedMode = false;
+		windowedMode = SimpleOptions::getBool(DH_OPT_B_WINDOWED);
 	} else {
 		SimpleOptions::setBool(DH_OPT_B_WINDOWED, windowedMode);
 		GameOptionManager::getInstance()->save();
@@ -1215,42 +1203,22 @@ int main(int argc, char *argv[]) {
 	::util::applyStorm(*s3d, proceduralProperties);
 
 	// some cursor configs
-	bool no_mouse = false;
-	bool no_keyboard = false;
-	bool no_joystick = false;
-	if (!SimpleOptions::getBool(DH_OPT_B_MOUSE_ENABLED))
-	{
-		no_mouse = true;
-	}
-	if (!SimpleOptions::getBool(DH_OPT_B_KEYBOARD_ENABLED))
-	{
-		no_keyboard = true;
-	}
-	if (!SimpleOptions::getBool(DH_OPT_B_JOYSTICK_ENABLED))
-	{
-		no_joystick = true;
-	}
+	const bool no_mouse = !SimpleOptions::getBool(DH_OPT_B_MOUSE_ENABLED) || vm.count("nomouse");
+	const bool no_keyboard = !SimpleOptions::getBool(DH_OPT_B_KEYBOARD_ENABLED) || vm.count("nokeyboard");
+	const bool no_joystick = !SimpleOptions::getBool(DH_OPT_B_JOYSTICK_ENABLED) || vm.count("nojoystick");
+
 	bool force_given_boundary = false;
 	if (SimpleOptions::getBool(DH_OPT_B_MOUSE_FORCE_GIVEN_BOUNDARY))
 	{
 		force_given_boundary = true;
 	}
-	float mouse_sensitivity = 1.0f;
-	mouse_sensitivity = SimpleOptions::getFloat(DH_OPT_F_MOUSE_SENSITIVITY);
-	if (mouse_sensitivity < 0.01f) 
-		mouse_sensitivity = 0.01f;
+
+	const float mouse_sensitivity = std::max(0.01f, SimpleOptions::getFloat(DH_OPT_F_MOUSE_SENSITIVITY));
 
 	// camera stuff
-	bool disable_camera_timing = false;
-	if (SimpleOptions::getBool(DH_OPT_B_CAMERA_DISABLE_TIMING))
-	{
-		disable_camera_timing = true;
-	}
-	bool no_delta_time_limit = false;
-	if (SimpleOptions::getBool(DH_OPT_B_CAMERA_NO_DELTA_TIME_LIMIT))
-	{
-		no_delta_time_limit = true;
-	}
+	const bool disable_camera_timing = SimpleOptions::getBool(DH_OPT_B_CAMERA_DISABLE_TIMING);
+	bool no_delta_time_limit = SimpleOptions::getBool(DH_OPT_B_CAMERA_NO_DELTA_TIME_LIMIT);
+
 	float camera_time_factor = 1.0f;
 	if (SimpleOptions::getFloat(DH_OPT_F_CAMERA_TIME_FACTOR) > 0.0f)
 	{
@@ -1307,7 +1275,7 @@ int main(int argc, char *argv[]) {
 		delete s3d;
 		s3d = 0;
 
-		return 0;
+		return EXIT_FAILURE;
 	}
 
 	OptionApplier::applyGammaOptions(s3d);
@@ -2191,5 +2159,5 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "Caught unknown exception.\n");
 	}
 
-	return 0;
+	return EXIT_SUCCESS;
 }
