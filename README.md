@@ -50,8 +50,11 @@ Checkouting and building is simple (Linux):
     make
 
 Make supports two targets: `shadowgrounds` and `survivor` (both are build by default).
+
 Location of data-files (`data*.fbz`, `data/`, `survivor/`) can be specified by {SHADOWGROUNDS,SURVIVOR}\_DATA\_PATH/CMAKE\_DATA\_PATH variables in cmake configuration or by `--data` command-line argument.
+
 Shadowgroun live-ebuilds for Gentoo Linux are available at [vayerx overlay](http://github.com/vayerx/vayerx-gentoo/) as `games-action/shadowgrounds`.
+
 
 Alternative (original) make-only build:
 
@@ -98,7 +101,7 @@ Somewhere in future, huge tasks:
 * Game data under Creative Commons license.
 * Blackjack and hookers.
 
-**As long as <strike>I hate tabs</strike> there is mix of tabs and spaces, all source code will be reformated with `uncrustify`.** If you are going to contribute, please contact me before forking.
+**As long as <strike>I hate tabs</strike> there is already mix of tabs and spaces, all source code will be reformatted with `uncrustify`.** If you are going to contribute, please contact me before forking.
 
 
 Special Notes
