@@ -166,11 +166,7 @@ int renderfunc(IStorm3D_Scene *scene)
 
 void set_mouse_borders()
 {
-	bool force_given_boundary = false;
-	if (SimpleOptions::getBool(DH_OPT_B_MOUSE_FORCE_GIVEN_BOUNDARY))
-	{
-		force_given_boundary = true;
-	}
+	const bool force_given_boundary = SimpleOptions::getBool(DH_OPT_B_MOUSE_FORCE_GIVEN_BOUNDARY);
 
 	if (force_given_boundary)
 	{
@@ -240,6 +236,9 @@ void parse_commandline(int argc, char *argv[], opt::variables_map &vm)
 		("windowed,w",  "Run the game windowed")
 		("fullscreen,f","Run the game fullscreen")
 		("nosound,s",   "Do not access the sound card")
+		("nomouse,m",   "Disable mouse")
+		("nokeyboard,k","Disable keyboard")
+		("nojoystick,j","Disable joystick")
 		("data,d",      value<std::string>()->default_value(GAMEDATA_PATH)->required(), "Path to game-data directory")
 	;
 	options_description hidden;
@@ -484,7 +483,9 @@ static void sighandler(int sig, siginfo_t *info, void *secret) {
 #endif
 	else
 		printf("Got signal %d\n", sig);
-	
+
+	igios_backtrace();
+
 	exit(0);
 }
 #endif
@@ -753,7 +754,7 @@ try {
 	if (version_branch_failure)
 	{
 		Logger::getInstance()->error("Version data incorrect.");
-		MessageBox(0,"Version mismatch or required data missing.\nMake sure you have all the application files properly installed.\n\nSee game website for more info.","Error",MB_OK); 
+		igiosErrorMessage("Required data missing.\nMake sure you have all the application files properly installed.\n\nSee game website for more info.");
 		assert(!"Version data incorrect");
 		abort();
 		return EXIT_FAILURE;
@@ -828,21 +829,10 @@ try {
 	::util::applyStorm(*s3d, proceduralProperties);
 
 	// some cursor configs
-	bool no_mouse = false;
-	bool no_keyboard = false;
-	bool no_joystick = false;
-	if (!SimpleOptions::getBool(DH_OPT_B_MOUSE_ENABLED))
-	{
-		no_mouse = true;
-	}
-	if (!SimpleOptions::getBool(DH_OPT_B_KEYBOARD_ENABLED))
-	{
-		no_keyboard = true;
-	}
-	if (!SimpleOptions::getBool(DH_OPT_B_JOYSTICK_ENABLED))
-	{
-		no_joystick = true;
-	}
+	const bool no_mouse = !SimpleOptions::getBool(DH_OPT_B_MOUSE_ENABLED) || vm.count("nomouse");
+	const bool no_keyboard = !SimpleOptions::getBool(DH_OPT_B_KEYBOARD_ENABLED) || vm.count("nokeyboard");
+	const bool no_joystick = !SimpleOptions::getBool(DH_OPT_B_JOYSTICK_ENABLED) || vm.count("nojoystick");
+
 	/*
 	bool force_given_boundary = false;
 	if (SimpleOptions::getBool(DH_OPT_B_MOUSE_FORCE_GIVEN_BOUNDARY))
@@ -850,22 +840,12 @@ try {
 		force_given_boundary = true;
 	}
 	*/
-	float mouse_sensitivity = 1.0f;
-	mouse_sensitivity = SimpleOptions::getFloat(DH_OPT_F_MOUSE_SENSITIVITY);
-	if (mouse_sensitivity < 0.01f) 
-		mouse_sensitivity = 0.01f;
+	const float mouse_sensitivity = std::max(0.01f, SimpleOptions::getFloat(DH_OPT_F_MOUSE_SENSITIVITY));
 
 	// camera stuff
-	bool disable_camera_timing = false;
-	if (SimpleOptions::getBool(DH_OPT_B_CAMERA_DISABLE_TIMING))
-	{
-		disable_camera_timing = true;
-	}
-	bool no_delta_time_limit = false;
-	if (SimpleOptions::getBool(DH_OPT_B_CAMERA_NO_DELTA_TIME_LIMIT))
-	{
-		no_delta_time_limit = true;
-	}
+	const bool disable_camera_timing = SimpleOptions::getBool(DH_OPT_B_CAMERA_DISABLE_TIMING);
+	bool no_delta_time_limit = SimpleOptions::getBool(DH_OPT_B_CAMERA_NO_DELTA_TIME_LIMIT);
+
 	float camera_time_factor = 1.0f;
 	if (SimpleOptions::getFloat(DH_OPT_F_CAMERA_TIME_FACTOR) > 0.0f)
 	{
@@ -953,6 +933,7 @@ try {
 	if (SimpleOptions::getBool(DH_OPT_B_SHOW_TERRAIN_MEMORY_INFO))
 		show_terrain_mem_info = true;
 	*/
+
 	int tex_detail_level = SimpleOptions::getInt(DH_OPT_I_TEXTURE_DETAIL_LEVEL);
 	if (tex_detail_level < 0) tex_detail_level = 0;
 	if (tex_detail_level > 100) tex_detail_level = 100;
@@ -1691,4 +1672,3 @@ try {
 
 	return EXIT_SUCCESS;
 }
- 
