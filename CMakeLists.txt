@@ -59,8 +59,12 @@ INCLUDE_DIRECTORIES( BEFORE SYSTEM
 )
 
 # List of all libraries
-SET ( SG_MODULES container convert editor filesystem game ogui sound system ui util storm particlesystem )
-
+SET ( SG_MODULES container convert game_ui editor system ogui storm util filesystem util_common sound particlesystem )
+# game < editor
+# game < util < sound
+# ui < ogui
+# ui <-> game
+# storm < filesystem < util
 
 
 IF( NOT CMAKE_BUILD_TYPE )
@@ -129,7 +133,7 @@ CompileSrcList( filesystem filesystem
     detail/unzip.c detail/ioapi.c
 )
 
-CompileSrcList( game game
+CompileSrcList( game_ui game
     AlienSpawner.cpp AmmoPack.cpp AmmoPackObject.cpp Ani.cpp AniManager.cpp AniRecorder.cpp AniTool.cpp Arm.cpp
     ArmorUnitActor.cpp ArmorUnit.cpp ArmorUnitType.cpp BuildingAdder.cpp Building.cpp BuildingList.cpp Bullet.cpp
     Character.cpp CheckpointChecker.cpp ConnectionChecker.cpp CoverFinder.cpp CoverMap.cpp createparts.cpp
@@ -153,16 +157,16 @@ CompileSrcList( game game
     BonusManager.cpp    # TODO survivor-only
 )
 
-CompileSrcList( game game/physics
+CompileSrcList( game_ui game/physics
     AbstractPhysicsObject.cpp BoxPhysicsObject.cpp CapsulePhysicsObject.cpp ConvexPhysicsObject.cpp gamephysics.cpp
     PhysicsContactDamageManager.cpp PhysicsContactEffectManager.cpp PhysicsContactSoundManager.cpp
     PhysicsContactUtils.cpp RackPhysicsObject.cpp StaticPhysicsObject.cpp 
 )
 IF ( ENABLE_PHYSX )
-    CompileSrcList( game game/physics physics_none.cpp )
+    CompileSrcList( game_ui game/physics physics_none.cpp )
 ENDIF ( ENABLE_PHYSX )
 
-CompileSrcList( game game/scripting
+CompileSrcList( game_ui game/scripting
     AnimationScripting.cpp CameraScripting.cpp CinematicScripting.cpp DecorScripting.cpp DevScripting.cpp
     EnvironmentScripting.cpp GameScriptingUtils.cpp HitChainScripting.cpp ItemScripting.cpp LightScripting.cpp
     MapScripting.cpp MathScripting.cpp MissionScripting.cpp OptionScripting.cpp
@@ -171,7 +175,7 @@ CompileSrcList( game game/scripting
     MiscScripting.cpp
 )
 
-CompileSrcList( game game/tracking
+CompileSrcList( game_ui game/tracking
     AnyBurnableTrackableObjectFactory.cpp ObjectTracker.cpp ScriptableTrackerObject.cpp ScriptableTrackerObjectType.cpp
     trackable_types.cpp TrackableUnifiedHandleObject.cpp
 )
@@ -228,7 +232,7 @@ CompileSrcList( system system
     FileTimestampChecker.cpp Logger.cpp SystemRandom.cpp SystemTime.cpp Timer.cpp Miscellaneous.cpp
 )
 
-CompileSrcList( ui ui
+CompileSrcList( game_ui ui
     AmbientSound.cpp AmbientSoundManager.cpp AmmoWindowCoop.cpp AmmoWindow.cpp AnimationSet.cpp Animator.cpp
     AniRecorderWindow.cpp ArmorConstructWindow.cpp ArmorPartSelectWindow.cpp BlackEdgeWindow.cpp
     CameraAutotilter.cpp CameraAutozoomer.cpp CharacterSelectionWindow.cpp CinematicScreen.cpp
@@ -259,23 +263,29 @@ CompileSrcList( ui ui
 #     CoopMenu.cpp SurvivalMenu.cpp CharacterSelectionWindow.cpp SurvivorLoadGameMenu.cpp VehicleWindow.cpp
 
 
-CompileSrcList( ui ui/camera_system
+CompileSrcList( game_ui ui/camera_system
     CameraAreaStreet.cpp CameraSystem.cpp CameraSystemAim.cpp CameraSystemAreas.cpp
 )
 
 
 CompileSrcList( util util
     AI_PathFind.cpp AreaMap.cpp assert.cpp BuildingHandler.cpp BuildingMap.cpp CheckedIntValue.cpp
-    CircleAreaTracker.cpp ClippedCircle.cpp ColorMap.cpp crc32.cpp CursorRayTracer.cpp Dampers.cpp
+    CircleAreaTracker.cpp ClippedCircle.cpp ColorMap.cpp CursorRayTracer.cpp Dampers.cpp
     Debug_MemoryManager.cpp DecalManager.cpp DecalSpawner.cpp DecalSystem.cpp DirectionalLight.cpp
     DistanceFloodfill.cpp FBCopyFile.cpp Floodfill.cpp FogApplier.cpp GridOcclusionCuller.cpp
-    HelperPositionCalculator.cpp hiddencommand.cpp jpak.cpp LightAmountManager.cpp LightMap.cpp LineAreaChecker.cpp
+    HelperPositionCalculator.cpp hiddencommand.cpp LightAmountManager.cpp LightMap.cpp LineAreaChecker.cpp
     LipsyncManager.cpp LocaleManager.cpp LocaleResource.cpp mod_selector.cpp ObjectDurabilityParser.cpp
     PathDeformer.cpp PathSimplifier.cpp Preprocessor.cpp procedural_applier.cpp procedural_properties.cpp
     profiler.cpp ScreenCapturer.cpp Script.cpp ScriptManager.cpp ScriptProcess.cpp SelfIlluminationChanger.cpp
     SimpleParser.cpp SoundMaterialParser.cpp SpotLightCalculator.cpp StringUtil.cpp TextFileModifier.cpp
     TextFinder.cpp TextureCache.cpp TextureSwitcher.cpp UberCrypt.cpp UnicodeConverter.cpp
 )
+
+CompileSrcList( util_common util
+    crc32.cpp 
+    jpak.cpp
+)
+
 
 # ------------------------------------------------
 #  Build options
@@ -347,16 +357,6 @@ MACRO( AddShadowgroundsBinary name defines )
         SetShadowgroundsProperties( ${name}_${mod} "-include ${PROJECT_SOURCE_DIR}/${name}/configuration.h" "${defines}" )
         TARGET_LINK_LIBRARIES( ${name} ${name}_${mod} )
     ENDFOREACH( mod )
-
-    # linkage dependencies hotfix
-    TARGET_LINK_LIBRARIES( ${name} ${name}_editor )
-    TARGET_LINK_LIBRARIES( ${name} ${name}_filesystem )
-    TARGET_LINK_LIBRARIES( ${name} ${name}_container )
-    TARGET_LINK_LIBRARIES( ${name} ${name}_ogui)
-    TARGET_LINK_LIBRARIES( ${name} ${name}_game )
-    TARGET_LINK_LIBRARIES( ${name} ${name}_util )
-    TARGET_LINK_LIBRARIES( ${name} ${name}_convert )
-    TARGET_LINK_LIBRARIES( ${name} ${name}_sound )
 
     TARGET_LINK_LIBRARIES( ${name} ${GLOBAL_LIBRARIES} )
 ENDMACRO( AddShadowgroundsBinary )
