@@ -5,11 +5,6 @@
 #include "CombatSubWindowFactory.h"
 
 namespace ui {
-///////////////////////////////////////////////////////////////////////////////
-namespace {
-REGISTER_COMBATSUBWINDOW( HealthWindowCoop );
-}
-///////////////////////////////////////////////////////////////////////////////
 
 HealthWindowCoop::HealthWindowCoop( Ogui* ogui, game::Game* game, int numOfPlayers ) :
 	HealthWindow(),

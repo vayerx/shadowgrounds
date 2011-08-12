@@ -22,13 +22,6 @@
 #include <sstream>
 
 namespace ui { 
-///////////////////////////////////////////////////////////////////////////////
-
-namespace {
-REGISTER_COMBATSUBWINDOW( ElaborateHintMessageWindow );
-}
-
-///////////////////////////////////////////////////////////////////////////////
 
 const std::string fadingTextWindowName = "elaborate_hint";
 bool elaborateLoggingEnabled = false;

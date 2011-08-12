@@ -24,10 +24,6 @@ using namespace game;
 
 namespace ui
 {
-///////////////////////////////////////////////////////////////////////////////
-REGISTER_COMBATSUBWINDOW( UpgradeAvailableWindow );
-///////////////////////////////////////////////////////////////////////////////
-
   UpgradeAvailableWindow::UpgradeAvailableWindow(Ogui *ogui, game::Game *game, int player)
   {
     this->ogui = ogui;

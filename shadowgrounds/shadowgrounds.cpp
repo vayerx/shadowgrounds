@@ -64,6 +64,7 @@
 #include "../ui/GameController.h"
 #include "../ui/GameCamera.h"
 #include "../ui/UIEffects.h"
+#include "../ui/CombatSubWindowFactory.h"
 #include "../util/ScriptManager.h"
 #include "../game/OptionApplier.h"
 
@@ -604,6 +605,7 @@ try {
 	}
 
 	// initialize...
+	RegisterGlobalCombatSubwindows();
 
 #ifndef DEMOVERSION
 	util::ModSelector modSelector;

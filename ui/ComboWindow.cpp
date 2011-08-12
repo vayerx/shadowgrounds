@@ -22,10 +22,6 @@
 namespace ui { 
 ///////////////////////////////////////////////////////////////////////////////
 
-namespace {
-REGISTER_COMBATSUBWINDOW( ComboWindow );
-}
-
 class ComboWindow::ComboWindowImpl : public game::IGameStatsListener
 {
 public:
