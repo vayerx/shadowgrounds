@@ -67,14 +67,17 @@ SET ( SG_MODULES container convert game_ui editor system ogui storm util filesys
 # storm < filesystem < util
 
 
+# ------------------------------------------------
+#  Options
+# ------------------------------------------------
+
 IF( NOT CMAKE_BUILD_TYPE )
     SET( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: Debug Release Gentoo." FORCE )
 ENDIF( NOT CMAKE_BUILD_TYPE )
 
-
-# ------------------------------------------------
-#  Options
-# ------------------------------------------------
+IF ( NOT INSTALLONLY )
+    SET ( INSTALLONLY   shadowgrounds survivor CACHE STRING "Installation tagets, options are: shadowgrounds, survivor" FORCE )
+ENDIF ( NOT INSTALLONLY )
 
 OPTION( ENABLE_PHYSX "Enable NVIDIA PhysX SDK" OFF )
 IF ( ENABLE_PHYSX )
@@ -377,7 +380,7 @@ AddShadowgroundsBinary( survivor "PROJECT_SURVIVOR=1;GAMEDATA_PATH=\"${SURVIVOR_
 #  Installation
 # ------------------------------------------------
 
-FOREACH( game shadowgrounds survivor )
+FOREACH( game ${INSTALLONLY} )
 INSTALL(
     TARGETS         ${game}
     COMPONENT       ${game}

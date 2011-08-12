@@ -25,6 +25,7 @@ and [NVIDIA PhysX API](http://knol.google.com/k/introduction-to-the-nvidia-physx
 External dependecies and build process are described [here](http://github.com/vayerx/shadowgrounds/wiki/Build).<br/>
 If you are going to contribute, please take a look at the [Roadmap](http://github.com/vayerx/shadowgrounds/wiki/Roadmap) and contact me before forking.
 
+Shadowgrounds live-ebuilds for Gentoo Linux are available at [vayerx overlay](http://github.com/vayerx/vayerx-gentoo/) as `games-action/shadowgrounds`.<br/>
 To get the game assets, you need a copy of each game.
 
 
