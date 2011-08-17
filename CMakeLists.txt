@@ -5,6 +5,7 @@ PROJECT( shadowgrounds )
 SET( CPACK_PACKAGE_VERSION_MAJOR    1 )
 SET( CPACK_PACKAGE_VERSION_MINOR    0 )
 SET( CPACK_PACKAGE_VERSION_PATCH    1 )
+SET( SG_PROG_VERSION                "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 
 SET( CMAKE_VERBOSE_MAKEFILE  OFF )
 
@@ -318,7 +319,7 @@ IF( CMAKE_COMPILER_IS_GNUCXX )
                                     -Wno-unused-parameter -Wno-unused-variable  # TODO
     )
     SET( CMAKE_CXX_FLAGS_DEBUG      "-O0 -g" )                  # ( waiting for COMPILE_OPTIONS_<CONFIG> )
-    SET( CMAKE_CXX_FLAGS_RELEASE    "-O2" )                     # ( waiting for COMPILE_OPTIONS_<CONFIG> )
+    SET( CMAKE_CXX_FLAGS_RELEASE    "-O2" )     # TODO O3       # ( waiting for COMPILE_OPTIONS_<CONFIG> )
     SET( CMAKE_CXX_FLAGS            "-fno-strict-aliasing" )
 ELSE( CMAKE_COMPILER_IS_GNUCXX )
     MESSAGE( "WARNING: using default options for non-GCC compiler" )
@@ -338,7 +339,7 @@ ENDIF( CMAKE_COMPILER_IS_GNUCXX )
 MACRO( SetShadowgroundsProperties name flags defines )
     SET_TARGET_PROPERTIES( ${name} PROPERTIES
         COMPILE_FLAGS               "${SG_WARNINGS} ${flags}"
-        COMPILE_DEFINITIONS         "${defines}"
+        COMPILE_DEFINITIONS         "${defines};SG_PROG_VERSION=\"${SG_PROG_VERSION}\";SG_PROG_HOST=\"${CMAKE_SYSTEM_NAME}\""
         COMPILE_DEFINITIONS_DEBUG   "_DEBUG=1"
         COMPILE_DEFINITIONS_RELEASE "NDEBUG=1"
         COMPILE_DEFINITIONS_GENTOO  "NDEBUG=1"

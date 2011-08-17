@@ -224,7 +224,7 @@ namespace {
 
 static void print_version()
 {
-  printf("Shadowgrounds for Linux version 1.5.0\n");
+	std::cout << "Shadowgrounds for " SG_PROG_HOST ", version " << SG_PROG_VERSION << std::endl;
 }
 
 void parse_commandline(int argc, char *argv[], opt::variables_map &vm)
@@ -235,7 +235,7 @@ void parse_commandline(int argc, char *argv[], opt::variables_map &vm)
 		("help,h",      "Display this help message")
 		("version,v",   "Display the game version")
 		("windowed,w",  "Run the game windowed")
-		("fullscreen,f","Run the game fullscreen")
+		("fullscreen,f","Run the game in fullscreen mode")
 		("nosound,s",   "Do not access the sound card")
 		("nomouse,m",   "Disable mouse")
 		("nokeyboard,k","Disable keyboard")
@@ -255,6 +255,7 @@ void parse_commandline(int argc, char *argv[], opt::variables_map &vm)
 
 	if (vm.count("help"))
 	{
+		print_version();
 		std::cout << visible;
 		exit(EXIT_SUCCESS);
 	}
