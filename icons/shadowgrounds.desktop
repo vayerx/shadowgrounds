@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Shadowgrounds
+GenericName=Action Game
+Comment=3rd-person alien shooter
+Icon=shadowgrounds
+Exec=shadowgrounds
+Categories=Game;ActionGame;
+

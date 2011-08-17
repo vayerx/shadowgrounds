@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Shadowgrounds Survivor
+GenericName=Action Game
+Comment=3rd-person alien shooter
+Icon=survivor
+Exec=survivor
+Categories=Game;ActionGame;
+

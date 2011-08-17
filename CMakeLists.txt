@@ -381,14 +381,25 @@ AddShadowgroundsBinary( survivor "PROJECT_SURVIVOR=1;GAMEDATA_PATH=\"${SURVIVOR_
 #  Installation
 # ------------------------------------------------
 
+IF( UNIX AND NOT APPLE AND NOT CYGWIN )
+    OPTION( ENABLE_DESKTOP_ENTRY "Enable installation of desktop entry files" ON )
+    SET( DATAROOT_DIR "${CMAKE_INSTALL_PREFIX}/share" CACHE STRING "Root of data directories")
+    SET( ICON_DIR "${DATAROOT_DIR}/pixmaps" CACHE STRING "Icon directory for desktop entry")
+    SET( DESKTOP_DIR "${DATAROOT_DIR}/applications/" CACHE STRING "Desktop file directory for desktop entry")
+ENDIF( UNIX AND NOT APPLE AND NOT CYGWIN )
+
 FOREACH( game ${INSTALLONLY} )
-INSTALL(
-    TARGETS         ${game}
-    COMPONENT       ${game}
-    PERMISSIONS     OWNER_READ OWNER_WRITE OWNER_EXECUTE  GROUP_READ GROUP_EXECUTE
-    DESTINATION     bin
-    #CONFIGURATIONS  Release Gentoo
-)
+    INSTALL(
+        TARGETS         ${game}
+        COMPONENT       ${game}
+        PERMISSIONS     OWNER_READ OWNER_WRITE OWNER_EXECUTE  GROUP_READ GROUP_EXECUTE
+        DESTINATION     bin
+        #CONFIGURATIONS  Release Gentoo
+    )
+    IF( ENABLE_DESKTOP_ENTRY AND DESKTOP_DIR AND ICON_DIR )
+        INSTALL(FILES icons/${game}.desktop DESTINATION ${DESKTOP_DIR} )
+        INSTALL(FILES icons/${game}.xpm DESTINATION ${ICON_DIR} )
+    ENDIF( ENABLE_DESKTOP_ENTRY AND DESKTOP_DIR AND ICON_DIR )
 ENDFOREACH( game )
 
 
