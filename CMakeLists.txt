@@ -105,6 +105,18 @@ IF( NOT SURVIVOR_DATA_PATH )
     SET( SURVIVOR_DATA_PATH "${CMAKE_DATA_PATH}/survivor" CACHE PATH "Path to Shadowgrounds Survivor data files" FORCE )
 ENDIF( NOT SURVIVOR_DATA_PATH )
 
+OPTION( LINKEDLIST_USE_NODE_POOL "Keep linkedlist nodes in pool, less dynamic memory allocations" ON )
+OPTION( CRIMSON_MODE "The new non-rts, pure action game - \"crimson mode\"" ON )
+OPTION( BUILDINGMAP_SHOW_LOADINGMESSAGE "Show rebuilding binaries loading message for buildingmaps" OFF )
+OPTION( BUILDINGMAP_USE_OPTIONS "Make buildingmap use game's options (force/auto recreate, etc.)" ON )
+OPTION( SCRIPT_PREPROCESS "allow script preprocessing - should be disabled for final release!!!" ON )
+OPTION( PATHFIND_DEBUG "Make debug view map of pathfinding" OFF )
+IF( NOT LIGHT_MAX_AMOUNT )
+    SET( LIGHT_MAX_AMOUNT "5" CACHE STRING "Amount of light or what? Integer" FORCE )   # cmake doesn't support integers
+ENDIF( NOT LIGHT_MAX_AMOUNT )
+MARK_AS_ADVANCED( LINKEDLIST_USE_NODE_POOL BUILDINGMAP_SHOW_LOADINGMESSAGE LIGHT_MAX_AMOUNT )
+CONFIGURE_FILE( project_common/configuration.h.in project_common/configuration.h )
+
 
 # ------------------------------------------------
 #  Source code
@@ -336,9 +348,9 @@ ENDIF( CMAKE_COMPILER_IS_GNUCXX )
 
 
 # Set default build options
-MACRO( SetShadowgroundsProperties name flags defines )
+MACRO( SetShadowgroundsProperties name defines )
     SET_TARGET_PROPERTIES( ${name} PROPERTIES
-        COMPILE_FLAGS               "${SG_WARNINGS} ${flags}"
+        COMPILE_FLAGS               "${SG_WARNINGS} -include ${PROJECT_BINARY_DIR}/project_common/configuration.h"
         COMPILE_DEFINITIONS         "${defines};SG_PROG_VERSION=\"${SG_PROG_VERSION}\";SG_PROG_HOST=\"${CMAKE_SYSTEM_NAME}\""
         COMPILE_DEFINITIONS_DEBUG   "_DEBUG=1"
         COMPILE_DEFINITIONS_RELEASE "NDEBUG=1"
@@ -354,11 +366,11 @@ ENDMACRO( SetShadowgroundsProperties )
 MACRO( AddShadowgroundsBinary name defines )
     ADD_EXECUTABLE( ${name} ${ARGN} )
     INCLUDE_DIRECTORIES( ${name} )
-    SetShadowgroundsProperties( ${name} "-include ${PROJECT_SOURCE_DIR}/${name}/configuration.h" "${defines}" )
+    SetShadowgroundsProperties( ${name} "${defines}" )
 
     FOREACH( mod ${SG_MODULES})
         ADD_LIBRARY( ${name}_${mod} STATIC ${${mod}_sources} )
-        SetShadowgroundsProperties( ${name}_${mod} "-include ${PROJECT_SOURCE_DIR}/${name}/configuration.h" "${defines}" )
+        SetShadowgroundsProperties( ${name}_${mod} "${defines}" )
         TARGET_LINK_LIBRARIES( ${name} ${name}_${mod} )
     ENDFOREACH( mod )
 

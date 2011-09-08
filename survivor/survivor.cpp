@@ -14,18 +14,16 @@
 #include <string.h>
 #include <time.h>
 #include <stdio.h>
-#include <SDL.h>
-#include "SDL_sound.h"
-#include "igios.h"
-
-
 
 #include <Storm3D_UI.h>
 #include <keyb3.h>
 #include <RawInputMouseHandler.h>
 
+#include <SDL.h>
+#include "SDL_sound.h"
+#include "igios.h"
+
 #include "version.h"
-#include "configuration.h"
 
 #include "../system/Logger.h"
 //#include "../util/Parser.h"
@@ -1111,7 +1109,7 @@ int main(int argc, char *argv[]) {
 #else
 	filesystem::InputStream main_file = filesystem::FilePackageManager::getInstance().getFile("data/config/startup.txt");
 #endif
-    main_file >> main_config;
+	main_file >> main_config;
 
 	GameOptionManager::getInstance()->load();
 	atexit(&GameConfigs::cleanInstance);
@@ -1272,7 +1270,7 @@ int main(int argc, char *argv[]) {
 		Logger::getInstance()->error(error.c_str());
 
 #ifdef LINUX
-        sysFatalError("Renderer initialization failure.\nSee the log for details.");
+		sysFatalError("Renderer initialization failure.\nSee the log for details.");
 #endif  // LINUX
 		// Linux version sometimes blows up here if initialization failed
 		delete s3d;
