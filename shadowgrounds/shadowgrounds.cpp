@@ -21,7 +21,6 @@
 #include "igios.h"
 
 #include "version.h"
-#include "configuration.h"
 
 #include "../system/Logger.h"
 //#include "../util/Parser.h"

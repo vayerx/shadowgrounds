@@ -281,7 +281,7 @@ bool OguiButton::SetText(const char *text)
 
 	// note, const char * -> char * cast.
 	// however, the og_set_text_button should not change that.
-	og_set_text_button((orvgui_but *)but, (char *)text, pixwidth, pixheight, 
+	og_set_text_button((orvgui_but *)but, text, pixwidth, pixheight,
 		fontwidth, fontheight);
 
 	return true;
