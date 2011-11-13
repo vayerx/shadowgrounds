@@ -146,7 +146,7 @@ CompileSrcList( filesystem filesystem
     file_list.cpp file_package_manager.cpp input_file_stream.cpp input_stream.cpp input_stream_wrapper.cpp
     memory_stream.cpp output_file_stream.cpp output_stream.cpp standard_package.cpp
     rle_packed_file_wrapper.cpp zip_package.cpp
-    detail/unzip.c detail/ioapi.c
+    detail/unzip.cpp detail/ioapi.cpp
 )
 
 CompileSrcList( game_ui game

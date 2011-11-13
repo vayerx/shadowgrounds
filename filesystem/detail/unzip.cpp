@@ -203,12 +203,6 @@ typedef struct
    IN assertion: the stream s has been sucessfully opened for reading.
 */
 
-
-local int unz64local_getByte OF((
-    const zlib_filefunc64_32_def* pzlib_filefunc_def,
-    voidpf filestream,
-    int *pi));
-
 local int unz64local_getByte(const zlib_filefunc64_32_def* pzlib_filefunc_def, voidpf filestream, int *pi)
 {
     unsigned char c;
@@ -231,10 +225,6 @@ local int unz64local_getByte(const zlib_filefunc64_32_def* pzlib_filefunc_def, v
 /* ===========================================================================
    Reads a long in LSB order from the given gz_stream. Sets
 */
-local int unz64local_getShort OF((
-    const zlib_filefunc64_32_def* pzlib_filefunc_def,
-    voidpf filestream,
-    uLong *pX));
 
 local int unz64local_getShort (const zlib_filefunc64_32_def* pzlib_filefunc_def,
                              voidpf filestream,
@@ -258,10 +248,6 @@ local int unz64local_getShort (const zlib_filefunc64_32_def* pzlib_filefunc_def,
     return err;
 }
 
-local int unz64local_getLong OF((
-    const zlib_filefunc64_32_def* pzlib_filefunc_def,
-    voidpf filestream,
-    uLong *pX));
 
 local int unz64local_getLong (const zlib_filefunc64_32_def* pzlib_filefunc_def,
                             voidpf filestream,
@@ -292,11 +278,6 @@ local int unz64local_getLong (const zlib_filefunc64_32_def* pzlib_filefunc_def,
         *pX = 0;
     return err;
 }
-
-local int unz64local_getLong64 OF((
-    const zlib_filefunc64_32_def* pzlib_filefunc_def,
-    voidpf filestream,
-    ZPOS64_T *pX));
 
 
 local int unz64local_getLong64 (const zlib_filefunc64_32_def* pzlib_filefunc_def,
@@ -409,7 +390,6 @@ extern int ZEXPORT unzStringFileNameCompare (const char*  fileName1,
   Locate the Central directory of a zipfile (at the end, just before
     the global comment)
 */
-local ZPOS64_T unz64local_SearchCentralDir OF((const zlib_filefunc64_32_def* pzlib_filefunc_def, voidpf filestream));
 local ZPOS64_T unz64local_SearchCentralDir(const zlib_filefunc64_32_def* pzlib_filefunc_def, voidpf filestream)
 {
     unsigned char* buf;
@@ -471,10 +451,6 @@ local ZPOS64_T unz64local_SearchCentralDir(const zlib_filefunc64_32_def* pzlib_f
   Locate the Central directory 64 of a zipfile (at the end, just before
     the global comment)
 */
-local ZPOS64_T unz64local_SearchCentralDir64 OF((
-    const zlib_filefunc64_32_def* pzlib_filefunc_def,
-    voidpf filestream));
-
 local ZPOS64_T unz64local_SearchCentralDir64(const zlib_filefunc64_32_def* pzlib_filefunc_def,
                                       voidpf filestream)
 {
@@ -865,16 +841,6 @@ local void unz64local_DosDateToTmuDate (ZPOS64_T ulDosDate, tm_unz* ptm)
 /*
   Get Info about the current file in the zipfile, with internal only info
 */
-local int unz64local_GetCurrentFileInfoInternal OF((unzFile file,
-                                                  unz_file_info64 *pfile_info,
-                                                  unz_file_info64_internal
-                                                  *pfile_info_internal,
-                                                  char *szFileName,
-                                                  uLong fileNameBufferSize,
-                                                  void *extraField,
-                                                  uLong extraFieldBufferSize,
-                                                  char *szComment,
-                                                  uLong commentBufferSize));
 
 local int unz64local_GetCurrentFileInfoInternal (unzFile file,
                                                   unz_file_info64 *pfile_info,
