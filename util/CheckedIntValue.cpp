@@ -586,7 +586,7 @@ CheckedIntValue::operator void*() const
 	{
 		CHECKED_INT_WARNING("CheckedIntValue - use of unitialized value (-> void*).");
 	}
-  return (void*)(this->value);
+  return reinterpret_cast<void*>(this->value);
 }
 
 // for error checking...

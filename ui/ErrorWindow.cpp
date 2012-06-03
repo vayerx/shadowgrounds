@@ -170,7 +170,7 @@ namespace ui
 
     // change current message to this msg
     messageText[messages % ERRORWINDOW_MSG_TEXTS] = 
-      ogui->CreateTextLabel(win, 0, 8 + 16 * (messages % ERRORWINDOW_MSG_TEXTS), 1008, 16, (char *)msg);
+      ogui->CreateTextLabel(win, 0, 8 + 16 * (messages % ERRORWINDOW_MSG_TEXTS), 1008, 16, msg);
     messageText[messages % ERRORWINDOW_MSG_TEXTS]->SetTextHAlign(OguiButton::TEXT_H_ALIGN_LEFT);
     if (defaultThinFont != NULL)
       messageText[messages % ERRORWINDOW_MSG_TEXTS]->SetFont(defaultThinFont);

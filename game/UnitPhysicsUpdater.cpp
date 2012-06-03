@@ -105,7 +105,7 @@ namespace game
 				if (physobj != NULL)
 				{
 					// WARNING: unsafe int to void * cast!
-					physobj->setCustomData((void *)PhysicsContactUtils::calcCustomPhysicsObjectDataForUnit(game, unit));
+					physobj->setCustomData(reinterpret_cast<void *>(PhysicsContactUtils::calcCustomPhysicsObjectDataForUnit(game, unit)));
 
 					util::ObjectDurabilityParser durp;
 					int durtype = durp.getDurabilityTypeIndexByName("unit");

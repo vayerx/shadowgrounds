@@ -2753,7 +2753,7 @@ static util::ObjectDurabilityParser durp;
 
 				int instanceId = i;
 				// WARNING: unsafe int to void * cast!
-				bp->setCustomData((void *)game::PhysicsContactUtils::calcCustomPhysicsObjectDataForTerrainObject(modelId, instanceId));
+				bp->setCustomData(reinterpret_cast<void *>(game::PhysicsContactUtils::calcCustomPhysicsObjectDataForTerrainObject(modelId, instanceId)));
 
 				instance.physicsObject.reset(bp);
 			}
@@ -2800,7 +2800,7 @@ static util::ObjectDurabilityParser durp;
 
 				int instanceId = i;
 				// WARNING: unsafe int to void * cast!
-				cp->setCustomData((void *)game::PhysicsContactUtils::calcCustomPhysicsObjectDataForTerrainObject(modelId, instanceId));
+				cp->setCustomData(reinterpret_cast<void *>(game::PhysicsContactUtils::calcCustomPhysicsObjectDataForTerrainObject(modelId, instanceId)));
 
 				instance.physicsObject.reset(cp);
 			}
@@ -2844,8 +2844,10 @@ static util::ObjectDurabilityParser durp;
 		{
 			if(data.physicsType == TERRAIN_OBJECT_PHYSICS_TYPE_STATIC)
 			{
+#if defined(PHYSICS_ODE) || defined(PHYSICS_PHYSX)
 				VC3 pos = VC3(instance.position.x, instance.height, instance.position.y);
 				QUAT rot = instance.setRotation;
+#endif
 #ifdef PHYSICS_ODE
 				game::StaticPhysicsObject *sp = new game::StaticPhysicsObject(gamePhysics, data.fileName.c_str(), NULL, pos, rot);
 				instance.physicsObject.reset(sp);
