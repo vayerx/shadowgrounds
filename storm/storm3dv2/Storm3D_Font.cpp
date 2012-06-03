@@ -275,7 +275,7 @@ COL &Storm3D_Font::GetColor()
 	\param length length of string
 	\return character width
 */
-int Storm3D_Font::GetCharacterWidth(wchar_t *string, int length) const
+int Storm3D_Font::GetCharacterWidth(const wchar_t *string, int length) const
 {
 	int w, h;
 	if(font)

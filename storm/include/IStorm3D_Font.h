@@ -49,7 +49,7 @@ public:
 	virtual COL &GetColor()=0;
 
 	virtual void SetFont(const char *face, int width, int height, bool bold, bool italic) = 0;
-	virtual int GetCharacterWidth(wchar_t *string, int length) const = 0; 
+	virtual int GetCharacterWidth(const wchar_t *string, int length) const = 0; 
 
 	virtual bool isUnicode() const = 0;
 	virtual const char *GetFace() const = 0;

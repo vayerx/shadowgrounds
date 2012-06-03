@@ -57,7 +57,7 @@ public:
 	void SetColor(const COL &color);
 	COL &GetColor();
 
-	int GetCharacterWidth(wchar_t *string, int length) const;
+	int GetCharacterWidth(const wchar_t *string, int length) const;
 	bool isUnicode() const;
 
 	TTF_Font *GetFont();

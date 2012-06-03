@@ -86,7 +86,7 @@ int OguiStormFont::getStringWidth(const wchar_t *text)
 	if(fnt && text )
 	{
 		// BUGBUG: crashes here at start-up
-		int length = fnt->GetCharacterWidth((wchar_t *) text, wcslen(text));
+		int length = fnt->GetCharacterWidth(text, wcslen(text));
 		return 1024 * length / scr_size_x;
 	}
 
