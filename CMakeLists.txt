@@ -334,13 +334,14 @@ IF( CMAKE_COMPILER_IS_GNUCXX )
                                     -Winit-self
                                     # -Werror
 
+                                    -Wno-unused-result
                                     -Wno-unused-parameter -Wno-unused-variable  # TODO
     )
     SET( CMAKE_CXX_FLAGS_DEBUG      "-O0 -g" )                  # ( waiting for COMPILE_OPTIONS_<CONFIG> )
     SET( CMAKE_CXX_FLAGS_RELEASE    "-O2" )     # TODO O3       # ( waiting for COMPILE_OPTIONS_<CONFIG> )
     SET( CMAKE_CXX_FLAGS            "-fno-strict-aliasing" )
 ELSE( CMAKE_COMPILER_IS_GNUCXX )
-    MESSAGE( "WARNING: using default options for non-GCC compiler" )
+    MESSAGE( WARNING "Using default options for non-GCC compiler" )
 ENDIF( CMAKE_COMPILER_IS_GNUCXX )
 
 # some files must be compiled unoptimized (gcc bug?)
