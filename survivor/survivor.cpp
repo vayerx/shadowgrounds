@@ -216,6 +216,7 @@ void parse_commandline(int argc, char *argv[], opt::variables_map &vm)
 		("nokeyboard,k","Disable keyboard")
 		("nojoystick,j","Disable joystick")
 		("data,d",      value<std::string>()->default_value(GAMEDATA_PATH)->required(), "Path to game-data directory")
+        ("errorlevel,l",value<int>()->default_value(LOGGER_LEVEL_NONE)->required(), "Logging level")
 	;
 	options_description hidden;
 	hidden.add_options()
@@ -1149,7 +1150,7 @@ int main(int argc, char *argv[]) {
 	//}
 
 	StormLogger logger(*Logger::getInstance());
-	Logger::getInstance()->setLogLevel(LOGGER_LEVEL_INFO);
+	Logger::getInstance()->setLogLevel( vm["errorlevel"].as<int>() );
 
 	IStorm3D *s3d = IStorm3D::Create_Storm3D_Interface(true, &filesystem::FilePackageManager::getInstance(), &logger);
 
