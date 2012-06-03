@@ -31,7 +31,7 @@ public:
 	void hide( int fadeTime = 0 );
 	void show( int fadeTime = 0 );
 
-	void update();
+	void update(int);
 	void clearOneMessage();
 
 	

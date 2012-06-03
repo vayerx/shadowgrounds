@@ -2914,7 +2914,7 @@ int getNumberOfPlayers()
 			i->second->update();
 		}
 
-		hintMessageWindow->update();
+		hintMessageWindow->update(0);
 
 		// if( unitHealthBar )
 		// {

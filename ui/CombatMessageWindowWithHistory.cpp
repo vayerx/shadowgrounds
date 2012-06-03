@@ -85,7 +85,7 @@ void CombatMessageWindowWithHistory::clearMessage()
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void CombatMessageWindowWithHistory::update()
+void CombatMessageWindowWithHistory::update(int)
 {
 
 	int i = 0;
