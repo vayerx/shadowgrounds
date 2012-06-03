@@ -1174,8 +1174,8 @@ namespace util
 						if (makeCall)
 						{
 							// WARNING: int -> void * casts
-							sp->ipStack->append((void *)ip);
-							sp->ipStack->append((void *)sp->ifDepth);
+							sp->ipStack->append(reinterpret_cast<void *>(ip));
+							sp->ipStack->append(reinterpret_cast<void *>(sp->ifDepth));
 							if (sp->thenBranch)
 								sp->ipStack->append((void *)1);
 							else
@@ -2200,7 +2200,7 @@ namespace util
 					int num = commandAmount;
 
 					// WARNING: int -> void * cast
-					loopNumBuf->append((void *)num);
+					loopNumBuf->append(reinterpret_cast<void *>(num));
 
 					// don't overwrite this one.
 					commandAmount++;

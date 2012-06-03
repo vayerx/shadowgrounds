@@ -222,7 +222,7 @@ namespace ui
 							int woffx = getLocaleGuiInt("gui_upgrades_slot_weapon_offset_x", 0);
 
 							int id = UPGRADEW_WEAPONBUT_FIRST + i;
-							weaponButtons[i] = ogui->CreateSimpleImageButton(win, wx + woffx, wy, sizex, sizey, NULL, NULL, NULL, NULL, id, (void *)partTypeId);
+							weaponButtons[i] = ogui->CreateSimpleImageButton(win, wx + woffx, wy, sizex, sizey, NULL, NULL, NULL, NULL, id, reinterpret_cast<void *>(partTypeId));
 							weaponButtons[i]->SetReactMask(0);
 							weaponButtons[i]->SetDisabled(false);
 							weaponButtons[i]->SetImage(weaponImages[i]);
@@ -290,7 +290,7 @@ namespace ui
 							int id = UPGRADEW_UPGRADEBUT_FIRST + i*UPGRADEWINDOW_MAX_UPGRADES_PER_WEAPON+j;
 							assert(id >= UPGRADEW_UPGRADEBUT_FIRST && id <= UPGRADEW_UPGRADEBUT_LAST);
 							int upgid = upgIds[j];
-							upgradeButtons[i][j] = ogui->CreateSimpleImageButton(win, x, y, sizex, sizey, NULL, NULL, NULL, NULL, id, (void *)upgid);
+							upgradeButtons[i][j] = ogui->CreateSimpleImageButton(win, x, y, sizex, sizey, NULL, NULL, NULL, NULL, id, reinterpret_cast<void *>(upgid));
 							upgradeButtons[i][j]->SetReactMask(0);
 							upgradeButtons[i][j]->SetImage(upgradeImages[i][j]);
 							//upgradeButtons[i][j]->SetDisabledImage(upgradeDisabledImages[i][j]);

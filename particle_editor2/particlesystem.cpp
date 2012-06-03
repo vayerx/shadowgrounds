@@ -420,7 +420,7 @@ void GenParticleSystem::defaultTick(IStorm3D_Scene* scene, const GenParticleSyst
 
 void GenParticleSystem::defaultRender(IStorm3D_Scene* scene, GenParticleSystemEditables& eds) 
 {
-#ifndef NX_DISABLE_FLUIDS
+#if defined (PHYSICS_PHYSX) && !defined(NX_DISABLE_FLUIDS)
 	bool usingFluids = false;
 	if(eds.physicsType == GenParticleSystemEditables::PHYSICS_TYPE_FLUID || eds.physicsType == GenParticleSystemEditables::PHYSICS_TYPE_FLUID_INTERACTION)
 		usingFluids = true;
