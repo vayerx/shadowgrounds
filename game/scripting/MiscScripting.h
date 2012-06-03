@@ -19,7 +19,7 @@ namespace game
 			 * Just processes one command...
 			 */
 			static void process(util::ScriptProcess *sp, 
-				int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue, 
+				int command, floatint intFloat, const char *stringData, ScriptLastValueType *lastValue, 
 				GameScriptData *gsd, Game *game, bool *pause);
 	};
 }

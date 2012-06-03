@@ -24,7 +24,7 @@ public:
   void setBank(int bank);
   void run();
   void setSuffle(bool suffle);
-  void playFile(char *filename);
+  void playFile(const char *filename);
   void setMusicFadeTime(int musicFadeTime);
 
 private:

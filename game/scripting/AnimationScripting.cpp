@@ -39,7 +39,7 @@ using namespace ui;
 namespace game
 {
 	void AnimationScripting::process(util::ScriptProcess *sp, 
-		int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue,
+		int command, floatint intFloat, const char *stringData, ScriptLastValueType *lastValue,
 		GameScriptData *gsd, Game *game, bool *pause)
 	{
 		Ani *ani = AniManager::getInstance()->getCurrentScriptAni();
@@ -344,7 +344,7 @@ namespace game
 			*/
 			if (stringData != NULL)
 			{
-				char *aniname;
+				const char *aniname;
 				if (stringData[0] == '$' && stringData[1] == '\0' && gsd->stringValue != NULL)
 					aniname = gsd->stringValue;
 				else
@@ -370,7 +370,7 @@ namespace game
 		case GS_CMD_STARTANIPLAY:
 			if (stringData != NULL)
 			{
-				char *aniname;
+				const char *aniname;
 				if (stringData[0] == '$' && stringData[1] == '\0' && gsd->stringValue != NULL)
 					aniname = gsd->stringValue;
 				else
@@ -401,7 +401,7 @@ ua->resetToNormalState(gsd->unit);
 		case GS_CMD_STOPANIPLAY:
 			if (stringData != NULL)
 			{
-				char *aniname;
+				const char *aniname;
 				if (stringData[0] == '$' && stringData[1] == '\0' && gsd->stringValue != NULL)
 					aniname = gsd->stringValue;
 				else
@@ -423,7 +423,7 @@ ua->resetToNormalState(gsd->unit);
 		case GS_CMD_STARTANIRECORD:
 			if (stringData != NULL)
 			{
-				char *aniname;
+				const char *aniname;
 				if (stringData[0] == '$' && stringData[1] == '\0' && gsd->stringValue != NULL)
 					aniname = gsd->stringValue;
 				else
@@ -446,7 +446,7 @@ ua->resetToNormalState(gsd->unit);
 		case GS_CMD_CANCELANIRECORD:
 			if (stringData != NULL)
 			{
-				char *aniname;
+				const char *aniname;
 				if (stringData[0] == '$' && stringData[1] == '\0' && gsd->stringValue != NULL)
 					aniname = gsd->stringValue;
 				else
@@ -468,7 +468,7 @@ ua->resetToNormalState(gsd->unit);
 		case GS_CMD_STOPANIRECORD:
 			if (stringData != NULL)
 			{
-				char *aniname;
+				const char *aniname;
 				if (stringData[0] == '$' && stringData[1] == '\0' && gsd->stringValue != NULL)
 					aniname = gsd->stringValue;
 				else

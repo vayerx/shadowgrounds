@@ -14,9 +14,9 @@ namespace game
 
 		~PlayerPartsManager();
 
-		bool allowPartType(int player, char *partIdString);
+		bool allowPartType(int player, const char *partIdString);
 
-		Part *addStoragePart(int player, char *partIdString);
+		Part *addStoragePart(int player, const char *partIdString);
 
 	private:
 		Game *game;

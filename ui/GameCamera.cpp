@@ -284,7 +284,7 @@ namespace ui
   }
 
 
-  GameCamera::CAMERA_MOVE GameCamera::getCameraMoveByName(char *name)
+  GameCamera::CAMERA_MOVE GameCamera::getCameraMoveByName(const char *name)
   {
     assert(name != NULL);
     for (int i = 0; i < CAMERA_MOVES_AMOUNT; i++)
@@ -296,7 +296,7 @@ namespace ui
   }
 
 
-  GameCamera::CAMERA_MODE GameCamera::getCameraModeByName(char *name)
+  GameCamera::CAMERA_MODE GameCamera::getCameraModeByName(const char *name)
   {
     assert(name != NULL);
     for (int i = 0; i < CAMERA_MODES_AMOUNT; i++)

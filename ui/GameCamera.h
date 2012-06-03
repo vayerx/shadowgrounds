@@ -59,9 +59,9 @@ namespace ui
       CAMERA_MOVE_FOV_OUT = 17
     };
 
-    static CAMERA_MOVE getCameraMoveByName(char *name);
+    static CAMERA_MOVE getCameraMoveByName(const char *name);
 
-    static CAMERA_MODE getCameraModeByName(char *name);
+    static CAMERA_MODE getCameraModeByName(const char *name);
     
     GameCamera(IStorm3D_Scene *scene, game::GameMap *gameMap,
       GameController **gameControllers);

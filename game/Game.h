@@ -222,7 +222,7 @@ namespace game
 		// by this game instance (else, returns zero)
     //int getCustomScriptProcessId(util::ScriptProcess *sp);
 
-    void setCinematicScriptProcess(char *script);
+    void setCinematicScriptProcess(const char *script);
 
 		bool isCinematicScriptRunning();
 

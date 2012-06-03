@@ -4128,7 +4128,7 @@ gameUI->getTerrain()->calculateLighting();
 		return nextMissionOnFailure.c_str();
 	}
 
-	void Game::setCinematicScriptProcess(char *script)
+	void Game::setCinematicScriptProcess(const char *script)
 	{
 		if (cinematicScriptProcess != NULL)
 		{

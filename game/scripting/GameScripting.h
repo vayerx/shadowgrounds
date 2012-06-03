@@ -36,7 +36,7 @@ namespace game
 		~GameScripting();
 
     virtual bool process(util::ScriptProcess *sp, int command, floatint intFloat,
-      char *stringData, ScriptLastValueType *lastValue);
+      const char *stringData, ScriptLastValueType *lastValue);
 
     void loadScripts(const char *filename, const char *relativeToFilenamePath);
 

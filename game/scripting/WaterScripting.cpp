@@ -26,7 +26,7 @@ using namespace ui;
 namespace game
 {
 	void WaterScripting::process(util::ScriptProcess *sp, 
-		int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue,
+		int command, floatint intFloat, const char *stringData, ScriptLastValueType *lastValue,
 		GameScriptData *gsd, Game *game)
 	{
 		switch(command)
@@ -40,7 +40,7 @@ namespace game
 				{
 					if (gsd->water != NULL)
 					{
-						char *watername;
+						const char *watername;
 						if (stringData[0] == '$' && stringData[1] == '\0' && gsd->stringValue != NULL)
 							watername = gsd->stringValue;
 						else

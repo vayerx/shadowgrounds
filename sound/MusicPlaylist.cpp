@@ -88,7 +88,7 @@ void MusicPlaylist::play()
 }
 
 
-void MusicPlaylist::playFile(char *filename)
+void MusicPlaylist::playFile(const char *filename)
 {
   Logger::getInstance()->debug("MusicPlaylist::playFile - Playing file.");
   if (mixer != NULL)

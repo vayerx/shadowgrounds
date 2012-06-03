@@ -44,7 +44,7 @@ using namespace ui;
 namespace game
 {
 	void MissionScripting::process(util::ScriptProcess *sp, 
-		int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue,
+		int command, floatint intFloat, const char *stringData, ScriptLastValueType *lastValue,
 		GameScriptData *gsd, Game *game)
 	{
 		int intData = intFloat.i;
@@ -419,23 +419,12 @@ namespace game
 		case GS_CMD_setPhysicsWaterSettings:
 			if (stringData != NULL)
 			{
-				unsigned int splitPos = 0;
-				unsigned int i = 0;
-				while(true)
+                const char *splitPos = strchr(stringData, ',');
+				if(splitPos != NULL)
 				{
-					if(stringData[i] == 0) break;
-					if(stringData[i] == ',')
-					{
-						splitPos = i;
-						stringData[i] = 0;
-						break;
-					}
-					i++;
-				}
-				if(splitPos > 0)
-				{
-					SimpleOptions::setFloat(DH_OPT_F_PHYSICS_WATER_HEIGHT, (float)atof(stringData));
-					SimpleOptions::setFloat(DH_OPT_F_PHYSICS_WATER_DAMPING, (float)atof(stringData + splitPos + 1));
+                    const std::string first(stringData, splitPos), second(splitPos + 1);
+					SimpleOptions::setFloat(DH_OPT_F_PHYSICS_WATER_HEIGHT, (float)atof(first.c_str()));
+					SimpleOptions::setFloat(DH_OPT_F_PHYSICS_WATER_DAMPING, (float)atof(second.c_str()));
 				}
 				else
 				{

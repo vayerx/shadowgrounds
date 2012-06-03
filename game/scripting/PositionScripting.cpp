@@ -29,7 +29,7 @@ namespace game
 	bool gs_global_temp_position_used = false;
 
 	void PositionScripting::process(util::ScriptProcess *sp, 
-		int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue,
+		int command, floatint intFloat, const char *stringData, ScriptLastValueType *lastValue,
 		GameScriptData *gsd, Game *game)
 	{
 		int intData = intFloat.i;

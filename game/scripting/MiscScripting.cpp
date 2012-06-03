@@ -95,7 +95,7 @@ namespace game
 	extern bool game_in_start_combat;
 
 	void MiscScripting::process(util::ScriptProcess *sp, 
-		int command, floatint intFloat, char *stringData, ScriptLastValueType *lastValue,
+		int command, floatint intFloat, const char *stringData, ScriptLastValueType *lastValue,
 		GameScriptData *gsd, Game *game, bool *pause)
 	{
 		int intData = intFloat.i;
@@ -159,7 +159,7 @@ namespace game
 		case GS_CMD_MESSAGE:
 			if (stringData != NULL)
 			{
-				char *usestr;
+				const char *usestr;
 				if (stringData[0] == '$' && stringData[1] == '\0' && gsd->stringValue != NULL)
 					usestr = gsd->stringValue;
 				else
@@ -178,7 +178,7 @@ namespace game
 		case GS_CMD_characterMessageNoFace:
 			if (stringData != NULL)
 			{
-				char *usestr;
+				const char *usestr;
 				if (stringData[0] == '$' && stringData[1] == '\0' && gsd->stringValue != NULL)
 					usestr = gsd->stringValue;
 				else
@@ -197,7 +197,7 @@ namespace game
 		case GS_CMD_CENTERMESSAGE:
 			if (stringData != NULL)
 			{
-				char *usestr;
+				const char *usestr;
 				if (stringData[0] == '$' && stringData[1] == '\0' && gsd->stringValue != NULL)
 					usestr = gsd->stringValue;
 				else
@@ -216,7 +216,7 @@ namespace game
 		case GS_CMD_HINTMESSAGE:
 			if (stringData != NULL)
 			{
-				char *usestr;
+				const char *usestr;
 				if (stringData[0] == '$' && stringData[1] == '\0' && gsd->stringValue != NULL)
 					usestr = gsd->stringValue;
 				else
@@ -235,7 +235,7 @@ namespace game
 		case GS_CMD_getLocaleStringLength:
 			if (stringData != NULL)
 			{
-				char *usestr;
+				const char *usestr;
 				if (stringData[0] == '$' && stringData[1] == '\0' && gsd->stringValue != NULL)
 					usestr = gsd->stringValue;
 				else
@@ -273,7 +273,7 @@ namespace game
 		case GS_CMD_EXECUTETIPMESSAGE:
 			if (stringData != NULL)
 			{
-				char *usestr;
+				const char *usestr;
 				if (stringData[0] == '$' && stringData[1] == '\0' && gsd->stringValue != NULL)
 					usestr = gsd->stringValue;
 				else
@@ -291,7 +291,7 @@ namespace game
 		case GS_CMD_PRIORITYEXECUTETIPMESSAGE:
 			if (stringData != NULL)
 			{
-				char *usestr;
+				const char *usestr;
 				if (stringData[0] == '$' && stringData[1] == '\0' && gsd->stringValue != NULL)
 					usestr = gsd->stringValue;
 				else
@@ -313,7 +313,7 @@ namespace game
 				{
 					if (stringData != NULL)
 					{
-						char *usestr;
+						const char *usestr;
 						if (stringData[0] == '$' && stringData[1] == '\0' && gsd->stringValue != NULL)
 							usestr = gsd->stringValue;
 						else
@@ -390,7 +390,7 @@ namespace game
 				{
 					if (stringData != NULL)
 					{
-						char *usestr;
+						const char *usestr;
 						if (stringData[0] == '$' && stringData[1] == '\0' && gsd->stringValue != NULL)
 							usestr = gsd->stringValue;
 						else
@@ -498,7 +498,7 @@ namespace game
 		case GS_CMD_STARTSCRIPTPROCESS:
 			if (stringData != NULL)
 			{
-				char *s = stringData;
+				const char *s = stringData;
 				if (stringData[0] == '$' && stringData[1] == '\0')
 				{
 					s = gsd->stringValue;
@@ -590,7 +590,7 @@ namespace game
 		case GS_CMD_STARTSCRIPTPROCESSFORUNIT:
 			if (stringData != NULL)
 			{
-				char *s = stringData;
+				const char *s = stringData;
 				if (stringData[0] == '$' && stringData[1] == '\0')
 				{
 					s = gsd->stringValue;
@@ -1268,7 +1268,7 @@ namespace game
 		case GS_CMD_SPAWNPROJECTILE:
 			if (stringData != NULL)
 			{
-				char *s;
+				const char *s;
 				if (stringData[0] == '$' && stringData[1] == '\0')
 					s = gsd->stringValue;
 				else
@@ -1308,7 +1308,7 @@ namespace game
 		case GS_CMD_spawnProjectileWithShooter:
 			if (stringData != NULL)
 			{
-				char *s;
+				const char *s;
 				if (stringData[0] == '$' && stringData[1] == '\0')
 					s = gsd->stringValue;
 				else
@@ -1825,7 +1825,7 @@ namespace game
 		case GS_CMD_chatSend:
 			if (stringData != NULL)
 			{
-				char *s = stringData;
+				const char *s = stringData;
 				if (stringData[0] == '$' && stringData[1] == '\0')
 					s = gsd->stringValue;
 				if (s == NULL)
@@ -1843,7 +1843,7 @@ namespace game
 		case GS_CMD_chatSendMessage:
 			if (stringData != NULL)
 			{
-				char *s = stringData;
+				const char *s = stringData;
 				if (stringData[0] == '$' && stringData[1] == '\0')
 					s = gsd->stringValue;
 				if (s == NULL)
@@ -2044,7 +2044,7 @@ namespace game
 				game->gameUI->getCombatWindow( gsd->player )->getSubWindow( "ElaborateHintMessageWindow" ) &&
 				stringData != NULL )
 			{
-				char *usestr;
+				const char *usestr;
 				if (stringData[0] == '$' && stringData[1] == '\0' && gsd->stringValue != NULL)
 					usestr = gsd->stringValue;
 				else

@@ -28,7 +28,7 @@ namespace game
 	}
 
 
-	bool PlayerPartsManager::allowPartType(int player, char *partIdString)
+	bool PlayerPartsManager::allowPartType(int player, const char *partIdString)
 	{
 		assert(partIdString != NULL);
 		if (player < 0 || player >= ABS_MAX_PLAYERS)
@@ -65,7 +65,7 @@ namespace game
 	}
 	
 
-	Part *PlayerPartsManager::addStoragePart(int player, char *partIdString)
+	Part *PlayerPartsManager::addStoragePart(int player, const char *partIdString)
 	{
 		Part *part = NULL;
     if (!PARTTYPE_ID_STRING_VALID(partIdString))

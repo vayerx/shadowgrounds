@@ -138,7 +138,7 @@ namespace game
 
 
 	bool GameScripting::process(util::ScriptProcess *sp, int command, floatint intFloat,
-		char *stringData, ScriptLastValueType *lastValue)
+		const char *stringData, ScriptLastValueType *lastValue)
 	{
 		// WARNING: unsafe cast!
 		GameScriptData *gsd = (GameScriptData *)sp->getData(); 
@@ -1528,7 +1528,7 @@ namespace game
 		singleCommandScriptProcess->setSecondaryValue(*secondaryValue);
 
 		/// @todo WARNING: const char * -> char * cast... as that should be the case (?)
-		process(singleCommandScriptProcess, command, intFloat, (char *)stringData, &singleCommandScriptProcess->lastValue);
+		process(singleCommandScriptProcess, command, intFloat, stringData, &singleCommandScriptProcess->lastValue);
 
 		*lastValue = singleCommandScriptProcess->lastValue;
 		*secondaryValue = singleCommandScriptProcess->secondaryValue;
