@@ -428,9 +428,9 @@ int getNumberOfPlayers()
 				openSubWindow( "FlashlightWindow", player );
 				openSubWindow( "HealthWindow", player );
 				openSubWindow( "AmmoWindow", player  );
-#ifdef PROJECT_SHADOWGROUNDS
+/// why? #ifdef PROJECT_SHADOWGROUNDS
 				openSubWindow( "WeaponWindow", player );
-#endif
+//#endif
 			}
 
 			openSubWindow( "ItemWindow", player  );
