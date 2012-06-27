@@ -8,7 +8,9 @@
 #include "../game/UnitSelections.h"
 
 #include <string>
+#include <memory>
 #include <map>
+#include <boost/noncopyable.hpp>
 
 #define COMBATW_UNITS 1
 //#define COMBATW_UNITS 5
@@ -73,6 +75,7 @@ namespace ui
 	
 	class CombatWindow : public IOguiButtonListener, 
 		private game::IUnitSelectionListener
+      , private boost::noncopyable
 	{
 	public:
 		
@@ -232,8 +235,8 @@ namespace ui
 		CombatMessageWindow *executeTipMessageWindow;
 		CombatMessageWindow *timerWindow;
 		
-		OguiButton *crosshair;
-		IOguiImage *crosshairImage;
+		std::auto_ptr<OguiButton> crosshair;
+		std::auto_ptr<IOguiImage> crosshairImage;
 
 		OguiButton *tacticalModeBut;
 		

@@ -406,9 +406,6 @@ int getNumberOfPlayers()
 		b->SetEventMask(OGUI_EMASK_CLICK | OGUI_EMASK_OVER | OGUI_EMASK_LEAVE);
 		*/
 		
-		crosshair = NULL;
-		crosshairImage = NULL;
-		
 		bool cooperative = game->isCooperative();
 
 #ifdef GUI_BUILD_INGAME_GUI
@@ -556,16 +553,6 @@ int getNumberOfPlayers()
 				delete areas[i];
 				areas[i] = NULL;
 			}
-		}
-		if (crosshair != NULL)
-		{
-			delete crosshair;
-			crosshair = NULL;
-		}
-		if (crosshairImage != NULL)
-		{
-			delete crosshairImage;
-			crosshairImage = NULL;
 		}
 		delete [] areas;
 		if (tacticalModeBut != NULL)
@@ -988,11 +975,7 @@ int getNumberOfPlayers()
 					impl->aovCrosshairs[i]->hide();
 			}
 #endif
-			if (crosshair != NULL)
-			{
-				delete crosshair;
-				crosshair = NULL;
-			}
+			crosshair.reset();
 		}
 	}
 	
@@ -1037,7 +1020,7 @@ int getNumberOfPlayers()
 				}
 			}
 #endif
-		if (crosshair != NULL)
+		if (crosshair.get() != NULL)
 		{
 			if (sizeFactor < 1.2f) sizeFactor = 1.2f;
 			sizeFactor = (1.0f + sizeFactor) / 2.0f;
