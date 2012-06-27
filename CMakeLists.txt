@@ -322,6 +322,18 @@ MACRO( CompileList result )
 ENDMACRO( CompileList )
 
 IF( CMAKE_COMPILER_IS_GNUCXX )
+    OPTION( ENABLE_GRAPHITE "Enable GCC Graphite" ON )
+    IF ( ENABLE_GRAPHITE )
+        CompileList( GRAPHITE_OPTS
+            -fgraphite-identity
+            -floop-block
+            -floop-flatten
+            -floop-interchange
+            -floop-parallelize-all
+            -floop-strip-mine
+        )
+    ENDIF ( ENABLE_GRAPHITE )
+
     CompileList( SG_WARNINGS
         -Wall
         -Wextra
@@ -339,6 +351,7 @@ IF( CMAKE_COMPILER_IS_GNUCXX )
         -Wno-unused-result
         -Wno-unused-parameter -Wno-unused-variable  # TODO
     )
+
     CompileList( SG_RELEASE_OPT
         -fcx-limited-range
         #-ffast-math
@@ -348,13 +361,14 @@ IF( CMAKE_COMPILER_IS_GNUCXX )
         -fomit-frame-pointer
         -ftree-loop-distribution
         -ftree-loop-linear
-        -funsafe-loop-optimizations
+        # -funsafe-loop-optimizations
         -mfpmath=sse
         -mmmx
         -msse
         -msse2
         -mssse3
         #-msse4.1
+        ${GRAPHITE_OPTS}
     )
     # waiting for COMPILE_OPTIONS_<CONFIG>
     SET( CMAKE_CXX_FLAGS_DEBUG      "-O0 -g" )                  # ( waiting for COMPILE_OPTIONS_<CONFIG> )
