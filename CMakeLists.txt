@@ -16,10 +16,11 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${SG_CMAKE_DIR}")
 #  Libraries
 # ------------------------------------------------
 
-SET( Boost_USE_STATIC_LIBS   OFF )
-SET( Boost_USE_MULTITHREADED ON )
-FIND_PACKAGE( Boost 1.42 REQUIRED
-    program_options 
+SET( Boost_USE_STATIC_LIBS      OFF )
+SET( Boost_USE_MULTITHREADED    ON )
+SET( Boost_USE_STATIC_RUNTIME   OFF )
+FIND_PACKAGE( Boost 1.46 REQUIRED
+    program_options
     thread
 )
 FIND_PACKAGE( SDL REQUIRED )
@@ -321,24 +322,44 @@ MACRO( CompileList result )
 ENDMACRO( CompileList )
 
 IF( CMAKE_COMPILER_IS_GNUCXX )
-    CompileList( SG_WARNINGS        -Wall
-                                    -Wextra
-                                    # -pedantic
-                                    -Wcast-align
-                                    -Wcast-qual
-                                    # -Wconversion
-                                    -Woverloaded-virtual
-                                    # -Wnon-virtual-dtor
-                                    -Wcomment
-                                    -Wstrict-null-sentinel
-                                    -Winit-self
-                                    # -Werror
+    CompileList( SG_WARNINGS
+        -Wall
+        -Wextra
+        # -pedantic
+        -Wcast-align
+        -Wcast-qual
+        # -Wconversion
+        -Woverloaded-virtual
+        # -Wnon-virtual-dtor
+        -Wcomment
+        -Wstrict-null-sentinel
+        -Winit-self
+        # -Werror
 
-                                    -Wno-unused-result
-                                    -Wno-unused-parameter -Wno-unused-variable  # TODO
+        -Wno-unused-result
+        -Wno-unused-parameter -Wno-unused-variable  # TODO
     )
+    CompileList( SG_RELEASE_OPT
+        -fcx-limited-range
+        #-ffast-math
+        -ffinite-math-only
+        -fno-math-errno
+        -fno-signaling-nans
+        -fomit-frame-pointer
+        -ftree-loop-distribution
+        -ftree-loop-linear
+        -funsafe-loop-optimizations
+        -mfpmath=sse
+        -mmmx
+        -msse
+        -msse2
+        -mssse3
+        #-msse4.1
+    )
+    # waiting for COMPILE_OPTIONS_<CONFIG>
     SET( CMAKE_CXX_FLAGS_DEBUG      "-O0 -g" )                  # ( waiting for COMPILE_OPTIONS_<CONFIG> )
-    SET( CMAKE_CXX_FLAGS_RELEASE    "-O2" )     # TODO O3       # ( waiting for COMPILE_OPTIONS_<CONFIG> )
+    SET( CMAKE_CXX_FLAGS_RELEASE    "-O2 ${SG_RELEASE_OPT}" )
+
     SET( CMAKE_CXX_FLAGS            "-fno-strict-aliasing" )
 ELSE( CMAKE_COMPILER_IS_GNUCXX )
     MESSAGE( WARNING "Using default options for non-GCC compiler" )
