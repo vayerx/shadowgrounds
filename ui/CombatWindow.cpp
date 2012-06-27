@@ -411,37 +411,26 @@ int getNumberOfPlayers()
 		
 		bool cooperative = game->isCooperative();
 
-
-		bool survivor = false;
-
-#ifdef PROJECT_SURVIVOR
-		survivor = true;
-#endif
-
 #ifdef GUI_BUILD_INGAME_GUI
 		{
 			if( cooperative  )
 			{
-				if(survivor)
-				{
-					openSubWindow( "HealthWindowCoop", getNumberOfPlayers() );
-					openSubWindow( "AmmoWindowCoop", getNumberOfPlayers() );
-				}
-
-				// why are these commented out??
-
-				//openSubWindow( "HealthWindowCoop", getNumberOfPlayers() );
-				//openSubWindow( "AmmoWindowCoop", getNumberOfPlayers() );
-				//if( survivor == false )
-				//	openSubWindow( "WeaponWindowCoop", getNumberOfPlayers() );
+#ifdef PROJECT_SURVIVOR
+				openSubWindow( "HealthWindowCoop", getNumberOfPlayers() );
+				openSubWindow( "AmmoWindowCoop", getNumberOfPlayers() );
+#endif
+#ifdef PROJECT_SHADOWGROUNDS
+				// openSubWindow( "WeaponWindowCoop", getNumberOfPlayers() );
+#endif
 			}
 			else // basic_shadowgrounds_singleplayer_ui
 			{
 				openSubWindow( "FlashlightWindow", player );
 				openSubWindow( "HealthWindow", player );
 				openSubWindow( "AmmoWindow", player  );
-				if( survivor == false )
-					openSubWindow( "WeaponWindow", player  );
+#ifdef PROJECT_SHADOWGROUNDS
+				openSubWindow( "WeaponWindow", player );
+#endif
 			}
 
 			openSubWindow( "ItemWindow", player  );
