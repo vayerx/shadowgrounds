@@ -975,7 +975,7 @@ int getNumberOfPlayers()
 					impl->aovCrosshairs[i]->hide();
 			}
 #endif
-			crosshair.reset();
+			// unused crosshair.reset();
 		}
 	}
 	
@@ -1020,6 +1020,7 @@ int getNumberOfPlayers()
 				}
 			}
 #endif
+#if 0 // unused
 		if (crosshair.get() != NULL)
 		{
 			if (sizeFactor < 1.2f) sizeFactor = 1.2f;
@@ -1028,7 +1029,8 @@ int getNumberOfPlayers()
 			size = (size & (0xffff - 1));
 			crosshair->Move(screenX - size / 2, screenY - size / 2);
 			crosshair->Resize(size, size);
-		}		
+		}
+#endif
 	}
 
 	

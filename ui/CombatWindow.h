@@ -235,8 +235,8 @@ namespace ui
 		CombatMessageWindow *executeTipMessageWindow;
 		CombatMessageWindow *timerWindow;
 		
-		std::auto_ptr<OguiButton> crosshair;
-		std::auto_ptr<IOguiImage> crosshairImage;
+		// unused std::auto_ptr<OguiButton> crosshair;
+		// unused std::auto_ptr<IOguiImage> crosshairImage;
 
 		OguiButton *tacticalModeBut;
 		
