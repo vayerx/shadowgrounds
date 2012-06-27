@@ -196,8 +196,7 @@ namespace ui
 		Ogui *ogui;
 		game::Game *game;
 		int player;
-		OguiWindow *win;
-		
+
 		int dragStartX;
 		int dragStartY;
 		int dragStartTime;
@@ -227,24 +226,26 @@ namespace ui
 		
 		// screen areas (scene and areas that move/rotate camera)
 		OguiButton **areas;
-		
-		CombatMessageWindow *messageWindow;
-		CombatMessageWindow *messageWindowRight;
-		CombatMessageWindow *centerMessageWindow;
-		CombatMessageWindowWithHistory *hintMessageWindow;
-		CombatMessageWindow *executeTipMessageWindow;
-		CombatMessageWindow *timerWindow;
-		
+
+        std::auto_ptr<CombatMessageWindow>  messageWindow;
+        std::auto_ptr<CombatMessageWindow>  timerWindow;
+        std::auto_ptr<CombatMessageWindow>  messageWindowRight;
+        std::auto_ptr<CombatMessageWindow>  centerMessageWindow;
+        std::auto_ptr<CombatMessageWindow>  hintMessageWindow;
+        std::auto_ptr<CombatMessageWindow>  executeTipMessageWindow;
+
+        std::auto_ptr<OffscreenUnitPointers> offscreenUnitPointers;
+        std::auto_ptr<CombatRadar>          radar;
+
+        std::auto_ptr<OguiWindow>           win;
+
 		// unused std::auto_ptr<OguiButton> crosshair;
 		// unused std::auto_ptr<IOguiImage> crosshairImage;
 
 		OguiButton *tacticalModeBut;
 		
 		game::Unit *unitsByNumber[COMBATW_UNITS];
-		
-		CombatRadar *radar;
 
-		OffscreenUnitPointers *offscreenUnitPointers;
 		
 		TacticalUnitWindow *tacticalUnitWindow;
 		

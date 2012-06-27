@@ -246,7 +246,7 @@ int getNumberOfPlayers()
 		this->game = game;
 		this->ogui = ogui;
 		
-		win = ogui->CreateSimpleWindow(0, 0, 1024, 768, NULL);
+		win.reset(ogui->CreateSimpleWindow(0, 0, 1024, 768, NULL));
 		win->Hide();
 		
 		winVisible = false;
@@ -291,7 +291,7 @@ int getNumberOfPlayers()
 		
 		// the whole screen area is clickable...
 		OguiButton *b;
-		b = ogui->CreateSimpleImageButton(win, 0, 0, 1024, 768, NULL, NULL, NULL, 
+		b = ogui->CreateSimpleImageButton(win.get(), 0, 0, 1024, 768, NULL, NULL, NULL, 
 			COMBATW_AREA_SCREEN);
 		areas[COMBATW_AREA_SCREEN] = b;
 		b->SetListener(this);
@@ -307,15 +307,15 @@ int getNumberOfPlayers()
 		// RADAR REMOVED!
 		if (!radarTemporarilyDisabled && !radarDisabled)
 		{
-			radar = new CombatRadar(ogui, game, player, win);
+			radar.reset(new CombatRadar(ogui, game, player, win.get()));
 		} else {
-			radar = NULL;
+			radar.reset();
 		}
 
-		offscreenUnitPointers = new OffscreenUnitPointers(ogui, game, player, win);
+		offscreenUnitPointers.reset(new OffscreenUnitPointers(ogui, game, player, win.get()));
 		
 		// then the screen edges that will move the camera
-		b = ogui->CreateSimpleImageButton(win, 8, 0, 1024-16, 8, NULL, NULL, NULL, 
+		b = ogui->CreateSimpleImageButton(win.get(), 8, 0, 1024-16, 8, NULL, NULL, NULL, 
 			COMBATW_AREA_FWD);
 		areas[COMBATW_AREA_FWD] = b;
 		b->SetListener(this);
@@ -323,7 +323,7 @@ int getNumberOfPlayers()
 		// HACK: scrollers off
 		b->SetDisabled(true);
 		
-		b = ogui->CreateSimpleImageButton(win, 8, 768-8, 1024-16, 8, NULL, NULL, NULL, 
+		b = ogui->CreateSimpleImageButton(win.get(), 8, 768-8, 1024-16, 8, NULL, NULL, NULL, 
 			COMBATW_AREA_BACK);
 		areas[COMBATW_AREA_BACK] = b;
 		b->SetListener(this);
@@ -331,7 +331,7 @@ int getNumberOfPlayers()
 		// HACK: scrollers off
 		b->SetDisabled(true);
 		
-		b = ogui->CreateSimpleImageButton(win, 0, 8, 8, 768-16, NULL, NULL, NULL, 
+		b = ogui->CreateSimpleImageButton(win.get(), 0, 8, 8, 768-16, NULL, NULL, NULL, 
 			COMBATW_AREA_LEFT);
 		areas[COMBATW_AREA_LEFT] = b;
 		b->SetListener(this);
@@ -339,7 +339,7 @@ int getNumberOfPlayers()
 		// HACK: scrollers off
 		b->SetDisabled(true);
 		
-		b = ogui->CreateSimpleImageButton(win, 1024-8, 8, 8, 768-16, NULL, NULL, NULL, 
+		b = ogui->CreateSimpleImageButton(win.get(), 1024-8, 8, 8, 768-16, NULL, NULL, NULL, 
 			COMBATW_AREA_RIGHT);
 		areas[COMBATW_AREA_RIGHT] = b;
 		b->SetListener(this);
@@ -347,7 +347,7 @@ int getNumberOfPlayers()
 		// HACK: scrollers off
 		b->SetDisabled(true);
 		
-		b = ogui->CreateSimpleImageButton(win, 0, 768-8, 8, 8, NULL, NULL, NULL, 
+		b = ogui->CreateSimpleImageButton(win.get(), 0, 768-8, 8, 8, NULL, NULL, NULL, 
 			COMBATW_AREA_DOWNLEFT);
 		areas[COMBATW_AREA_DOWNLEFT] = b;
 		b->SetListener(this);
@@ -355,7 +355,7 @@ int getNumberOfPlayers()
 		// HACK: scrollers off
 		b->SetDisabled(true);
 		
-		b = ogui->CreateSimpleImageButton(win, 1024-8, 768-8, 8, 8, NULL, NULL, NULL, 
+		b = ogui->CreateSimpleImageButton(win.get(), 1024-8, 768-8, 8, 8, NULL, NULL, NULL, 
 			COMBATW_AREA_DOWNRIGHT);
 		areas[COMBATW_AREA_DOWNRIGHT] = b;
 		b->SetListener(this);
@@ -363,7 +363,7 @@ int getNumberOfPlayers()
 		// HACK: scrollers off
 		b->SetDisabled(true);
 		
-		b = ogui->CreateSimpleImageButton(win, 0, 0, 8, 8, NULL, NULL, NULL, 
+		b = ogui->CreateSimpleImageButton(win.get(), 0, 0, 8, 8, NULL, NULL, NULL, 
 			COMBATW_AREA_UPLEFT);
 		areas[COMBATW_AREA_UPLEFT] = b;
 		b->SetListener(this);
@@ -371,7 +371,7 @@ int getNumberOfPlayers()
 		// HACK: scrollers off
 		b->SetDisabled(true);
 		
-		b = ogui->CreateSimpleImageButton(win, 1024-8, 0, 8, 8, NULL, NULL, NULL, 
+		b = ogui->CreateSimpleImageButton(win.get(), 1024-8, 0, 8, 8, NULL, NULL, NULL, 
 			COMBATW_AREA_UPRIGHT);
 		areas[COMBATW_AREA_UPRIGHT] = b;
 		b->SetListener(this);
@@ -448,26 +448,26 @@ int getNumberOfPlayers()
 		}
 #endif
 		
-		messageWindow = new CombatMessageWindow(ogui, game, player, "converse", "face1");
+		messageWindow.reset(new CombatMessageWindow(ogui, game, player, "converse", "face1"));
 		messageWindow->setBoxed(true);
 
-		timerWindow = new CombatMessageWindow(ogui, game, player, "timer", "");
+		timerWindow.reset(new CombatMessageWindow(ogui, game, player, "timer", ""));
 		timerWindow->setBoxed(true);
 
-		messageWindowRight = new CombatMessageWindow(ogui, game, player, "converse", "face2");
+		messageWindowRight.reset(new CombatMessageWindow(ogui, game, player, "converse", "face2"));
 		//messageWindowRight->setBoxed(true);
 
-		centerMessageWindow = new CombatMessageWindow(ogui, game, player, "center", "");
+		centerMessageWindow.reset(new CombatMessageWindow(ogui, game, player, "center", ""));
 		//centerMessageWindow->moveTo(1024/2-8, 768/2-8);
 		centerMessageWindow->setFont(ui::defaultBigIngameFont, true);
 
-		hintMessageWindow = new CombatMessageWindowWithHistory(ogui, "hint", "");
+		hintMessageWindow.reset(new CombatMessageWindowWithHistory(ogui, "hint", ""));
 		//hintMessageWindow->moveTo(1024/2-8, 768-16);
 		//hintMessageWindow->setFont(ui::defaultSmallIngameFont, true);
 		hintMessageWindow->setFont(ui::defaultIngameFont, true);
 		//hintMessageWindow->setBoxed(false);
 		
-		executeTipMessageWindow = new CombatMessageWindow(ogui, game, player, "executetip", "");
+		executeTipMessageWindow.reset(new CombatMessageWindow(ogui, game, player, "executetip", ""));
 		//executeTipMessageWindow->setFont(ui::defaultSmallIngameFont, true);
 		executeTipMessageWindow->setFont(ui::defaultIngameFont, true);
 		
@@ -570,51 +570,7 @@ int getNumberOfPlayers()
 			}
 		}
 		*/
-		if (messageWindow != NULL)
-		{
-			delete messageWindow;
-			messageWindow = NULL;
-		}
-		if (timerWindow != NULL)
-		{
-			delete timerWindow;
-			timerWindow = NULL;
-		}
-		if (messageWindowRight != NULL)
-		{
-			delete messageWindowRight;
-			messageWindowRight = NULL;
-		}
-		if (centerMessageWindow != NULL)
-		{
-			delete centerMessageWindow;
-			centerMessageWindow = NULL;
-		}
-		if (hintMessageWindow != NULL)
-		{
-			delete hintMessageWindow;
-			hintMessageWindow = NULL;
-		}
-		if (executeTipMessageWindow != NULL)
-		{
-			delete executeTipMessageWindow;
-			executeTipMessageWindow = NULL;
-		}
-		if (offscreenUnitPointers != NULL)
-		{
-			delete offscreenUnitPointers;
-			offscreenUnitPointers = NULL;
-		}
-		if (radar != NULL)
-		{
-			delete radar;
-			radar = NULL;
-		}
-		if (win != NULL)
-		{
-			delete win;
-			win = NULL;
-		}
+
 		delete unitHighlight;
 		delete gamePointers;
 #ifdef PROJECT_SHADOWGROUNDS
@@ -728,11 +684,7 @@ int getNumberOfPlayers()
 		executeTipMessageWindow->hide( fadeTime );
 		timerWindow->hide( 0 );
 
-		if (radar != NULL)
-		{
-			delete radar;
-			radar = NULL;
-		}
+        radar.reset();
 	}
 
 	void CombatWindow::endGUIModeTempInvisible(int fadeTime)
@@ -757,11 +709,11 @@ int getNumberOfPlayers()
 		}
 		if(radarMode == RADAR_MODE_RADAR)
 		{
-			if(!radar)
+			if(!radar.get())
 			{
 				if (!radarTemporarilyDisabled && !radarDisabled)
 				{
-					radar = new CombatRadar(ogui, game, player, win);
+					radar.reset(new CombatRadar(ogui, game, player, win.get()));
 				}
 			}
 		}
@@ -774,9 +726,9 @@ int getNumberOfPlayers()
 
 	void CombatWindow::setConversationNoise(int index, int value)
 	{
-		if(index == 0 && messageWindow)
+		if(index == 0 && messageWindow.get())
 			messageWindow->setNoiseAlpha(value / 100.f);
-		else if(index == 1 && messageWindowRight)
+		else if(index == 1 && messageWindowRight.get())
 			messageWindowRight->setNoiseAlpha(value / 100.f);
 	}
 
@@ -786,16 +738,12 @@ int getNumberOfPlayers()
 		if (radarMode > MAX_RADAR_MODE)
 			radarMode = MIN_RADAR_MODE;
 
-		if (radar != NULL)
-		{
-			delete radar;
-			radar = NULL;
-		}
+		radar.reset();
 		if (radarMode == RADAR_MODE_RADAR)
 		{
 			if (!radarTemporarilyDisabled && !radarDisabled)
 			{
-				radar = new CombatRadar(ogui, game, player, win);
+				radar.reset(new CombatRadar(ogui, game, player, win.get()));
 			}
 		}
 	}
@@ -888,7 +836,7 @@ int getNumberOfPlayers()
 	
 	void CombatWindow::updateOffscreenUnitPointers()
 	{
-		if (offscreenUnitPointers != NULL)
+		if (offscreenUnitPointers.get() != NULL)
 		{
 			offscreenUnitPointers->update();
 		}
@@ -897,7 +845,7 @@ int getNumberOfPlayers()
 
 	void CombatWindow::addHostileUnitPointer(game::Unit *unit)
 	{
-		if (offscreenUnitPointers != NULL)
+		if (offscreenUnitPointers.get() != NULL)
 		{
 			offscreenUnitPointers->addUnitForChecklist(unit);
 		}
@@ -906,7 +854,7 @@ int getNumberOfPlayers()
 
 	void CombatWindow::removeHostileUnitPointer(game::Unit *unit)
 	{
-		if (offscreenUnitPointers != NULL)
+		if (offscreenUnitPointers.get() != NULL)
 		{
 			offscreenUnitPointers->removeUnitFromChecklist(unit);
 		}
@@ -915,7 +863,7 @@ int getNumberOfPlayers()
 
 	void CombatWindow::updateRadar(float x, float y)
 	{
-		if (radar != NULL)
+		if (radar.get() != NULL)
 		{
 			radar->setOrigo(x, y);
 			radar->update();
@@ -925,7 +873,7 @@ int getNumberOfPlayers()
 	
 	void CombatWindow::setRadarAngle(float angle)
 	{
-		if (radar != NULL)
+		if (radar.get() != NULL)
 		{
 			radar->setAngle(angle);
 		}
@@ -1076,11 +1024,11 @@ int getNumberOfPlayers()
 	
 	void CombatWindow::update(int delta)
 	{
-		if(messageWindow)
+		if(messageWindow.get())
 			messageWindow->update(delta);
-		if(messageWindowRight)
+		if(messageWindowRight.get())
 			messageWindowRight->update(delta);
-		if(timerWindow)
+		if(timerWindow.get())
 			timerWindow->update(delta);
 
 #ifdef GUI_BUILD_AOV_CROSSHAIR
@@ -1915,11 +1863,10 @@ int getNumberOfPlayers()
 		{
 			messageWindow->clearMessageTextOnly();
 			messageWindowRight->showMessage(message, image);
-			if (radar != NULL)
+			if (radar.get() != NULL)
 			{
 				radarTemporarilyDisabled = true;
-				delete radar;
-				radar = NULL;
+				radar.reset();
 			}
 		} else {
 			messageWindowRight->clearMessageTextOnly();
@@ -1941,9 +1888,9 @@ int getNumberOfPlayers()
 		if (radarTemporarilyDisabled)
 		{
 			radarTemporarilyDisabled = false;
-			if (radar == NULL)
+			if (radar.get() == NULL)
 			{
-				radar = new CombatRadar(ogui, game, player, win);
+				radar.reset(new CombatRadar(ogui, game, player, win.get()));
 			}
 		}
 
@@ -2955,7 +2902,7 @@ int getNumberOfPlayers()
 		{
 			if (tacticalModeBut == NULL)
 			{
-				tacticalModeBut = ogui->CreateSimpleTextButton(win, 
+				tacticalModeBut = ogui->CreateSimpleTextButton(win.get(), 
 					4, UNITSTAT_BOTTOM_START_Y - 20, 64, 16, NULL, NULL, NULL, 
 					"TACTICAL MODE", COMBATW_TACTICAL_MODE);
 				tacticalModeBut->SetFont(ui::defaultIngameFont);
@@ -3166,23 +3113,18 @@ int getNumberOfPlayers()
 		{
 			radarWasDisabled = radarDisabled;
 			radarDisabled = true;
-
-			if (radar != NULL)
-			{
-				delete radar;
-				radar = NULL;
-			}
+			radar.reset();
 		}
 		else
 		{
 			if(!radarWasDisabled)
 			{
 				radarDisabled = false;
-				if (radar == NULL)
+				if (radar.get() == NULL)
 				{
 					if (!radarTemporarilyDisabled)
 					{
-						radar = new CombatRadar(ogui, game, player, win);
+						radar.reset(new CombatRadar(ogui, game, player, win.get()));
 					}
 				}
 			}
@@ -3194,23 +3136,20 @@ int getNumberOfPlayers()
 	{
 		radarDisabled = disabled;
 
-		if(disabled && radar != NULL)
+		if(disabled)
+			radar.reset();
+		else if(!disabled && radar.get() == NULL && !radarTemporarilyDisabled)
 		{
-			delete radar;
-			radar = NULL;
-		}
-		else if(!disabled && radar == NULL && !radarTemporarilyDisabled)
-		{
-			radar = new CombatRadar(ogui, game, player, win);
+			radar.reset(new CombatRadar(ogui, game, player, win.get()));
 		}
 	}
 
 	bool CombatWindow::hasMessageWindow() const
 	{
-		if(messageWindow != NULL && messageWindow->hasMessage())
+		if(messageWindow.get() != NULL && messageWindow->hasMessage())
 			return true;
 
-		if(messageWindowRight != NULL && messageWindowRight->hasMessage())
+		if(messageWindowRight.get() != NULL && messageWindowRight->hasMessage())
 			return true;
 
 		return false;
