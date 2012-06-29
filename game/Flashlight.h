@@ -60,7 +60,7 @@ namespace game
 
 
 			void toggleOn();
-			bool isFlashlightOn();
+			bool isFlashlightOn() const;
 			void setFlashlightOn(bool flashlightOn);
 
 			int getFlashlightEnergy();

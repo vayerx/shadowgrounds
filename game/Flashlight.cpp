@@ -20,7 +20,7 @@
 #include "../util/LightAmountManager.h"
 
 #include <boost/shared_ptr.hpp>
-
+#include <boost/noncopyable.hpp>
 
 #define FLASHLIGHT_HEIGHT 0.0f
 
@@ -40,14 +40,14 @@
 
 namespace game
 {
-  class FlashlightImpl
+    class FlashlightImpl : private boost::noncopyable
 	{
 		private:
 			Game *game;
 			util::ColorMap *colorMap;
 			util::LightMap *lightMap;
 			ui::VisualObject *origin;
-			ui::Spotlight *spotlight;
+			std::auto_ptr<ui::Spotlight>    spotlight;
 			VC3 position;
 			int energy;
 			bool needRecharge;
@@ -75,7 +75,6 @@ namespace game
 				this->colorMap = game->gameMap->colorMap;
 				this->lightMap = game->gameMap->lightMap;
 				this->origin = origin;
-				this->spotlight = NULL;
 				this->position = VC3(0,0,0);
 				this->energy = SimpleOptions::getInt(DH_OPT_I_GAME_FLASHLIGHT_ENERGY_MAX);
 				this->needRecharge = false;
@@ -118,7 +117,7 @@ namespace game
 
 	void Flashlight::resetOrigin(ui::VisualObject *origin)
 	{
-		bool wasOn = isFlashlightOn();
+		const bool wasOn = isFlashlightOn();
 		setFlashlightOn(false);
 		impl->origin = origin;
 		if (wasOn)
@@ -147,7 +146,7 @@ namespace game
 				impl->impactFactor = 0.0f;
 		}
 
-		if (impl->spotlight != NULL)
+		if (impl->spotlight.get() != NULL)
 		{
 			VC3 pos = impl->position;
 			pos.y += FLASHLIGHT_HEIGHT;
@@ -187,7 +186,7 @@ namespace game
 			dir.Normalize();
 			impl->lightCalculator->update(position, dir);
 
-			assert(impl->spotlight != NULL);
+			assert(impl->spotlight.get() != NULL);
 			impl->energy -= SimpleOptions::getInt(DH_OPT_I_GAME_FLASHLIGHT_ENERGY_USAGE);
 
 			if (impl->energy < SimpleOptions::getInt(DH_OPT_I_GAME_FLASHLIGHT_ENERGY_LOW))
@@ -310,7 +309,7 @@ namespace game
 			// FIXME: should use current intensity as base value for the factor!
 			// (now non-full-bright flashlight may get too bright because of this)
 			COL tempIntensity = COL(impl->tempBrightnessFactor, impl->tempBrightnessFactor, impl->tempBrightnessFactor);
-			if (impl->spotlight != NULL)
+			if (impl->spotlight.get() != NULL)
 			{
 				impl->spotlight->setSpotlightParams(tempIntensity);
 			}
@@ -318,7 +317,7 @@ namespace game
 			impl->tempBrightnessFactor = 1.0f;
 		}
 
-		if (impl->spotlight != NULL)
+		if (impl->spotlight.get() != NULL)
 		{
 			impl->spotlight->prepareForRender();
 		}
@@ -408,7 +407,7 @@ namespace game
 	void Flashlight::setRotation(float angle)
 	{
 		impl->angle = angle;
-		if (impl->spotlight != NULL)
+		if (impl->spotlight.get() != NULL)
 		{
 			if (fabs(impl->betaAngle) > 0.001f)
 			{
@@ -494,7 +493,7 @@ dir.z = -dir.z;
 	void Flashlight::setRotationToward(float angle, int timeElapsed)
 	{
 		impl->angle = angle;
-		if (impl->spotlight != NULL)
+		if (impl->spotlight.get() != NULL)
 		{
 			VC3 pos = impl->position;
 			VC3 dir = VC3(-sinf(angle), 0, -cosf(angle));
@@ -527,14 +526,9 @@ dir.z = -dir.z;
 	}
 
 
-	bool Flashlight::isFlashlightOn()
+	bool Flashlight::isFlashlightOn() const
 	{
-		if (impl->spotlight != NULL)
-		{
-			return true;
-		} else {
-			return false;
-		}
+		return impl->spotlight.get() != NULL;
 	}
 
 
@@ -571,7 +565,7 @@ dir.z = -dir.z;
 				*impl->game->getGameScene()->getStorm3D(), *impl->game->gameUI->getTerrain()->GetTerrain(),
 				*impl->game->getGameScene()->getStormScene(), stormModel, 
 				std::string("flashlight"));
-			impl->spotlight = sp;
+			impl->spotlight.reset(sp);
 			this->setRotation(impl->angle);
 
 			impl->lightCalculator = boost::shared_ptr<util::SpotLightCalculator> (new util::SpotLightCalculator(40.0f, 20.0f, impl->origin->getDataObject()));
@@ -587,8 +581,7 @@ dir.z = -dir.z;
 			impl->lightCalculator.reset();
 
 			// set it off
-			delete impl->spotlight;
-			impl->spotlight = NULL;
+			impl->spotlight.reset();
 		}
 	}
 
@@ -612,7 +605,7 @@ dir.z = -dir.z;
 
 		if (isFlashlightOn())
 		{
-			assert(impl->spotlight != NULL);
+			assert(impl->spotlight.get() != NULL);
 			COL fullIntensity = COL(1.0f, 1.0f, 1.0f);
 			impl->spotlight->setSpotlightParams(fullIntensity);
 			VC3 pos = impl->position;
