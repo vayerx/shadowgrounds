@@ -160,21 +160,25 @@ void OguiButton::SetHighlightedFont( IOguiFont* font )
 
 void OguiButton::Resize(int sizeX, int sizeY)
 {
+    assert(but != NULL);
 	og_resize_button(but, (short)sizeX, (short)sizeY);
 }
 
 void OguiButton::SetClipToWindow( bool clip )
 {
+    assert(but != NULL);
 	but->clip_to_window = clip;
 }
 
 void OguiButton::Move(int x, int y)
 {
+    assert(but != NULL);
 	og_move_button(but, (short)x, (short)y);
 }
 
 void OguiButton::MoveBy( int x, int y )
 {
+    assert(but != NULL);
 	og_move_button_by( but, (short)x, (short) y );
 }
 
@@ -208,6 +212,7 @@ void OguiButton::SetEventMask(int allowedEvents)
 
 void OguiButton::SetReactMask(int reactButtons)
 {
+    assert(but != NULL);
 	og_set_react_button(but, (unsigned int)reactButtons);
 }
 
@@ -222,6 +227,7 @@ void OguiButton::SetDisabled(bool disabled)
 
 bool OguiButton::isDisabled()
 {
+    assert(but != NULL);
 	return but->enabled == 0;
 }
 
@@ -236,6 +242,7 @@ void OguiButton::SetLineBreaks(bool linebreaks)
 
 bool OguiButton::IsLineBreaks()
 {
+    assert(but != NULL);
 	return (but->linebreaks != 0);
 }
 
@@ -244,6 +251,7 @@ bool OguiButton::SetText(const char *text)
 {
 	// HACK: optimization, if text is the same as it was before,
 	// do nothing...
+	assert(but != NULL);
 	if (but->text != NULL
 		&& text != NULL
 		&& strcmp(but->text, text) == 0)
@@ -276,6 +284,7 @@ bool OguiButton::SetText(const char *text)
 
 	// note, const char * -> char * cast.
 	// however, the og_set_text_button should not change that.
+	assert(but != NULL);
 	og_set_text_button(but, text, pixwidth, pixheight,
 		fontwidth, fontheight);
 
@@ -284,18 +293,21 @@ bool OguiButton::SetText(const char *text)
 
 void OguiButton::SetAngle(float angle)
 {
+    assert(but != NULL);
 	og_rotate_button(but, angle);
 }
 
 // 0 for no transparency, 100 for full transparency
 void OguiButton::SetTransparency(int transparencyPercentage)
 {
+    assert(but != NULL);
 	og_set_transparency_button(but, transparencyPercentage);
 }
 
 
 void OguiButton::SetTextHAlign(OguiButton::TEXT_H_ALIGN hAlign)
 {
+    assert(but != NULL);
 	if (hAlign == OguiButton::TEXT_H_ALIGN_LEFT)
 		og_set_h_align_button(but, OG_H_ALIGN_LEFT);
 	else
@@ -307,6 +319,7 @@ void OguiButton::SetTextHAlign(OguiButton::TEXT_H_ALIGN hAlign)
 
 void OguiButton::SetTextVAlign(OguiButton::TEXT_V_ALIGN vAlign)
 {
+    assert(but != NULL);
 	if (vAlign == OguiButton::TEXT_V_ALIGN_TOP)
 		og_set_v_align_button(but, OG_V_ALIGN_TOP);
 	else
@@ -346,6 +359,7 @@ void OguiButton::ApplyImages()
 	if (imageDown != NULL) matdown = ((OguiStormImage *)imageDown)->mat;
 	if (imageDisabled != NULL) matdisabled = ((OguiStormImage *)imageDisabled)->mat;
 	if (imageHighlighted != NULL) mathighlighted = ((OguiStormImage *)imageHighlighted)->mat;
+    assert(but != NULL);
 	og_set_pic_button(but, mat, matdown, matdisabled, mathighlighted);
 }
 
@@ -381,12 +395,14 @@ void OguiButton::ApplyFonts()
 		fnt_highlighted_color = ((OguiStormFont *)fontHighlighted)->color;
 	}
 
+	assert(but != NULL);
 	og_set_fonts_button( but, fnt, fnt_color, fnt_down, fnt_down_color, fnt_disabled, fnt_disabled_color, fnt_highlighted, fnt_highlighted_color );
 
 	// need to update font metrics (set the text again)
 	// a hack to do that 
 	// need to copy the original text first, as the method call will 
 	// delete the original text
+    assert(but != NULL);
 	if (but->text != NULL)
 	{
 		char *buf = new char[strlen(but->text) + 1];
@@ -412,26 +428,31 @@ IOguiFont *OguiButton::GetFont()
 
 int OguiButton::GetSizeX()
 {
+    assert(but != NULL);
 	return but->sizex;
 }
 
 int OguiButton::GetSizeY()
 {
+    assert(but != NULL);
 	return but->sizey;
 }
 
 int OguiButton::GetX()
 {
+    assert(but != NULL);
 	return but->put_x;
 }
 
 int OguiButton::GetY()
 {
+    assert(but != NULL);
 	return but->put_y;
 }
 
 void OguiButton::SetClip(float leftX, float topY, float rightX, float bottomY)
 {
+    assert(but != NULL);
 	but->clipleftx = leftX;
 	but->cliptopy = topY;
 	but->cliprightx = rightX;
@@ -440,6 +461,7 @@ void OguiButton::SetClip(float leftX, float topY, float rightX, float bottomY)
 
 void OguiButton::GetClip(float &leftX, float &topY, float &rightX, float &bottomY)
 {
+    assert(but != NULL);
 	leftX = but->clipleftx;
 	topY = but->cliptopy;
 	rightX = but->cliprightx;
@@ -448,6 +470,7 @@ void OguiButton::GetClip(float &leftX, float &topY, float &rightX, float &bottom
 
 void OguiButton::SetScroll(float scrollX, float scrollY)
 {
+    assert(but != NULL);
 	but->scroll_x = scrollX;
 	but->scroll_y = scrollY;
 	but->wrap = true;
@@ -455,6 +478,7 @@ void OguiButton::SetScroll(float scrollX, float scrollY)
 
 void OguiButton::SetRepeat(float repeatX, float repeatY)
 {
+    assert(but != NULL);
 	but->repeat_x = repeatX;
 	but->repeat_y = repeatY;
 	but->wrap = true;
@@ -462,6 +486,7 @@ void OguiButton::SetRepeat(float repeatX, float repeatY)
 
 void OguiButton::SetHotKey(int hotkey, int hotkeyModifier1, int hotkeyModifier2)
 {
+    assert(but != NULL);
 	but->hotKeys[0] = hotkey;
 	but->hotKeys[1] = hotkeyModifier1;
 	but->hotKeys[2] = hotkeyModifier2;
@@ -563,5 +588,6 @@ void OguiButton::SetCustomShape(Vertex *vertices, int numVertices)
 
 void OguiButton::SetWrap(bool wrap)
 {
+    assert(but != NULL);
 	but->wrap = wrap;
 }
