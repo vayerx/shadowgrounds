@@ -135,7 +135,7 @@ typedef struct {
 	bool wrap;
 } orvgui_win;
 
-typedef struct {
+struct orvgui_but {
 	unsigned char type;
 	unsigned int react_but;
 	unsigned char enabled;
@@ -213,7 +213,7 @@ typedef struct {
 	vertex *vertices;
 	int num_vertices;
 
-} orvgui_but;
+};
 
 extern void *og_arg;
 
