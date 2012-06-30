@@ -22,10 +22,10 @@ PhysX SDK can be obtained from NVIDIA [here](http://developer.nvidia.com/physx/)
 More PhysX help: [How to register developer account](http://physxinfo.com/news/901/how-to-register-developer-account-to-get-physx-sdk-access/)
 and [NVIDIA PhysX API](http://knol.google.com/k/introduction-to-the-nvidia-physx-api).<br/>
 
-External dependecies and build process are described [here](http://github.com/vayerx/shadowgrounds/wiki/Build).<br/>
-If you are going to contribute, please take a look at the [Roadmap](http://github.com/vayerx/shadowgrounds/wiki/Roadmap) and contact me before forking.
+External **dependecies and build** process are described [here](http://github.com/vayerx/shadowgrounds/wiki/Build).<br/>
+If you are going to contribute, please have a look at the **[Roadmap](http://github.com/vayerx/shadowgrounds/wiki/Roadmap)**.
 
-Shadowgrounds live-ebuilds for Gentoo Linux are available at [vayerx overlay](http://github.com/vayerx/vayerx-gentoo/) as `games-action/shadowgrounds`.<br/>
+Shadowgrounds **ebuilds** for Gentoo Linux are available at [vayerx overlay](http://github.com/vayerx/vayerx-gentoo/) as `games-action/shadowgrounds`.<br/>
 To get the game assets, you need a copy of each game.
 
 
