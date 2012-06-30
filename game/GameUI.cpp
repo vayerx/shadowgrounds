@@ -1112,12 +1112,12 @@ namespace game
 
     void GameUI::refreshArmorConstructWindow(int player)
     {
-        if (armorConstructWindows[player] == NULL)
+        if (armorConstructWindows[player] == NULL) {
             // not opened
 #ifdef _DEBUG
             abort();
 #endif
-        else
+        } else
             armorConstructWindows[player]->refresh();
     }
 
@@ -1461,11 +1461,12 @@ namespace game
         // TODO, NETGAME: check that
         if (aniRecorderWindow == NULL)
             aniRecorderWindow = new AniRecorderWindow(ogui, game);
-        else
+        else {
             // already open
 #ifdef _DEBUG
             abort();
 #endif
+        }
     }
 
     void GameUI::closeAniRecorderWindow(int player)
@@ -1516,8 +1517,9 @@ namespace game
 #ifdef GUI_BUILD_INGAME_GUI_TABS
                     if (this->openUpgradeWindow(firstPerson[player]) && ingameGuiTabs)
                         ingameGuiTabs->setActive(type);
-                    else
+                    else {
                         FB_ASSERT(false);
+                    }
 
 #else
                     this->openUpgradeWindow(firstPerson[player]);

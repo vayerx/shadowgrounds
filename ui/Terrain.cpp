@@ -1645,8 +1645,9 @@ struct TerrainData {
 #endif
 
         for (int i = 0; i < objectAmount; ++i) {
-            if ( ( (i * 4) / objectAmount ) != ( ( (i - 1) * 5 ) / objectAmount ) )
+            if ( ( (i * 4) / objectAmount ) != ( ( (i - 1) * 5 ) / objectAmount ) ) {
                 SHOW_LOADING_BAR( 40 + ( (i * 5) / objectAmount ) );
+            }
 
             ObjectData data;
             stream >> data.fileName >> data.type >> data.fallType >> data.height >> data.radius >> data.fireThrough;

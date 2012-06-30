@@ -104,7 +104,7 @@ namespace ui
 
             faderBg = ogui->CreateSimpleImageButton(win, x, y, w, h, NULL, NULL, NULL, img_name);
             faderBg->SetDisabled(true);
-        } * /
+        } */
 
         // add header
         //

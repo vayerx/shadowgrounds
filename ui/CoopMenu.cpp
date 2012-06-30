@@ -389,8 +389,7 @@ namespace ui {
 
     void CoopMenu::CursorEvent(OguiButtonEvent *eve)
     {
-        if (eve->eventType == OGUI_EMASK_CLICK)
-
+        if (eve->eventType == OGUI_EMASK_CLICK) {
             if (eve->triggerButton == coopCaptureEvents) {
                 closeCoopProfileMenu();
                 return;
@@ -425,8 +424,7 @@ namespace ui {
             default:
                 break;
             }
-
-        else
+        } else
             MenuBaseImpl::CursorEvent(eve);
     }
 

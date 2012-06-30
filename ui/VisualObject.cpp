@@ -882,8 +882,9 @@ namespace ui
                         isCollModel = true;
                 if (strcmp(object->GetName(), "effect_2nd_layer") == 0)
                     isEffLayer = true;
-                if (strcmp(object->GetName(), "effect_layer") == 0)
+                if (strcmp(object->GetName(), "effect_layer") == 0) {
                     fb_assert(!"VisualObject::createEffectLayer - Layer already exists!");
+                }
             }
 
             if (!isCollModel && !isEffLayer)
@@ -935,8 +936,9 @@ namespace ui
                         isCollModel = true;
                 if (strcmp(object->GetName(), "effect_layer") == 0)
                     isEffLayer = true;
-                if (strcmp(object->GetName(), "effect_2nd_layer") == 0)
+                if (strcmp(object->GetName(), "effect_2nd_layer") == 0) {
                     fb_assert(!"VisualObject::createEffectLayer2 - Layer already exists!");
+                }
             }
 
             if (!isCollModel && !isEffLayer)

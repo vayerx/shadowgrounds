@@ -360,7 +360,7 @@ namespace ui
 
         // take-first-free-one logic
         //
-        /*/ / for each character type
+        /* // for each character type
         for (int charNum = 0; charNum < 3; charNum++) {
             Unit *unit = NULL;
 
@@ -388,7 +388,7 @@ namespace ui
                 }
             }
         }
-        * /
+        */
 
         // each player uses their own character copies
         //

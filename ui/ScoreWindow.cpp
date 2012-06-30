@@ -277,7 +277,8 @@ namespace ui {
             for (unsigned int i = 0; i < scores.size(); i++) {
                 // this is my score
                 if (i == myPos) {
-                    if (!showPlayerScore) continue;
+                    if (!showPlayerScore)
+                        continue;
 
                     if (i >= 2) {
                         // scroll
@@ -286,405 +287,389 @@ namespace ui {
                         last_scroll = Timer::getTime() + 1000; // start scrolling after 1 second
                     }
 
-                    /*/
-                    / didn
-                    't make it to top 3, add separator
-                if(i == 3)
-                {
-                    ss << getLocaleGuiString( "gui_scorewindow_highscores_separator" );
-                }*/
-                // add as highlighted
-                ss << "<h1>" << scores[i].name << "</h1><br><i>";
-                ss << scores[i].time << " (" << scores[i].score << "p)</i><br><br><br>";
-                ss2 << "   <h1>" << i+1 << ".</h1><br><br><br><br>";
-            }
-
-            // don't
-                    list the 4th score since it
-                    's not my score
-            else //if(i < 3 || !showPlayerScore)
-            {
-                ss << "<b>" << scores[i].name << "</b><br>";
-                ss << scores[i].time << " (" << scores[i].score << "p)<br><br><br>";
-                ss2 << "   <b>" << i+1 << ".</b><br><br><br><br>";
-            }
-        }
-
-        highScores->setText( ss.str() );
-        highScoreNumbers->setText( ss2.str() );
-        
-        // give some room for fader
-        highScores->moveBy(0, 25);
-        highScoreNumbers->moveBy(0, 25);
-
-        // score limit stars
-        //
-        int developer, ultimate;
-        std::string mission = std::string("survival\\") + game->getMissionId();
-        if(GameStats::getScoreLimits(mission.c_str(), developer, ultimate))
-        {
-            for(unsigned int i = 0; i < scores.size(); i++)
-            {
-                int score = atoi(scores[i].score.c_str());
-                if(score > ultimate)
-                {
-                    int x = getLocaleGuiInt("gui_scorewindow_ultimatestar_x", 0) + highScoreNumbers->getX();
-                    int y = getLocaleGuiInt("gui_scorewindow_ultimatestar_y", 0) + highScoreNumbers->getLinePositionY(i * 4) + 25;
-                    int w = getLocaleGuiInt("gui_scorewindow_ultimatestar_w", 0);
-                    int h = getLocaleGuiInt("gui_scorewindow_ultimatestar_h", 0);
-                    const char *img = getLocaleGuiString("gui_scorewindow_ultimatestar_img");
-                    OguiButton *but = ogui->CreateSimpleImageButton(win, x, y, w, h, NULL, NULL, NULL, img, 0, 0, false);
-                    but->SetDisabled(true);
-                    starButtons.push_back(but);
+                    /* didn't make it to top 3, add separator
+                    if(i == 3)
+                    {
+                        ss << getLocaleGuiString( "gui_scorewindow_highscores_separator" );
+                    }*/
+                    // add as highlighted
+                    ss << "<h1>" << scores[i].name << "</h1><br><i>";
+                    ss << scores[i].time << " (" << scores[i].score << "p)</i><br><br><br>";
+                    ss2 << "   <h1>" << i+1 << ".</h1><br><br><br><br>";
                 }
-                else if(score > developer)
+                // don't list the 4th score since it's not my score
+                else //if(i < 3 || !showPlayerScore)
                 {
-                    int x = getLocaleGuiInt("gui_scorewindow_developerstar_x", 0) + highScoreNumbers->getX();
-                    int y = getLocaleGuiInt("gui_scorewindow_developerstar_y", 0) + highScoreNumbers->getLinePositionY(i * 4) + 25;
-                    int w = getLocaleGuiInt("gui_scorewindow_developerstar_w", 0);
-                    int h = getLocaleGuiInt("gui_scorewindow_developerstar_h", 0);
-                    const char *img = getLocaleGuiString("gui_scorewindow_developerstar_img");
-                    OguiButton *but = ogui->CreateSimpleImageButton(win, x, y, w, h, NULL, NULL, NULL, img, 0, 0, false);
-                    but->SetDisabled(true);
-                    starButtons.push_back(but);
+                    ss << "<b>" << scores[i].name << "</b><br>";
+                    ss << scores[i].time << " (" << scores[i].score << "p)<br><br><br>";
+                    ss2 << "   <b>" << i+1 << ".</b><br><br><br><br>";
                 }
             }
-        }
 
-        if(scorefader != NULL)
-            delete scorefader;
+            highScores->setText( ss.str() );
+            highScoreNumbers->setText( ss2.str() );
 
-        scorefader = oguiLoader.LoadButton( "scorefader", win, 0 );
-        scorefader->SetDisabled(true);
+            // give some room for fader
+            highScores->moveBy(0, 25);
+            highScoreNumbers->moveBy(0, 25);
 
-        // re-order buttons a bit..
-        //
+            // score limit stars
+            //
+            int developer, ultimate;
+            std::string mission = std::string("survival\\") + game->getMissionId();
+            if(GameStats::getScoreLimits(mission.c_str(), developer, ultimate)) {
+                for(unsigned int i = 0; i < scores.size(); i++) {
+                    int score = atoi(scores[i].score.c_str());
+                    if(score > ultimate) {
+                        int x = getLocaleGuiInt("gui_scorewindow_ultimatestar_x", 0) + highScoreNumbers->getX();
+                        int y = getLocaleGuiInt("gui_scorewindow_ultimatestar_y", 0) + highScoreNumbers->getLinePositionY(i * 4) + 25;
+                        int w = getLocaleGuiInt("gui_scorewindow_ultimatestar_w", 0);
+                        int h = getLocaleGuiInt("gui_scorewindow_ultimatestar_h", 0);
+                        const char *img = getLocaleGuiString("gui_scorewindow_ultimatestar_img");
+                        OguiButton *but = ogui->CreateSimpleImageButton(win, x, y, w, h, NULL, NULL, NULL, img, 0, 0, false);
+                        but->SetDisabled(true);
+                        starButtons.push_back(but);
+                    } else if(score > developer) {
+                        int x = getLocaleGuiInt("gui_scorewindow_developerstar_x", 0) + highScoreNumbers->getX();
+                        int y = getLocaleGuiInt("gui_scorewindow_developerstar_y", 0) + highScoreNumbers->getLinePositionY(i * 4) + 25;
+                        int w = getLocaleGuiInt("gui_scorewindow_developerstar_w", 0);
+                        int h = getLocaleGuiInt("gui_scorewindow_developerstar_h", 0);
+                        const char *img = getLocaleGuiString("gui_scorewindow_developerstar_img");
+                        OguiButton *but = ogui->CreateSimpleImageButton(win, x, y, w, h, NULL, NULL, NULL, img, 0, 0, false);
+                        but->SetDisabled(true);
+                        starButtons.push_back(but);
+                    }
+                }
+            }
 
-        if(game->isCooperative() && game::SimpleOptions::getBool( DH_OPT_B_1ST_PLAYER_ENABLED + player + 1 ))
-        {
-            if(closebut != NULL)
-                delete closebut;
+            if(scorefader != NULL)
+                delete scorefader;
 
-            closebut = oguiLoader.LoadButton( "nextplayerbutton", win, SCOREWINDOW_CLOSEME );
-            closebut->SetText( getLocaleGuiString("gui_scorewindow_closebutton_text") );
-            closebut->SetListener(this);
-            closebut->SetDisabled(false);
-        }
-        else
-        {
-            if(closebut != NULL)
-                delete closebut;
+            scorefader = oguiLoader.LoadButton( "scorefader", win, 0 );
+            scorefader->SetDisabled(true);
 
-            closebut = oguiLoader.LoadButton( "closebutton", win, SCOREWINDOW_CLOSEME );
-            closebut->SetText( getLocaleGuiString("gui_close") );
-            closebut->SetListener(this);
-            closebut->SetDisabled(false);
+            // re-order buttons a bit..
+            //
 
-            if(restartbut != NULL)
-                delete restartbut;
-
-            restartbut = oguiLoader.LoadButton( "restartbutton", win, SCOREWINDOW_RESTART );
-            restartbut->SetListener(this);
-            restartbut->SetDisabled(false);
-        }
-
-        // made it to top 3
-        /*if(showPlayerScore && myPos < 3)
-        {
-            // show new score hint
-            int offsetY = highScores->getFont()->getHeight() * 4;
-            newHighScoreHint->setText(newHighScoreHintText);
-            newHighScoreHint->moveBy(0, myPos * offsetY + highScores->getFont()->getHeight()/2);
-        }*/
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    
-    bool AllowLoading() const
-    {
-        return allowLoading;
-    }
-
-    void Close()
-    {
-        allowLoading = true;
-        if( game )
-        {
-            game::GameStats* stats = game::GameStats::instances[ player ];
-
-            if(game->gameUI->getFirstPerson(player))
+            if(game->isCooperative() && game::SimpleOptions::getBool( DH_OPT_B_1ST_PLAYER_ENABLED + player + 1 ))
             {
-                unsigned int myPos = 0;
-                std::vector<GameStats::ScoreData> scores;
+                if(closebut != NULL)
+                    delete closebut;
 
-                // take name from profile
-                if(!game::SimpleOptions::getBool(DH_OPT_B_SCOREWINDOW_NAME_INPUT))
-                    editBuffer = game->getGameProfiles()->getCurrentProfile(player);
+                closebut = oguiLoader.LoadButton( "nextplayerbutton", win, SCOREWINDOW_CLOSEME );
+                closebut->SetText( getLocaleGuiString("gui_scorewindow_closebutton_text") );
+                closebut->SetListener(this);
+                closebut->SetDisabled(false);
+            }
+            else
+            {
+                if(closebut != NULL)
+                    delete closebut;
 
-                stats->updateScoreList(scores, myPos, editBuffer);
+                closebut = oguiLoader.LoadButton( "closebutton", win, SCOREWINDOW_CLOSEME );
+                closebut->SetText( getLocaleGuiString("gui_close") );
+                closebut->SetListener(this);
+                closebut->SetDisabled(false);
 
-                // only store top 20 scores
-                if(scores.size() > 20) scores.resize(20);
-                GameStats::saveScores(GameStats::getCurrentScoreFile(), scores);
+                if(restartbut != NULL)
+                    delete restartbut;
+
+                restartbut = oguiLoader.LoadButton( "restartbutton", win, SCOREWINDOW_RESTART );
+                restartbut->SetListener(this);
+                restartbut->SetDisabled(false);
+            }
+
+            // made it to top 3
+            /*if(showPlayerScore && myPos < 3)
+            {
+                // show new score hint
+                int offsetY = highScores->getFont()->getHeight() * 4;
+                newHighScoreHint->setText(newHighScoreHintText);
+                newHighScoreHint->moveBy(0, myPos * offsetY + highScores->getFont()->getHeight()/2);
+            }*/
+        }
+
+        ///////////////////////////////////////////////////////////////////////////
+
+        bool AllowLoading() const
+        {
+            return allowLoading;
+        }
+
+        void Close()
+        {
+            allowLoading = true;
+            if( game )
+            {
+                game::GameStats* stats = game::GameStats::instances[ player ];
+
+                if(game->gameUI->getFirstPerson(player))
+                {
+                    unsigned int myPos = 0;
+                    std::vector<GameStats::ScoreData> scores;
+
+                    // take name from profile
+                    if(!game::SimpleOptions::getBool(DH_OPT_B_SCOREWINDOW_NAME_INPUT))
+                        editBuffer = game->getGameProfiles()->getCurrentProfile(player);
+
+                    stats->updateScoreList(scores, myPos, editBuffer);
+
+                    // only store top 20 scores
+                    if(scores.size() > 20) scores.resize(20);
+                    GameStats::saveScores(GameStats::getCurrentScoreFile(), scores);
+                }
+            }
+            //win->StartEffect(OGUI_WINDOW_EFFECT_FADEOUT, 100);
+            //win->Hide();
+        }
+
+        //=========================================================================
+
+        void Update()
+        {
+            if(resetPlayerTime > 0 && game->gameTimer > resetPlayerTime)
+            {
+                setPlayer(resetPlayerTo, -1);
+            }
+
+            if(game->gameTimer - lastCounterUpdate > 0)
+            {
+                lastCounterUpdate = game->gameTimer;
+
+                if(scoreCounters[4].current == 0)
+                {
+
+                    for(unsigned int i = 0; i < scoreCounters.size(); i++)
+                    {
+                        if(scoreCounters[i].current < scoreCounters[i].target)
+                        {
+                            scoreCounters[i].current += scoreCounters[i].step;
+                            if(scoreCounters[i].current >= scoreCounters[i].target)
+                            {
+                                scoreCounters[i].current = scoreCounters[i].target;
+                                if(i != 3)
+                                game->gameUI->playGUISound( counterDoneSound.c_str() );
+                                // pause for a while
+                                lastCounterUpdate += scoreCounters[i].wait;
+                            }
+                            else
+                                game->gameUI->playGUISound( counterIncSound.c_str() );
+                            break;
+                        }
+                    }
+
+                    std::string text = modifiedStatsText;
+                    text = util::StringReplace("($scoretime)", int2str(scoreCounters[0].current), text);
+                    text = util::StringReplace("($scorekills)", int2str(scoreCounters[1].current), text);
+                    text = util::StringReplace("($totalscore)", int2str(scoreCounters[2].current), text);
+                    textArea->setText( text );
+
+                    if(scoreCounters[4].current == 1)
+                    {
+                        if(!game::SimpleOptions::getBool(DH_OPT_B_SCOREWINDOW_NAME_INPUT))
+                        {
+                            // show players score
+                            generateScoreList(true);
+                        }
+                        else
+                        {
+                            nametext->SetText(originalNameText.c_str());
+                            name->SetText(">_");
+                            editcursor_show = true;
+                            editcursor_last_change = game->gameTimer;
+                            editHandle = game->gameUI->getController(0)->addKeyreader( this );
+                        }
+                    }
+                    else if(scoreCounters[3].current == 1)
+                    {
+                        // test score limits
+                        int developer, ultimate;
+                        std::string mission = std::string("survival\\") + game->getMissionId();
+                        if(GameStats::getScoreLimits(mission.c_str(), developer, ultimate))
+                        {
+                            if(scoreCounters[2].target > ultimate)
+                            {
+                                scoreLimitHint = oguiLoader.LoadButton("ultimate_hint", win, 0);
+                                scoreLimitHint->SetDisabled(true);
+                                game->gameUI->playStreamedSound( getLocaleGuiString("gui_scorewindow_ultimate_hint_sound") );
+                            }
+                            else if(scoreCounters[2].target > developer)
+                            {
+                                scoreLimitHint = oguiLoader.LoadButton("developer_hint", win, 0);
+                                scoreLimitHint->SetDisabled(true);
+                                game->gameUI->playStreamedSound( getLocaleGuiString("gui_scorewindow_developer_hint_sound") );
+                            } else {
+                                // no limit reached, don't wait
+                                lastCounterUpdate = game->gameTimer;
+                        }
+                    }
+                }
+
             }
         }
-        //win->StartEffect(OGUI_WINDOW_EFFECT_FADEOUT, 100);
-        //win->Hide();
+
+        if (game->gameTimer - editcursor_last_change > GAME_TICKS_PER_SECOND / 2) {
+            editcursor_last_change = game->gameTimer;
+
+            if (editHandle != -1) {
+                editcursor_show = !editcursor_show;
+
+                if (editcursor_show)
+                    name->SetText( (">" + editBuffer + "_").c_str() );
+                else
+                    name->SetText( (">" + editBuffer + " ").c_str() );
+            }
+        }
+
+        if (scrollScores > 0) {
+            int delta_time = Timer::getTime() - last_scroll;
+            int scroll_delay = 500 / (scrollScores + 1);
+            if (scroll_delay > 8)
+                scroll_delay = 8;
+            else if (scroll_delay < 4)
+                scroll_delay = 4;
+
+            if (delta_time >= scroll_delay) {
+                last_scroll = Timer::getTime();
+                int amount = -delta_time / scroll_delay;
+
+                if (scrollScores + amount < 0)
+                    amount = -scrollScores;
+
+                highScoreNumbers->moveBy(0, amount, true, false);
+                highScores->moveBy(0, amount, true, false);
+                for (unsigned int i = 0; i < starButtons.size(); i++) {
+                    if (starButtons[i]) {
+                        starButtons[i]->MoveBy(0, amount);
+                        if ( starButtons[i]->GetY() < highScores->getY() ) {
+                            delete starButtons[i];
+                            starButtons[i] = NULL;
+                        }
+                    }
+                }
+                scrollScores += amount;
+            }
+        }
+    }
+
+    int getPlayer() {
+        return player;
+    }
+
+    void setPlayer(int p, int time) {
+        if (time < 0) {
+            if (resetPlayerTo != -1)
+                game->gameUI->getEffects()->startFadeIn(200);
+
+            resetPlayerTime = -1;
+            resetPlayerTo = -1;
+
+            player = p;
+            allowLoading = false;
+            highScores->setText("");
+            highScoreNumbers->setText("");
+            for (unsigned int i = 0; i < starButtons.size(); i++) {
+                delete starButtons[i];
+            }
+            starButtons.clear();
+            // wait before starting counting
+            creationTime = game->gameTimer;
+            lastCounterUpdate = game->gameTimer + 3 * GAME_TICKS_PER_SECOND / 2;
+            editBuffer.clear();
+            GenerateStats();
+        } else {
+            delete closebut;
+            closebut = NULL;
+
+            allowLoading = false;
+            resetPlayerTo = p;
+            resetPlayerTime = game->gameTimer + time;
+        }
+    }
+
+    bool shouldRestart() {
+        return pressed_restart;
+    }
+
+    void pleaseClose()
+    {
+        // finish counters
+        if (scoreCounters[4].current == 0) {
+            lastCounterUpdate = 0;
+            for (unsigned int i = 0; i < scoreCounters.size(); i++) {
+                scoreCounters[i].current = scoreCounters[i].target - 1;
+                scoreCounters[i].wait = 0;
+            }
+        } else if (editHandle != -1) {
+            // stop writing name
+            if ( editBuffer.empty() )
+                editBuffer = game->getGameProfiles()->getCurrentProfile(player);
+            editButtonEnter();
+        } else if (scrollScores != 0 && highScores != NULL && highScoreNumbers != NULL) {
+            highScoreNumbers->moveBy(0, -scrollScores, true, false);
+            highScores->moveBy(0, -scrollScores, true, false);
+            scrollScores = 0;
+        } else {
+            // close
+            Close();
+        }
     }
 
     //=========================================================================
 
-    void Update()
-    {
-        if(resetPlayerTime > 0 && game->gameTimer > resetPlayerTime)
-        {
-            setPlayer(resetPlayerTo, -1);
-        }
-
-        if(game->gameTimer - lastCounterUpdate > 0)
-        {
-            lastCounterUpdate = game->gameTimer;
-
-            if(scoreCounters[4].current == 0)
-            {
-
-                for(unsigned int i = 0; i < scoreCounters.size(); i++)
-                {
-                    if(scoreCounters[i].current < scoreCounters[i].target)
-                    {
-                        scoreCounters[i].current += scoreCounters[i].step;
-                        if(scoreCounters[i].current >= scoreCounters[i].target)
-                        {
-                            scoreCounters[i].current = scoreCounters[i].target;
-                            if(i != 3)
-                            game->gameUI->playGUISound( counterDoneSound.c_str() );
-                            // pause for a while
-                            lastCounterUpdate += scoreCounters[i].wait;
-                        }
-                        else
-                            game->gameUI->playGUISound( counterIncSound.c_str() );
-                        break;
-                    }
-                }
-
-                std::string text = modifiedStatsText;
-                text = util::StringReplace("($scoretime)", int2str(scoreCounters[0].current), text);
-                text = util::StringReplace("($scorekills)", int2str(scoreCounters[1].current), text);
-                text = util::StringReplace("($totalscore)", int2str(scoreCounters[2].current), text);
-                textArea->setText( text );
-
-                if(scoreCounters[4].current == 1)
-                {
-                    if(!game::SimpleOptions::getBool(DH_OPT_B_SCOREWINDOW_NAME_INPUT))
-                    {
-                        // show players score
-                        generateScoreList(true);
-                    }
-                    else
-                    {
-                        nametext->SetText(originalNameText.c_str());
-                        name->SetText(">_");
-                        editcursor_show = true;
-                        editcursor_last_change = game->gameTimer;
-                        editHandle = game->gameUI->getController(0)->addKeyreader( this );
-                    }
-                }
-                else if(scoreCounters[3].current == 1)
-                {
-                    // test score limits
-                    int developer, ultimate;
-                    std::string mission = std::string("survival\\") + game->getMissionId();
-                    if(GameStats::getScoreLimits(mission.c_str(), developer, ultimate))
-                    {
-                        if(scoreCounters[2].target > ultimate)
-                        {
-                            scoreLimitHint = oguiLoader.LoadButton("ultimate_hint", win, 0);
-                            scoreLimitHint->SetDisabled(true);
-                            game->gameUI->playStreamedSound( getLocaleGuiString("gui_scorewindow_ultimate_hint_sound") );
-                        }
-                        else if(scoreCounters[2].target > developer)
-                        {
-                            scoreLimitHint = oguiLoader.LoadButton("developer_hint", win, 0);
-                            scoreLimitHint->SetDisabled(true);
-                            game->gameUI->playStreamedSound( getLocaleGuiString("gui_scorewindow_developer_hint_sound") );
-                        }
-                        else
-                        {
-                            // no limit reached, don't
-                    wait
-                    lastCounterUpdate = game->gameTimer;
-                }
-            }
-        }
-
-    }
-}
-
-if (game->gameTimer - editcursor_last_change > GAME_TICKS_PER_SECOND / 2) {
-    editcursor_last_change = game->gameTimer;
-
-    if (editHandle != -1) {
-        editcursor_show = !editcursor_show;
-
-        if (editcursor_show)
-            name->SetText( (">" + editBuffer + "_").c_str() );
-        else
-            name->SetText( (">" + editBuffer + " ").c_str() );
-    }
-}
-
-if (scrollScores > 0) {
-    int delta_time = Timer::getTime() - last_scroll;
-    int scroll_delay = 500 / (scrollScores + 1);
-    if (scroll_delay > 8)
-        scroll_delay = 8;
-    else if (scroll_delay < 4)
-        scroll_delay = 4;
-
-    if (delta_time >= scroll_delay) {
-        last_scroll = Timer::getTime();
-        int amount = -delta_time / scroll_delay;
-
-        if (scrollScores + amount < 0)
-            amount = -scrollScores;
-
-        highScoreNumbers->moveBy(0, amount, true, false);
-        highScores->moveBy(0, amount, true, false);
-        for (unsigned int i = 0; i < starButtons.size(); i++) {
-            if (starButtons[i]) {
-                starButtons[i]->MoveBy(0, amount);
-                if ( starButtons[i]->GetY() < highScores->getY() ) {
-                    delete starButtons[i];
-                    starButtons[i] = NULL;
-                }
-            }
-        }
-        scrollScores += amount;
-    }
-}
-}
-
-int getPlayer()
-{
-    return player;
-}
-
-void setPlayer(int p, int time)
-{
-    if (time < 0) {
-        if (resetPlayerTo != -1)
-            game->gameUI->getEffects()->startFadeIn(200);
-
-        resetPlayerTime = -1;
-        resetPlayerTo = -1;
-
-        player = p;
-        allowLoading = false;
-        highScores->setText("");
-        highScoreNumbers->setText("");
-        for (unsigned int i = 0; i < starButtons.size(); i++) {
-            delete starButtons[i];
-        }
-        starButtons.clear();
-        // wait before starting counting
-        creationTime = game->gameTimer;
-        lastCounterUpdate = game->gameTimer + 3 * GAME_TICKS_PER_SECOND / 2;
-        editBuffer.clear();
-        GenerateStats();
-    } else {
-        delete closebut;
-        closebut = NULL;
-
-        allowLoading = false;
-        resetPlayerTo = p;
-        resetPlayerTime = game->gameTimer + time;
-    }
-}
-
-bool shouldRestart()
-{
-    return pressed_restart;
-}
-
-void pleaseClose()
-{
-    // finish counters
-    if (scoreCounters[4].current == 0) {
-        lastCounterUpdate = 0;
-        for (unsigned int i = 0; i < scoreCounters.size(); i++) {
-            scoreCounters[i].current = scoreCounters[i].target - 1;
-            scoreCounters[i].wait = 0;
-        }
-    } else if (editHandle != -1) {
-        // stop writing name
-        if ( editBuffer.empty() )
-            editBuffer = game->getGameProfiles()->getCurrentProfile(player);
-        editButtonEnter();
-    } else if (scrollScores != 0 && highScores != NULL && highScoreNumbers != NULL) {
-        highScoreNumbers->moveBy(0, -scrollScores, true, false);
-        highScores->moveBy(0, -scrollScores, true, false);
-        scrollScores = 0;
-    } else {
-        // close
-        Close();
-    }
-}
-
-//=========================================================================
-
 private:
-Ogui *ogui;
-OguiWindow *win;
-game::Game *game;
-bool allowLoading;
-int player;
+    Ogui *ogui;
+    OguiWindow *win;
+    game::Game *game;
+    bool allowLoading;
+    int player;
 
-struct ScoreCounter {
-    int current;
-    int target;
-    int step;
-    int wait;
-};
-std::vector<ScoreCounter> scoreCounters;
-std::string counterIncSound;
-std::string counterDoneSound;
-int lastCounterUpdate;
-int creationTime;
+    struct ScoreCounter {
+        int current;
+        int target;
+        int step;
+        int wait;
+    };
+    std::vector<ScoreCounter> scoreCounters;
+    std::string counterIncSound;
+    std::string counterDoneSound;
+    int lastCounterUpdate;
+    int creationTime;
 
-OguiButton *closebut;
-OguiButton *restartbut;
-OguiFormattedText *textArea;
-std::string originalStatsText;
-std::string modifiedStatsText;
+    OguiButton *closebut;
+    OguiButton *restartbut;
+    OguiFormattedText *textArea;
+    std::string originalStatsText;
+    std::string modifiedStatsText;
 
-OguiFormattedText *newHighScoreHint;
-std::string newHighScoreHintText;
+    OguiFormattedText *newHighScoreHint;
+    std::string newHighScoreHintText;
 
-OguiFormattedText *highScores;
-OguiFormattedText *highScoreNumbers;
-OguiButton *scorefader;
-std::vector<OguiButton *> starButtons;
-OguiButton *scoreLimitHint;
-int scrollScores;
-int last_scroll;
+    OguiFormattedText *highScores;
+    OguiFormattedText *highScoreNumbers;
+    OguiButton *scorefader;
+    std::vector<OguiButton *> starButtons;
+    OguiButton *scoreLimitHint;
+    int scrollScores;
+    int last_scroll;
 
-OguiButton *title;
-OguiButton *clickCatcher;
+    OguiButton *title;
+    OguiButton *clickCatcher;
 
-OguiLocaleWrapper oguiLoader;
+    OguiLocaleWrapper oguiLoader;
 
-OguiButton *name;
-OguiButton *nametext;
-std::string originalNameText;
-std::string editBuffer;
-int editHandle;
-bool editcursor_show;
-int editcursor_last_change;
+    OguiButton *name;
+    OguiButton *nametext;
+    std::string originalNameText;
+    std::string editBuffer;
+    int editHandle;
+    bool editcursor_show;
+    int editcursor_last_change;
 
-int resetPlayerTo;
-int resetPlayerTime;
+    int resetPlayerTo;
+    int resetPlayerTime;
 
-bool pressed_restart;
+    bool pressed_restart;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

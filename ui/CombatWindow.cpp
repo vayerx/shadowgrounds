@@ -801,7 +801,7 @@ namespace ui
 
     void CombatWindow::setCrosshair(bool crosshairVisible)
     {
-        if (crosshairVisible)
+        if (crosshairVisible) {
 #ifdef GUI_BUILD_AOV_CROSSHAIR
             for (int i = 0; i < MAX_PLAYERS_PER_CLIENT; i++) {
                 if (impl->aovCrosshairs[i] == NULL
@@ -828,13 +828,14 @@ namespace ui
                 crosshair->SetDisabled(true);
                }
              */
-        else
+        } else {
 #ifdef GUI_BUILD_AOV_CROSSHAIR
             for (int i = 0; i < MAX_PLAYERS_PER_CLIENT; i++) {
                 if (impl->aovCrosshairs[i] != NULL)
                     impl->aovCrosshairs[i]->hide();
             }
 #endif
+        }
             // unused crosshair.reset();
     }
 
