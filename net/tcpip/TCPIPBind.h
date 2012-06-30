@@ -9,41 +9,38 @@ class Connection;
 
 namespace net
 {
-  namespace tcpip
-  {
-    // proto
-    class TCPIPDriver;
-
-
-    /**
-     * TCP/IP net bind interface.
-     */
-    class TCPIPBind : public INetBind
+    namespace tcpip
     {
-    public:
-      TCPIPBind(const char *name);
+        // proto
+        class TCPIPDriver;
 
-      virtual INetConnection *acceptConnection() 
-        throw (NetDriverException*);
+        /**
+         * TCP/IP net bind interface.
+         */
+        class TCPIPBind : public INetBind {
+        public:
+            TCPIPBind(const char *name);
 
-      virtual void listen(int backlog) 
-        throw (NetDriverException*);
+            virtual INetConnection *acceptConnection()
+            throw (NetDriverException *);
 
-      virtual int getMaxBacklog();
+            virtual void listen(int backlog)
+            throw (NetDriverException *);
 
-      virtual void unbind() 
-        throw (NetDriverException*);
-     
-      virtual ~TCPIPBind();
+            virtual int getMaxBacklog();
 
-    private:
-      Connection *c;
-      Connection *nc;
+            virtual void unbind()
+            throw (NetDriverException *);
 
-      friend TCPIPDriver;
-    };
-  }
+            virtual ~TCPIPBind();
+
+        private:
+            Connection *c;
+            Connection *nc;
+
+            friend TCPIPDriver;
+        };
+    }
 }
 
 #endif
-

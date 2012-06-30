@@ -4,24 +4,22 @@
 #include <io.h>
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        class FileIterator {
+            long handle;
+            _finddata_t findData;
+            bool validFile;
+            bool foldersOnly;
 
-	class FileIterator
-	{
-		long handle;
-		_finddata_t findData;
-		bool validFile;
-		bool foldersOnly;
+            bool validateFile(const std::string &string);
 
-		bool validateFile(const std::string &string);
-
-	public:
-		FileIterator(const std::string &searchString, bool foldersOnly);
-		~FileIterator();
-		std::string getFileName();
-		void next();
-	};
-}
+        public:
+            FileIterator(const std::string &searchString, bool foldersOnly);
+            ~FileIterator();
+            std::string getFileName();
+            void next();
+        };
+    }
 }
 
 #endif

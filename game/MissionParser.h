@@ -1,4 +1,3 @@
-
 #ifndef MISSIONPARSER_H
 #define MISSIONPARSER_H
 
@@ -11,32 +10,27 @@
 // v0.1 - 27.5.2002 - jpkokkon
 //
 
-
-#define MISSIONPARSER_SECTION_NONE 0
+#define MISSIONPARSER_SECTION_NONE   0
 #define MISSIONPARSER_SECTION_BEFORE 1
 #define MISSIONPARSER_SECTION_COMBAT 2
-#define MISSIONPARSER_SECTION_AFTER 3
+#define MISSIONPARSER_SECTION_AFTER  3
 
 namespace game
 {
+    class Game;
 
-  class Game;
+    class MissionParser {
+    public:
+        MissionParser();
+        ~MissionParser();
 
+        // each mission as it's own data file? sounds great ;)
+        void parseMission(Game *game, const char *filename, int section);
 
-  class MissionParser
-  {
-  public:
-    MissionParser();
-    ~MissionParser();
-
-    // each mission as it's own data file? sounds great ;)
-    void parseMission(Game *game, const char *filename, int section);
-
-  private:
-    void error(const char *err, int linenum, bool isError = true);
-  };
+    private:
+        void error(const char *err, int linenum, bool isError = true);
+    };
 
 }
 
 #endif
-

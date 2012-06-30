@@ -6,18 +6,21 @@
 #include <boost/scoped_ptr.hpp>
 
 namespace frozenbyte {
-namespace particle {
+    namespace particle {
+        class IParticleCollision {
+        public:
+            virtual ~IParticleCollision() { }
 
-class IParticleCollision
-{
-public:
-	virtual ~IParticleCollision() {}
+            virtual bool spawnPosition(const VC3 &emitter, const VC3 &dir, VC3 &position) const = 0;
+            virtual bool getCollision(const VC3 &oldPosition,
+                                      VC3       &position,
+                                      VC3       &velocity,
+                                      float      slowFactor,
+                                      float      groundSlowFactor,
+                                      float      wallSlowFactor) const = 0;
+        };
 
-	virtual bool spawnPosition(const VC3 &emitter, const VC3 &dir, VC3 &position) const = 0;
-	virtual bool getCollision(const VC3 &oldPosition, VC3 &position, VC3 &velocity, float slowFactor, float groundSlowFactor, float wallSlowFactor) const = 0;
-};
-
-} // particle
-} // frozenbyte
+    } // particle
+}     // frozenbyte
 
 #endif

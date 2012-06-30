@@ -1,4 +1,3 @@
-
 #ifndef BUILDING_H
 #define BUILDING_H
 
@@ -7,72 +6,70 @@
 #include "GameObject.h"
 #include "../ui/VisualObject.h"
 
-
 namespace ui
 {
-  class VisualObject;
+    class VisualObject;
 }
 
 namespace game
 {
-	class GamePhysics;
-	class StaticPhysicsObject;
+    class GamePhysics;
+    class StaticPhysicsObject;
 
-  extern const int buildingDataId;
+    extern const int buildingDataId;
 
-  /**
-   * A game building.
-   *
-   * @version 1.1, 23.1.2003
-   * @author Jukka Kokkonen <jukka@frozenbyte.com>
-   * @see BuildingList
-   *
-   */
-
-  class Building : public GameObject, public ui::IVisualObjectData
-  {
-  public:
-
-    //Building(char *filename, int mapX, int mapY);
-    Building(const char *filename);
-
-    ~Building();
-
-    /** 
-     * TODO!
-     * To implement GameObject "interface" class.
-     * @return SaveData, data to be saved. TODO, currently NULL.
+    /**
+     * A game building.
+     *
+     * @version 1.1, 23.1.2003
+     * @author Jukka Kokkonen <jukka@frozenbyte.com>
+     * @see BuildingList
+     *
      */
-    virtual SaveData *getSaveData() const;
 
-    virtual const char *getStatusInfo() const;
+    class Building : public GameObject, public ui::IVisualObjectData {
+    public:
 
-    virtual void *getVisualObjectDataId() const;
+        //Building(char *filename, int mapX, int mapY);
+        Building(const char *filename);
 
-    char *getModelFilename();
+        ~Building();
 
-    //VC2I getMapPosition();
+        /**
+         * TODO!
+         * To implement GameObject "interface" class.
+         * @return SaveData, data to be saved. TODO, currently NULL.
+         */
+        virtual SaveData *getSaveData() const;
 
-    void setPosition(VC3 &position);
+        virtual const char *getStatusInfo() const;
 
-    void addPhysics(GamePhysics *gamePhysics);
-    void deletePhysics(GamePhysics *gamePhysics);
+        virtual void *getVisualObjectDataId() const;
 
-    VC3 getPosition();
+        char *getModelFilename();
 
-    ui::VisualObject *getVisualObject();
-    void setVisualObject(ui::VisualObject *visualObject);
+        //VC2I getMapPosition();
 
-  private:
-    char *modelFilename;
+        void setPosition(VC3 &position);
 
-    VC3 position;
-    //VC2I mapPosition;
+        void addPhysics(GamePhysics *gamePhysics);
+        void deletePhysics(GamePhysics *gamePhysics);
 
-    ui::VisualObject *visualObject;
+        VC3 getPosition();
 
-		StaticPhysicsObject *physicsObject;
-  };
+        ui::VisualObject *getVisualObject();
+        void setVisualObject(ui::VisualObject *visualObject);
+
+    private:
+        char *modelFilename;
+
+        VC3 position;
+        //VC2I mapPosition;
+
+        ui::VisualObject *visualObject;
+
+        StaticPhysicsObject *physicsObject;
+    };
 
 }
 

@@ -1,7 +1,7 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
 #ifdef _MSC_VER
-#pragma warning(disable:4103)
+#  pragma warning(disable:4103)
 #endif
 
 #include <stack>
@@ -21,99 +21,93 @@ Storm3D_ResourceManager::Storm3D_ResourceManager()
 // (look for comment in the header) -jpk
 void Storm3D_ResourceManager::uninitialize()
 {
-	while(meshes.begin() != meshes.end())
-		delete meshes.begin()->first;
+    while ( meshes.begin() != meshes.end() )
+        delete meshes.begin()->first;
 
-	while(materials.begin() != materials.end())
-		delete materials.begin()->first;
+    while ( materials.begin() != materials.end() )
+        delete materials.begin()->first;
 
-	meshes.clear();
-	materials.clear();
+    meshes.clear();
+    materials.clear();
 }
 
 Storm3D_ResourceManager::~Storm3D_ResourceManager()
 {
-	uninitialize();
+    uninitialize();
 }
 
 void Storm3D_ResourceManager::addResource(IStorm3D_Material *material)
 {
-	if(!material)
-		return;
+    if (!material)
+        return;
 
-	assert(materials[material] == 0);
-	materials[material] = 0;
+    assert(materials[material] == 0);
+    materials[material] = 0;
 }
 
 void Storm3D_ResourceManager::addResource(IStorm3D_Mesh *mesh)
 {
-	if(!mesh)
-		return;
+    if (!mesh)
+        return;
 
-	assert(meshes[mesh] == 0);
-	meshes[mesh] = 0;
+    assert(meshes[mesh] == 0);
+    meshes[mesh] = 0;
 }
 
 void Storm3D_ResourceManager::deleteResource(IStorm3D_Material *material)
 {
-	assert(materials[material] == 0);
-	materials.erase(material);
+    assert(materials[material] == 0);
+    materials.erase(material);
 }
 
 void Storm3D_ResourceManager::deleteResource(IStorm3D_Mesh *mesh)
 {
-	assert(meshes[mesh] == 0);
-	meshes.erase(mesh);
+    assert(meshes[mesh] == 0);
+    meshes.erase(mesh);
 }
 
 void Storm3D_ResourceManager::addUser(IStorm3D_Material *material, IStorm3D_Mesh *mesh)
 {
-	if((!material) || (!mesh))
-	{
-		assert(!"Whoops");
-		return;
-	}
+    if ( (!material) || (!mesh) ) {
+        assert(!"Whoops");
+        return;
+    }
 
-	++materials[material];
+    ++materials[material];
 }
 
 void Storm3D_ResourceManager::addUser(IStorm3D_Mesh *mesh, IStorm3D_Model_Object *object)
 {
-	if((!mesh) || (!object))
-	{
-		assert(!"Whoops");
-		return;
-	}
+    if ( (!mesh) || (!object) ) {
+        assert(!"Whoops");
+        return;
+    }
 
-	++meshes[mesh];
+    ++meshes[mesh];
 }
 
 void Storm3D_ResourceManager::removeUser(IStorm3D_Material *material, IStorm3D_Mesh *mesh)
 {
-	if((!material) || (!mesh))
-	{
-		assert(!"Whoops");
-		return;
-	}
+    if ( (!material) || (!mesh) ) {
+        assert(!"Whoops");
+        return;
+    }
 
-	if(--materials[material] == 0)
-	{
-		materials.erase(material);
-		delete material;
-	}
+    if (--materials[material] == 0) {
+        materials.erase(material);
+        delete material;
+    }
 }
 
 void Storm3D_ResourceManager::removeUser(IStorm3D_Mesh *mesh, IStorm3D_Model_Object *object)
 {
-	if((!mesh) || (!object))
-	{
-		assert(!"Whoops");
-		return;
-	}
+    if ( (!mesh) || (!object) ) {
+        assert(!"Whoops");
+        return;
+    }
 
-	if(--meshes[mesh] == 0)
-	{
-		meshes.erase(mesh);
-		delete mesh;
-	}
+    if (--meshes[mesh] == 0) {
+        meshes.erase(mesh);
+        delete mesh;
+    }
 }

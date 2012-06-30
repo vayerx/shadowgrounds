@@ -7,40 +7,41 @@ class IStorm3D;
 
 namespace sfx
 {
-	class SoundMixer;
+    class SoundMixer;
 }
 
 namespace game
 {
-	class Game;
+    class Game;
 }
 
 namespace ui {
-
 ///////////////////////////////////////////////////////////////////////////////
 
-class CinematicScreen
-{
-public:
-	class CinematicScreenImpl;
+    class CinematicScreen {
+    public:
+        class CinematicScreenImpl;
 
-	CinematicScreen( Ogui* ogui, game::Game *game, const std::string& name, sfx::SoundMixer *mixer, IStorm3D* storm3d );
-	~CinematicScreen();
+        CinematicScreen(Ogui              *ogui,
+                        game::Game        *game,
+                        const std::string &name,
+                        sfx::SoundMixer   *mixer,
+                        IStorm3D          *storm3d);
+        ~CinematicScreen();
 
-	void update();
-	void close();
+        void update();
+        void close();
 
-	bool isOpen() const;
-	bool shouldBeDeleted() const;
-	bool hasVideo() const;
+        bool isOpen() const;
+        bool shouldBeDeleted() const;
+        bool hasVideo() const;
 
-	void raise();
+        void raise();
 
-private:
-	CinematicScreenImpl* impl;
+    private:
+        CinematicScreenImpl *impl;
 
-	
-};
+    };
 
 ///////////////////////////////////////////////////////////////////////////////
 } // end of namespace ui

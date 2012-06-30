@@ -1,4 +1,3 @@
-
 #ifndef VERSION_H
 #define VERSION_H
 
@@ -8,4 +7,3 @@ extern const char *get_application_classname_string();
 extern const char *get_version_string();
 
 #endif
-

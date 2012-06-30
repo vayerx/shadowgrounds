@@ -1,4 +1,3 @@
-
 #include "precompiled.h"
 
 #include "ClawUnit.h"
@@ -8,12 +7,10 @@
 
 namespace game
 {
-
-  ClawUnit::ClawUnit(int player)
-  {
-		setOwner(player);
-    //unitTypeId = getUnitTypeByName("Claw");
-  }
+    ClawUnit::ClawUnit(int player)
+    {
+        setOwner(player);
+        //unitTypeId = getUnitTypeByName("Claw");
+    }
 
 }
-

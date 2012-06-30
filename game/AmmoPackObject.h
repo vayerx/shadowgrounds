@@ -1,4 +1,3 @@
-
 #ifndef AMMOPACKOBJECT_H
 #define AMMOPACKOBJECT_H
 
@@ -6,29 +5,26 @@
 
 namespace game
 {
+    class AmmoPackObject : public Part {
+    protected:
+        int amount;
+        int maxAmount;
 
-  class AmmoPackObject : public Part
-  {
-  protected:
-    int amount;
-    int maxAmount;
+    public:
 
-  public:
+        AmmoPackObject();
 
-    AmmoPackObject();
+        virtual SaveData *getSaveData() const;
 
-    virtual SaveData *getSaveData() const;
+        int getReloadPrice();
+        void reload();
 
-    int getReloadPrice();
-    void reload();
-
-    inline int getAmount() { return amount; }
-    inline void setAmount(int amount) { this->amount = amount; }
-    inline int getMaxAmount() { return maxAmount; }
-    inline void setMaxAmount(int maxAmount) { this->maxAmount = maxAmount; }
-  };
+        inline int getAmount() { return amount; }
+        inline void setAmount(int amount) { this->amount = amount; }
+        inline int getMaxAmount() { return maxAmount; }
+        inline void setMaxAmount(int maxAmount) { this->maxAmount = maxAmount; }
+    };
 
 }
 
 #endif
-

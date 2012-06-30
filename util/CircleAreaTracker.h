@@ -1,4 +1,3 @@
-
 // TODO
 
 // THIS SHOULD KEEP A LIST (QUADTREE MAYBE?) OF LISTENED(TRACKED) AREAS AND OBJECTS
@@ -21,7 +20,7 @@
 // getUnitVariable scriptclip
 // setAreaClipToValue
 // setPlayer 0
-// 
+//
 // loop
 //   if
 //     hasAreaTriggered
@@ -42,26 +41,24 @@
 #include <DatatypeDef.h>
 
 namespace util {
+    class ITrackable;
+    class ITriggerListener;
+    class ClippedCircle;
 
-class ITrackable;
-class ITriggerListener;
-class ClippedCircle;
+    class CircleAreaTracker {
+        struct Data;
+        boost::scoped_ptr<Data> data;
 
-class CircleAreaTracker
-{
-	struct Data;
-	boost::scoped_ptr<Data> data;
+    public:
+        explicit CircleAreaTracker(const VC2 &size);
+        ~CircleAreaTracker();
 
-public:
-	explicit CircleAreaTracker(const VC2 &size);
-	~CircleAreaTracker();
+        int addCircleTrigger(const ClippedCircle &circle, ITriggerListener *listener, void *triggerData);
+        void addTrackable(int circleId, ITrackable *ptr);
+        void removeCircleTrigger(int circleId);
 
-	int addCircleTrigger(const ClippedCircle &circle, ITriggerListener *listener, void *triggerData);
-	void addTrackable(int circleId, ITrackable *ptr);
-	void removeCircleTrigger(int circleId);
-
-	void update(int ms);
-};
+        void update(int ms);
+    };
 
 } // util
 

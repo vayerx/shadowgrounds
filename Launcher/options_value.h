@@ -7,42 +7,39 @@
 #include <string>
 
 namespace game {
-	class GameOptionManager;
+    class GameOptionManager;
 }
 
 namespace frozenbyte {
-namespace launcher {
+    namespace launcher {
+        class OptionsValue {
+        public:
+            struct KeyValuePair {
+                std::string key;
+                std::string value;
+            };
 
-class OptionsValue
-{
-public:
-	struct KeyValuePair
-	{
-		std::string key;
-		std::string value;
-	};
+            OptionsValue();
+            OptionsValue(const OptionsValue &other);
+            ~OptionsValue();
 
-	OptionsValue();
-	OptionsValue( const OptionsValue& other );
-	~OptionsValue();
+            const OptionsValue &operator =(const OptionsValue &other);
 
-	const OptionsValue& operator= ( const OptionsValue& other );
+            bool empty() const;
 
-	bool empty() const;
+            void addKeyValue(const std::string &key, const std::string &value);
+            std::list< KeyValuePair > getData() const;
+            void apply(game::GameOptionManager *manager);
+            bool isInUse(game::GameOptionManager *manager) const;
 
-	void addKeyValue( const std::string& key, const std::string& value );
-	std::list< KeyValuePair > getData() const;
-	void apply( game::GameOptionManager* manager );
-	bool isInUse( game::GameOptionManager* manager ) const;
+        private:
 
-private:
+            typedef std::list< KeyValuePair > DataType;
 
-	typedef std::list< KeyValuePair > DataType;
+            std::list< KeyValuePair > data;
+        };
 
-	std::list< KeyValuePair > data;
-};
-
-} // end of namespace launcher
-} // end of namespace frozenbyte
+    } // end of namespace launcher
+}     // end of namespace frozenbyte
 
 #endif

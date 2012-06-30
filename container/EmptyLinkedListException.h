@@ -3,12 +3,9 @@
 
 // #include "csp/CSPException.h"
 
-class EmptyLinkedListException 
-{ 
+class EmptyLinkedListException {
 public:
-	EmptyLinkedListException() { }
+    EmptyLinkedListException() { }
 }; // extends CSPException { };
 
 #endif
-
-

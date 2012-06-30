@@ -1,4 +1,3 @@
-
 #include "precompiled.h"
 
 #include "../container/LinkedList.h"
@@ -9,32 +8,29 @@
 
 namespace game
 {
+    GameObjectList *GameObject::constructorList = NULL;
 
-  GameObjectList *GameObject::constructorList = NULL;
-  
-  void GameObject::setConstructorList(GameObjectList *objectList)
-  {
-    constructorList = objectList;
-  }
-
-  GameObject::GameObject()
-  {
-    if (constructorList != NULL)
+    void GameObject::setConstructorList(GameObjectList *objectList)
     {
-      gameObjectList = constructorList;
-      listSelfPointer = gameObjectList->add(this);
+        constructorList = objectList;
     }
-  }
 
-  /*
-  GameObject::~GameObject()
-  {
-    if (gameObjectList != NULL)
+    GameObject::GameObject()
     {
-      gameObjectList->removeByNode(listSelfPointer, this);
+        if (constructorList != NULL) {
+            gameObjectList = constructorList;
+            listSelfPointer = gameObjectList->add(this);
+        }
     }
-  }
-  */
 
+    /*
+       GameObject::~GameObject()
+       {
+       if (gameObjectList != NULL)
+       {
+        gameObjectList->removeByNode(listSelfPointer, this);
+       }
+       }
+     */
 
 }

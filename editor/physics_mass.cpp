@@ -9,113 +9,107 @@
 #include <vector>
 
 namespace frozenbyte {
-namespace editor {
-namespace {
-	std::string fileName = "Editor\\Masses.fbt";
-}
+    namespace editor {
+        namespace {
+            std::string fileName = "Editor\\Masses.fbt";
+        }
 
-struct PhysicsMass::Data
-{
-	struct Mass
-	{
-		std::string name;
-		float value;
+        struct PhysicsMass::Data {
+            struct Mass {
+                std::string name;
+                float       value;
 
-		Mass()
-		:	value()
-		{
-		}
-	};
+                Mass()
+                    :   value()
+                {
+                }
+            };
 
-	struct MassSorter
-	{
-		bool operator () (const Mass &a, const Mass &b) const
-		{
-			return a.value < b.value;
-		}
-	};
+            struct MassSorter {
+                bool operator () (const Mass &a, const Mass &b) const
+                {
+                    return a.value < b.value;
+                }
+            };
 
-	typedef std::vector<Mass> MassList;
-	MassList masses;
+            typedef std::vector<Mass> MassList;
+            MassList masses;
 
-	Data()
-	{
-		parseData();
-	}
+            Data()
+            {
+                parseData();
+            }
 
-	void parseData()
-	{
-		Parser parser;
-		filesystem::FilePackageManager::getInstance().getFile(fileName) >> parser;
+            void parseData()
+            {
+                Parser parser;
+                filesystem::FilePackageManager::getInstance().getFile(fileName) >> parser;
 
-		const ParserGroup &globals = parser.getGlobals();
-		int groups = globals.getSubGroupAmount();
+                const ParserGroup &globals = parser.getGlobals();
+                int groups = globals.getSubGroupAmount();
 
-		for(int i = 0; i < groups; ++i)
-		{
-			Mass mass;
-			mass.name = globals.getSubGroupName(i);
-			
-			if(mass.name.empty())
-				continue;
+                for (int i = 0; i < groups; ++i) {
+                    Mass mass;
+                    mass.name = globals.getSubGroupName(i);
 
-			const ParserGroup &group = globals.getSubGroup(mass.name);
-			const std::string &massString = group.getValue("value");
-			mass.value = convertFromString<float> (massString, 20.f);
+                    if ( mass.name.empty() )
+                        continue;
 
-			masses.push_back(mass);
-		}
+                    const ParserGroup &group = globals.getSubGroup(mass.name);
+                    const std::string &massString = group.getValue("value");
+                    mass.value = convertFromString<float>(massString, 20.f);
 
-		std::sort(masses.begin(), masses.end(), MassSorter());
-	}
-};
+                    masses.push_back(mass);
+                }
 
-PhysicsMass::PhysicsMass()
-:	data(new Data())
-{
-}
+                std::sort( masses.begin(), masses.end(), MassSorter() );
+            }
+        };
 
-PhysicsMass::~PhysicsMass()
-{
-}
+        PhysicsMass::PhysicsMass()
+            :   data( new Data() )
+        {
+        }
 
-int PhysicsMass::getMassAmount() const
-{
-	return data->masses.size();
-}
+        PhysicsMass::~PhysicsMass()
+        {
+        }
 
-std::string PhysicsMass::getMassName(int index) const
-{
-	assert(index >= 0 && index <= getMassAmount());
-	return data->masses[index].name;
-}
+        int PhysicsMass::getMassAmount() const
+        {
+            return data->masses.size();
+        }
 
-int PhysicsMass::getMassIndex(const std::string &name) const
-{
-	for(int i = 0; i < getMassAmount(); ++i)
-	{
-		if(data->masses[i].name == name)
-			return i;
-	}
+        std::string PhysicsMass::getMassName(int index) const
+        {
+            assert( index >= 0 && index <= getMassAmount() );
+            return data->masses[index].name;
+        }
 
-	//assert(!"Name not found! -- conflicts?");
-	return 0;
-}
+        int PhysicsMass::getMassIndex(const std::string &name) const
+        {
+            for (int i = 0; i < getMassAmount(); ++i) {
+                if (data->masses[i].name == name)
+                    return i;
+            }
 
-float PhysicsMass::getMass(const std::string &name) const
-{
-	for(int i = 0; i < getMassAmount(); ++i)
-	{
-		if(data->masses[i].name == name)
-			return data->masses[i].value;
-	}
+            //assert(!"Name not found! -- conflicts?");
+            return 0;
+        }
 
-	//assert(!"Name not found! -- conflicts?");
-	Logger::getInstance()->warning("PhysicsMass::getMass - Physics mass name not found.");
-	Logger::getInstance()->debug(name.c_str());
+        float PhysicsMass::getMass(const std::string &name) const
+        {
+            for (int i = 0; i < getMassAmount(); ++i) {
+                if (data->masses[i].name == name)
+                    return data->masses[i].value;
+            }
 
-	return 20.f;
-}
+            //assert(!"Name not found! -- conflicts?");
+            Logger::getInstance()->warning("PhysicsMass::getMass - Physics mass name not found.");
+            Logger::getInstance()->debug( name.c_str() );
 
-} // editor
-} // frozenbyte
+            return 20.f;
+        }
+
+    } // editor
+}     // frozenbyte

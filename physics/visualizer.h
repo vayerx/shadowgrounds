@@ -8,12 +8,11 @@
 class IStorm3D_Scene;
 
 namespace frozenbyte {
-namespace physics {
+    namespace physics {
+        class PhysicsLib;
+        void visualize(PhysicsLib &physics, IStorm3D_Scene &scene, float range);
 
-class PhysicsLib;
-void visualize(PhysicsLib &physics, IStorm3D_Scene &scene, float range);
-
-} // physics
-} // frozenbyte
+    } // physics
+}     // frozenbyte
 
 #endif

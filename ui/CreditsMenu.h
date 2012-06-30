@@ -9,60 +9,55 @@ class IOguiFont;
 
 namespace game
 {
-	class Game;
+    class Game;
 }
 
 namespace ui
 {
+    extern std::string G_UiCredits;
 
-extern std::string G_UiCredits;
+    class CreditsMenu : public MenuBaseImpl {
+    public:
+        //.........................................................................
 
-class CreditsMenu : public MenuBaseImpl
-{
-public:
-	//.........................................................................
+        enum COMMANDS {
+            COMMANDS_CLOSEME
+        };
 
-	enum COMMANDS 
-	{
-		COMMANDS_CLOSEME
-	};
+        //.........................................................................
 
-	//.........................................................................
-	
-	CreditsMenu( MenuCollection* menu, MenuCollection::Fonts* fonts, Ogui* o_gui, game::Game* g );
-	~CreditsMenu();
+        CreditsMenu(MenuCollection *menu, MenuCollection::Fonts *fonts, Ogui *o_gui, game::Game *g);
+        ~CreditsMenu();
 
-	//.........................................................................
+        //.........................................................................
 
-	int getType() const;
+        int getType() const;
 
-	//.........................................................................
-	
-	void closeMenu();
-	void openMenu( int m );
-	void applyChanges();
+        //.........................................................................
 
-	//.........................................................................
+        void closeMenu();
+        void openMenu(int m);
+        void applyChanges();
 
-	void CursorEvent( OguiButtonEvent* eve );
-	void update();
+        //.........................................................................
 
-private:
-	MenuCollection*			menuCollection;
-	MenuCollection::Fonts*	fonts;
+        void CursorEvent(OguiButtonEvent *eve);
+        void update();
 
-	std::vector<IOguiFont *> credits_fonts;
-	OguiWindow*				maskWindow;
-	OguiWindow*				textWindow;
-	OguiFormattedText*		theText;
-	float					yPosition;
-	int						lastYPosition;
-	int						lastUpdate;
-	float					speed;
-};
+    private:
+        MenuCollection *menuCollection;
+        MenuCollection::Fonts *fonts;
 
+        std::vector<IOguiFont *> credits_fonts;
+        OguiWindow *maskWindow;
+        OguiWindow *textWindow;
+        OguiFormattedText *theText;
+        float yPosition;
+        int lastYPosition;
+        int lastUpdate;
+        float speed;
+    };
 
 } // end of namespace
-
 
 #endif

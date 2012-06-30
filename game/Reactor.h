@@ -1,4 +1,3 @@
-
 #ifndef REACTOR_H
 #define REACTOR_H
 
@@ -6,22 +5,20 @@
 
 namespace game
 {
+    class Reactor : public PartType {
+    public:
+        Reactor();
+        Reactor(int id);
+        virtual ~Reactor();
 
-  class Reactor : public PartType
-  {
-  public:
-    Reactor();
-    Reactor(int id);
-    virtual ~Reactor();
+        virtual bool setData(const char *key, char *value);
 
-    virtual bool setData(const char *key, char *value);
+        int getEnergyAmount();
 
-    int getEnergyAmount();
+    protected:
+        int energyAmount;
 
-  protected:
-    int energyAmount;
-
-  };
+    };
 
 }
 

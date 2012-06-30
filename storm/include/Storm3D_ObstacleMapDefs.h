@@ -1,10 +1,9 @@
 // Copyright 2002-2004 Frozenbyte Ltd.
 
-
 #ifndef STORM3D_OBSTACLEMAPDEFS_H
 #define STORM3D_OBSTACLEMAPDEFS_H
 
-// collision heightmap multiplier 
+// collision heightmap multiplier
 // (compared to initial loaded/rendered heightmap)
 // DEPRECATED: now given to storm as a parameter
 //#define COLLISION_HEIGHTMAP_SHIFT 2
@@ -18,11 +17,11 @@
 // obstacle map bits (unsigned short, 16 bits)
 #define OBSTACLE_MAP_MASK_HEIGHT 0xffff
 
-#define OBSTACLE_MAP_MASK_ALL 0xffff
+#define OBSTACLE_MAP_MASK_ALL    0xffff
 
 // min and max height that the obstaclemap can handle
-#define OBSTACLE_MAP_MIN_HEIGHT 0
-#define OBSTACLE_MAP_MAX_HEIGHT 0xffff
+#define OBSTACLE_MAP_MIN_HEIGHT  0
+#define OBSTACLE_MAP_MAX_HEIGHT  0xffff
 
 // NOTE: unhittable means that the obstacle won't be hit by a normal
 // raytrace (bullets), seethrough means that the obstacle won't be
@@ -32,14 +31,13 @@
 
 // WARNING: these values MUST equal to the ones defined in game code
 // or unexpected behaviour will occur (see areamasks.h)
-#define OBSTACLE_AREA_UNHITTABLE 256
-#define OBSTACLE_AREA_SEETHROUGH 512
-#define OBSTACLE_AREA_MOVABLE 1024
-#define OBSTACLE_AREA_ROUNDED 2048
-#define OBSTACLE_AREA_RESERVED1 4096
-#define OBSTACLE_AREA_BUILDINGWALL ((1<<12))
-#define OBSTACLE_AREA_BREAKABLE ((1<<5))
-
+#define OBSTACLE_AREA_UNHITTABLE   256
+#define OBSTACLE_AREA_SEETHROUGH   512
+#define OBSTACLE_AREA_MOVABLE      1024
+#define OBSTACLE_AREA_ROUNDED      2048
+#define OBSTACLE_AREA_RESERVED1    4096
+#define OBSTACLE_AREA_BUILDINGWALL ( (1 << 12) )
+#define OBSTACLE_AREA_BREAKABLE    ( (1 << 5) )
 
 // old...
 //#define COLLISION_HEIGHTMAP_MULT 2
@@ -51,4 +49,3 @@
 //#define OBSTACLE_MAP_MASK_SEETHROUGH 0x8000
 
 #endif
-

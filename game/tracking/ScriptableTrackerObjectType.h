@@ -1,4 +1,3 @@
-
 #ifndef SCRIPTABLETRACKEROBJECTTYPE_H
 #define SCRIPTABLETRACKEROBJECTTYPE_H
 
@@ -7,76 +6,74 @@
 
 namespace game
 {
-	class GameScripting;
+    class GameScripting;
 
-namespace tracking
-{
-	class ScriptableTrackerObject;
-	class ITrackableObject;
-	class ITrackerObject;
+    namespace tracking
+    {
+        class ScriptableTrackerObject;
+        class ITrackableObject;
+        class ITrackerObject;
 
-	class ScriptableTrackerObjectType : public ITrackerObjectType
-	{
-	public:
-		ScriptableTrackerObjectType();
+        class ScriptableTrackerObjectType : public ITrackerObjectType {
+        public:
+            ScriptableTrackerObjectType();
 
-		~ScriptableTrackerObjectType();
+            ~ScriptableTrackerObjectType();
 
-		virtual void *getTypeId() const { return ScriptableTrackerObjectType::typeId; }
+            virtual void *getTypeId() const { return ScriptableTrackerObjectType::typeId; }
 
-		virtual bool doesGiveOwnershipToObjectTracker() const;
+            virtual bool doesGiveOwnershipToObjectTracker() const;
 
-		void setScript(const std::string &script);
+            void setScript(const std::string &script);
 
-		void doSelfInit();
+            void doSelfInit();
 
-		void setTickInterval(int tickInterval);
+            void setTickInterval(int tickInterval);
 
-		void setAllowTickBalancing(bool allowBalancing);
+            void setAllowTickBalancing(bool allowBalancing);
 
-		void setAreaOfInterestRadius(float radius);
+            void setAreaOfInterestRadius(float radius);
 
-		void addTypesOfInterest(TRACKABLE_TYPEID_DATATYPE trackableTypes);
+            void addTypesOfInterest(TRACKABLE_TYPEID_DATATYPE trackableTypes);
 
-		void removeTypesOfInterest(TRACKABLE_TYPEID_DATATYPE trackableTypes);
+            void removeTypesOfInterest(TRACKABLE_TYPEID_DATATYPE trackableTypes);
 
-		void setScriptableTrackerVariables(const std::vector<std::string> &variableNameList);
-		void addScriptableTrackerVariable(const std::string &variableName);
+            void setScriptableTrackerVariables(const std::vector<std::string> &variableNameList);
+            void addScriptableTrackerVariable(const std::string &variableName);
 
-		virtual std::string getTrackerTypeName() const;
+            virtual std::string getTrackerTypeName() const;
 
-		virtual TRACKABLE_TYPEID_DATATYPE getTrackablesTypeOfInterest() const;
+            virtual TRACKABLE_TYPEID_DATATYPE getTrackablesTypeOfInterest() const;
 
-		virtual int getTickInterval() const;
+            virtual int getTickInterval() const;
 
-		virtual bool doesAllowTickBalancing() const;
+            virtual bool doesAllowTickBalancing() const;
 
-		virtual float getAreaOfInterestRadius() const;
+            virtual float getAreaOfInterestRadius() const;
 
-		virtual ITrackerObject *createNewObjectInstance();
+            virtual ITrackerObject *createNewObjectInstance();
 
-		static void setGameScripting(GameScripting *gameScripting);
+            static void setGameScripting(GameScripting *gameScripting);
 
-		static ScriptableTrackerObjectType *trackerTypeForCurrentlyRunningScript;
+            static ScriptableTrackerObjectType *trackerTypeForCurrentlyRunningScript;
 
-		static void *typeId;
+            static void *typeId;
 
-	private:
-		int tickInterval;
-		bool allowTickBalancing;
-		float influenceRadius;
-		std::string script;
-		TRACKABLE_TYPEID_DATATYPE typesOfInterest;
+        private:
+            int tickInterval;
+            bool allowTickBalancing;
+            float influenceRadius;
+            std::string script;
+            TRACKABLE_TYPEID_DATATYPE typesOfInterest;
 
-		static game::GameScripting *gameScripting;
+            static game::GameScripting *gameScripting;
 
-		std::vector<std::string> variableNames;
+            std::vector<std::string> variableNames;
 
-		friend class ScriptableTrackerObject;
-	};
+            friend class ScriptableTrackerObject;
+        };
 
-}
+    }
 }
 
 #endif
-

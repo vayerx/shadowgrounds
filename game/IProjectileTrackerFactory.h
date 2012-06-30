@@ -1,4 +1,3 @@
-
 #ifndef IPROJECTILETRACKERFACTORY_H
 #define IPROJECTILETRACKERFACTORY_H
 
@@ -6,16 +5,14 @@
 
 namespace game
 {
-	class Projectile;
+    class Projectile;
 
-	class IProjectileTrackerFactory
-	{
-	public:
-		virtual Projectile *createNewProjectileTrackerInstance() = 0;
-		virtual void projectileDeleted(Projectile *projectile) = 0;
-		virtual ~IProjectileTrackerFactory() {};
-	};
+    class IProjectileTrackerFactory {
+    public:
+        virtual Projectile *createNewProjectileTrackerInstance() = 0;
+        virtual void projectileDeleted(Projectile *projectile) = 0;
+        virtual ~IProjectileTrackerFactory() { };
+    };
 }
 
 #endif
-

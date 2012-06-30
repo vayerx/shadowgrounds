@@ -8,100 +8,97 @@ class OguiWindow;
 class IOguiFont;
 
 namespace game
-{ 
-	class Game; 
+{
+    class Game;
 }
 
 namespace ui
 {
-	
-	class MenuCollectionImpl;
+    class MenuCollectionImpl;
 
-   /**
-	* MenuCollection a collection of menus
-	* This is the interface for the collection of menus 
-	* ( mainmenu, options, loadgame )
-	*
-	* @version 0.1, 15.02.2005
-	* @author Petri Purho
-	*/
-	class MenuCollection
-	{
-	public:
+    /**
+     * MenuCollection a collection of menus
+     * This is the interface for the collection of menus
+     * ( mainmenu, options, loadgame )
+     *
+     * @version 0.1, 15.02.2005
+     * @author Petri Purho
+     */
+    class MenuCollection {
+    public:
 
-		enum MENU_TYPE
-		{
-			MENU_TYPE_MAINMENU = 0,
-			MENU_TYPE_LOADGAMEMENU,
-			MENU_TYPE_SURVIVALMENU,
-			MENU_TYPE_COOPMENU,
-			MENU_TYPE_PROFILESMENU,
-			MENU_TYPE_OPTIONSMENU,
-			MENU_TYPE_CREDITSMENU,
-			MENU_TYPE_NEWGAMEMENU
-		};
+        enum MENU_TYPE {
+            MENU_TYPE_MAINMENU = 0,
+            MENU_TYPE_LOADGAMEMENU,
+            MENU_TYPE_SURVIVALMENU,
+            MENU_TYPE_COOPMENU,
+            MENU_TYPE_PROFILESMENU,
+            MENU_TYPE_OPTIONSMENU,
+            MENU_TYPE_CREDITSMENU,
+            MENU_TYPE_NEWGAMEMENU
+        };
 
-		struct FontStyle
-		{
-			FontStyle() :
-				normal( NULL ),
-				disabled( NULL ),
-				down( NULL ),
-				highlighted( NULL )
-			{
+        struct FontStyle {
+            FontStyle() :
+                normal(NULL),
+                disabled(NULL),
+                down(NULL),
+                highlighted(NULL)
+            {
+            }
 
-			}
-			
-			IOguiFont* normal;
-			IOguiFont* disabled;
-			IOguiFont* down;
-			IOguiFont* highlighted;
-		};
+            IOguiFont *normal;
+            IOguiFont *disabled;
+            IOguiFont *down;
+            IOguiFont *highlighted;
+        };
 
-		// The fonts used in menu collections
-		struct Fonts
-		{
-			FontStyle big;
-			FontStyle medium;
-			FontStyle little;
-		};
+        // The fonts used in menu collections
+        struct Fonts {
+            FontStyle big;
+            FontStyle medium;
+            FontStyle little;
+        };
 
-		MenuCollection( Ogui *ogui, game::Game *game, int player, bool start_automagicly = false, int menu_to_be_opened = 0 );
-		~MenuCollection( );
+        MenuCollection(Ogui       *ogui,
+                       game::Game *game,
+                       int         player,
+                       bool        start_automagicly = false,
+                       int         menu_to_be_opened = 0);
+        ~MenuCollection();
 
-		void start();
+        void start();
 
-		void hide();
-		void show();
-		bool isVisible() const;
+        void hide();
+        void show();
+        bool isVisible() const;
 
-		bool wasQuitPressed(); // should be const
+        bool wasQuitPressed(); // should be const
 
-		// opens a new menu on top of the stack
-		void openMenu( int menu );
-		
-		// closes the and pops the top from stack
-		void closeMenu();
+        // opens a new menu on top of the stack
+        void openMenu(int menu);
 
-		// closes the current menu and opens a new one
-		void changeMenu( int menu );
+        // closes the and pops the top from stack
+        void closeMenu();
 
-		// Starts mission number n
-		void loadMission( int n );
+        // closes the current menu and opens a new one
+        void changeMenu(int menu);
 
-		// Starts the very first mission (starts a new game)
-		void newMission();
+        // Starts mission number n
+        void loadMission(int n);
 
-		void escPressed();
+        // Starts the very first mission (starts a new game)
+        void newMission();
 
-		// Sets the background image to the given image
-		void setBackgroundImage( const std::string& background );
+        void escPressed();
 
-	private:
-		MenuCollectionImpl* impl;
-		
-	};
+        // Sets the background image to the given image
+        void setBackgroundImage(const std::string &background);
 
+    private:
+        MenuCollectionImpl *impl;
+
+    };
 
 }
 

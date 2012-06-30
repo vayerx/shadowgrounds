@@ -4,45 +4,42 @@
 #define INCLUDED_EDITOR_CAMERA_H
 
 #ifndef INCLUDED_BOOST_SCOPED_PTR_HPP
-#define INCLUDED_BOOST_SCOPED_PTR_HPP
-#include <boost/scoped_ptr.hpp>
+#  define INCLUDED_BOOST_SCOPED_PTR_HPP
+#  include <boost/scoped_ptr.hpp>
 #endif
 
 #include <datatypedef.h>
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        class Mouse;
+        struct Storm;
+        struct CameraData;
 
-class Mouse;
-struct Storm;
-struct CameraData;
+        class Camera {
+            boost::scoped_ptr<CameraData> data;
 
-class Camera
-{
-	boost::scoped_ptr<CameraData> data;
+        public:
+            Camera(Storm &storm);
+            ~Camera();
 
-public:
-	Camera(Storm &storm);
-	~Camera() ;
+            void forceGameCamera(bool force);
+            const VC3&getPosition() const;
 
-	void forceGameCamera(bool force);
-	const VC3 &getPosition() const;
+            void nudgeCamera(const VC3 &direction);
 
-	void nudgeCamera(const VC3 &direction);
+            void update(const Mouse &mouse, bool hasFocus);
+            void setToOrigo();
+            void setToSky();
 
-	void update(const Mouse &mouse, bool hasFocus);
-	void setToOrigo();
-	void setToSky();
+            float getHorizontal();
+            float getVertical();
+        };
 
-	float getHorizontal();
-	float getVertical();
-};
+        float getTimeDelta();
+        void setBoundary(const VC2 &min, const VC2 &max);
 
-float getTimeDelta();
-void setBoundary(const VC2 &min, const VC2 &max);
-
-} // end of namespace editor
-} // end of namespace frozenbyte
+    } // end of namespace editor
+}     // end of namespace frozenbyte
 
 #endif
-

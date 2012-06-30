@@ -1,4 +1,3 @@
-
 #ifndef GAMEPROFILESENUMERATION_H
 #define GAMEPROFILESENUMERATION_H
 
@@ -7,22 +6,18 @@
 
 namespace game
 {
-	class GameProfilesEnumeration
-	{
-		public:
-			std::string getNextProfile();
-			bool isNextProfileAvailable();
+    class GameProfilesEnumeration {
+    public:
+        std::string getNextProfile();
+        bool isNextProfileAvailable();
 
-		private:
-			std::vector<std::string> profileList;
-			int currentPos;
+    private:
+        std::vector<std::string> profileList;
+        int currentPos;
 
-		friend class GameProfiles;
-	};
+        friend class GameProfiles;
+    };
 
 }
 
-
-
 #endif
-

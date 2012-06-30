@@ -8,31 +8,30 @@ using namespace std;
 typedef map<IStorm3D_Model_Object *, bool> CollisionMap;
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        EditorObjectState::EditorObjectState()
+        {
+        }
 
-EditorObjectState::EditorObjectState()
-{
-}
+        EditorObjectState::~EditorObjectState()
+        {
+        }
 
-EditorObjectState::~EditorObjectState()
-{
-}
+        void EditorObjectState::setCollision(IStorm3D_Model_Object *o)
+        {
+            assert(o);
+            collision[o] = !o->GetNoCollision();
+        }
 
-void EditorObjectState::setCollision(IStorm3D_Model_Object *o)
-{
-	assert(o);
-	collision[o] = !o->GetNoCollision();
-}
+        bool EditorObjectState::hasCollision(IStorm3D_Model_Object *o) const
+        {
+            assert(o);
+            CollisionMap::const_iterator it = collision.find(o);
+            if ( it == collision.end() )
+                return false;
 
-bool EditorObjectState::hasCollision(IStorm3D_Model_Object *o) const
-{
-	assert(o);
-	CollisionMap::const_iterator it = collision.find(o);
-	if(it == collision.end())
-		return false;
+            return it->second;
+        }
 
-	return it->second;
-}
-
-} // editor
-} // frozenbyte
+    } // editor
+}     // frozenbyte

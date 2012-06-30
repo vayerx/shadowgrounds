@@ -1,10 +1,9 @@
-
 #include "precompiled.h"
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
 #ifdef _MSC_VER
-#pragma warning(disable:4103)
+#  pragma warning(disable:4103)
 #endif
 
 #include "standard_package.h"
@@ -18,78 +17,74 @@
 #include "../util/crc32.h"
 
 namespace frozenbyte {
+    using namespace editor;
+    using namespace std;
 
-using namespace editor;
-using namespace std;
+    namespace filesystem {
+        namespace {
+            void getFiles(const std::string &dir, const std::string &extension, IFileList &result)
+            {
+                string searchString = dir;
+                searchString += "/";
+                searchString += extension;
 
-namespace filesystem {
-namespace {
+                editor::FindFileWrapper wrapper(searchString.c_str(), editor::FindFileWrapper::File);
+                for ( ; !wrapper.end(); wrapper.next() ) {
+                    std::string fileName = dir + std::string("/") + wrapper.getName();
+                    result.addFile(fileName);
+                }
+            }
 
-void getFiles(const std::string &dir, const std::string &extension, IFileList &result)
-{
-	string searchString = dir;
-	searchString += "/";
-	searchString += extension;
+            void iterateDir(const std::string &dir, const std::string &extension, IFileList &result)
+            {
+                getFiles(dir, extension, result);
 
-	editor::FindFileWrapper wrapper(searchString.c_str(), editor::FindFileWrapper::File);
-	for(; !wrapper.end(); wrapper.next())
-	{
-		std::string fileName = dir + std::string("/") + wrapper.getName();
-		result.addFile(fileName);
-	}
-}
+                string searchString = dir;
+                searchString += "/*";
 
-void iterateDir(const std::string &dir, const std::string &extension, IFileList &result)
-{
-	getFiles(dir, extension, result);
+                editor::FindFileWrapper wrapper(searchString.c_str(), editor::FindFileWrapper::Dir);
+                for ( ; !wrapper.end(); wrapper.next() ) {
+                    std::string currentDir = dir;
+                    currentDir += "/";
+                    currentDir += wrapper.getName();
 
-	string searchString = dir;
-	searchString += "/*";
+                    result.addDir(currentDir);
+                    iterateDir(currentDir, extension, result);
+                }
+            }
 
-	editor::FindFileWrapper wrapper(searchString.c_str(), editor::FindFileWrapper::Dir);
-	for(; !wrapper.end(); wrapper.next())
-	{
-		std::string currentDir = dir;
-		currentDir += "/";
-		currentDir += wrapper.getName();
+        } // unnamed
 
-		result.addDir(currentDir);
-		iterateDir(currentDir, extension, result);
-	}
-}
+        StandardPackage::StandardPackage()
+        {
+        }
 
-} // unnamed
+        StandardPackage::~StandardPackage()
+        {
+        }
 
-StandardPackage::StandardPackage()
-{
-}
+        void StandardPackage::findFiles(const std::string &dir, const std::string &extension, IFileList &result)
+        {
+            iterateDir(dir, extension, result);
+        }
 
-StandardPackage::~StandardPackage()
-{
-}
+        InputStream StandardPackage::getFile(const std::string &fileName)
+        {
+            return createInputFileStream(fileName);
+        }
 
-void StandardPackage::findFiles(const std::string &dir, const std::string &extension, IFileList &result)
-{
-	iterateDir(dir, extension, result);
-}
+        unsigned int StandardPackage::getCrc(const std::string &fileName)
+        {
+            /*
+               InputStream strm = createInputFileStream(fileName);
+               if(strm.getSize() != 0)
+               {
+                return 0xFFFFFFFF;
+               }
+               return 0;
+             */
+            return crc32_file( fileName.c_str() );
+        }
 
-InputStream StandardPackage::getFile(const std::string &fileName)
-{
-	return createInputFileStream(fileName);
-}
-
-unsigned int StandardPackage::getCrc(const std::string &fileName)
-{
-	/*
-	InputStream strm = createInputFileStream(fileName);
-	if(strm.getSize() != 0)
-	{
-		return 0xFFFFFFFF;
-	}
-	return 0;
-	*/
-	return crc32_file(fileName.c_str());
-}
-
-} // end of namespace filesystem
-} // end of namespace frozenbyte
+    } // end of namespace filesystem
+}     // end of namespace frozenbyte

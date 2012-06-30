@@ -18,183 +18,179 @@ using namespace std;
 using namespace boost;
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        Mouse::Mouse()
+        {
+            window = 0;
+            x = 0;
+            y = 0;
 
-Mouse::Mouse()
-{
-	window = 0;
-	x = 0;
-	y = 0;
+            leftButtonDown = false;
+            leftButtonClicked = false;
+            rightButtonDown = false;
+            rightButtonClicked = false;
 
-	leftButtonDown = false;
-	leftButtonClicked = false;
-	rightButtonDown = false;
-	rightButtonClicked = false;
-	
-	insideWindow = false;
-	wheelDelta = 0;
+            insideWindow = false;
+            wheelDelta = 0;
 
-	storm = 0;
-}
+            storm = 0;
+        }
 
-Mouse::~Mouse()
-{
-}
+        Mouse::~Mouse()
+        {
+        }
 
-void Mouse::setTrackWindow(HWND windowHandle)
-{
-	window = windowHandle;
-}
+        void Mouse::setTrackWindow(HWND windowHandle)
+        {
+            window = windowHandle;
+        }
 
-void Mouse::setStorm(Storm &storm_)
-{
-	storm = &storm_;
-}
+        void Mouse::setStorm(Storm &storm_)
+        {
+            storm = &storm_;
+        }
 
-void Mouse::update()
-{
-	assert(window);
-	
-	POINT p = { 0 };
-	RECT r = { 0 };
+        void Mouse::update()
+        {
+            assert(window);
 
-	leftButtonClicked = false;
-	rightButtonClicked = false;
-	wheelDelta = 0;
+            POINT p = { 0 };
+            RECT r = { 0 };
 
-	if(GetCursorPos(&p))
-	if(MapWindowPoints(HWND_DESKTOP, window, &p, 1))
-	{
-		x = p.x;
-		y = p.y;
+            leftButtonClicked = false;
+            rightButtonClicked = false;
+            wheelDelta = 0;
 
-		GetClientRect(window, &r);
-		if((x < r.left) || (y < r.top) || (x > r.right) || (y > r.bottom))
-			insideWindow = false;
-		else 
-			insideWindow = true;
+            if ( GetCursorPos(&p) )
+                if ( MapWindowPoints(HWND_DESKTOP, window, &p, 1) ) {
+                    x = p.x;
+                    y = p.y;
 
-		return;
-	}
+                    GetClientRect(window, &r);
+                    if ( (x < r.left) || (y < r.top) || (x > r.right) || (y > r.bottom) )
+                        insideWindow = false;
+                    else
+                        insideWindow = true;
 
-	insideWindow = false;
-}
+                    return;
+                }
 
-void Mouse::setLeftButtonDown()
-{
-	leftButtonDown = true;
-}
+            insideWindow = false;
+        }
 
-void Mouse::setLeftButtonUp()
-{
-	leftButtonDown = false;
-	leftButtonClicked = true;
-}
+        void Mouse::setLeftButtonDown()
+        {
+            leftButtonDown = true;
+        }
 
-void Mouse::setRightButtonDown()
-{
-	rightButtonDown = true;
-}
+        void Mouse::setLeftButtonUp()
+        {
+            leftButtonDown = false;
+            leftButtonClicked = true;
+        }
 
-void Mouse::setRightButtonUp()
-{
-	rightButtonDown = false;
-	rightButtonClicked = true;
-}
+        void Mouse::setRightButtonDown()
+        {
+            rightButtonDown = true;
+        }
 
-void Mouse::setWheelDelta(int delta)
-{
-	wheelDelta = delta;
-}
+        void Mouse::setRightButtonUp()
+        {
+            rightButtonDown = false;
+            rightButtonClicked = true;
+        }
 
-int Mouse::getX() const
-{
-	return x;
-}
+        void Mouse::setWheelDelta(int delta)
+        {
+            wheelDelta = delta;
+        }
 
-int Mouse::getY() const
-{
-	return y;
-}
+        int Mouse::getX() const
+        {
+            return x;
+        }
 
-int Mouse::getWheelDelta() const
-{
-	return wheelDelta;
-}
+        int Mouse::getY() const
+        {
+            return y;
+        }
 
-bool Mouse::isLeftButtonDown() const
-{
-	return leftButtonDown;
-}
+        int Mouse::getWheelDelta() const
+        {
+            return wheelDelta;
+        }
 
-bool Mouse::hasLeftClicked() const
-{
-	return leftButtonClicked;
-}
+        bool Mouse::isLeftButtonDown() const
+        {
+            return leftButtonDown;
+        }
 
-bool Mouse::isRightButtonDown() const
-{
-	return rightButtonDown;
-}
+        bool Mouse::hasLeftClicked() const
+        {
+            return leftButtonClicked;
+        }
 
-bool Mouse::hasRightClicked() const
-{
-	return rightButtonClicked;
-}
+        bool Mouse::isRightButtonDown() const
+        {
+            return rightButtonDown;
+        }
 
-bool Mouse::isInsideWindow() const
-{
-	return insideWindow;
-}
+        bool Mouse::hasRightClicked() const
+        {
+            return rightButtonClicked;
+        }
 
-bool Mouse::cursorRayTrace(Storm3D_CollisionInfo &ci, VC3 *position, VC3 *direction)
-{
-	if(!storm)
-		return false;
+        bool Mouse::isInsideWindow() const
+        {
+            return insideWindow;
+        }
 
-	VC3 fooP, fooD;
-	if(!position)
-		position = &fooP;
-	if(!direction)
-		direction = &fooD;
+        bool Mouse::cursorRayTrace(Storm3D_CollisionInfo &ci, VC3 *position, VC3 *direction)
+        {
+            if (!storm)
+                return false;
 
-	VC2I screen(getX(), getY());
-	storm->scene->GetEyeVectors(screen, *position, *direction);
+            VC3 fooP, fooD;
+            if (!position)
+                position = &fooP;
+            if (!direction)
+                direction = &fooD;
 
-	set<weak_ptr<IStorm3D_Model> >::iterator it = storm->floorModels.begin();
-	for(; it != storm->floorModels.end(); ++it)
-	{
-		shared_ptr<IStorm3D_Model> m = it->lock();
-		if(!m)
-			continue;
+            VC2I screen( getX(), getY() );
+            storm->scene->GetEyeVectors(screen, *position, *direction);
 
-		boost::scoped_ptr<Iterator<IStorm3D_Model_Object *> > objectIterator(m->ITObject->Begin());
-		for(; !objectIterator->IsEnd(); objectIterator->Next())
-		{
-			IStorm3D_Model_Object *object = objectIterator->GetCurrent();
-			if(!object)
-				continue;
+            set<weak_ptr<IStorm3D_Model> >::iterator it = storm->floorModels.begin();
+            for (; it != storm->floorModels.end(); ++it) {
+                shared_ptr<IStorm3D_Model> m = it->lock();
+                if (!m)
+                    continue;
 
-			string name = object->GetName();
-			if(name.find("BuildingFloor") == name.npos)
-				continue;
+                boost::scoped_ptr<Iterator<IStorm3D_Model_Object *> > objectIterator( m->ITObject->Begin() );
+                for ( ; !objectIterator->IsEnd(); objectIterator->Next() ) {
+                    IStorm3D_Model_Object *object = objectIterator->GetCurrent();
+                    if (!object)
+                        continue;
 
-			bool oldNoCollision = object->GetNoCollision();
-			if(oldNoCollision != false)
-				object->SetNoCollision(false);
+                    string name = object->GetName();
+                    if (name.find("BuildingFloor") == name.npos)
+                        continue;
 
-			object->RayTrace(*position, *direction, 1000.f, ci, true);
-		}
-	}
+                    bool oldNoCollision = object->GetNoCollision();
+                    if (oldNoCollision != false)
+                        object->SetNoCollision(false);
 
-	if(ci.hit)
-		return true;
+                    object->RayTrace(*position, *direction, 1000.f, ci, true);
+                }
+            }
 
-	ObstacleCollisionInfo oi;
-	storm->terrain->rayTrace(*position, *direction, 1000.f, ci, oi, true);
+            if (ci.hit)
+                return true;
 
-	return ci.hit;
-}
+            ObstacleCollisionInfo oi;
+            storm->terrain->rayTrace(*position, *direction, 1000.f, ci, oi, true);
 
-} // end of namespace editor
-} // end of namespace frozenbyte
+            return ci.hit;
+        }
+
+    } // end of namespace editor
+}     // end of namespace frozenbyte

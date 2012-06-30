@@ -9,49 +9,46 @@
 
 namespace net
 {
-  namespace dummy
-  {
-    // proto
-    class DummyDriver;
-
-
-    /**
-     * Dummy net bind interface.
-     */
-    class DummyBind : public INetBind
+    namespace dummy
     {
-    public:
-      DummyBind(const char *name);
+        // proto
+        class DummyDriver;
 
-      virtual INetConnection *acceptConnection() 
-        throw (NetDriverException*);
+        /**
+         * Dummy net bind interface.
+         */
+        class DummyBind : public INetBind {
+        public:
+            DummyBind(const char *name);
 
-      virtual void listen(int backlog) 
-        throw (NetDriverException*);
+            virtual INetConnection *acceptConnection()
+            throw (NetDriverException *);
 
-      virtual int getMaxBacklog();
+            virtual void listen(int backlog)
+            throw (NetDriverException *);
 
-      virtual void unbind() 
-        throw (NetDriverException*);
-     
-      virtual ~DummyBind();
+            virtual int getMaxBacklog();
 
-      const char *getName();
+            virtual void unbind()
+            throw (NetDriverException *);
 
-    private:
-      char *name;
-      int acceptAmount;
+            virtual ~DummyBind();
 
-      LinkedList *acceptedConnections;
+            const char *getName();
 
-      void addAcceptedConnection(DummyConnection *connection);
+        private:
+            char *name;
+            int acceptAmount;
 
-      bool isAcceptingConnections();
+            LinkedList *acceptedConnections;
 
-      friend DummyDriver;
-    };
-  }
+            void addAcceptedConnection(DummyConnection *connection);
+
+            bool isAcceptingConnections();
+
+            friend DummyDriver;
+        };
+    }
 }
 
 #endif
-

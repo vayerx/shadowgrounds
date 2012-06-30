@@ -37,208 +37,190 @@
 using namespace game;
 
 namespace ui {
-
 ///////////////////////////////////////////////////////////////////////////////
 
-class VehicleWindow::VehicleWindowImpl
-{
-private:
-	Ogui* ogui;
-	game::Game* game;
-	game::Unit* unit;
+    class VehicleWindow::VehicleWindowImpl {
+    private:
+        Ogui *ogui;
+        game::Game *game;
+        game::Unit *unit;
 
-	OguiLocaleWrapper	oguiLoader;
+        OguiLocaleWrapper oguiLoader;
 
-	OguiWindow *window;
+        OguiWindow *window;
 
-	OguiSlider*	healthbarSlider;
-	std::string healthbarLow;
-	std::string healthbarNormal;
-	std::string healthbarBg;
+        OguiSlider *healthbarSlider;
+        std::string healthbarLow;
+        std::string healthbarNormal;
+        std::string healthbarBg;
 
-	OguiButton *ammoBackground[2];
-	OguiButton *ammoText[2];
-	std::string window_name;
+        OguiButton *ammoBackground[2];
+        OguiButton *ammoText[2];
+        std::string window_name;
 
-public:
+    public:
 
+        //-------------------------------------------------------------------------
+        VehicleWindowImpl(Ogui *ogui, game::Game *game, game::Unit *unit, const char *params) :
+            ogui(ogui),
+            game(game),
+            unit(unit),
+            oguiLoader(ogui)
+        {
+            window_name = params;
 
-	//-------------------------------------------------------------------------
-	VehicleWindowImpl( Ogui *ogui, game::Game *game, game::Unit *unit, const char *params ) :
-		ogui( ogui ),
-		game( game ),
-		unit( unit ),
-		oguiLoader( ogui )
-	{
-		window_name = params;
+            window = oguiLoader.LoadWindow( (window_name + "window").c_str() );
+            healthbarSlider = oguiLoader.LoadSlider("health_bar", window, 0);
+            healthbarSlider->setDisabled(true);
+            healthbarLow = getLocaleGuiString( ("gui_" + window_name + "window_health_bar_fore_low").c_str() );
+            healthbarNormal = getLocaleGuiString( ("gui_" + window_name + "window_health_bar_fore_disabled").c_str() );
+            healthbarBg = getLocaleGuiString( ("gui_" + window_name + "window_health_bar_back_disabled").c_str() );
 
-		window = oguiLoader.LoadWindow( (window_name + "window").c_str() );
-		healthbarSlider = oguiLoader.LoadSlider( "health_bar", window, 0 );
-		healthbarSlider->setDisabled( true );
-		healthbarLow = getLocaleGuiString(("gui_" + window_name + "window_health_bar_fore_low").c_str());
-		healthbarNormal = getLocaleGuiString(("gui_" + window_name + "window_health_bar_fore_disabled").c_str());
-		healthbarBg = getLocaleGuiString(("gui_" + window_name + "window_health_bar_back_disabled").c_str());
+            ammoBackground[0] = oguiLoader.LoadButton("ammo_primary", window, 0); ammoBackground[0]->SetDisabled(true);
+            ammoBackground[1] = oguiLoader.LoadButton("ammo_secondary", window, 0); ammoBackground[1]->SetDisabled(true);
+            ammoText[0] = oguiLoader.LoadButton("ammo_primary_text", window, 0); ammoText[0]->SetDisabled(true);
+            ammoText[1] = oguiLoader.LoadButton("ammo_secondary_text", window, 0); ammoText[1]->SetDisabled(true);
 
-		ammoBackground[0] = oguiLoader.LoadButton( "ammo_primary", window, 0 ); ammoBackground[0]->SetDisabled(true);
-		ammoBackground[1] = oguiLoader.LoadButton( "ammo_secondary", window, 0 ); ammoBackground[1]->SetDisabled(true);
-		ammoText[0] = oguiLoader.LoadButton( "ammo_primary_text", window, 0 ); ammoText[0]->SetDisabled(true);
-		ammoText[1] = oguiLoader.LoadButton( "ammo_secondary_text", window, 0 ); ammoText[1]->SetDisabled(true);
+            setCombatWindowVisibility();
+        }
 
-		setCombatWindowVisibility();
-	}
+        ~VehicleWindowImpl()
+        {
+            CombatWindow *combatwin = game->gameUI->getCombatWindow(0);
+            if (combatwin)
+                combatwin->setSubWindowsVisible(true, true);
+            delete healthbarSlider;
+            delete ammoBackground[0]; delete ammoBackground[1];
+            delete ammoText[0]; delete ammoText[1];
+            delete window;
+        }
 
-	~VehicleWindowImpl()
-	{
-		CombatWindow *combatwin = game->gameUI->getCombatWindow(0);
-		if(combatwin)
-		{
-			combatwin->setSubWindowsVisible(true, true);
-		}
-		delete healthbarSlider;
-		delete ammoBackground[0]; delete ammoBackground[1];
-		delete ammoText[0]; delete ammoText[1];
-		delete window;
-	}
+        void update()
+        {
+            unit = game->gameUI->getFirstPerson(0);
+            if (unit == NULL) return;
 
+            int ammoAmount[2] = { 0, 0 };
+            int maxAmmo[2] = { 0, 0 };
 
-	void update()
-	{
-		unit = game->gameUI->getFirstPerson(0);
-		if(unit == NULL) return;
+            int selWeap[2] = { unit->getSelectedWeapon(), unit->getAttachedWeapon( unit->getSelectedWeapon() ) };
+            for (int i = 0; i < 2; i++) {
+                if (selWeap[i] != -1 && unit->getWeaponType(selWeap[i]) != NULL) {
+                    ammoAmount[i] = unit->getWeaponAmmoAmount(selWeap[i]);
+                    maxAmmo[i] = unit->getWeaponMaxAmmoAmount(selWeap[i]);
+                }
 
-		int ammoAmount[2] = {0,0};
-		int maxAmmo[2] = {0,0};
+                if (ammoAmount[i] == 0 && maxAmmo[i] == 0)
+                    ammoText[i]->SetText("");
+                else
+                    ammoText[i]->SetText( int2str(ammoAmount[i]) );
+            }
 
-		int selWeap[2] = { unit->getSelectedWeapon(), unit->getAttachedWeapon(unit->getSelectedWeapon()) };
-		for(int i = 0; i < 2; i++)
-		{
-			if (selWeap[i] != -1 && unit->getWeaponType(selWeap[i]) != NULL)
-			{
-				ammoAmount[i] = unit->getWeaponAmmoAmount(selWeap[i]);
-				maxAmmo[i] = unit->getWeaponMaxAmmoAmount(selWeap[i]);
-			}
+            float hpPercentage = unit->getHP() / (float) unit->getMaxHP();
+            if (hpPercentage > 1) hpPercentage = 1;
+            if (hpPercentage < 0) hpPercentage = 0;
 
-			if(ammoAmount[i] == 0 && maxAmmo[i] == 0)
-			{
-				ammoText[i]->SetText( "" );
-			}
-			else
-			{
-				ammoText[i]->SetText( int2str(ammoAmount[i]) );
-			}
-		}
+            if (hpPercentage > 0.3f)
+                healthbarSlider->setDisabledImages(healthbarBg, healthbarNormal);
+            else
+                healthbarSlider->setDisabledImages(healthbarBg, healthbarLow);
 
+            healthbarSlider->setValue(hpPercentage);
+        }
 
-		float hpPercentage = unit->getHP() / (float) unit->getMaxHP();
-		if(hpPercentage > 1) hpPercentage = 1;
-		if(hpPercentage < 0) hpPercentage = 0;
+        bool setCombatSubWindowVisible(std::string name, bool visible)
+        {
+            CombatWindow *combatwin = game->gameUI->getCombatWindow(0);
+            if (combatwin == NULL)
+                return false;
 
-		if(hpPercentage > 0.3f)
-			healthbarSlider->setDisabledImages( healthbarBg, healthbarNormal);
-		else
-			healthbarSlider->setDisabledImages( healthbarBg, healthbarLow);
+            ICombatSubWindow *win = combatwin->getSubWindow(name);
+            if (win) {
+                if (!visible) win->hide();
+                else win->show();
+                return true;
+            }
 
-		healthbarSlider->setValue( hpPercentage );
-	}
+            return false;
+        }
 
-	bool setCombatSubWindowVisible(std::string name, bool visible)
-	{
-		CombatWindow *combatwin = game->gameUI->getCombatWindow(0);
-		if(combatwin == NULL)
-		{
-			return false;
-		}
+        void setCombatWindowVisibility()
+        {
+            CombatWindow *combatwin = game->gameUI->getCombatWindow(0);
 
-		ICombatSubWindow* win = combatwin->getSubWindow(name);
-		if(win)
-		{
-			if(!visible) win->hide();
-			else win->show();
-			return true;
-		}
+            const char *const_combatwindows_array =
+                getLocaleGuiString( ("gui_" + window_name + "window_show_combat_windows").c_str() );
 
-		return false;
-	}
+            if (combatwin) {
+                bool show_radar = strstr(const_combatwindows_array, "CombatRadar") != NULL;
+                combatwin->setSubWindowsVisible(false, show_radar);
+            }
 
-	void setCombatWindowVisibility()
-	{
-		CombatWindow *combatwin = game->gameUI->getCombatWindow(0);
+            int length = strlen(const_combatwindows_array) + 1;
+            char *combatwindows_array = (char *)alloca(length);
+            memcpy(combatwindows_array, const_combatwindows_array, length);
+            int i = 0;
+            int start = 0;
+            while (true) {
+                if (combatwindows_array[i] == 0 || combatwindows_array[i] == ',') {
+                    bool was_end = combatwindows_array[i] == 0;
+                    combatwindows_array[i] = 0;
 
-		const char *const_combatwindows_array = getLocaleGuiString(("gui_" + window_name + "window_show_combat_windows").c_str());
+                    const char *subwin = combatwindows_array + start;
+                    setCombatSubWindowVisible(subwin, true);
 
-		if(combatwin)
-		{
-			bool show_radar = strstr(const_combatwindows_array, "CombatRadar") != NULL;
-			combatwin->setSubWindowsVisible(false, show_radar);
-		}
+                    if (was_end) break;
+                    start = i + 1;
+                }
+                i++;
+            }
+        }
 
-		int length = strlen(const_combatwindows_array) + 1;
-		char *combatwindows_array = (char *)alloca(length);
-		memcpy(combatwindows_array, const_combatwindows_array, length);
-		int i = 0;
-		int start = 0;
-		while(true)
-		{
-			if(combatwindows_array[i] == 0 || combatwindows_array[i] == ',')
-			{
-				bool was_end = combatwindows_array[i] == 0;
-				combatwindows_array[i] = 0;
-				
-				const char *subwin = combatwindows_array + start;
-				setCombatSubWindowVisible(subwin, true);
+        void hide()
+        {
+            window->Hide();
+        }
 
-				if(was_end) break;
-				start = i + 1;
-			}
-			i++;
-		}
-	}
+        void show()
+        {
+            window->Hide();
+        }
 
-	void hide()
-	{
-		window->Hide();
-	}
-
-	void show()
-	{
-		window->Hide();
-	}
-
-};
+    };
 ///////////////////////////////////////////////////////////////////////////////
 
-VehicleWindow::VehicleWindow( Ogui *ogui, game::Game *game, game::Unit *unit, const char *params ) :
-	impl( NULL )
-{
-	impl = new VehicleWindowImpl( ogui, game, unit, params );
-}
+    VehicleWindow::VehicleWindow(Ogui *ogui, game::Game *game, game::Unit *unit, const char *params) :
+        impl(NULL)
+    {
+        impl = new VehicleWindowImpl(ogui, game, unit, params);
+    }
 
 //.............................................................................
 
-VehicleWindow::~VehicleWindow()
-{
-	delete impl;
-	impl = NULL;
-}
+    VehicleWindow::~VehicleWindow()
+    {
+        delete impl;
+        impl = NULL;
+    }
 
-void VehicleWindow::update()
-{
-	impl->update();
-}
+    void VehicleWindow::update()
+    {
+        impl->update();
+    }
 
-void VehicleWindow::hide()
-{
-	impl->hide();
-}
+    void VehicleWindow::hide()
+    {
+        impl->hide();
+    }
 
-void VehicleWindow::show()
-{
-	impl->show();
-}
-void VehicleWindow::setCombatWindowVisibility()
-{
-	impl->setCombatWindowVisibility();
-}
+    void VehicleWindow::show()
+    {
+        impl->show();
+    }
+    void VehicleWindow::setCombatWindowVisibility()
+    {
+        impl->setCombatWindowVisibility();
+    }
 ///////////////////////////////////////////////////////////////////////////////
 
 } // end of namespace ui

@@ -8,64 +8,60 @@
 #include <string>
 #include <DatatypeDef.h>
 
-class IStorm3D_ProceduralManager
-{
+class IStorm3D_ProceduralManager {
 public:
-	virtual ~IStorm3D_ProceduralManager() {}
+    virtual ~IStorm3D_ProceduralManager() { }
 
-	struct Layer
-	{
-		std::string texture;
-		VC2 scale;
-		VC2 speed;
+    struct Layer {
+        std::string texture;
+        VC2         scale;
+        VC2         speed;
 
-		Layer() :
-			texture(""),
-			scale(0.0f),
-			speed(0.0f)
-		{
-		}
-	};
+        Layer() :
+            texture(""),
+            scale(0.0f),
+            speed(0.0f)
+        {
+        }
+    };
 
-	struct Source
-	{
-		Layer texture;
-		Layer offset;
+    struct Source {
+        Layer texture;
+        Layer offset;
 
-		VC2 radius;
-		VC2 linearSpeed;
+        VC2   radius;
+        VC2   linearSpeed;
 
-		Source() :
-			texture(),
-			offset(),
-			radius(0.0f),
-			linearSpeed(0.0f)
-		{
-		}
-	};
+        Source() :
+            texture(),
+            offset(),
+            radius(0.0f),
+            linearSpeed(0.0f)
+        {
+        }
+    };
 
-	struct Effect
-	{
-		Source source1;
-		Source source2;
-		Source distortion1;
-		Source distortion2;
+    struct Effect {
+        Source      source1;
+        Source      source2;
+        Source      distortion1;
+        Source      distortion2;
 
-		std::string fallback;
-		bool enableDistortion;
+        std::string fallback;
+        bool        enableDistortion;
 
-		Effect() :
-			source1(),
-			source2(),
-			distortion1(),
-			distortion2(),
-			fallback(""),
-			enableDistortion(false)
-		{
-		}
-	};
+        Effect() :
+            source1(),
+            source2(),
+            distortion1(),
+            distortion2(),
+            fallback(""),
+            enableDistortion(false)
+        {
+        }
+    };
 
-	virtual void addEffect(const std::string &name, const Effect &effect) = 0;
+    virtual void addEffect(const std::string &name, const Effect &effect) = 0;
 };
 
 #endif

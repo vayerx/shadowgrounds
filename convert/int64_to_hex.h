@@ -1,4 +1,3 @@
-
 #ifndef INT64_TO_HEX_H
 #define INT64_TO_HEX_H
 

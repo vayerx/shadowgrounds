@@ -5,31 +5,28 @@
 #include <string>
 
 namespace frozenbyte {
-namespace launcher {
+    namespace launcher {
+        class OptionsValueManagerImpl;
 
-class OptionsValueManagerImpl;
+        class OptionsValueManager {
+        public:
+            OptionsValueManager();
+            ~OptionsValueManager();
 
-class OptionsValueManager
-{
-public:
-	OptionsValueManager();
-	~OptionsValueManager();
+            void load();
+            void save();
 
-	void load();
-	void save();
-	
-	std::vector< std::string >	getOptionNames( const std::string& category ) const;
-	std::string					getTheOneInUse( const std::string& category ) const;
-	
+            std::vector< std::string >  getOptionNames(const std::string &category) const;
+            std::string                 getTheOneInUse(const std::string &category) const;
 
-	void						applyOptions( const std::string& category, const std::string& value );
-	
-private:
+            void                        applyOptions(const std::string &category, const std::string &value);
 
-	OptionsValueManagerImpl* impl;
-};
+        private:
 
-} // end of namespace frozenbyte
-} // end of namespace launcher
+            OptionsValueManagerImpl *impl;
+        };
+
+    } // end of namespace frozenbyte
+}     // end of namespace launcher
 
 #endif

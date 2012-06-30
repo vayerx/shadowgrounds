@@ -7,42 +7,40 @@ class Ogui;
 
 namespace game
 {
-	class Game;
+    class Game;
 }
 
 namespace ui {
+    class IngameGuiTabsImpl;
 
-class IngameGuiTabsImpl;
+    class IngameGuiTabs {
+    public:
+        /*
+           enum IngameWindows
+           {
+            map = 0,
+            upgrade = 1,
+            log = 2
+           };*/
+        typedef game::GameUI::WINDOW_TYPE IngameWindows;
 
-class IngameGuiTabs 
-{
-public:
-	/*
-	enum IngameWindows
-	{
-		map = 0,
-		upgrade = 1,
-		log = 2
-	};*/
-	typedef game::GameUI::WINDOW_TYPE IngameWindows;
+        IngameGuiTabs(Ogui *ogui, game::Game *game);
+        ~IngameGuiTabs();
 
-	IngameGuiTabs( Ogui *ogui, game::Game *game );
-	~IngameGuiTabs();
+        void show();
+        void hide();
 
-	void show();
-	void hide();
-	
-	void raise();
-	void update(int ms);
+        void raise();
+        void update(int ms);
 
-	bool isVisible() const;
+        bool isVisible() const;
 
-	void setActive( IngameWindows current_active );
+        void setActive(IngameWindows current_active);
 
-private:
-	
-	IngameGuiTabsImpl* impl;
-};
+    private:
+
+        IngameGuiTabsImpl *impl;
+    };
 
 } // end of namespace ui
 

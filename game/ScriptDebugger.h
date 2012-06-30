@@ -1,4 +1,3 @@
-
 #ifndef SCRIPTDEBUGGER_H
 #define SCRIPTDEBUGGER_H
 
@@ -7,21 +6,18 @@
 
 namespace game
 {
+    /**
+     * Class for debugging game scripts.
+     */
 
-  /**
-   * Class for debugging game scripts.
-   */
-
-  class ScriptDebugger
-  {
-  public:
-    static void init();
-    static void run(GameScripting *gs);
-  private:
-    static int historyNumber;
-  };
+    class ScriptDebugger {
+    public:
+        static void init();
+        static void run(GameScripting *gs);
+    private:
+        static int historyNumber;
+    };
 
 }
 
 #endif
-

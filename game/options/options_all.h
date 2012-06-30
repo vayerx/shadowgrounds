@@ -1,4 +1,3 @@
-
 #ifndef OPTIONS_ALL_H
 #define OPTIONS_ALL_H
 
@@ -25,5 +24,3 @@
 #include "options_physics.h"
 
 #endif
-
-

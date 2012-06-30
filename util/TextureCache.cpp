@@ -1,9 +1,8 @@
-
 #include "precompiled.h"
 
 #ifdef _MSC_VER
-#pragma warning(disable:4103)
-#pragma warning(disable:4786)
+#  pragma warning(disable:4103)
+#  pragma warning(disable:4786)
 #endif
 
 #include "TextureCache.h"
@@ -21,258 +20,239 @@ using namespace std;
 using namespace boost;
 
 namespace frozenbyte {
+    static const int TEMPORARY_TIME = 20 * 1000;
 
-	static const int TEMPORARY_TIME = 20 * 1000;
+    struct TextureDeleter {
+        void operator () (IStorm3D_Texture *t)
+        {
+            if (t)
+                t->Release();
+        }
+    };
 
-	struct TextureDeleter
-	{
-		void operator() (IStorm3D_Texture *t)
-		{
-			if(t)
-				t->Release();
-		}
-	};
+    static void makeLower(std::string &string)
+    {
+        for (unsigned int i = 0; i < string.size(); ++i) {
+            string[i] = tolower(string[i]);
+        }
+    }
 
-	static void makeLower(std::string &string)
-	{
-		for(unsigned int i = 0; i < string.size(); ++i)
-			string[i] = tolower(string[i]);
-	}
+    struct TemporaryTexture {
+        shared_ptr<IStorm3D_Texture> texture;
+        int timeLeft;
 
-	struct TemporaryTexture
-	{
-		shared_ptr<IStorm3D_Texture> texture;
-		int timeLeft;
+        explicit TemporaryTexture(shared_ptr<IStorm3D_Texture> &texture_)
+            :   texture(texture_),
+            timeLeft(TEMPORARY_TIME)
+        {
+            if (texture)
+                texture->AddHighPriority();
+        }
 
-		explicit TemporaryTexture(shared_ptr<IStorm3D_Texture> &texture_)
-		:	texture(texture_),
-			timeLeft(TEMPORARY_TIME)
-		{
-			if(texture)
-				texture->AddHighPriority();
-		}
+        TemporaryTexture(const TemporaryTexture &other)
+            :   texture(other.texture),
+            timeLeft(other.timeLeft)
+        {
+            if (texture)
+                texture->AddHighPriority();
+        }
 
-		TemporaryTexture(const TemporaryTexture &other)
-		:	texture(other.texture),
-			timeLeft(other.timeLeft)
-		{
-			if(texture)
-				texture->AddHighPriority();
-		}
+        ~TemporaryTexture()
+        {
+            if (texture)
+                texture->RemoveHighPriority();
+        }
 
-		~TemporaryTexture()
-		{
-			if(texture)
-				texture->RemoveHighPriority();
-		}
+        const TemporaryTexture &operator = (const TemporaryTexture &other)
+        {
+            if (texture)
+                texture->RemoveHighPriority();
 
-		const TemporaryTexture &operator = (const TemporaryTexture &other)
-		{
-			if(texture)
-				texture->RemoveHighPriority();
+            texture = other.texture;
+            timeLeft = other.timeLeft;
 
-			texture = other.texture;
-			timeLeft = other.timeLeft;
+            if (texture)
+                texture->AddHighPriority();
 
-			if(texture)
-				texture->AddHighPriority();
+            return *this;
+        }
+    };
 
-			return *this;
-		}
-	};
+    struct TextureData {
+        char  *data;
+        size_t data_size;
+    };
 
+    typedef list<TemporaryTexture> TimedTemporaryList;
 
-	struct TextureData
-	{
-		char *data;
-		size_t data_size;
-	};
+    struct TextureCache::Data {
+        IStorm3D &storm;
 
-typedef list<TemporaryTexture> TimedTemporaryList;
+        map<string, shared_ptr<IStorm3D_Texture> > textures;
+        map<string, shared_ptr<IStorm3D_Texture> > temporaryTextures;
 
-struct TextureCache::Data
-{
-	IStorm3D &storm;
+        // texture data loaded to memory
+        map<string, TextureData > textureDatas;
 
-	map<string, shared_ptr<IStorm3D_Texture> > textures;
-	map<string, shared_ptr<IStorm3D_Texture> > temporaryTextures;
+        TimedTemporaryList        timedTemporaries;
 
-	// texture data loaded to memory
-	map<string, TextureData > textureDatas;
+        int loadflags;
 
-	TimedTemporaryList timedTemporaries;
+        Data(IStorm3D &storm_)
+            :   storm(storm_),
+            loadflags(0)
+        {
+        }
 
-	int loadflags;
+        ~Data()
+        {
+            size_t total = 0;
+            map<string, TextureData>::iterator it;
+            for (it = textureDatas.begin(); it != textureDatas.end(); it++) {
+                total += it->second.data_size;
+                delete[] it->second.data;
+            }
+            Logger::getInstance()->debug( ("TextureCache preloaded a total of "
+                                           + boost::lexical_cast<std::string>(total) + " bytes").c_str() );
+        }
 
-	Data(IStorm3D &storm_)
-	:	storm(storm_),
-		loadflags(0)
-	{
-	}
+        void loadTexture(string fileName, bool temporaryCache)
+        {
+            makeLower(fileName);
 
-	~Data()
-	{
-		size_t total = 0;
-		map<string, TextureData>::iterator it;
-		for(it = textureDatas.begin(); it != textureDatas.end(); it++)
-		{
-			total += it->second.data_size;
-			delete[] it->second.data;
-		}
-		Logger::getInstance()->debug(("TextureCache preloaded a total of " + boost::lexical_cast<std::string>(total) + " bytes").c_str());
-	}
+            // try to find texture data from CPU side memory
+            const void *data = NULL;
+            size_t data_size = 0;
+            map<string, TextureData >::iterator it = textureDatas.find( fileName.c_str() );
+            if ( it != textureDatas.end() ) {
+                data = it->second.data;
+                data_size = it->second.data_size;
+            }
 
-	void loadTexture(string fileName, bool temporaryCache)
-	{
-		makeLower(fileName);
+            IStorm3D_Texture *t = storm.CreateNewTexture(fileName.c_str(), loadflags, 0, data, data_size);
+            if (!t) {
+                std::string foo = "TextureCache::loadTexture - Can't find texture: " + std::string(fileName);
+                Logger::getInstance()->warning( foo.c_str() );
 
-		// try to find texture data from CPU side memory
-		const void *data = NULL;
-		size_t data_size = 0;
-		map<string, TextureData >::iterator it = textureDatas.find(fileName.c_str());
-		if(it != textureDatas.end())
-		{
-			data = it->second.data;
-			data_size = it->second.data_size;
-		}
+                return;
+            }
 
-		IStorm3D_Texture *t = storm.CreateNewTexture(fileName.c_str(), loadflags, 0, data, data_size);
-		if(!t)
-		{
-			std::string foo = "TextureCache::loadTexture - Can't find texture: " + std::string(fileName);
-			Logger::getInstance()->warning(foo.c_str());
+            shared_ptr<IStorm3D_Texture> texture( t, TextureDeleter() );
 
-			return;
-		}
+            if (temporaryCache) {
+                TemporaryTexture t(texture);
+                timedTemporaries.push_back(t);
 
-		shared_ptr<IStorm3D_Texture> texture(t, TextureDeleter());
+                if ( temporaryTextures.find(fileName) == temporaryTextures.end() )
+                    temporaryTextures[fileName] = texture;
+            } else {
+                if ( textures.find(fileName) == textures.end() )
+                    textures[fileName] = texture;
+            }
+        }
 
-		if(temporaryCache)
-		{
-			TemporaryTexture t(texture);
-			timedTemporaries.push_back(t);
+        IStorm3D_Texture *getTexture(string fileName)
+        {
+            makeLower(fileName);
 
-			if(temporaryTextures.find(fileName) == temporaryTextures.end())
-				temporaryTextures[fileName] = texture;
-		}
-		else
-		{
-			if(textures.find(fileName) == textures.end())
-				textures[fileName] = texture;
-		}
-	}
+            map<string, shared_ptr<IStorm3D_Texture> >::iterator it = textures.find(fileName);
+            if ( it != textures.end() )
+                return it->second.get();
 
-	IStorm3D_Texture *getTexture(string fileName)
-	{
-		makeLower(fileName);
+            it = temporaryTextures.find(fileName);
+            if ( it != temporaryTextures.end() )
+                return it->second.get();
 
-		map<string, shared_ptr<IStorm3D_Texture> >::iterator it = textures.find(fileName);
-		if(it != textures.end())
-			return it->second.get();
+            return 0;
+        }
 
-		it = temporaryTextures.find(fileName);
-		if(it != temporaryTextures.end())
-			return it->second.get();
+        void loadTextureData(string fileName)
+        {
+            makeLower(fileName);
 
-		return 0;
-	}
+            // already loaded
+            if ( textureDatas.find(fileName) != textureDatas.end() ) return;
 
-	void loadTextureData(string fileName)
-	{
-		makeLower(fileName);
+            filesystem::FB_FILE *file = filesystem::fb_fopen(fileName.c_str(), "rb");
+            if (file) {
+                TextureData td;
+                td.data_size = filesystem::fb_fsize(file);
 
-		// already loaded
-		if(textureDatas.find(fileName) != textureDatas.end()) return;
+                if (td.data_size > 0) {
+                    td.data = new char[td.data_size];
+                    if (filesystem::fb_fread(td.data, 1, td.data_size, file) == td.data_size)
+                        textureDatas[fileName] = td;
+                    else
+                        delete[] td.data;
+                }
 
-		filesystem::FB_FILE *file = filesystem::fb_fopen(fileName.c_str(), "rb");
-		if(file)
-		{
-			TextureData td;
-			td.data_size = filesystem::fb_fsize(file);
+                filesystem::fb_fclose(file);
+            }
+        }
+    };
 
-			if(td.data_size > 0)
-			{
-				td.data = new char[td.data_size];
-				if(filesystem::fb_fread(td.data, 1, td.data_size, file) == td.data_size)
-				{
-					textureDatas[fileName] = td;
-				}
-				else
-				{
-					delete[] td.data;
-				}
-			}
+    TextureCache::TextureCache(IStorm3D &storm)
+        :   data( new Data(storm) )
+    {
+    }
 
-			filesystem::fb_fclose(file);
-		}
-	}
-};
+    TextureCache::~TextureCache()
+    {
+    }
 
-TextureCache::TextureCache(IStorm3D &storm)
-:	data(new Data(storm))
-{
-}
+    void TextureCache::loadTexture(const char *fileName, bool temporaryCache)
+    {
+        data->loadTexture(fileName, temporaryCache);
+    }
 
-TextureCache::~TextureCache()
-{
-}
+    void TextureCache::clearTemporary()
+    {
+        data->temporaryTextures.clear();
+        data->timedTemporaries.clear();
+    }
 
-void TextureCache::loadTexture(const char *fileName, bool temporaryCache)
-{
-	data->loadTexture(fileName, temporaryCache);
-}
+    void TextureCache::update(int ms)
+    {
+        TimedTemporaryList::iterator it = data->timedTemporaries.begin();
+        for (; it != data->timedTemporaries.end(); ) {
+            TemporaryTexture &t = *it;
+            t.timeLeft -= ms;
 
-void TextureCache::clearTemporary()
-{
-	data->temporaryTextures.clear();
-	data->timedTemporaries.clear();
-}
+            if (t.timeLeft <= 0) {
+                it = data->timedTemporaries.erase(it);
+                continue;
+            }
 
-void TextureCache::update(int ms)
-{
-	TimedTemporaryList::iterator it = data->timedTemporaries.begin();
-	for(; it != data->timedTemporaries.end(); )
-	{
-		TemporaryTexture &t = *it;
-		t.timeLeft -= ms;
+            ++it;
+        }
+    }
 
-		if(t.timeLeft <= 0)
-		{
-			it = data->timedTemporaries.erase(it);
-			continue;
-		}
+    IStorm3D_Texture *TextureCache::getTexture(const char *fileName, bool temporaryCache)
+    {
+        IStorm3D_Texture *result = data->getTexture(fileName);
 
-		++it;
-	}
-}
+        if (!result) {
+            loadTexture(fileName, temporaryCache);
+            result = data->getTexture(fileName);
+        }
 
-IStorm3D_Texture *TextureCache::getTexture(const char *fileName, bool temporaryCache)
-{
-	IStorm3D_Texture *result = data->getTexture(fileName);
-
-	if(!result)
-	{
-		loadTexture(fileName, temporaryCache);
-		result = data->getTexture(fileName);
-	}
-
-	return result;
-}
+        return result;
+    }
 
 // loads texture data to cpu side memory
-void TextureCache::loadTextureDataToMemory(const char *fileName)
-{
-	data->loadTextureData(fileName);
-}
+    void TextureCache::loadTextureDataToMemory(const char *fileName)
+    {
+        data->loadTextureData(fileName);
+    }
 
-void TextureCache::setLoadFlags(int fag)
-{
-	data->loadflags = fag;
-}
+    void TextureCache::setLoadFlags(int fag)
+    {
+        data->loadflags = fag;
+    }
 
-int TextureCache::getLoadFlags()
-{
-	return data->loadflags;
-}
+    int TextureCache::getLoadFlags()
+    {
+        return data->loadflags;
+    }
 
 } // frozenbyte

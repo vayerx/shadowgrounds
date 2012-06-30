@@ -1,4 +1,3 @@
-
 #include "precompiled.h"
 
 #include "CircleAreaTracker.h"
@@ -14,293 +13,273 @@ using namespace boost;
 using namespace std;
 
 namespace util {
+    struct Trackable {
+        ITrackable *ptr;
+        int         triggers;
 
-	struct Trackable
-	{
-		ITrackable *ptr;
-		int triggers;
+        Trackable()
+            :   ptr(0),
+            triggers(0)
+        {
+        }
+    };
 
-		Trackable()
-		:	ptr(0),
-			triggers(0)
-		{
-		}
-	};
+    typedef vector<shared_ptr<Trackable> > TrackableList;
 
-	typedef vector<shared_ptr<Trackable> > TrackableList;
+    struct Trigger {
+        ClippedCircle     circle;
+        ITriggerListener *listener;
+        TrackableList     trackables;
 
-	struct Trigger
-	{
-		ClippedCircle circle;
-		ITriggerListener *listener;
-		TrackableList trackables;
+        Quadtree<Trigger>::Entity *entity;
+        int   id;
 
-		Quadtree<Trigger>::Entity *entity;
-		int id;
+        void *triggerData;
 
-		void *triggerData;
+        Trigger()
+            :   listener(0),
+            entity(0),
+            id(-1),
+            triggerData(0)
+        {
+        }
 
-		Trigger()
-		:	listener(0),
-			entity(0),
-			id(-1),
-			triggerData(0)
-		{
-		}
+        void SphereCollision(const VC3 &position, float radius, Storm3D_CollisionInfo &info, bool) const
+        {
+            // FIXME:
+            // Doing only point vs clipped circle here
 
-		void SphereCollision(const VC3 &position, float radius, Storm3D_CollisionInfo &info, bool) const
-		{
-			// FIXME:
-			// Doing only point vs clipped circle here
+            if ( circle.isInsideArea(position) )
+                info.hit = true;
+        }
 
-			if(circle.isInsideArea(position))
-				info.hit = true;
-		}
+        bool fits(const AABB &area) const
+        {
+            return false;
+        }
+    };
 
-		bool fits(const AABB &area) const
-		{
-			return false;
-		}
-	};
+    typedef vector<shared_ptr<Trigger> > TriggerList;
+    typedef Quadtree<Trigger>            QTree;
 
-	typedef vector<shared_ptr<Trigger> > TriggerList;
-	typedef Quadtree<Trigger> QTree;
+    static const int UPDATE_INTERVAL = 200;
+    static const float HEIGHT = 15.f;
 
-	static const int UPDATE_INTERVAL = 200;
-	static const float HEIGHT = 15.f;
+    struct ITrackableComparator {
+        ITrackable *given;
 
-	struct ITrackableComparator
-	{
-		ITrackable *given;
+        explicit ITrackableComparator(ITrackable *given_)
+            :   given(given_) { }
 
-		explicit ITrackableComparator(ITrackable *given_)
-		:	given(given_) {}
+        bool operator () (const shared_ptr<Trackable> &ptr) const
+        {
+            return given == ptr->ptr;
+        }
+    };
 
-		bool operator () (const shared_ptr<Trackable> &ptr) const
-		{
-			return given == ptr->ptr;
-		}
-	};
+    struct TrackableComparator {
+        Trackable *given;
 
-	struct TrackableComparator
-	{
-		Trackable *given;
+        explicit TrackableComparator(Trackable *given_)
+            :   given(given_) { }
 
-		explicit TrackableComparator(Trackable *given_)
-		:	given(given_) {}
+        bool operator () (const shared_ptr<Trackable> &ptr) const
+        {
+            return given == ptr.get();
+        }
+    };
 
-		bool operator () (const shared_ptr<Trackable> &ptr) const
-		{
-			return given == ptr.get();
-		}
-	};
+    struct CircleAreaTracker::Data {
+        scoped_ptr<QTree> tree;
+        TriggerList       triggers;
+        TrackableList     trackables;
 
+        int time;
 
-struct CircleAreaTracker::Data
-{
-	scoped_ptr<QTree> tree;
-	TriggerList triggers;
-	TrackableList trackables;
+        Data()
+            :   time(0)
+        {
+        }
 
-	int time;
+        void init(const VC2 &size)
+        {
+            VC2 mmin(-size.x, -size.y);
+            VC2 mmax(size.x,  size.y);
 
-	Data()
-	:	time(0)
-	{
-	}
+            tree.reset( new QTree(mmin, mmax) );
+        }
 
-	void init(const VC2 &size)
-	{
-		VC2 mmin(-size.x, -size.y);
-		VC2 mmax( size.x,  size.y);
+        int insert(const ClippedCircle &circle, ITriggerListener *listener, void *triggerData)
+        {
+            shared_ptr<Trigger> trigger;
+            int index = -1;
 
-		tree.reset(new QTree(mmin, mmax));
-	}
+            for (unsigned int i = 0; i < triggers.size(); ++i) {
+                FB_ASSERT(triggers[i]);
 
-	int insert(const ClippedCircle &circle, ITriggerListener *listener, void *triggerData)
-	{
-		shared_ptr<Trigger> trigger;
-		int index = -1;
+                if (!triggers[i]->listener || !triggers[i]->entity) {
+                    index = i;
+                    break;
+                }
+            }
 
-		for(unsigned int i = 0; i < triggers.size(); ++i)
-		{
-			FB_ASSERT(triggers[i]);
+            if (index == -1) {
+                index = triggers.size();
+                triggers.resize(index + 1);
 
-			if(!triggers[i]->listener || !triggers[i]->entity)
-			{
-				index = i;
-				break;
-			}
-		}
+                triggers[index].reset( new Trigger() );
+            }
 
-		if(index == -1)
-		{
-			index = triggers.size();
-			triggers.resize(index + 1);
+            VC3 position = circle.getPosition();
+            position.y = HEIGHT;
 
-			triggers[index].reset(new Trigger());
-		}
+            trigger = triggers[index];
+            trigger->id = index;
+            trigger->listener = listener;
+            trigger->circle = circle;
+            trigger->entity = tree->insert( trigger.get(), position, circle.getRadius() );
+            trigger->triggerData = triggerData;
 
-		VC3 position = circle.getPosition();
-		position.y = HEIGHT;
+            FB_ASSERT(trigger->entity);
+            return index;
+        }
 
-		trigger = triggers[index];
-		trigger->id = index;
-		trigger->listener = listener;
-		trigger->circle = circle;
-		trigger->entity = tree->insert(trigger.get(), position, circle.getRadius());
-		trigger->triggerData = triggerData;
+        void addTrackable(int id, ITrackable *ptr)
+        {
+            // Note:
+            // Should we check if trying to insert same trackable multiple times?
 
-		FB_ASSERT(trigger->entity);
-		return index;
-	}
+            FB_ASSERT(id >= 0 && id < int( triggers.size() ) && triggers[id]);
+            Trigger &trigger = *triggers[id];
 
-	void addTrackable(int id, ITrackable *ptr)
-	{
-		// Note:
-		// Should we check if trying to insert same trackable multiple times?
+            int index = -1;
+            TrackableList::iterator it = find_if( trackables.begin(), trackables.end(), ITrackableComparator(ptr) );
+            if ( it != trackables.end() )
+                index = it - trackables.begin();
+            if (index == -1)
+                for (unsigned int i = 0; i < trackables.size(); ++i) {
+                    if (!trackables[i]->triggers) {
+                        index = i;
+                        break;
+                    }
+                }
+            if (index == -1) {
+                index = trackables.size();
+                trackables.resize(index + 1);
+                trackables[index].reset( new Trackable() );
+            }
 
-		FB_ASSERT(id >= 0 && id < int(triggers.size()) && triggers[id]);
-		Trigger &trigger = *triggers[id];
+            shared_ptr<Trackable> &trackable = trackables[index];
+            FB_ASSERT(trackable);
 
-		int index = -1;
-		TrackableList::iterator it = find_if(trackables.begin(), trackables.end(), ITrackableComparator(ptr));
-		if(it != trackables.end())
-			index = it - trackables.begin();
-		if(index == -1)
-		{
-			for(unsigned int i = 0; i < trackables.size(); ++i)
-			{
-				if(!trackables[i]->triggers)
-				{
-					index = i;
-					break;
-				}
-			}
-		}
-		if(index == -1)
-		{
-			index = trackables.size();
-			trackables.resize(index + 1);
-			trackables[index].reset(new Trackable());
-		}
+            trackable->ptr = ptr;
+            ++trackable->triggers;
 
-		shared_ptr<Trackable> &trackable = trackables[index];
-		FB_ASSERT(trackable);
+            trigger.trackables.push_back(trackable);
+        }
 
-		trackable->ptr = ptr;
-		++trackable->triggers;
+        void erase(int id)
+        {
+            FB_ASSERT(id >= 0 && id < int( triggers.size() ) && triggers[id]);
+            Trigger &trigger = *triggers[id];
+            FB_ASSERT(trigger.entity);
 
-		trigger.trackables.push_back(trackable);
-	}
+            TrackableList::iterator it = trigger.trackables.begin();
+            for (; it != trigger.trackables.end(); ++it) {
+                FB_ASSERT(*it);
+                --it->get()->triggers;
+            }
 
-	void erase(int id)
-	{
-		FB_ASSERT(id >= 0 && id < int(triggers.size()) && triggers[id]);
-		Trigger &trigger = *triggers[id];
-		FB_ASSERT(trigger.entity);
+            tree->erase(trigger.entity);
+            trigger.entity = 0;
+            trigger.listener = 0;
+        }
 
-		TrackableList::iterator it = trigger.trackables.begin();
-		for(; it != trigger.trackables.end(); ++it)
-		{
-			FB_ASSERT(*it);
-			--it->get()->triggers;
-		}
+        void update(int ms)
+        {
+            time += ms;
+            if (time <= UPDATE_INTERVAL)
+                return;
+            time -= UPDATE_INTERVAL;
 
-		tree->erase(trigger.entity);
-		trigger.entity = 0;
-		trigger.listener = 0;
-	}
+            vector<Trigger *> activated;
 
-	void update(int ms)
-	{
-		time += ms;
-		if(time <= UPDATE_INTERVAL)
-			return;
-		time -= UPDATE_INTERVAL;
+            // Find triggers under trackables
+            {
+                TrackableList::iterator it = trackables.begin();
+                for (; it != trackables.end(); ++it) {
+                    Trackable *t = it->get();
+                    VC3 position = t->ptr->getTrackablePosition();
+                    position.y = HEIGHT;
 
-		vector<Trigger *> activated;
+                    vector<Trigger *> foundTriggers;
+                    tree->collectSphere( foundTriggers, position, t->ptr->getTrackableRadius2d() );
 
-		// Find triggers under trackables
-		{
-			TrackableList::iterator it = trackables.begin();
-			for(; it != trackables.end(); ++it)
-			{
-				Trackable *t = it->get();
-				VC3 position = t->ptr->getTrackablePosition();
-				position.y = HEIGHT;
+                    // Test if those really track given entity
+                    for (unsigned int i = 0; i < foundTriggers.size(); ++i) {
+                        Trigger *trigger = foundTriggers[i];
+                        TrackableList::iterator it = find_if( trigger->trackables.begin(),
+                                                              trigger->trackables.end(), TrackableComparator(t) );
+                        if ( it != trigger->trackables.end() ) {
+                            // Insert if and only if not on activated list already
+                            bool found = false;
+                            for (unsigned int j = 0; j < activated.size(); ++j) {
+                                if (activated[j] == trigger) {
+                                    found = true;
+                                    break;
+                                }
+                            }
 
-				vector<Trigger *> foundTriggers;
-				tree->collectSphere(foundTriggers, position, t->ptr->getTrackableRadius2d());
+                            if (!found)
+                                activated.push_back(trigger);
+                        }
+                    }
+                }
+            }
 
-				// Test if those really track given entity
-				for(unsigned int i = 0; i < foundTriggers.size(); ++i)
-				{
-					Trigger *trigger = foundTriggers[i];
-					TrackableList::iterator it = find_if(trigger->trackables.begin(), trigger->trackables.end(), TrackableComparator(t));
-					if(it != trigger->trackables.end())
-					{
-						// Insert if and only if not on activated list already
-						bool found = false;
-						for(unsigned int j = 0; j < activated.size(); ++j)
-						{
-							if(activated[j] == trigger)
-							{
-								found = true;
-								break;
-							}
-						}
+            vector<Trigger *>::iterator it = activated.begin();
+            for (; it != activated.end(); ++it) {
+                (*it)->listener->activate( (*it)->id, (*it)->triggerData );
+            }
+        }
+    };
 
-						if(!found)
-							activated.push_back(trigger);
-					}
-				}
-			}
-		}
+    CircleAreaTracker::CircleAreaTracker(const VC2 &size)
+    {
+        scoped_ptr<Data> tempData( new Data() );
+        tempData->init(size);
 
-		vector<Trigger *>::iterator it = activated.begin();
-		for(; it != activated.end(); ++it)
-			(*it)->listener->activate((*it)->id, (*it)->triggerData);
-	}
-};
+        data.swap(tempData);
+    }
 
-CircleAreaTracker::CircleAreaTracker(const VC2 &size)
-{
-	scoped_ptr<Data> tempData(new Data());
-	tempData->init(size);
+    CircleAreaTracker::~CircleAreaTracker()
+    {
+    }
 
-	data.swap(tempData);
-}
+    int CircleAreaTracker::addCircleTrigger(const ClippedCircle &circle, ITriggerListener *listener, void *triggerData)
+    {
+        FB_ASSERT(listener);
+        return data->insert(circle, listener, triggerData);
+    }
 
-CircleAreaTracker::~CircleAreaTracker()
-{
-}
+    void CircleAreaTracker::addTrackable(int circleId, ITrackable *ptr)
+    {
+        if (!ptr) {
+            FB_ASSERT(ptr);
+            return;
+        }
 
-int CircleAreaTracker::addCircleTrigger(const ClippedCircle &circle, ITriggerListener *listener, void *triggerData)
-{
-	FB_ASSERT(listener);
-	return data->insert(circle, listener, triggerData);
-}
+        data->addTrackable(circleId, ptr);
+    }
 
-void CircleAreaTracker::addTrackable(int circleId, ITrackable *ptr)
-{
-	if(!ptr)
-	{
-		FB_ASSERT(ptr);
-		return;
-	}
+    void CircleAreaTracker::removeCircleTrigger(int circleId)
+    {
+        data->erase(circleId);
+    }
 
-	data->addTrackable(circleId, ptr);
-}
-
-void CircleAreaTracker::removeCircleTrigger(int circleId)
-{
-	data->erase(circleId);
-}
-
-void CircleAreaTracker::update(int ms)
-{
-	data->update(ms);
-}
+    void CircleAreaTracker::update(int ms)
+    {
+        data->update(ms);
+    }
 
 } // util

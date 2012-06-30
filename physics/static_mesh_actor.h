@@ -10,37 +10,37 @@ class NxTriangleMesh;
 class NxTriangleMeshShape;
 
 namespace frozenbyte {
-namespace physics {
+    namespace physics {
+        class StaticMeshActor;
 
-class StaticMeshActor;
+        class StaticMesh {
+            NxPhysicsSDK &sdk;
+            NxTriangleMesh *mesh;
 
-class StaticMesh
-{
-	NxPhysicsSDK &sdk;
-	NxTriangleMesh *mesh;
+        public:
+            StaticMesh(NxPhysicsSDK &sdk, const char *filename);
+            ~StaticMesh();
 
-public:
-	StaticMesh(NxPhysicsSDK &sdk, const char *filename);
-	~StaticMesh();
+            inline NxTriangleMesh *getMesh() const { return mesh; }
+            friend class StaticMeshActor;
+        };
 
-	inline NxTriangleMesh *getMesh() const { return mesh; }
-	friend class StaticMeshActor;
-};
+        class StaticMeshActor : public ActorBase {
+            //NxTriangleMeshShape *shape;
+            boost::shared_ptr<StaticMesh> mesh;
 
-class StaticMeshActor: public ActorBase
-{
-	//NxTriangleMeshShape *shape;
-	boost::shared_ptr<StaticMesh> mesh;
+        public:
+            StaticMeshActor(NxScene                             &scene,
+                            const boost::shared_ptr<StaticMesh> &mesh,
+                            const VC3                           &position,
+                            const QUAT                          &rotation);
+            ~StaticMeshActor();
 
-public:
-	StaticMeshActor(NxScene &scene, const boost::shared_ptr<StaticMesh> &mesh, const VC3 &position, const QUAT &rotation);
-	~StaticMeshActor();
+            // Extended stuff
+            bool isValid() const;
+        };
 
-	// Extended stuff
-	bool isValid() const;
-};
-
-} // physics
-} // frozenbyte
+    } // physics
+}     // frozenbyte
 
 #endif

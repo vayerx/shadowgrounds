@@ -8,24 +8,24 @@
 #include <boost/scoped_ptr.hpp>
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        struct UnitProperties;
+        struct StringProperties;
 
-struct UnitProperties;
-struct StringProperties;
+        class UnitPropertiesDialog {
+            struct Data;
+            boost::scoped_ptr<Data> data;
 
-class UnitPropertiesDialog
-{
-	struct Data;
-	boost::scoped_ptr<Data> data;
+        public:
+            UnitPropertiesDialog(UnitProperties                 &properties,
+                                 const std::vector<std::string> &usedStrings,
+                                 const StringProperties         &stringProperties);
+            ~UnitPropertiesDialog();
 
-public:
-	UnitPropertiesDialog(UnitProperties &properties, const std::vector<std::string> &usedStrings, const StringProperties &stringProperties);
-	~UnitPropertiesDialog();
+            void execute(int id);
+        };
 
-	void execute(int id);
-};
-
-} // editor
-} // frozenbyte
+    } // editor
+}     // frozenbyte
 
 #endif

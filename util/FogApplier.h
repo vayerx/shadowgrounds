@@ -8,39 +8,36 @@
 class IStorm3D_Scene;
 
 namespace util {
+    class FogApplier {
+        struct Data;
+        boost::scoped_ptr<Data> data;
 
-class FogApplier
-{
-	struct Data;
-	boost::scoped_ptr<Data> data;
+    public:
+        FogApplier();
+        ~FogApplier();
 
-public:
-	FogApplier();
-	~FogApplier();
+        struct Fog {
+            float start;
+            float end;
+            COL   color;
+            bool  enabled;
+            bool  cameraCentric;
 
-	struct Fog
-	{
-		float start;
-		float end;
-		COL color;
-		bool enabled;
-		bool cameraCentric;
+            Fog()
+                :   start(1),
+                end(0),
+                enabled(false),
+                cameraCentric(false)
+            {
+            }
+        };
 
-		Fog()
-		:	start(1),
-			end(0),
-			enabled(false),
-			cameraCentric(false)
-		{
-		}
-	};
-
-	void setScene(IStorm3D_Scene &scene);
-	void setInterpolate(int type);
-	void setFog(const std::string &id, const Fog &fog);
-	void setActiveFog(const std::string &id);
-	void update(float cameraHeight, float timeDelta);
-};
+        void setScene(IStorm3D_Scene &scene);
+        void setInterpolate(int type);
+        void setFog(const std::string &id, const Fog &fog);
+        void setActiveFog(const std::string &id);
+        void update(float cameraHeight, float timeDelta);
+    };
 
 } // util
 

@@ -1,4 +1,3 @@
-
 #include "precompiled.h"
 
 #include "AmmoPackObject.h"
@@ -8,38 +7,31 @@
 
 namespace game
 {
-
-  
-  AmmoPackObject::AmmoPackObject()
-  {
-    amount = 0;
-    maxAmount = 0;
-  }
-
-
-  SaveData *AmmoPackObject::getSaveData() const
-  {
-    // TODO
-    return NULL;
-  }
-
-
-  int AmmoPackObject::getReloadPrice()
-  {
-    if (amount < maxAmount)
+    AmmoPackObject::AmmoPackObject()
     {
-      // WARNING: unsafe cast!
-      AmmoPack *ap = (AmmoPack *)this->getType();
-      return (((maxAmount - amount) * ap->getPrice()) / ap->getAmount());
-    }    
-    return 0;
-  }
+        amount = 0;
+        maxAmount = 0;
+    }
 
+    SaveData *AmmoPackObject::getSaveData() const
+    {
+        // TODO
+        return NULL;
+    }
 
-  void AmmoPackObject::reload()
-  {
-    amount = maxAmount;
-  }
+    int AmmoPackObject::getReloadPrice()
+    {
+        if (amount < maxAmount) {
+            // WARNING: unsafe cast!
+            AmmoPack *ap = (AmmoPack *)this->getType();
+            return ( ( (maxAmount - amount) * ap->getPrice() ) / ap->getAmount() );
+        }
+        return 0;
+    }
+
+    void AmmoPackObject::reload()
+    {
+        amount = maxAmount;
+    }
 
 }
-

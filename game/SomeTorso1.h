@@ -1,4 +1,3 @@
-
 #ifndef SOMETORSO1_H
 #define SOMETORSO1_H
 
@@ -14,17 +13,15 @@
 
 namespace game
 {
+    class SomeTorso1 : public Torso {
+    public:
+        SomeTorso1();
+        ~SomeTorso1();
 
-  class SomeTorso1 : public Torso
-  {
-  public:
-    SomeTorso1();
-    ~SomeTorso1();
+        virtual Part *getNewPartInstance();
+    };
 
-    virtual Part *getNewPartInstance();
-  };
-
-  //extern SomeTorso1 someTorso1;
+    //extern SomeTorso1 someTorso1;
 
 }
 

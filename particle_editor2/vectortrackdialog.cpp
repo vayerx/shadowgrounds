@@ -19,253 +19,233 @@
 
 namespace frozenbyte
 {
-namespace particle
-{
+    namespace particle
+    {
+        using namespace editor;
 
-using namespace editor;
+        struct VectorTrackDialogData {
+            struct DialogData {
+                ParserGroup &pg;
+                Dialog      &dlg;
+                int curKey;
+                bool         floatMode;
 
-struct VectorTrackDialogData {
+                class Key {
+                public:
+                    Key() { }
+                    Key(float t) : time(t) { value = Vector(0.0f, 0.0f, 0.0f); }
+                    Key(const Key &other) { *this = other; }
+                    Key &operator =(const Key &other) {
+                        time = other.time;
+                        value = other.value;
+                        return *this;
+                    }
+                    float time;
+                    Vector value;
+                };
 
+                std::vector<Key> keys;
+                bool noValueUpdate;
 
-	struct DialogData {
-		
-		ParserGroup& pg;
-		Dialog& dlg;
-		int curKey;
-		bool floatMode;
+                DialogData(Dialog &dlg_, ParserGroup &pg_,
+                           bool floatMode_) : dlg(dlg_), pg(pg_), floatMode(floatMode_) {
+                    int numKeys = convertFromString<int>(pg.getValue("num_keys", ""), 0);
+                    keys.resize(numKeys);
 
-		class Key {
-		public:
-			Key() {}
-			Key(float t) : time(t) { value = Vector(0.0f, 0.0f, 0.0f); }
-			Key(const Key& other) { *this = other; }
-			Key& operator=(const Key& other) { 
-				time = other.time; 
-				value = other.value;
-				return *this; }
-			float time;
-			Vector value;
-		};
+                    for (int i = 0; i < numKeys; i++) {
+                        std::string str = "key" + convertToString<int>(i);
 
-		std::vector<Key> keys;
-		bool noValueUpdate;
+                        keys[i].time = convertFromString<float>(pg.getValue( (str + ".time"), "" ), 0);
 
-		DialogData(Dialog& dlg_, ParserGroup& pg_, bool floatMode_) : dlg(dlg_), pg(pg_), floatMode(floatMode_) {
-		
-			
-			int numKeys = convertFromString<int>(pg.getValue("num_keys", ""), 0);
-			keys.resize(numKeys);
-			
-			for(int i = 0; i < numKeys; i++) {
-				
-				std::string str = "key" + convertToString<int>(i);
-				
-				keys[i].time = convertFromString<float>(pg.getValue((str + ".time"), ""), 0);				
-				
-				if(!floatMode) {
-					keys[i].value = convertVectorFromString(pg.getValue((str + ".value"), "0,0,0"));
-				} else {
-					keys[i].value.x = convertFromString<float>(pg.getValue((str + ".value"), ""), 0);
-				}
-			}
+                        if (!floatMode)
+                            keys[i].value = convertVectorFromString( pg.getValue( (str + ".value"), "0,0,0" ) );
+                        else
+                            keys[i].value.x = convertFromString<float>(pg.getValue( (str + ".value"), "" ), 0);
+                    }
 
-			updateDialog();
-			
-			if(numKeys > 0) {
-				ListBox_SetCurSel(dlg.getItem(IDC_KEYSV), 0);
-				selectKey();
-			}
-			
+                    updateDialog();
 
-		}
+                    if (numKeys > 0) {
+                        ListBox_SetCurSel(dlg.getItem(IDC_KEYSV), 0);
+                        selectKey();
+                    }
 
-		void updateKey() {
-							
-			if(curKey < 0)
-				return;
+                }
 
-			if(!noValueUpdate) {	
-				keys[curKey].time = getDialogItemFloat(dlg, IDC_TIMEV);
-				keys[curKey].value.x = getDialogItemFloat(dlg, IDC_VALUE_X);			
-				if(!floatMode) {	
-					keys[curKey].value.y = getDialogItemFloat(dlg, IDC_VALUE_Y);			
-					keys[curKey].value.z = getDialogItemFloat(dlg, IDC_VALUE_Z);
-				}
-			}
+                void updateKey() {
+                    if (curKey < 0)
+                        return;
 
-		}
-		
-		void update() 
-		{
-			pg.setValue("num_keys", convertToString<int>(keys.size()));
+                    if (!noValueUpdate) {
+                        keys[curKey].time = getDialogItemFloat(dlg, IDC_TIMEV);
+                        keys[curKey].value.x = getDialogItemFloat(dlg, IDC_VALUE_X);
+                        if (!floatMode) {
+                            keys[curKey].value.y = getDialogItemFloat(dlg, IDC_VALUE_Y);
+                            keys[curKey].value.z = getDialogItemFloat(dlg, IDC_VALUE_Z);
+                        }
+                    }
 
-			for(unsigned int i = 0; i < keys.size(); ++i) 
-			{
-				std::string str = "key" + convertToString<int>(i);
-				pg.setValue((str + ".time"), convertToString<float>(keys[i].time));
+                }
 
-				if(!floatMode)	
-					pg.setValue((str + ".value"), convertVectorToString(keys[i].value));
-				else
-					pg.setValue((str + ".value"), convertToString<float>(keys[i].value.x));
-			}
-		}
-		
-		void updateDialog() 
-		{	
-			ListBox_ResetContent(dlg.getItem(IDC_KEYSV));
+                void update()
+                {
+                    pg.setValue( "num_keys", convertToString<int>( keys.size() ) );
 
-			for(unsigned int i = 0; i < keys.size(); i++) 
-			{
-				std::string str = "key" + convertToString<int>(i);
-				ListBox_AddString(dlg.getItem(IDC_KEYSV), str.c_str());
-			}
-		
-			selectKey();
-		}
+                    for (unsigned int i = 0; i < keys.size(); ++i) {
+                        std::string str = "key" + convertToString<int>(i);
+                        pg.setValue( (str + ".time"), convertToString<float>(keys[i].time) );
 
-		void addKey() 
-		{
-			keys.push_back(Key(1.0f));
-			updateDialog();
-		}
+                        if (!floatMode)
+                            pg.setValue( (str + ".value"), convertVectorToString(keys[i].value) );
+                        else
+                            pg.setValue( (str + ".value"), convertToString<float>(keys[i].value.x) );
+                    }
+                }
 
-		void removeKey() {
-			
-			if(curKey < 0)
-				return;
+                void updateDialog()
+                {
+                    ListBox_ResetContent( dlg.getItem(IDC_KEYSV) );
 
-			if(keys.size() > 1) {
-				keys.erase(keys.begin()+curKey);			
-			}
-			if(keys.size()==1) {
-				keys[0].time = 0.0f;
-			}
+                    for (unsigned int i = 0; i < keys.size(); i++) {
+                        std::string str = "key" + convertToString<int>(i);
+                        ListBox_AddString( dlg.getItem(IDC_KEYSV), str.c_str() );
+                    }
 
-			updateDialog();
-		}
+                    selectKey();
+                }
 
-		void selectKey() {
+                void addKey()
+                {
+                    keys.push_back( Key(1.0f) );
+                    updateDialog();
+                }
 
-			curKey = ListBox_GetCurSel(dlg.getItem(IDC_KEYSV));
-			if(curKey < 0)
-				return;
-			
-			noValueUpdate = true;
-			
-			setDialogItemFloat(dlg, IDC_VALUE_X, keys[curKey].value.x);
-			setDialogItemFloat(dlg, IDC_TIMEV, keys[curKey].time);
-			if(!floatMode) {	
-				setDialogItemFloat(dlg, IDC_VALUE_Y, keys[curKey].value.y);
-				setDialogItemFloat(dlg, IDC_VALUE_Z, keys[curKey].value.z);
-			}
+                void removeKey() {
+                    if (curKey < 0)
+                        return;
 
-			noValueUpdate = false;
-		}
+                    if (keys.size() > 1)
+                        keys.erase(keys.begin() + curKey);
+                    if (keys.size() == 1)
+                        keys[0].time = 0.0f;
 
-	
-	};
-	
-	class SelectKeyCommand : public ICommand {
-		DialogData& data;
-	public:
-		SelectKeyCommand(DialogData& data_) : data(data_) {}
-		void execute(int id) {
-			data.selectKey();
-		}
-	};
+                    updateDialog();
+                }
 
-	class AddKeyCommand : public ICommand {
-		DialogData& data;
-	public:
-		AddKeyCommand(DialogData& data_) : data(data_) {}
-		void execute(int id) {
-			data.addKey();
-		}
-	};
+                void selectKey() {
+                    curKey = ListBox_GetCurSel( dlg.getItem(IDC_KEYSV) );
+                    if (curKey < 0)
+                        return;
 
-	class RemoveKeyCommand : public ICommand {
-		DialogData& data;
-	public:
-		RemoveKeyCommand(DialogData& data_) : data(data_) {}
-		void execute(int id) {
-			data.removeKey();
-		}
-	};
+                    noValueUpdate = true;
 
-	class UpdateCommand : public ICommand {
-		DialogData& data;
-	public:
-		UpdateCommand(DialogData& data_) : data(data_) {}
-		void execute(int id) {
-			data.updateKey();
-		}
-	};
+                    setDialogItemFloat(dlg, IDC_VALUE_X, keys[curKey].value.x);
+                    setDialogItemFloat(dlg, IDC_TIMEV, keys[curKey].time);
+                    if (!floatMode) {
+                        setDialogItemFloat(dlg, IDC_VALUE_Y, keys[curKey].value.y);
+                        setDialogItemFloat(dlg, IDC_VALUE_Z, keys[curKey].value.z);
+                    }
 
-	class OkCommand : public ICommand {
-		Dialog& dlg;
-		DialogData& data;
-	public:
-		OkCommand(Dialog& dlg_, DialogData& data_) : dlg(dlg_), data(data_) {}
-		void execute(int id) {
-			data.update();
-			dlg.hide();
-		}
-	};
+                    noValueUpdate = false;
+                }
 
-	class CancelCommand : public ICommand {
-		Dialog& dlg;
-	public:
-		CancelCommand(Dialog& dlg_) : dlg(dlg_) {}
-		void execute(int id) {
-			dlg.hide();
-		}
-	};
+            };
 
+            class SelectKeyCommand : public ICommand {
+                DialogData &data;
+            public:
+                SelectKeyCommand(DialogData &data_) : data(data_) { }
+                void execute(int id) {
+                    data.selectKey();
+                }
+            };
 
-	Dialog dialog;
-	DialogData data;
-	SelectKeyCommand selectKeyCommand;
-	AddKeyCommand addKeyCommand;
-	RemoveKeyCommand removeKeyCommand;
-	OkCommand okCommand;
-	CancelCommand cancelCommand;
-	UpdateCommand updateCommand;
+            class AddKeyCommand : public ICommand {
+                DialogData &data;
+            public:
+                AddKeyCommand(DialogData &data_) : data(data_) { }
+                void execute(int id) {
+                    data.addKey();
+                }
+            };
 
-	VectorTrackDialogData(Dialog& parent, int id, ParserGroup& pg, bool floatMode) : dialog(id, parent.getWindowHandle()),
-		data(dialog, pg, floatMode), selectKeyCommand(data),
-		addKeyCommand(data), removeKeyCommand(data), okCommand(dialog, data), 
-		cancelCommand(dialog), updateCommand(data) {
-	
-		dialog.getCommandList().addCommand(IDC_KEYSV, &selectKeyCommand);
-		dialog.getCommandList().addCommand(IDC_ADD_KEYV, &addKeyCommand);
-		dialog.getCommandList().addCommand(IDC_REMOVE_KEYV, &removeKeyCommand);
-		dialog.getCommandList().addCommand(IDOK, &okCommand);
-		dialog.getCommandList().addCommand(IDCANCEL, &cancelCommand);
-		dialog.getCommandList().addCommand(IDC_VALUE_X, &updateCommand);
-		dialog.getCommandList().addCommand(IDC_VALUE_Y, &updateCommand);
-		dialog.getCommandList().addCommand(IDC_VALUE_Z, &updateCommand);
-		dialog.getCommandList().addCommand(IDC_TIMEV, &updateCommand);
+            class RemoveKeyCommand : public ICommand {
+                DialogData &data;
+            public:
+                RemoveKeyCommand(DialogData &data_) : data(data_) { }
+                void execute(int id) {
+                    data.removeKey();
+                }
+            };
 
-	}
+            class UpdateCommand : public ICommand {
+                DialogData &data;
+            public:
+                UpdateCommand(DialogData &data_) : data(data_) { }
+                void execute(int id) {
+                    data.updateKey();
+                }
+            };
 
+            class OkCommand : public ICommand {
+                Dialog &dlg;
+                DialogData &data;
+            public:
+                OkCommand(Dialog &dlg_, DialogData &data_) : dlg(dlg_), data(data_) { }
+                void execute(int id) {
+                    data.update();
+                    dlg.hide();
+                }
+            };
 
-};
+            class CancelCommand : public ICommand {
+                Dialog &dlg;
+            public:
+                CancelCommand(Dialog &dlg_) : dlg(dlg_) { }
+                void execute(int id) {
+                    dlg.hide();
+                }
+            };
 
-VectorTrackDialog::VectorTrackDialog() {
-}
-	
-VectorTrackDialog::~VectorTrackDialog() {
-}
+            Dialog dialog;
+            DialogData       data;
+            SelectKeyCommand selectKeyCommand;
+            AddKeyCommand    addKeyCommand;
+            RemoveKeyCommand removeKeyCommand;
+            OkCommand        okCommand;
+            CancelCommand    cancelCommand;
+            UpdateCommand    updateCommand;
 
+            VectorTrackDialogData(Dialog &parent, int id, ParserGroup &pg, bool floatMode) : dialog( id,
+                                                                                                     parent.
+                                                                                                     getWindowHandle() ),
+                data(dialog, pg, floatMode), selectKeyCommand(data),
+                addKeyCommand(data), removeKeyCommand(data), okCommand(dialog, data),
+                cancelCommand(dialog), updateCommand(data) {
+                dialog.getCommandList().addCommand(IDC_KEYSV, &selectKeyCommand);
+                dialog.getCommandList().addCommand(IDC_ADD_KEYV, &addKeyCommand);
+                dialog.getCommandList().addCommand(IDC_REMOVE_KEYV, &removeKeyCommand);
+                dialog.getCommandList().addCommand(IDOK, &okCommand);
+                dialog.getCommandList().addCommand(IDCANCEL, &cancelCommand);
+                dialog.getCommandList().addCommand(IDC_VALUE_X, &updateCommand);
+                dialog.getCommandList().addCommand(IDC_VALUE_Y, &updateCommand);
+                dialog.getCommandList().addCommand(IDC_VALUE_Z, &updateCommand);
+                dialog.getCommandList().addCommand(IDC_TIMEV, &updateCommand);
 
-void VectorTrackDialog::open(Dialog& parent_, int id_, ParserGroup& pg_, bool floatMode) {
-	boost::scoped_ptr<VectorTrackDialogData> p(new VectorTrackDialogData(parent_, id_, pg_, floatMode));
-	data.swap(p);
-}
+            }
 
+        };
 
+        VectorTrackDialog::VectorTrackDialog() {
+        }
 
+        VectorTrackDialog::~VectorTrackDialog() {
+        }
 
-} // particle
-} // frozenbyte
+        void VectorTrackDialog::open(Dialog &parent_, int id_, ParserGroup &pg_, bool floatMode) {
+            boost::scoped_ptr<VectorTrackDialogData> p( new VectorTrackDialogData(parent_, id_, pg_, floatMode) );
+            data.swap(p);
+        }
+
+    } // particle
+}     // frozenbyte

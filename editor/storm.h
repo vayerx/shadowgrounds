@@ -4,19 +4,19 @@
 #define INCLUDED_EDITOR_STORM_H
 
 #ifndef INCLUDED_BOOST_SCOPED_PTR_HPP
-#define INCLUDED_BOOST_SCOPED_PTR_HPP
-#include <boost/scoped_ptr.hpp>
+#  define INCLUDED_BOOST_SCOPED_PTR_HPP
+#  include <boost/scoped_ptr.hpp>
 #endif
 #ifndef INCLUDED_DATATYPEDEF_H
-#define INCLUDED_DATATYPEDEF_H
-#include <datatypedef.h>
+#  define INCLUDED_DATATYPEDEF_H
+#  include <datatypedef.h>
 #endif
 #ifndef INCLUDED_WINDOWS_H
-#define INCLUDED_WINDOWS_H
-#include <windows.h>
+#  define INCLUDED_WINDOWS_H
+#  include <windows.h>
 #endif
 #ifndef INCLUDED_EDITOR_ALIGN_UNITS_H
-#include "align_units.h"
+#  include "align_units.h"
 #endif
 
 #include <boost/shared_ptr.hpp>
@@ -29,47 +29,45 @@ class IStorm3D_Scene;
 class IStorm3D_Terrain;
 
 namespace ui {
-	class LightManager;
+    class LightManager;
 } // ui
 
 struct Storm3D_CollisionInfo;
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        class Mouse;
 
-class Mouse;
+        struct Storm {
+            IStorm3D           *storm;
+            IStorm3D_Scene     *scene;
+            IStorm3D_Terrain   *terrain;
+            ::ui::LightManager *lightManager;
 
-struct Storm
-{
-	IStorm3D *storm;
-	IStorm3D_Scene *scene;
-	IStorm3D_Terrain *terrain;
-	::ui::LightManager *lightManager;
+            VC2I            heightmapResolution;
+            VC3             heightmapSize;
 
-	VC2I heightmapResolution; 
-	VC3 heightmapSize;
+            AlignUnits      unitAligner;
+            bool            viewerCamera;
 
-	AlignUnits unitAligner;
-	bool viewerCamera;
+            IStorm3D_Scene *floorScene;
+            std::set<boost::weak_ptr<IStorm3D_Model> > floorModels;
 
-	IStorm3D_Scene *floorScene;
-	std::set<boost::weak_ptr<IStorm3D_Model> > floorModels;
+            explicit Storm(HWND hwnd);
+            ~Storm();
 
-	explicit Storm(HWND hwnd);
-	~Storm();
+            void   recreate(HWND hwnd, bool disableBuffers = false);
 
-	void recreate(HWND hwnd, bool disableBuffers = false);
+            bool   rayTrace(Storm3D_CollisionInfo &info, const Mouse &mouse) const;
+            float  getHeight(const VC2 &position) const;
+            bool   onFloor(const VC2 &position) const;
 
-	bool rayTrace(Storm3D_CollisionInfo &info, const Mouse &mouse) const;
-	float getHeight(const VC2 &position) const;
-	bool onFloor(const VC2 &position) const;
+        private:
+            Storm(const Storm &);
+            Storm &operator =(const Storm &);
+        };
 
-private:
-	Storm(const Storm &);
-	Storm &operator = (const Storm &);
-};
-
-} // end of namespace editor
-} // end of namespace frozenbyte
+    } // end of namespace editor
+}     // end of namespace frozenbyte
 
 #endif

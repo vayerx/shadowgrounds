@@ -9,48 +9,46 @@
 
 namespace net
 {
-  namespace dummy
-  {
-    /**
-     * Dummy net connection.
-     */
-    class DummyConnection : public INetConnection
+    namespace dummy
     {
-    public:
-      DummyConnection(DummyConnection *peer); 
+        /**
+         * Dummy net connection.
+         */
+        class DummyConnection : public INetConnection {
+        public:
+            DummyConnection(DummyConnection *peer);
 
-      virtual ~DummyConnection();
- 
-      virtual void flush() 
-        throw (NetDriverException*);
+            virtual ~DummyConnection();
 
-      virtual int send(const void *buf, int maxlen) 
-        throw (NetDriverException*);
+            virtual void flush()
+            throw (NetDriverException *);
 
-      virtual int receive(void *buf, int maxlen) 
-        throw (NetDriverException*);
+            virtual int send(const void *buf, int maxlen)
+            throw (NetDriverException *);
 
-      virtual void close() 
-        throw (NetDriverException*);
+            virtual int receive(void *buf, int maxlen)
+            throw (NetDriverException *);
 
-    private:
-      DummyConnection *connectedTo;
-      char *recvBuf;
-      int recvBufUsed;
-			int recvBufPos;
+            virtual void close()
+            throw (NetDriverException *);
 
-      short *recvBufTiming;
+        private:
+            DummyConnection *connectedTo;
+            char *recvBuf;
+            int recvBufUsed;
+            int recvBufPos;
 
-			int currentLag;
-			int currentTime;
+            short *recvBufTiming;
 
-			int createArtificialLag(int receiveBytes);
+            int currentLag;
+            int currentTime;
 
-			static int lagRand[DUMMYCONNECTION_LAG_RAND_AMOUNT];
+            int createArtificialLag(int receiveBytes);
 
-    };
-  }
+            static int lagRand[DUMMYCONNECTION_LAG_RAND_AMOUNT];
+
+        };
+    }
 }
 
 #endif
-

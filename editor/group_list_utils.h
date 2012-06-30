@@ -9,28 +9,26 @@
 #include <boost/shared_ptr.hpp>
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        struct Storm;
+        class ObjectSettings;
 
-struct Storm;
-class ObjectSettings;
+        struct ModelGroup {
+            std::vector<boost::shared_ptr<IStorm3D_Model> > models;
+            GroupList::ObjectGroup objectGroup;
+            VC3   rotationEul;
+            float heightOffset;
 
-struct ModelGroup
-{
-	std::vector<boost::shared_ptr<IStorm3D_Model> > models;
-	GroupList::ObjectGroup objectGroup;
-	VC3 rotationEul;
-	float heightOffset;
+            ModelGroup();
 
-	ModelGroup();
+            VC3   getPosition(Storm &storm, int index) const;
+            VC3   getRotation(Storm &storm, int index) const;
 
-	VC3 getPosition(Storm &storm, int index) const;
-	VC3 getRotation(Storm &storm, int index) const;
+            void  create(Storm &storm, const GroupList::ObjectGroup &group, ObjectSettings &objectSettings);
+            void  update(Storm &storm, const VC3 &position);
+        };
 
-	void create(Storm &storm, const GroupList::ObjectGroup &group, ObjectSettings &objectSettings);
-	void update(Storm &storm, const VC3 &position);
-};
-
-} // editor
-} // frozenbyte
+    } // editor
+}     // frozenbyte
 
 #endif

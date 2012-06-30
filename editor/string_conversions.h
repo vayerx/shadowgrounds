@@ -4,44 +4,38 @@
 #define INCLUDED_EDITOR_STRING_CONVERSIONS
 
 #ifndef INCLUDED_STRING
-#define INCLUDED_STRING
-#include <string>
+#  define INCLUDED_STRING
+#  include <string>
 #endif
 #ifndef INCLUDED_BOOST_LEXICAL_CAST_HPP
-#define INCLUDED_BOOST_LEXICAL_CAST_HPP
-#include <boost/lexical_cast.hpp>
+#  define INCLUDED_BOOST_LEXICAL_CAST_HPP
+#  include <boost/lexical_cast.hpp>
 #endif
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        template <class T> T convertFromString(const std::string &string, T defaultValue)
+        {
+            try {
+                return boost::lexical_cast<T>(string);
+            } catch (...) {
+                return defaultValue;
+            }
+        }
 
-template<class T>
-T convertFromString(const std::string &string, T defaultValue)
-{
-	try
-	{
-		return boost::lexical_cast<T> (string);
-	}
-	catch(...)
-	{
-		return defaultValue;
-	}
-}
+        template <class T> inline std::string convertToString(T value)
+        {
+            std::stringstream stream;
+            std::string result;
 
-template<class T>
-inline std::string convertToString(T value)
-{
-	std::stringstream stream;
-	std::string result;
+            stream << std::fixed;
+            if ( !(stream << value) || !(stream >> result) || !(stream >> std::ws).eof() )
+                return "";
 
-	stream << std::fixed;
-	if(!(stream << value) || !(stream >> result) || !(stream >> std::ws).eof())
-		return "";
+            return result;
+        }
 
-	return result;
-}
-
-} // end of namespace editor
-} // end of namespace frozenbyte
+    } // end of namespace editor
+}     // end of namespace frozenbyte
 
 #endif

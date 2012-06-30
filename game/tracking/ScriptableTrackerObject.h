@@ -1,4 +1,3 @@
-
 #ifndef SCRIPTABLETRACKEROBJECT_H
 #define SCRIPTABLETRACKEROBJECT_H
 
@@ -9,63 +8,61 @@
 
 namespace game
 {
-namespace tracking
-{
-	class ScriptableTrackerObjectType;
+    namespace tracking
+    {
+        class ScriptableTrackerObjectType;
 
-	class ScriptableTrackerObject : public ITrackerObject
-	{
-	public:
-		ScriptableTrackerObject(ScriptableTrackerObjectType *type);
-		~ScriptableTrackerObject();
+        class ScriptableTrackerObject : public ITrackerObject {
+        public:
+            ScriptableTrackerObject(ScriptableTrackerObjectType *type);
+            ~ScriptableTrackerObject();
 
-		void initVariableValues();
-		void setUnifiedHandle(UnifiedHandle uh);
-		//UnifiedHandle getUnifiedHandle() const;
+            void initVariableValues();
+            void setUnifiedHandle(UnifiedHandle uh);
+            //UnifiedHandle getUnifiedHandle() const;
 
-		virtual ITrackerObjectType *getType();
+            virtual ITrackerObjectType *getType();
 
-		virtual void tick();
+            virtual void tick();
 
-		virtual void setTrackablePosition(const VC3 &globalPosition);
+            virtual void setTrackablePosition(const VC3 &globalPosition);
 
-		virtual void setTrackableRotation(const QUAT &rotation);
+            virtual void setTrackableRotation(const QUAT &rotation);
 
-		virtual void setTrackableVelocity(const VC3 &velocity);
+            virtual void setTrackableVelocity(const VC3 &velocity);
 
-		virtual void lostTracked();
+            virtual void lostTracked();
 
-		virtual void trackerSignal(int trackerSignalNumber);
+            virtual void trackerSignal(int trackerSignalNumber);
 
-		virtual void trackerDeleted() { }
+            virtual void trackerDeleted() { }
 
-		virtual void attachedToTrackable(ITrackableObject *trackable);
+            virtual void attachedToTrackable(ITrackableObject *trackable);
 
-		virtual void setTrackerPosition(const VC3 &position);
+            virtual void setTrackerPosition(const VC3 &position);
 
-		virtual VC3 getTrackerPosition() const;
+            virtual VC3 getTrackerPosition() const;
 
-		virtual void iterateTrackables(ITrackableObjectIterator *iter);
+            virtual void iterateTrackables(ITrackableObjectIterator *iter);
 
-		void setVariable(int variableNumber, int value);
-		int getVariable(int variableNumber);
-		int getVariableNumberByName(const std::string &variableName);
+            void setVariable(int variableNumber, int value);
+            int getVariable(int variableNumber);
+            int getVariableNumberByName(const std::string &variableName);
 
-		// NOTE: far from multithread safe.
-		static UnifiedHandle trackerForCurrentlyRunningScript;
-		static ITrackableObjectIterator *trackableIteratorForCurrentlyRunningScript;
+            // NOTE: far from multithread safe.
+            static UnifiedHandle trackerForCurrentlyRunningScript;
+            static ITrackableObjectIterator *trackableIteratorForCurrentlyRunningScript;
 
-	private:
-		VC3 position;
-		ScriptableTrackerObjectType *type;
-		std::vector<int> variables;
-		UnifiedHandle unifiedHandle;
-		bool initedVariableValues;
+        private:
+            VC3 position;
+            ScriptableTrackerObjectType *type;
+            std::vector<int> variables;
+            UnifiedHandle unifiedHandle;
+            bool initedVariableValues;
 
-		//friend class ScriptableTrackerObjectType;
-	};
-}
+            //friend class ScriptableTrackerObjectType;
+        };
+    }
 }
 
 #endif
-

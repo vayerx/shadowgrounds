@@ -6,16 +6,14 @@
 #pragma once
 #include "c2_vectors.h"
 
-template<class T>
-struct TOOBB
-{
-	Vec3<T> center;
-	Vec3<T> axes[3];
-	Vec3<T> extents;
+template <class T> struct TOOBB {
+    Vec3<T> center;
+    Vec3<T> axes[3];
+    Vec3<T> extents;
 
-	TOOBB()
-	{
-	}
+    TOOBB()
+    {
+    }
 };
 
 typedef TOOBB<float> OOBB;

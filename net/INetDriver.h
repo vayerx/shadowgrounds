@@ -1,4 +1,3 @@
-
 #ifndef NET_INETDRIVER_H
 #define NET_INETDRIVER_H
 
@@ -11,32 +10,28 @@
 
 namespace net
 {
+    /**
+     * Network driver interface.
+     */
+    class INetDriver {
+    public:
+        virtual INetConnection *connectTo(char *to)
+        throw (NetDriverException *) = 0;
 
-  /**
-   * Network driver interface.
-   */
-  class INetDriver
-  {
-  public:
-    virtual INetConnection *connectTo(char *to)
-      throw (NetDriverException*) = 0;
+        virtual INetBind *bind(char *port)
+        throw (NetDriverException *) = 0;
 
-    virtual INetBind *bind(char *port)
-      throw (NetDriverException*) = 0;
+        virtual void setNetModeFlags(int netModeFlags)
+        throw (NetDriverException *) = 0;
 
-    virtual void setNetModeFlags(int netModeFlags)
-      throw (NetDriverException*) = 0;
+        virtual int getNetModeFlags() = 0;
 
-    virtual int getNetModeFlags() = 0;
+        virtual int getSupportedModeFlags() = 0;
 
-    virtual int getSupportedModeFlags() = 0;
+        virtual const char *getDriverName() = 0;
 
-    virtual const char *getDriverName() = 0;
-
-    virtual ~INetDriver() { };
-  };
+        virtual ~INetDriver() { };
+    };
 }
 
-
 #endif
-

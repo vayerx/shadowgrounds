@@ -1,4 +1,3 @@
-
 #ifndef OFFSCREENUNITPOINTERS_H
 #define OFFSCREENUNITPOINTERS_H
 
@@ -6,8 +5,8 @@
 
 namespace game
 {
-	class Unit;
-	class Game;
+    class Unit;
+    class Game;
 }
 
 class Ogui;
@@ -18,44 +17,41 @@ class LinkedList;
 
 namespace ui
 {
-	class OffscreenUnitPointers : public IOguiButtonListener
-	{
-		public:
-			OffscreenUnitPointers(Ogui *ogui, game::Game *game, int player, OguiWindow *window);
+    class OffscreenUnitPointers : public IOguiButtonListener {
+    public:
+        OffscreenUnitPointers(Ogui *ogui, game::Game *game, int player, OguiWindow *window);
 
-			~OffscreenUnitPointers();
+        ~OffscreenUnitPointers();
 
-			void setEnabled(bool enabled);
+        void setEnabled(bool enabled);
 
-			void addUnitForChecklist(game::Unit *unit);
+        void addUnitForChecklist(game::Unit *unit);
 
-			void removeUnitFromChecklist(game::Unit *unit);
+        void removeUnitFromChecklist(game::Unit *unit);
 
-			void update();
+        void update();
 
-	    virtual void CursorEvent(OguiButtonEvent *eve);
+        virtual void CursorEvent(OguiButtonEvent *eve);
 
-		private:
-			Ogui *ogui;
-			game::Game *game;
-			int player;
-			OguiWindow *win;
+    private:
+        Ogui *ogui;
+        game::Game *game;
+        int player;
+        OguiWindow *win;
 
-			IOguiImage *upImage;
-			IOguiImage *downImage;
-			IOguiImage *leftImage;
-			IOguiImage *rightImage;
+        IOguiImage *upImage;
+        IOguiImage *downImage;
+        IOguiImage *leftImage;
+        IOguiImage *rightImage;
 
-			LinkedList *checkUnits;
+        LinkedList *checkUnits;
 
-			int pointedUnitsAmount;
-			OguiButton **pointerButs;
-			game::Unit **pointedUnits;
+        int pointedUnitsAmount;
+        OguiButton **pointerButs;
+        game::Unit **pointedUnits;
 
-			bool enabled;
-	};
+        bool enabled;
+    };
 }
 
-
 #endif
-

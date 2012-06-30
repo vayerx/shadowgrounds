@@ -1,4 +1,3 @@
-
 #ifndef SOMETORSO1OBJECT_H
 #define SOMETORSO1OBJECT_H
 
@@ -6,19 +5,17 @@
 
 namespace game
 {
+    class SomeTorso1Object : public Part {
+    public:
+        //SomeTorso1Object();
+        //~SomeTorso1Object();
 
-  class SomeTorso1Object : public Part
-  {
-  public:
-    //SomeTorso1Object();
-    //~SomeTorso1Object();
+        virtual SaveData *getSaveData();
 
-    virtual SaveData *getSaveData();
-    
-    virtual PartType *getType();
-  };
+        virtual PartType *getType();
+    };
 
-  extern SomeTorso1Object someTorso1Object;
+    extern SomeTorso1Object someTorso1Object;
 
 }
 

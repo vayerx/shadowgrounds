@@ -1,4 +1,3 @@
-
 #ifndef ITRACKABLEUNIFIEDHANDLEOBJECTITERATOR_H
 #define ITRACKABLEUNIFIEDHANDLEOBJECTITERATOR_H
 
@@ -6,19 +5,17 @@
 
 namespace game
 {
-namespace tracking
-{
+    namespace tracking
+    {
+        class ITrackableUnifiedHandleObjectIterator {
+        public:
+            virtual ~ITrackableUnifiedHandleObjectIterator() { };
 
-	class ITrackableUnifiedHandleObjectIterator
-	{
-	public:
-		virtual ~ITrackableUnifiedHandleObjectIterator() { };
+            virtual bool iterateAvailable() = 0;
+            virtual UnifiedHandle iterateNext() = 0;
+        };
 
-		virtual bool iterateAvailable() = 0;
-		virtual UnifiedHandle iterateNext() = 0;
-	};
-
-}
+    }
 }
 
 #endif

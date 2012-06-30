@@ -1,4 +1,3 @@
-
 #ifndef UNITHIGHLIGHT_H
 #define UNITHIGHLIGHT_H
 
@@ -9,50 +8,47 @@ class IStorm3D_Scene;
 
 namespace game
 {
-  class Unit;
+    class Unit;
 }
 
 namespace ui
 {
-	class VisualObject;
-	class VisualObjectModel;
+    class VisualObject;
+    class VisualObjectModel;
 
+    class UnitHighlight {
+    public:
+        UnitHighlight(IStorm3D *storm3D, IStorm3D_Scene *stormScene);
 
-	class UnitHighlight
-	{
-		public:
-			UnitHighlight(IStorm3D *storm3D, IStorm3D_Scene *stormScene);
+        ~UnitHighlight();
 
-			~UnitHighlight();
+        void setHighlightedTerrain(VC3 &position);
 
-			void setHighlightedTerrain(VC3 &position);
+        void clearHighlightedTerrain();
 
-			void clearHighlightedTerrain();
+        void setHighlightedUnit(const game::Unit *unit);
 
-			void setHighlightedUnit(const game::Unit *unit);
+        void run();
 
-			void run();
-			
-		private:
-			IStorm3D *storm3D;
-			IStorm3D_Scene *stormScene;
-			const game::Unit *highlightUnit;
-			bool highlightTerrain;
-			VC3 highlightTerrainPosition;
+    private:
+        IStorm3D *storm3D;
+        IStorm3D_Scene *stormScene;
+        const game::Unit *highlightUnit;
+        bool highlightTerrain;
+        VC3 highlightTerrainPosition;
 
-			VisualObjectModel *visualObjectModel;
-			VisualObject *visualObject;
-			VisualObject *visualObject2;
+        VisualObjectModel *visualObjectModel;
+        VisualObject *visualObject;
+        VisualObject *visualObject2;
 
-			VisualObjectModel *terrainVisualObjectModel;
-			VisualObject *terrainVisualObject;
-			VisualObject *terrainVisualObject2;
+        VisualObjectModel *terrainVisualObjectModel;
+        VisualObject *terrainVisualObject;
+        VisualObject *terrainVisualObject2;
 
-			float rotX;
-			float rotY;
-			float rotZ;
-	};
+        float rotX;
+        float rotY;
+        float rotZ;
+    };
 }
 
 #endif
-

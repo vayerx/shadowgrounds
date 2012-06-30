@@ -1,26 +1,23 @@
-
 #ifndef ISCRIPTPROCESSOR_H
 #define ISCRIPTPROCESSOR_H
 
 typedef union {
-	int i;
-	float f;
+    int   i;
+    float f;
 } floatint;
 
 namespace util
 {
-  class ScriptProcess;
+    class ScriptProcess;
 
-  class IScriptProcessor
-  {
-  public:
+    class IScriptProcessor {
+    public:
 
-	  virtual ~IScriptProcessor() {}
-    virtual bool process(ScriptProcess *sp, int command, floatint intData,
-      const char *stringData, ScriptLastValueType *lastValue) = 0;
-  };
+        virtual ~IScriptProcessor() { }
+        virtual bool process(ScriptProcess *sp, int command, floatint intData,
+                             const char *stringData, ScriptLastValueType *lastValue) = 0;
+    };
 
 }
 
 #endif
-

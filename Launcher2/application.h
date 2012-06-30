@@ -2,22 +2,20 @@
 #define INC_APPLICATION_H
 
 namespace frozenbyte {
-	namespace launcher {
-		class ApplicationImpl;
-		
-		class Application
-		{
-		public:
-			Application();
-			~Application();
+    namespace launcher {
+        class ApplicationImpl;
 
-			void run();
+        class Application {
+        public:
+            Application();
+            ~Application();
 
-		private:
-			ApplicationImpl* impl;
-		};
-	} // end of namespace launcher
-} // end of namespace frozenbyte
+            void run();
 
+        private:
+            ApplicationImpl *impl;
+        };
+    } // end of namespace launcher
+}     // end of namespace frozenbyte
 
 #endif

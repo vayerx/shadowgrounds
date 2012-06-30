@@ -18,130 +18,121 @@
 
 namespace frozenbyte
 {
-namespace particle
-{
+    namespace particle
+    {
+        static ParamDesc sprayParticleSystemParamDesc[] = {
+            ParamDesc(PB_SPREAD1, "spread1", PARAM_FLOAT, false),
+            ParamDesc(PB_SPREAD2, "spread2", PARAM_FLOAT, false)
+        };
 
-static ParamDesc sprayParticleSystemParamDesc[] = {
-	ParamDesc(PB_SPREAD1, "spread1", PARAM_FLOAT, false),
-	ParamDesc(PB_SPREAD2, "spread2", PARAM_FLOAT, false)
-};
+        class SprayParticleSystem : public GenParticleSystem {
+        public:
 
-class SprayParticleSystem : public GenParticleSystem {
-public:
-	
-	SprayParticleSystem();
-	
-	const char* getClassName();
-	const char* getSuperClassName();
+            SprayParticleSystem();
 
-	ParticleSystem* launch();
-	
-	void create();
-	void init(IStorm3D* s3d, IStorm3D_Scene* scene);
-	void setParticlePosition(Vector& v);
-	void setParticleVelocity(Vector& v, float speed);
+            const char *getClassName();
+            const char *getSuperClassName();
 
-};
+            ParticleSystem *launch();
 
-SprayParticleSystem::SprayParticleSystem() {
-	
-}
+            void create();
+            void init(IStorm3D *s3d, IStorm3D_Scene *scene);
+            void setParticlePosition(Vector &v);
+            void setParticleVelocity(Vector &v, float speed);
 
-void SprayParticleSystem::create() {
+        };
 
-	GenParticleSystem::create();
+        SprayParticleSystem::SprayParticleSystem() {
+        }
 
-	m_pb->addParams(sprayParticleSystemParamDesc, 2);
-	m_pb->setValue(PB_SPREAD1, 0.0f);
-	m_pb->setValue(PB_SPREAD2, 0.0f);
+        void SprayParticleSystem::create() {
+            GenParticleSystem::create();
 
-}
+            m_pb->addParams(sprayParticleSystemParamDesc, 2);
+            m_pb->setValue(PB_SPREAD1, 0.0f);
+            m_pb->setValue(PB_SPREAD2, 0.0f);
 
+        }
 
-void SprayParticleSystem::init(IStorm3D* s3d, IStorm3D_Scene* scene) {
-	
-	GenParticleSystem::init(s3d, scene);
+        void SprayParticleSystem::init(IStorm3D *s3d, IStorm3D_Scene *scene) {
+            GenParticleSystem::init(s3d, scene);
 
+        }
 
-}
+        ParticleSystem *SprayParticleSystem::launch() {
+            SprayParticleSystem *ps = new SprayParticleSystem();
+            baseCopy(ps);
 
-ParticleSystem* SprayParticleSystem::launch() {
-	
-	SprayParticleSystem* ps = new SprayParticleSystem();
-	baseCopy(ps);
+            return ps;
 
-	return ps;
+        }
 
-}
+        const char *SprayParticleSystem::getClassName() {
+            return "spray";
+        }
 
-const char* SprayParticleSystem::getClassName() {
-	return "spray";
-}
+        const char *SprayParticleSystem::getSuperClassName() {
+            return "gen_system";
+        }
 
-const char* SprayParticleSystem::getSuperClassName() {
-	return "gen_system";
-}
+        void SprayParticleSystem::setParticlePosition(Vector &v) {
+            v = Vector(0.0f, 0.0f, 0.0f);
+        }
 
-void SprayParticleSystem::setParticlePosition(Vector& v) {
-	v = Vector(0.0f, 0.0f, 0.0f);
-}
+        void SprayParticleSystem::setParticleVelocity(Vector &v, float speed) {
+            float spread1;
+            float spread2;
 
-void SprayParticleSystem::setParticleVelocity(Vector& v, float speed) {
-	
-	float spread1;
-	float spread2;
+            m_pb->getValue(PB_SPREAD1, spread1);
+            m_pb->getValue(PB_SPREAD2, spread2);
 
-	m_pb->getValue(PB_SPREAD1, spread1);
-	m_pb->getValue(PB_SPREAD2, spread2);
-	
-	Vector dir(0.0f, 1.0f, 0.0f);
-	dir.Normalize();
-	
-	Vector up(0.0f, 0.0f, 1.0f);
-	Vector u = dir.GetCrossWith(up);
-	if(u.GetDotWith(u)<0.0001f) {
-		up = Vector(0.0f, 1.0f, 0.0f);	
-	}
-	
-	Vector left;
-	left = dir.GetCrossWith(up);
-	left.Normalize();
-	up = left.GetCrossWith(dir);
-	up.Normalize();
-	
-	int seed1 = rand() % RAND_MAX;
-	int seed2 = rand() % RAND_MAX;
-	
-	float rnd1 = -1.0f + (float)seed1 / (float)RAND_MAX * 2.0f;
-	float rnd2 = -1.0f + (float)seed2 / (float)RAND_MAX * 2.0f;
-	
-	float a1 = rnd1 * spread1;
-	float a2 = rnd2 * spread2;
-	
-	QUAT q1;
-	QUAT q2;
-	
-	q1.MakeFromAxisRotation(left, a1);
-	q2.MakeFromAxisRotation(up, a2);
-	
-	q1.RotateVector(dir);
-	q2.RotateVector(dir);
-	
-	v = dir * speed;
-}
+            Vector dir(0.0f, 1.0f, 0.0f);
+            dir.Normalize();
 
-class SprayParticleSystemClassDesc : public ParticleSystemClassDesc {
-public:
-	void* create() { return new SprayParticleSystem(); }
-	const char* getClassName() { return "spray"; }
-};
- 
-static SprayParticleSystemClassDesc theSprayParticleSystemClassDesc;
-						 
-ParticleSystemClassDesc* getSprayParticleSystemClassDesc() {
-	return &theSprayParticleSystemClassDesc;
-}
+            Vector up(0.0f, 0.0f, 1.0f);
+            Vector u = dir.GetCrossWith(up);
+            if (u.GetDotWith(u) < 0.0001f)
+                up = Vector(0.0f, 1.0f, 0.0f);
 
-} // particle
+            Vector left;
+            left = dir.GetCrossWith(up);
+            left.Normalize();
+            up = left.GetCrossWith(dir);
+            up.Normalize();
 
-} // frozenbyte
+            int seed1 = rand() % RAND_MAX;
+            int seed2 = rand() % RAND_MAX;
+
+            float rnd1 = -1.0f + (float)seed1 / (float)RAND_MAX * 2.0f;
+            float rnd2 = -1.0f + (float)seed2 / (float)RAND_MAX * 2.0f;
+
+            float a1 = rnd1 * spread1;
+            float a2 = rnd2 * spread2;
+
+            QUAT q1;
+            QUAT q2;
+
+            q1.MakeFromAxisRotation(left, a1);
+            q2.MakeFromAxisRotation(up, a2);
+
+            q1.RotateVector(dir);
+            q2.RotateVector(dir);
+
+            v = dir * speed;
+        }
+
+        class SprayParticleSystemClassDesc : public ParticleSystemClassDesc {
+        public:
+            void *create() { return new SprayParticleSystem(); }
+            const char *getClassName() { return "spray"; }
+        };
+
+        static SprayParticleSystemClassDesc theSprayParticleSystemClassDesc;
+
+        ParticleSystemClassDesc *getSprayParticleSystemClassDesc() {
+            return &theSprayParticleSystemClassDesc;
+        }
+
+    } // particle
+
+}     // frozenbyte

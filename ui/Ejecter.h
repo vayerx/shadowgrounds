@@ -1,4 +1,3 @@
-
 #ifndef EJECTER_H
 #define EJECTER_H
 
@@ -6,24 +5,22 @@
 
 namespace ui
 {
-	class IPointableObject;
-	class VisualObject;
+    class IPointableObject;
+    class VisualObject;
 
-	class Ejecter
-	{
-		public:
+    class Ejecter {
+    public:
 
-			// NOTICE: expects a _unit_, not just any IPointableObject
-			// (will do a nasty cast to that)
-			// should use some "ejectable" interface instead. :P
+        // NOTICE: expects a _unit_, not just any IPointableObject
+        // (will do a nasty cast to that)
+        // should use some "ejectable" interface instead. :P
 
-			static void createEject(IPointableObject *unit);
+        static void createEject(IPointableObject *unit);
 
-			static void deleteEject(IPointableObject *unit);
+        static void deleteEject(IPointableObject *unit);
 
-	};
+    };
 
 }
 
 #endif
-

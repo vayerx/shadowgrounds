@@ -8,63 +8,59 @@
 
 namespace game
 {
-	class Game;
+    class Game;
 }
 
 namespace ui {
-
-
 // A window that is opened when a terminal / computer / log etc is executed
-class TerminalWindow : public IOguiButtonListener
-{
-public:
-	TerminalWindow( Ogui* ogui, game::Game* game, const std::string& style_name );
-	~TerminalWindow();
-	
-	void setText( const std::string& txt );
-	void setPage( int page );
-	void nextPage();
-	void prevPage();
+    class TerminalWindow : public IOguiButtonListener {
+    public:
+        TerminalWindow(Ogui *ogui, game::Game *game, const std::string &style_name);
+        ~TerminalWindow();
 
-	bool isVisible() const;
+        void setText(const std::string &txt);
+        void setPage(int page);
+        void nextPage();
+        void prevPage();
 
-	void update();
+        bool isVisible() const;
 
-	void CursorEvent( OguiButtonEvent* eve );
-	
+        void update();
 
-private:
-	OguiButton* loadButton( const std::string& name, int id = 0 );
-	OguiTextLabel* loadText( const std::string& name );
+        void CursorEvent(OguiButtonEvent *eve);
 
-	game::Game* game;
-	Ogui*		ogui;
+    private:
+        OguiButton *loadButton(const std::string &name, int id = 0);
+        OguiTextLabel *loadText(const std::string &name);
 
-	OguiWindow*			window;
-	OguiFormattedText*	textarea;
-	OguiButton*			next;
-	OguiButton*			prev;
-	OguiButton*			close;
-	OguiButton*			pageNumButton;
-	OguiButton*			vsyncImage1;
-	OguiButton*			vsyncImage2;
-	float				vsyncY1;
-	float				vsyncY2;
-	int					vsyncX;
-	float				vsyncSpeed1;
-	float				vsyncSpeed2;
-	int					vsyncBeginPos;
-	int					vsyncDownPos;
-	int					pageNum;
-	int					pageMax;
-	bool				visible;
+        game::Game *game;
+        Ogui *ogui;
 
-	std::vector< IOguiFont* >	fonts;
-	std::vector< std::string >	text;
-	
-	std::vector<OguiTextLabel*> buttonTexts;
-	
-};
+        OguiWindow *window;
+        OguiFormattedText *textarea;
+        OguiButton *next;
+        OguiButton *prev;
+        OguiButton *close;
+        OguiButton *pageNumButton;
+        OguiButton *vsyncImage1;
+        OguiButton *vsyncImage2;
+        float vsyncY1;
+        float vsyncY2;
+        int vsyncX;
+        float vsyncSpeed1;
+        float vsyncSpeed2;
+        int vsyncBeginPos;
+        int vsyncDownPos;
+        int pageNum;
+        int pageMax;
+        bool visible;
+
+        std::vector< IOguiFont * > fonts;
+        std::vector< std::string > text;
+
+        std::vector<OguiTextLabel *> buttonTexts;
+
+    };
 
 }
 

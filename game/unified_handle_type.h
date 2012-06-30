@@ -1,4 +1,3 @@
-
 #ifndef UNIFIED_HANDLE_TYPE_H
 #define UNIFIED_HANDLE_TYPE_H
 

@@ -1,4 +1,3 @@
-
 #ifndef CARHYSICSOBJECT_H
 #define CARPHYSICSOBJECT_H
 
@@ -7,24 +6,20 @@
 
 namespace game
 {
-	class GamePhysics;
+    class GamePhysics;
 
-	class CarPhysicsObject : public AbstractPhysicsObject
-	{
-	public:
-		CarPhysicsObject(GamePhysics *gamePhysics, float mass, int collisionGroup, const VC3 &position);
-		~CarPhysicsObject();
+    class CarPhysicsObject : public AbstractPhysicsObject {
+    public:
+        CarPhysicsObject(GamePhysics *gamePhysics, float mass, int collisionGroup, const VC3 &position);
+        ~CarPhysicsObject();
 
+    protected:
+        virtual PHYSICS_ACTOR createImplementationObject();
+        virtual void syncImplementationObject(PHYSICS_ACTOR &obj);
 
-	protected:
-		virtual PHYSICS_ACTOR createImplementationObject();
-		virtual void syncImplementationObject(PHYSICS_ACTOR &obj);
-
-
-		float mass;
-		int collisionGroup;
-	};
+        float mass;
+        int collisionGroup;
+    };
 }
 
 #endif
-

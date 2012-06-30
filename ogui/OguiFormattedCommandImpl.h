@@ -6,35 +6,31 @@
 #include <map>
 #include <boost/lexical_cast.hpp>
 
-class OguiFormattedCommandImpl : public IOguiFormattedCommand
-{
+class OguiFormattedCommandImpl : public IOguiFormattedCommand {
 public:
 
-	OguiFormattedCommandImpl() { }
-	virtual ~OguiFormattedCommandImpl() { }
-	
-	virtual void execute( OguiFormattedText* text, const std::string& parameters, OguiFormattedText::ParseData* data ) = 0;
-	
+    OguiFormattedCommandImpl() { }
+    virtual ~OguiFormattedCommandImpl() { }
+
+    virtual void execute(OguiFormattedText *text, const std::string &parameters,
+                         OguiFormattedText::ParseData *data) = 0;
+
 protected:
-	virtual void parseParameters( const std::string& params );
+    virtual void parseParameters(const std::string &params);
 
-	template< class T >
-	T castParameter( const std::string& name, const T& default_value )
-	{
-		if( parameters.find( name ) == parameters.end() )
-			return default_value;
-		
-		try
-		{
-			return boost::lexical_cast< T >( parameters[ name ] );
-		}
-		catch(...)
-		{
-			return default_value;
-		}
-	}
+    template < class T > T castParameter(const std::string &name, const T &default_value)
+    {
+        if ( parameters.find(name) == parameters.end() )
+            return default_value;
 
-	std::map< std::string, std::string >	parameters;
+        try {
+            return boost::lexical_cast< T >(parameters[ name ]);
+        } catch (...) {
+            return default_value;
+        }
+    }
+
+    std::map< std::string, std::string > parameters;
 };
 
 #endif

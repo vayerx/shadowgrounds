@@ -1,4 +1,3 @@
-
 #ifndef PROJECTILELIST_H
 #define PROJECTILELIST_H
 
@@ -8,42 +7,40 @@ class LinkedList;
 
 namespace game
 {
-	class Projectile;
+    class Projectile;
 
-	/**
-	 * A class holding game projectiles.
-	 * Projectiles are usually bullets of some kind.
-	 * 
-	 * @version 1.0, 25.6.2002
-	 * @author Jukka Kokkonen <jukka@frozenbyte.com>
-	 * @see Projectile
-	 * @see Game
-	 */
+    /**
+     * A class holding game projectiles.
+     * Projectiles are usually bullets of some kind.
+     *
+     * @version 1.0, 25.6.2002
+     * @author Jukka Kokkonen <jukka@frozenbyte.com>
+     * @see Projectile
+     * @see Game
+     */
 
-	class ProjectileList : public GameObject
-	{
-	public:
-		ProjectileList();
-		~ProjectileList();
+    class ProjectileList : public GameObject {
+    public:
+        ProjectileList();
+        ~ProjectileList();
 
-		virtual SaveData *getSaveData() const;
+        virtual SaveData *getSaveData() const;
 
-		virtual const char *getStatusInfo() const;
+        virtual const char *getStatusInfo() const;
 
-		int getAllProjectileAmount();
+        int getAllProjectileAmount();
 
-		LinkedList *getAllProjectiles();
+        LinkedList *getAllProjectiles();
 
-		void addProjectile(Projectile *projectile);
-		void removeProjectile(Projectile *projectile);
+        void addProjectile(Projectile *projectile);
+        void removeProjectile(Projectile *projectile);
 
-		Projectile *getProjectileByHandle(int handle);
+        Projectile *getProjectileByHandle(int handle);
 
-	private:
-		LinkedList *allProjectiles;
-	};
+    private:
+        LinkedList *allProjectiles;
+    };
 
 }
 
 #endif
-

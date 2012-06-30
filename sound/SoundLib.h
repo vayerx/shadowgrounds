@@ -1,125 +1,113 @@
 #ifndef SOUNDLIB_H
 #define SOUNDLIB_H
 
-
 #include <boost/shared_ptr.hpp>
-
 
 class IStorm3D_Stream;
 
-
 namespace sfx {
+    class SoundLib;
+    class StormStream;
 
-class SoundLib;
-class StormStream;
+    class Sound {
+        struct Data;
+        boost::shared_ptr<Data> data;
+        friend class SoundLib;
 
-class Sound
-{
-	struct Data;
-	boost::shared_ptr<Data> data;
-	friend class SoundLib;
+    public:
+        Sound(Data *data_);
+        ~Sound();
 
-public:
-	Sound(Data *data_);
-	~Sound();
+        void setDefaultVolume(float value);
+        void setPriority(int value);
+        int getLength() const;
 
-	void setDefaultVolume(float value);
-	void setPriority(int value);
-	int getLength() const;
+        const std::string&getFileName() const;
+    };
 
-	const std::string &getFileName() const;
-};
+    class SoundStream {
+        struct Data;
+        boost::shared_ptr<Data> data;
+        friend class SoundLib;
+        friend struct Data;
 
+    public:
 
-class SoundStream
-{
-	struct Data;
-	boost::shared_ptr<Data> data;
-	friend class SoundLib;
-	friend struct Data;
+        explicit SoundStream(Data *data_);
+        ~SoundStream();
 
-public:
+        void setBaseVolume(float value);
+        void setVolume(float value);
+        void setPanning(float value);
+        void setLooping(bool loop);
+        void play();
+        void pause();
+        void stop();
 
-	explicit SoundStream(Data *data_);
-	~SoundStream();
+        void setType(int t);
+        int getType() const;
 
-	void setBaseVolume(float value);
-	void setVolume(float value);
-	void setPanning(float value);
-	void setLooping(bool loop);
-	void play();
-	void pause();
-	void stop();
+        bool hasEnded() const;
+        const std::string&getFileName() const;
+    };
 
-	void setType(int t);
-	int getType() const;
+    class SoundLib {
+        struct Data;
+        boost::shared_ptr<Data> data;
 
-	bool hasEnded() const;
-	const std::string &getFileName() const;
-};
+        friend class SoundStream;
+        friend class StormStream;
 
+    public:
+        SoundLib();
+        ~SoundLib();
 
-class SoundLib
-{
-	struct Data;
-	boost::shared_ptr<Data> data;
+        enum SpeakerType {
+            DolbyDigital,
+            HeadPhones,
+            MonoSpeakers,
+            StereoSpeakers,
+            QuadSpeakers,
+            SurroundSpeakers
+        };
 
-	friend class SoundStream;
-	friend class StormStream;
+        void setProperties(int mixrate, int softwareChannels);
+        void setAcceleration(bool useHW, bool useEax, int minHardwareChannels, int maxHardwareChannels);
+        void setSpeakers(SpeakerType speakerType);
+        void setSoundAPI(const char *api);
+        bool initialize();
+        void setFrequencyFactor(float scalar);
 
-public:
-	SoundLib();
-	~SoundLib();
+        Sound *loadSample(const char *file);
+        SoundStream *createStream(const char *file);
 
-	enum SpeakerType
-	{
-		DolbyDigital,
-		HeadPhones,
-		MonoSpeakers,
-		StereoSpeakers,
-		QuadSpeakers,
-		SurroundSpeakers
-	};
+        // Sounds
+        int createSound(Sound *sound, int priority);
+        void playSound(int sound);
+        void setSoundLoop(int sound, bool loop);
+        void setSoundPaused(int sound, bool pause);
+        void setSoundVolume(int sound, float value);
+        void setSoundFrequency(int sound, int value);
+        void setSound3D(int sound, const VC3 &position, const VC3 &velocity);
+        void stopSound(int sound);
 
-	void setProperties(int mixrate, int softwareChannels);
-	void setAcceleration(bool useHW, bool useEax, int minHardwareChannels, int maxHardwareChannels);
-	void setSpeakers(SpeakerType speakerType);
-	void setSoundAPI(const char *api);
-	bool initialize();
-	void setFrequencyFactor(float scalar);
+        float getSoundVolume(int sound) const;
+        int getSoundFrequency(int sound) const;
+        int getSoundTime(int sound) const;
+        bool isSoundPlaying(int sound) const;
 
-	Sound *loadSample(const char *file);
-	SoundStream *createStream(const char *file);
+        // Music
 
-	// Sounds
-	int createSound(Sound *sound, int priority);
-	void playSound(int sound);
-	void setSoundLoop(int sound, bool loop);
-	void setSoundPaused(int sound, bool pause);
-	void setSoundVolume(int sound, float value);
-	void setSoundFrequency(int sound, int value);
-	void setSound3D(int sound, const VC3 &position, const VC3 &velocity);
-	void stopSound(int sound);
+        // General
+        void setGlobalVolume(float volume);
+        void setListener(const VC3 &position, const VC3 &velocity, const VC3 &forwardDirection, const VC3 &upDirection);
+        void setSoundArea(const std::string &name);
 
-	float getSoundVolume(int sound) const;
-	int getSoundFrequency(int sound) const;
-	int getSoundTime(int sound) const;
-	bool isSoundPlaying(int sound) const;
+        void update();
 
-	// Music
-
-	// General
-	void setGlobalVolume(float volume);
-	void setListener(const VC3 &position, const VC3 &velocity, const VC3 &forwardDirection, const VC3 &upDirection);
-	void setSoundArea(const std::string &name);
-
-	void update();
-
-	boost::shared_ptr<IStorm3D_Stream> createStormStream(bool stereo_, int frequency_, int bits_, float volume);
-};
-
+        boost::shared_ptr<IStorm3D_Stream> createStormStream(bool stereo_, int frequency_, int bits_, float volume);
+    };
 
 } // sfx
-
 
 #endif

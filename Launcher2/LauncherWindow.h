@@ -1,24 +1,21 @@
-
 #pragma once
 
 namespace frozenbyte
 {
-	namespace launcher
-	{
+    namespace launcher
+    {
+        class LauncherWindowImpl;
 
-		class LauncherWindowImpl;
+        class LauncherWindow {
+        public:
 
-		class LauncherWindow
-		{
-		public:
+            LauncherWindow();
+            ~LauncherWindow();
 
-			LauncherWindow( );
-			~LauncherWindow( );
-		
-		private:
+        private:
 
-			LauncherWindowImpl *impl;
+            LauncherWindowImpl *impl;
 
-		};
-	}
+        };
+    }
 }

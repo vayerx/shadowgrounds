@@ -1,30 +1,27 @@
-
 #ifndef VISUALOBJECTMODELSTORAGE_H
 #define VISUALOBJECTMODELSTORAGE_H
 
 class LinkedList;
 namespace ui
 {
-	class VisualObjectModel;
+    class VisualObjectModel;
 }
 
 namespace game
 {
-	class VisualObjectModelStorage
-	{
-		public:
-			VisualObjectModelStorage();
+    class VisualObjectModelStorage {
+    public:
+        VisualObjectModelStorage();
 
-			~VisualObjectModelStorage();
+        ~VisualObjectModelStorage();
 
-			void clear();
+        void clear();
 
-			ui::VisualObjectModel *getVisualObjectModel(const char *filename);
+        ui::VisualObjectModel *getVisualObjectModel(const char *filename);
 
-		private:
-			LinkedList *models;
-	};
+    private:
+        LinkedList *models;
+    };
 }
 
 #endif
-

@@ -4,20 +4,18 @@
 #include "actor_base.h"
 
 namespace frozenbyte {
-namespace physics {
+    namespace physics {
+        class SphereActor : public ActorBase {
+            // data
 
-class SphereActor: public ActorBase
-{
-	// data
+        public:
+            SphereActor();
+            ~SphereActor();
 
-public:
-	SphereActor();
-	~SphereActor();
+            // Extended stuff
+        };
 
-	// Extended stuff
-};
-
-} // physics
-} // frozenbyte
+    } // physics
+}     // frozenbyte
 
 #endif

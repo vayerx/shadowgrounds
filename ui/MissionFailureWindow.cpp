@@ -1,4 +1,3 @@
-
 #include "precompiled.h"
 
 #include <stdlib.h> // for NULL
@@ -20,89 +19,83 @@
 using namespace game;
 
 namespace ui {
+    class MissionFailureWindow::MissionFailureWindowImpl : private IOguiButtonListener {
+    public:
+        bool close;
+        bool restart;
 
-class MissionFailureWindow::MissionFailureWindowImpl : private IOguiButtonListener
-{
-public:
-	bool close;
-	bool restart;
+        Ogui *ogui;
+        game::Game *game;
 
-	Ogui*		ogui;
-	game::Game*	game;
+        OguiLocaleWrapper oguiLoader;
+        OguiWindow *win;
+        OguiButton *closeButton;
+        OguiButton *restartButton;
+        OguiFormattedText *textArea;
 
-	OguiLocaleWrapper	oguiLoader;
-	OguiWindow*	win;	
-	OguiButton* closeButton;
-	OguiButton* restartButton;
-	OguiFormattedText* textArea;
+    public:
+        MissionFailureWindowImpl(Ogui *ogui, game::Game *game) : ogui(ogui), game(game), oguiLoader(ogui)
+        {
+            close = false;
+            restart = false;
 
-public:
-	MissionFailureWindowImpl(Ogui *ogui, game::Game *game) : ogui(ogui), game(game), oguiLoader(ogui)
-	{
-		close = false;
-		restart = false;
+            win = oguiLoader.LoadWindow("missionfailurewindow");
+            closeButton = oguiLoader.LoadButton("closebutton", win, 0);
+            closeButton->SetListener(this);
+            restartButton = oguiLoader.LoadButton("restartbutton", win, 0);
+            restartButton->SetListener(this);
+            textArea = oguiLoader.LoadFormattedText("textarea", win, 0);
+        }
 
-		win = oguiLoader.LoadWindow( "missionfailurewindow" );
-		closeButton = oguiLoader.LoadButton( "closebutton", win, 0 );
-		closeButton->SetListener(this);
-		restartButton = oguiLoader.LoadButton( "restartbutton", win, 0 );
-		restartButton->SetListener(this);
-		textArea = oguiLoader.LoadFormattedText( "textarea", win, 0 );
-	}
+        ~MissionFailureWindowImpl()
+        {
+            delete closeButton;
+            delete restartButton;
+            delete textArea;
+            delete win;
+        }
 
-	~MissionFailureWindowImpl()
-	{
-		delete closeButton;
-		delete restartButton;
-		delete textArea;
-		delete win;
-	}
+        virtual void CursorEvent(OguiButtonEvent *eve)
+        {
+            if (eve->eventType == OguiButtonEvent::EVENT_TYPE_CLICK) {
+                if (eve->triggerButton == closeButton) {
+                    close = true;
+                    restart = false;
+                } else if (eve->triggerButton == restartButton) {
+                    close = true;
+                    restart = true;
+                }
+            }
+        }
 
-	virtual void CursorEvent( OguiButtonEvent *eve )
-	{
-		if (eve->eventType == OguiButtonEvent::EVENT_TYPE_CLICK)
-		{
-			if(eve->triggerButton == closeButton)
-			{
-				close = true;
-				restart = false;
-			}
-			else if(eve->triggerButton == restartButton)
-			{
-				close = true;
-				restart = true;
-			}
-		}
-	}
+        bool closeMePlease() const
+        {
+            return close;
+        }
 
-	bool closeMePlease() const
-	{
-		return close;
-	}
+        bool shouldRestart() const
+        {
+            return restart;
+        }
+    };
 
-	bool shouldRestart() const
-	{
-		return restart;
-	}
-};
+    MissionFailureWindow::MissionFailureWindow(Ogui *ogui, game::Game *game)
+    {
+        impl = new MissionFailureWindowImpl(ogui, game);
+    }
 
-MissionFailureWindow::MissionFailureWindow(Ogui *ogui, game::Game *game)
-{
-	impl = new MissionFailureWindowImpl(ogui, game);
-}
+    MissionFailureWindow::~MissionFailureWindow()
+    {
+        delete impl;
+    }
 
-MissionFailureWindow::~MissionFailureWindow()
-{
-	delete impl;
-}
+    bool MissionFailureWindow::closeMePlease() const
+    {
+        return impl->closeMePlease();
+    }
 
-bool MissionFailureWindow::closeMePlease() const
-{
-	return impl->closeMePlease();
-}
-
-bool MissionFailureWindow::shouldRestart() const
-{
-	return impl->shouldRestart();
-}
+    bool MissionFailureWindow::shouldRestart() const
+    {
+        return impl->shouldRestart();
+    }
 }

@@ -5,21 +5,19 @@
 #include <string>
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        class StringDialog {
+            struct Data;
+            boost::scoped_ptr<Data> data;
 
-class StringDialog
-{
-	struct Data;
-	boost::scoped_ptr<Data> data;
+        public:
+            StringDialog();
+            ~StringDialog();
 
-public:
-	StringDialog();
-	~StringDialog();
+            std::string show(const std::string &title);
+        };
 
-	std::string show(const std::string &title);
-};
-
-} // editor
-} // frozenbyte
+    } // editor
+}     // frozenbyte
 
 #endif

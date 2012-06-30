@@ -8,54 +8,48 @@
 
 namespace game
 {
-	class Game;
+    class Game;
 }
 
 class Ogui;
 
 namespace ui
 {
+    class CombatMessageWindowWithHistory : public CombatMessageWindow {
+    public:
 
+        CombatMessageWindowWithHistory(Ogui *ogui, const std::string &textConfName, const std::string &iconConfName);
+        ~CombatMessageWindowWithHistory();
 
-class CombatMessageWindowWithHistory : public CombatMessageWindow
-{
-public:
+        void showMessage(const char *messa, Visual2D *image);
+        void clearMessage();
 
+        void hide(int fadeTime = 0);
+        void show(int fadeTime = 0);
 
-	CombatMessageWindowWithHistory( Ogui* ogui, const std::string& textConfName, const std::string& iconConfName );
-	~CombatMessageWindowWithHistory();
+        void update(int);
+        void clearOneMessage();
 
-	void showMessage(const char *messa, Visual2D *image);
-	void clearMessage();
+    private:
 
-	void hide( int fadeTime = 0 );
-	void show( int fadeTime = 0 );
+        void pushMessage(const std::string &message);
+        void popMessage();
 
-	void update(int);
-	void clearOneMessage();
+        int     getVerticalPosition(int i);
+        float   getAlphaValue(int i);
 
-	
+        struct TextMessage;
+        std::vector< TextMessage * > messageBuffer;
 
-private:
-	
-	void pushMessage( const std::string& message );
-	void popMessage();
+        int numOfMessages;
+        int textHeight;
 
-	int		getVerticalPosition( int i );
-	float	getAlphaValue( int i );
+        int messageStartFadeTime;
+        int messageEndFadeTime;
 
-	struct TextMessage;
-	std::vector< TextMessage* >	messageBuffer;
+        bool visible;
 
-	int numOfMessages;
-	int textHeight;
-	
-	int messageStartFadeTime;
-	int messageEndFadeTime;
-
-	bool visible;
-
-};
+    };
 
 } // end of namespace ui
 

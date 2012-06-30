@@ -15,57 +15,55 @@
 #include "dragparticleforce.h"
 
 namespace frozenbyte {
-namespace particle
-{
+    namespace particle
+    {
+        ParamDesc theDragParticleForceParamDesc[] = {
+            ParamDesc(PB_DRAG_FACTOR, "factor", PARAM_FLOAT, false),
+        };
 
+        class DragParticleForce : public GenParticleForce {
+            float m_factor;
+            int m_function;
+        public:
+            DragParticleForce() {
+            }
+            void create() {
+                GenParticleForce::create();
+                m_pb->addParams(theDragParticleForceParamDesc, 1);
+            }
+            const char *getSuperClassName() {
+                return "gen_force";
+            }
+            const char *getClassName() {
+                return "drag";
+            }
+            void preCalculate(float t) {
+                m_pb->getValue(PB_DRAG_FACTOR, m_factor);
+            }
+            void calcForce(Vector &force, const Vector &pos, const Vector &vel) {
+                float len = vel.GetLength();
+                Vector newVel = vel * pow(1.0f - m_factor, len);
+                force = newVel - vel;
+            }
+            void parseFrom(const editor::ParserGroup &pg) {
+                GenParticleForce::parseFrom(pg);
+            }
+            void parseTo(editor::ParserGroup &pg) {
+            }
+        };
 
-ParamDesc theDragParticleForceParamDesc[] = {
-	ParamDesc(PB_DRAG_FACTOR, "factor", PARAM_FLOAT, false),
-};
+        class DragParticleForceClassDesc : public ParticleForceClassDesc {
+        public:
+            const char *getClassName() { return "drag"; }
+            const char *getSuperClassName() { return "genforce"; }
+            void *create() { return new DragParticleForce(); }
+        };
 
-class DragParticleForce : public GenParticleForce {
-	float m_factor;
-	int m_function;
-public:
-	DragParticleForce() {
-	}
-	void create() {
-		GenParticleForce::create();
-		m_pb->addParams(theDragParticleForceParamDesc, 1);
-	}
-	const char* getSuperClassName() {
-		return "gen_force";
-	}
-	const char* getClassName() {
-		return "drag";
-	}	
-	void preCalculate(float t) {
-		m_pb->getValue(PB_DRAG_FACTOR, m_factor);
-	}
-	void calcForce(Vector& force, const Vector& pos, const Vector& vel) {
-		float len = vel.GetLength();
-		Vector newVel = vel * pow(1.0f - m_factor, len);
-		force = newVel - vel;
-	}
-	void parseFrom(const editor::ParserGroup& pg) {
-		GenParticleForce::parseFrom(pg);
-	}
-	void parseTo(editor::ParserGroup& pg) {
-	}
-};
+        static DragParticleForceClassDesc theDragParticleForceClassDesc;
 
-class DragParticleForceClassDesc : public ParticleForceClassDesc {
-public:
-	const char* getClassName() { return "drag"; }
-	const char* getSuperClassName() { return "genforce"; }
-	void* create() { return new DragParticleForce(); }
-};
+        ParticleForceClassDesc *getDragParticleForceClassDesc() {
+            return &theDragParticleForceClassDesc;
+        }
 
-static DragParticleForceClassDesc theDragParticleForceClassDesc;
-
-ParticleForceClassDesc* getDragParticleForceClassDesc() {
-	return &theDragParticleForceClassDesc;
-}
-
-} // particle
-} // frozenbyte
+    } // particle
+}     // frozenbyte

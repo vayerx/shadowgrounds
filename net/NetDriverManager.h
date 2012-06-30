@@ -1,4 +1,3 @@
-
 #ifndef NET_NETDRIVERMANAGER_H
 #define NET_NETDRIVERMANAGER_H
 
@@ -7,17 +6,15 @@
 
 namespace net
 {
-  class NetDriverManager
-  {
-  public:
-    static void registerDriver(INetDriver *driver);
+    class NetDriverManager {
+    public:
+        static void registerDriver(INetDriver *driver);
 
-    static INetDriver *getDriver(char *name);
+        static INetDriver *getDriver(char *name);
 
-  private:
-    static LinkedList *driverList;
-  };
+    private:
+        static LinkedList *driverList;
+    };
 }
 
 #endif
-

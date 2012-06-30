@@ -3,17 +3,17 @@
 #pragma warning(disable:4103)
 
 /*
-#include "storm3d_string_util.h"
+   #include "storm3d_string_util.h"
 
-#define UNICODE
-#include <atlbase.h>
+   #define UNICODE
+   #include <atlbase.h>
 
-#include "..\..\util\Debug_MemoryManager.h"
+   #include "..\..\util\Debug_MemoryManager.h"
 
 
-std::wstring Storm3D_MakeWideString(const std::string &string)
-{
-	USES_CONVERSION;
-	return A2W(string.c_str());
-}
-*/
+   std::wstring Storm3D_MakeWideString(const std::string &string)
+   {
+    USES_CONVERSION;
+    return A2W(string.c_str());
+   }
+ */

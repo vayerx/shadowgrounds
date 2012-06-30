@@ -1,4 +1,3 @@
-
 #ifndef SYSTEMRANDOM_H
 #define SYSTEMRANDOM_H
 
@@ -7,28 +6,24 @@
 #define SYSTEMRANDOM_MIN_VALUE 0
 #define SYSTEMRANDOM_MAX_VALUE 0x7fff
 
-
-class SystemRandom
-{
+class SystemRandom {
 public:
-  SystemRandom();
-  ~SystemRandom();
+    SystemRandom();
+    ~SystemRandom();
 
-	static SystemRandom *getInstance();
+    static SystemRandom *getInstance();
 
-	static void cleanInstance();
+    static void cleanInstance();
 
-  int nextInt();
+    int nextInt();
 
-  //unsigned int nextUInt();
-  //signed short nextShort();
-  //unsigned short nextUShort();
+    //unsigned int nextUInt();
+    //signed short nextShort();
+    //unsigned short nextUShort();
 
 private:
-	static SystemRandom *instance;
+    static SystemRandom *instance;
 
 };
 
-
 #endif
-

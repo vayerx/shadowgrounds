@@ -5,47 +5,45 @@
 
 namespace frozenbyte
 {
-namespace particle
-{
+    namespace particle
+    {
+        class SprayParticleSystemEditables : public GenParticleSystemEditables {
+        public:
+            float spread1;
+            float spread2;
+        };
 
-class SprayParticleSystemEditables : public GenParticleSystemEditables {
-public:
-	float spread1;
-	float spread2;
-};
+        class SprayParticleSystem : public GenParticleSystem {
+            boost::shared_ptr<SprayParticleSystemEditables> m_eds;
 
-class SprayParticleSystem : public GenParticleSystem {
-	boost::shared_ptr<SprayParticleSystemEditables> m_eds;	
+            boost::shared_ptr<IParticleCollision> collision;
 
-	boost::shared_ptr<IParticleCollision> collision;
+            SprayParticleSystem();
+        public:
 
-	SprayParticleSystem();
-public:
-	
-	static boost::shared_ptr<IParticleSystem> createNew();
-	
-	boost::shared_ptr<IParticleSystem> clone();
+            static boost::shared_ptr<IParticleSystem> createNew();
 
-	void setParticlePosition(Vector& pos);
-	void setParticleVelocity(Vector& vel, const Vector& dir, float speed, const GenParticleSystemEditables& eds);
-	void *getId() const;
-	static void *getType();
+            boost::shared_ptr<IParticleSystem> clone();
 
-	void init(IStorm3D* s3d, IStorm3D_Scene* scene);
-	void prepareForLaunch(IStorm3D* s3d, IStorm3D_Scene* scene);
-	void tick(IStorm3D_Scene* scene);
-	void render(IStorm3D_Scene* scene);
-	void parseFrom(const editor::ParserGroup& pg, const util::SoundMaterialParser &materialParser);
+            void setParticlePosition(Vector &pos);
+            void setParticleVelocity(Vector &vel, const Vector &dir, float speed, const GenParticleSystemEditables &eds);
+            void *getId() const;
+            static void *getType();
 
-	SprayParticleSystemEditables& getEditables();
-	const SprayParticleSystemEditables& getEditables() const;
+            void init(IStorm3D *s3d, IStorm3D_Scene *scene);
+            void prepareForLaunch(IStorm3D *s3d, IStorm3D_Scene *scene);
+            void tick(IStorm3D_Scene *scene);
+            void render(IStorm3D_Scene *scene);
+            void parseFrom(const editor::ParserGroup &pg, const util::SoundMaterialParser &materialParser);
 
-	void setCollision(boost::shared_ptr<IParticleCollision> &collision);
-	void setEmitterRotation(const QUAT &/*rotation*/) {}
-};
-	
-} // particle
-} // frozenbyte
+            SprayParticleSystemEditables&getEditables();
+            const SprayParticleSystemEditables&getEditables() const;
 
+            void setCollision(boost::shared_ptr<IParticleCollision> &collision);
+            void setEmitterRotation(const QUAT & /*rotation*/) { }
+        };
+
+    } // particle
+}     // frozenbyte
 
 #endif

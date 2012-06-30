@@ -4,23 +4,21 @@
 #include <boost/scoped_ptr.hpp>
 
 namespace frozenbyte {
-	class TextureCache;
+    class TextureCache;
 }
 
 namespace util {
+    class BuildingBlinker {
+        struct Data;
+        boost::scoped_ptr<Data> data;
 
-class BuildingBlinker 
-{
-	struct Data;
-	boost::scoped_ptr<Data> data;
+    public:
+        BuildingBlinker(frozenbyte::TextureCache &cache);
+        ~BuildingBlinker();
 
-public:
-	BuildingBlinker(frozenbyte::TextureCache &cache);
-	~BuildingBlinker();
-
-	void addBlinkTexture(const char *original, const char *to, int delta);
-	void update(int timeDelta);
-}; 
+        void addBlinkTexture(const char *original, const char *to, int delta);
+        void update(int timeDelta);
+    };
 
 } // util
 

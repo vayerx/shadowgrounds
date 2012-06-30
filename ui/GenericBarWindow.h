@@ -10,102 +10,97 @@ class IOguiFont;
 
 namespace game
 {
-	class Game;
-	class Unit;
+    class Game;
+    class Unit;
 }
 
 namespace ui {
+///////////////////////////////////////////////////////////////////////////////
+
+    class IGenericBarWindowUpdator {
+    public:
+        virtual ~IGenericBarWindowUpdator() { }
+
+        // returns a slider value between 1 and 0
+        virtual float update() = 0;
+    };
 
 ///////////////////////////////////////////////////////////////////////////////
 
-class IGenericBarWindowUpdator
-{
-public:
-	virtual ~IGenericBarWindowUpdator() { }
+    class GenericBarWindow : public ICombatSubWindow, private IOguiEffectListener {
+    public:
+        GenericBarWindow(Ogui *ogui, game::Game *game, int player);
+        ~GenericBarWindow();
 
-	// returns a slider value between 1 and 0
-	virtual float update() = 0;
-};
+        void loadDataFromLocales(const std::string &locale_name);
 
-///////////////////////////////////////////////////////////////////////////////
+        void hide(int fadeTime);
+        void show(int fadeTime);
+        void update();
 
-class GenericBarWindow : public ICombatSubWindow, private IOguiEffectListener
-{
-public:
-	GenericBarWindow( Ogui* ogui, game::Game* game, int player );
-	~GenericBarWindow();
+        // NOTE! deletes the given updator, when it's done with it
+        void setUpdator(IGenericBarWindowUpdator *up);
 
-	void loadDataFromLocales( const std::string& locale_name );
+        void EffectEvent(OguiEffectEvent *e);
 
-	
-	void hide( int fadeTime );
-	void show( int fadeTime );
-	void update();
-	
-	// NOTE! deletes the given updator, when it's done with it
-	void setUpdator( IGenericBarWindowUpdator* up );
+        void moveBy(int x, int y);
+        void move(int x, int y);
+        void resize(int x, int y);
+        void getWindowRect(int &x, int &y, int &w, int &h);
 
-	void EffectEvent( OguiEffectEvent *e );
+        inline bool isHidden() const { return reallyHidden; }
 
-	void moveBy(int x, int y);
-	void move(int x, int y);
-	void resize(int x, int y);
-	void getWindowRect(int &x, int &y, int &w, int &h);
+        int getFadeOffTime() const { return fadeOffTime; }
+        int getFadeOutTime() const { return fadeOutTime; }
+        int getFadeInTime()  const { return fadeInTime; }
 
-	inline bool isHidden() const { return reallyHidden; }
+        void setValue(float value);
+        void raise();
 
-	int getFadeOffTime() const { return fadeOffTime; }
-	int getFadeOutTime() const { return fadeOutTime; }
-	int getFadeInTime()  const { return fadeInTime; }
+    private:
 
-	void setValue( float value );
-	void raise();
+        void fadeHide(int fadeTime);
+        void fadeShow(int fadeTime);
 
-private:
+        void Release();
 
-	void fadeHide( int fadeTime );
-	void fadeShow( int fadeTime );
+        int getTime() const;
 
-	void Release();
+        Ogui *ogui;
+        game::Game *game;
+        int player;
 
-	int getTime() const;
+        OguiWindow *win;
+        OguiWindow *win_hidden;
+        OguiSlider *slider;
+        IGenericBarWindowUpdator *updator;
 
-	Ogui*		ogui;
-	game::Game* game;
-	int player;
+        std::vector<OguiButton *> decorations;
+        std::vector<IOguiFont *> decorationfonts;
 
-	OguiWindow* win;
-	OguiWindow* win_hidden;
-	OguiSlider* slider;
-	IGenericBarWindowUpdator* updator;
+        bool isOfFadingType;
+        float sliderValue;
+        int lastTime;
+        bool hidden;
+        bool reallyHidden;
 
-	std::vector<OguiButton*> decorations;
-	std::vector<IOguiFont*> decorationfonts;
-	
-	bool isOfFadingType;
-	float sliderValue;
-	int	lastTime;
-	bool hidden;
-	bool reallyHidden;
+        std::string messageOnHide;
+        std::string messageOnHideStyle;
+        std::string messageOnShow;
+        std::string messageOnShowStyle;
 
-	std::string messageOnHide;
-	std::string messageOnHideStyle;
-	std::string messageOnShow;
-	std::string messageOnShowStyle;
+        int fadeOffTime;
+        int fadeOutTime;
+        int fadeInTime;
 
+        float valueStart;
+        float valueScale;
 
-	int fadeOffTime;
-	int fadeOutTime;
-	int fadeInTime;
-
-	float valueStart;
-	float valueScale;
-
-	int showTextOffsetX;
-	int showTextOffsetY;
-	int hideTextOffsetX;
-	int hideTextOffsetY;
-};
+        int showTextOffsetX;
+        int showTextOffsetY;
+        int hideTextOffsetX;
+        int hideTextOffsetY;
+    };
 
 ///////////////////////////////////////////////////////////////////////////////
 } // end of namespace ui

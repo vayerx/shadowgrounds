@@ -2,18 +2,15 @@
 #define INC_IITEMLISTENER_H
 
 namespace game {
+    class Item;
 
-class Item;
+    class IItemListener {
+    public:
+        virtual ~IItemListener() { }
 
-class IItemListener
-{
-public:
-	virtual ~IItemListener() { }
-
-	virtual void onDestruction( Item* item ) = 0;
-};
+        virtual void onDestruction(Item *item) = 0;
+    };
 
 } // end of namespace game
-
 
 #endif

@@ -1,17 +1,15 @@
 /*
 
-  Storm3D v2.0 T&L Graphics Engine
-  (C) Sebastian Aaltonen 2000-2001
+   Storm3D v2.0 T&L Graphics Engine
+   (C) Sebastian Aaltonen 2000-2001
 
-  Class: Storm3D_SystemSurface
+   Class: Storm3D_SystemSurface
 
-  System memory surface and software rendering
+   System memory surface and software rendering
 
-*/
-
+ */
 
 #pragma once
-
 
 //------------------------------------------------------------------
 // Includes
@@ -21,30 +19,30 @@
 // Common datatype includes
 #include "DatatypeDef.h"
 
-// Storm3D includes 
+// Storm3D includes
 #include "Storm3D_Datatypes.h"
-
-
 
 //------------------------------------------------------------------
 // Storm3D_SystemSurface
 //------------------------------------------------------------------
-class Storm3D_SystemSurface
-{
-	uint8_t *data;
-	int size,sizesq;
-	int shift;
+class Storm3D_SystemSurface {
+    uint8_t *data;
+    int size, sizesq;
+    int shift;
 
 public:
 
-	void Clear();
-	void Fix();	// Fills clipping holes...
-	void RenderFaceList(Storm3D_Scene *scene,D3DMATRIX worldmx,Storm3D_Face *faces,Storm3D_Vertex *vertexes,int num_faces,int num_vertexes);
+    void Clear();
+    void Fix(); // Fills clipping holes...
+    void RenderFaceList(Storm3D_Scene  *scene,
+                        D3DMATRIX       worldmx,
+                        Storm3D_Face   *faces,
+                        Storm3D_Vertex *vertexes,
+                        int             num_faces,
+                        int             num_vertexes);
 
-	uint8_t *GetDataStart();
+    uint8_t *GetDataStart();
 
-	Storm3D_SystemSurface(int size);	// size must be: 16 - 2048
-	~Storm3D_SystemSurface();
+    Storm3D_SystemSurface(int size);    // size must be: 16 - 2048
+    ~Storm3D_SystemSurface();
 };
-
-

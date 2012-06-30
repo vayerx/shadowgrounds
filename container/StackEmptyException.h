@@ -5,5 +5,4 @@
 
 class StackEmptyException { }; //extends CSPException { };
 
-
 #endif

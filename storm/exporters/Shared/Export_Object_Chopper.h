@@ -8,21 +8,20 @@
 #include <boost/shared_ptr.hpp>
 
 namespace frozenbyte {
-namespace exporter {
+    namespace exporter {
+        class Object;
+        class Material;
 
-class Object;
-class Material;
+        double calculateSize(Object &object);
+        void chopFaces(Object &object);
+        void chopObjects(std::vector<boost::shared_ptr<Object> > &objects);
+        bool needChop(std::vector<boost::shared_ptr<Object> > &objects);
 
-double calculateSize(Object &object);
-void chopFaces(Object &object);
-void chopObjects(std::vector<boost::shared_ptr<Object> > &objects);
-bool needChop(std::vector<boost::shared_ptr<Object> > &objects);
+        void chopObjectToLimits(std::vector<boost::shared_ptr<Object> > &objects);
+        void removeJunctions(std::vector<boost::shared_ptr<Object> > &objects);
+        void snapVertices(std::vector<boost::shared_ptr<Object> > &objects);
 
-void chopObjectToLimits(std::vector<boost::shared_ptr<Object> > &objects);
-void removeJunctions(std::vector<boost::shared_ptr<Object> > &objects);
-void snapVertices(std::vector<boost::shared_ptr<Object> > &objects);
-
-} // end of namespace export
-} // end of namespace frozenbyte
+    } // end of namespace export
+}     // end of namespace frozenbyte
 
 #endif

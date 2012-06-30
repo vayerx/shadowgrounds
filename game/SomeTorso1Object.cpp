@@ -1,4 +1,3 @@
-
 #include "SomeTorso1.h"
 #include "SomeTorso1Object.h"
 
@@ -8,18 +7,16 @@
 
 namespace game
 {
+    SaveData *SomeTorso1Object::getSaveData()
+    {
+        // TODO
+        return NULL;
+    }
 
-  SaveData *SomeTorso1Object::getSaveData()
-  {
-    // TODO
-    return NULL;
-  }
-    
-  PartType *SomeTorso1Object::getType() 
-  {
-    //return &someTorso1;
-    return NULL;
-  }
+    PartType *SomeTorso1Object::getType()
+    {
+        //return &someTorso1;
+        return NULL;
+    }
 
 }
-

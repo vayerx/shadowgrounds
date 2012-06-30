@@ -4,8 +4,8 @@
 #define INCLUDED_EDITOR_MOUSE_H
 
 #ifndef INCLUDED_WINDOWS_H
-#define INCLUDED_WINDOWS_H
-#include <windows.h>
+#  define INCLUDED_WINDOWS_H
+#  include <windows.h>
 #endif
 
 struct Storm3D_CollisionInfo;
@@ -14,55 +14,53 @@ class ObstacleCollisionInfo;
 #include <datatypedef.h>
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        struct Storm;
 
-struct Storm;
+        class Mouse {
+            HWND window;
 
-class Mouse
-{
-	HWND window;
+            int x;
+            int y;
 
-	int x;
-	int y;
+            bool leftButtonDown;
+            bool leftButtonClicked;
+            bool rightButtonDown;
+            bool rightButtonClicked;
 
-	bool leftButtonDown;
-	bool leftButtonClicked;
-	bool rightButtonDown;
-	bool rightButtonClicked;
+            int wheelDelta;
+            bool insideWindow;
 
-	int wheelDelta;
-	bool insideWindow;
+            Storm *storm;
 
-	Storm *storm;
+        public:
+            Mouse();
+            ~Mouse();
 
-public:
-	Mouse();
-	~Mouse();
+            void setTrackWindow(HWND windowHandle);
+            void setStorm(Storm &storm);
+            void update();
 
-	void setTrackWindow(HWND windowHandle);
-	void setStorm(Storm &storm);
-	void update();
+            void setLeftButtonDown();
+            void setLeftButtonUp();
+            void setRightButtonDown();
+            void setRightButtonUp();
+            void setWheelDelta(int delta);
 
-	void setLeftButtonDown();
-	void setLeftButtonUp();
-	void setRightButtonDown();
-	void setRightButtonUp();
-	void setWheelDelta(int delta);
+            int getX() const;
+            int getY() const;
+            int getWheelDelta() const;
 
-	int getX() const;
-	int getY() const;
-	int getWheelDelta() const;
+            bool isLeftButtonDown() const;
+            bool hasLeftClicked() const;
+            bool isRightButtonDown() const;
+            bool hasRightClicked() const;
+            bool isInsideWindow() const;
 
-	bool isLeftButtonDown() const;
-	bool hasLeftClicked() const;
-	bool isRightButtonDown() const;
-	bool hasRightClicked() const;
-	bool isInsideWindow() const;
+            bool cursorRayTrace(Storm3D_CollisionInfo &ci, VC3 *position = 0, VC3 *direction = 0);
+        };
 
-	bool cursorRayTrace(Storm3D_CollisionInfo &ci, VC3 *position = 0, VC3 *direction = 0 );
-};
-
-} // end of namespace editor
-} // end of namespace frozenbyte
+    } // end of namespace editor
+}     // end of namespace frozenbyte
 
 #endif

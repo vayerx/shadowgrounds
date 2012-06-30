@@ -3,20 +3,16 @@
 
 namespace frozenbyte
 {
-namespace particle
-{
+    namespace particle
+    {
+        enum SPRAY_PARTICLE_SYSTEM_PARAMS {
+            PB_SPREAD1 = GEN_PARTICLE_SYSTEM_PARAM_COUNT,
+            PB_SPREAD2
+        };
 
+        ParticleSystemClassDesc *getSprayParticleSystemClassDesc();
 
-enum SPRAY_PARTICLE_SYSTEM_PARAMS
-{
-	PB_SPREAD1 = GEN_PARTICLE_SYSTEM_PARAM_COUNT,
-	PB_SPREAD2
-};
-
-ParticleSystemClassDesc* getSprayParticleSystemClassDesc();
-
-} // particle
-} // frozenbyte
-
+    } // particle
+}     // frozenbyte
 
 #endif

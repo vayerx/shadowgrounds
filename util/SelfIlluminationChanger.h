@@ -8,22 +8,20 @@ class IStorm3D_Model;
 class IStorm3D_Scene;
 
 namespace util {
+    class SelfIlluminationChanger {
+        struct Data;
+        boost::scoped_ptr<Data> data;
 
-class SelfIlluminationChanger
-{
-	struct Data;
-	boost::scoped_ptr<Data> data;
+    public:
+        SelfIlluminationChanger();
+        ~SelfIlluminationChanger();
 
-public:
-	SelfIlluminationChanger();
-	~SelfIlluminationChanger();
+        void addModel(IStorm3D_Model *model);
+        void addAllModels(IStorm3D_Scene *scene);
+        void clearModels();
 
-	void addModel(IStorm3D_Model *model);
-	void addAllModels(IStorm3D_Scene *scene);
-	void clearModels();
-
-	void setFactor(const COL &color);
-};
+        void setFactor(const COL &color);
+    };
 
 } // utils
 

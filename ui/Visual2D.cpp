@@ -1,4 +1,3 @@
-
 #include "precompiled.h"
 
 #include <stdlib.h> // for abort
@@ -9,54 +8,49 @@
 
 namespace ui
 {
-  
-  Ogui *Visual2D::visualOgui = NULL;
+    Ogui *Visual2D::visualOgui = NULL;
 
-  void Visual2D::setVisualOgui(Ogui *ogui)
-  {
-    visualOgui = ogui;
-  }
-
-  Visual2D::Visual2D(char *filename)
-  {
-    if (filename != NULL)
+    void Visual2D::setVisualOgui(Ogui *ogui)
     {
-      // must set the ogui for visualization first...
-      if (visualOgui == NULL) abort();
+        visualOgui = ogui;
+    }
 
-      // want to catch exceptions here if not debugging
+    Visual2D::Visual2D(char *filename)
+    {
+        if (filename != NULL)
+            // must set the ogui for visualization first...
+            if (visualOgui == NULL) abort();
+
+            // want to catch exceptions here if not debugging
 // TODO: put these back!
 //#ifndef _DEBUG
-      try {
+            try {
 //#endif
-        image = visualOgui->LoadOguiImage(filename);
+                image = visualOgui->LoadOguiImage(filename);
 //#ifndef _DEBUG
-      } catch(OguiException *e) {
-        image = NULL;
-        delete e;
-      }
+            } catch (OguiException *e) {
+                image = NULL;
+                delete e;
+            }
 //#endif
     }
-  }
 
-  Visual2D::Visual2D(int renderTargetIndex)
-	{
-		image = visualOgui->GetOguiRenderTarget(renderTargetIndex);
-	}
-
-  Visual2D::~Visual2D()
-  {
-    if (image != NULL)
+    Visual2D::Visual2D(int renderTargetIndex)
     {
-      delete image;
-      image = NULL;
+        image = visualOgui->GetOguiRenderTarget(renderTargetIndex);
     }
-  }
 
-  IOguiImage *Visual2D::getImage() 
-  {
-    return image;
-  }
+    Visual2D::~Visual2D()
+    {
+        if (image != NULL) {
+            delete image;
+            image = NULL;
+        }
+    }
+
+    IOguiImage *Visual2D::getImage()
+    {
+        return image;
+    }
 
 }
-

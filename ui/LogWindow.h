@@ -5,31 +5,29 @@ class Ogui;
 
 namespace game
 {
-	class Game;
+    class Game;
 }
 
 namespace ui {
+    class LogManager;
+    class LogWindowImpl;
 
-class LogManager;
-class LogWindowImpl;
+    class LogWindow {
+    public:
+        LogWindow(game::Game &game, Ogui &ogui, LogManager &manager);
+        ~LogWindow();
 
-class LogWindow
-{
-public:
-	LogWindow( game::Game &game, Ogui &ogui, LogManager& manager );
-	~LogWindow();
+        void show();
+        void hide();
 
-	void show();
-	void hide();
+        bool isVisible() const;
 
-	bool isVisible() const;
+        // updates effects
+        void update(int msecsDelta);
 
-	// updates effects
-	void update( int msecsDelta );
-
-private:
-	LogWindowImpl* impl;
-};
+    private:
+        LogWindowImpl *impl;
+    };
 
 } // end of namespace ui
 

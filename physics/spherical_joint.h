@@ -7,18 +7,19 @@ class NxScene;
 class NxSphericalJointDesc;
 
 namespace frozenbyte {
-namespace physics {
+    namespace physics {
+        class SphericalJoint : public JointBase {
+        public:
+            SphericalJoint(NxScene                      &scene,
+                           const NxSphericalJointDesc   &desc,
+                           boost::shared_ptr<ActorBase> &a,
+                           boost::shared_ptr<ActorBase> &b);
+            ~SphericalJoint();
 
-class SphericalJoint: public JointBase
-{
-public:
-	SphericalJoint(NxScene &scene, const NxSphericalJointDesc &desc, boost::shared_ptr<ActorBase> &a, boost::shared_ptr<ActorBase> &b);
-	~SphericalJoint();
+            bool isValid() const;
+        };
 
-	bool isValid() const;
-};
-
-} // physics
-} // frozenbyte
+    } // physics
+}     // frozenbyte
 
 #endif

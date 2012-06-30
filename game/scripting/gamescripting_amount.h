@@ -1,4 +1,3 @@
-
 #ifndef GAMESCRIPT_AMOUNT_H
 #define GAMESCRIPT_AMOUNT_H
 
@@ -28,11 +27,10 @@
 // 1700-1749 PositionScripting (50)
 // 1750-1799 WaterScripting (50)
 // 1800-1899 SoundScripting
-// 1900-1999 StringScripting 
+// 1900-1999 StringScripting
 // 2000-2049 TrackingScripting (50)
 // 2050-2099 DecorScripting (50)
 // 2100-2199 SyncScripting
 // 2200-2299 DirectControlScripting
 
 #endif
-

@@ -7,31 +7,29 @@ class Ogui;
 
 namespace game
 {
-	class Game;
+    class Game;
 }
 
 namespace ui
 {
+    class TerminalManagerImpl;
 
-class TerminalManagerImpl;
+    class TerminalManager {
+    public:
+        TerminalManager(Ogui *ogui, game::Game *game);
+        ~TerminalManager();
 
-class TerminalManager
-{
-public:
-	TerminalManager( Ogui* ogui, game::Game* game );
-	~TerminalManager();
+        void openTerminalWindow(const std::string &name);
+        void closeTerminalWindow();
 
-	void openTerminalWindow( const std::string& name );
-	void closeTerminalWindow();
+        void update();
 
-	void update();
+        bool isWindowOpen() const;
 
-	bool isWindowOpen() const;
+    private:
 
-private:
-
-	TerminalManagerImpl* impl;
-};
+        TerminalManagerImpl *impl;
+    };
 
 } // end of namespace ui
 

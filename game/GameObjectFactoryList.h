@@ -1,4 +1,3 @@
-
 #ifndef GAMEOBJECTFACTORYLIST_H
 #define GAMEOBJECTFACTORYLIST_H
 
@@ -7,20 +6,18 @@
 
 namespace game
 {
+    class GameObjectFactoryList {
+    public:
+        GameObjectFactoryList();
+        ~GameObjectFactoryList();
 
-  class GameObjectFactoryList
-  {
-  public:
-    GameObjectFactoryList();
-    ~GameObjectFactoryList();
+        void addFactory(int id, IGameObjectFactory *factory);
+        IGameObjectFactory *getById(int id);
 
-    void addFactory(int id, IGameObjectFactory *factory);
-    IGameObjectFactory *getById(int id);
+    private:
+        LinkedList *factories;
 
-  private:
-    LinkedList *factories;
-
-  };
+    };
 
 }
 

@@ -1,4 +1,3 @@
-
 #include <windows.h>
 #include "window.h"
 
@@ -9,45 +8,40 @@
 
 namespace frozenbyte
 {
-	namespace launcher
-	{
+    namespace launcher
+    {
+        class LauncherWindowImpl {
+        public:
 
-		class LauncherWindowImpl
-		{
-		public:
+            Window window;
+            LauncherMainDialog dialog;
 
-			Window window;
-			LauncherMainDialog dialog;
+            LauncherWindowImpl(LauncherWindow *a_LauncherWindow) :
+                window(::game::getLocaleGuiString("launcher_window_caption"), 0, false, true, 500, 500),
+                dialog(window, a_LauncherWindow)
+            {
+                int xs = 0;
+                int ys = 0;
+                dialog.getSize(xs, ys);
+                window.setSize(xs, ys);
 
-			LauncherWindowImpl( LauncherWindow *a_LauncherWindow ) :
-				window( ::game::getLocaleGuiString( "launcher_window_caption" ) , 0, false, true, 500, 500 ),
-				dialog( window, a_LauncherWindow )
-			{
-				int xs = 0;
-				int ys = 0;
-				dialog.getSize(xs, ys);
-				window.setSize(xs, ys);
-	
-				dialog.show();
+                dialog.show();
 
-			};
-		};
+            };
+        };
 
+        LauncherWindow::LauncherWindow() : impl(NULL)
+        {
+            if (!impl)
+                impl = new LauncherWindowImpl(this);
 
-		LauncherWindow::LauncherWindow( ) : impl ( NULL )
-		{
-			if( !impl )
-				impl = new LauncherWindowImpl( this );
+        }
 
-		}
+        LauncherWindow::~LauncherWindow()
+        {
+            if (impl)
+                delete impl;
+        }
 
-		LauncherWindow::~LauncherWindow( )
-		{
-			if( impl )
-				delete impl;
-		}
-
-
-	};
+    };
 };
-

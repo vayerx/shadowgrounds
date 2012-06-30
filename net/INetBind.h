@@ -1,4 +1,3 @@
-
 #ifndef NET_INETBIND_H
 #define NET_INETBIND_H
 
@@ -9,27 +8,24 @@
 
 namespace net
 {
+    /**
+     * Net bind interface.
+     */
+    class INetBind {
+    public:
+        virtual INetConnection *acceptConnection()
+        throw (NetDriverException *) = 0;
 
-  /**
-   * Net bind interface.
-   */
-  class INetBind
-  {
-  public:
-    virtual INetConnection *acceptConnection()
-      throw (NetDriverException*) = 0;
+        virtual void listen(int backlog)
+        throw (NetDriverException *) = 0;
 
-    virtual void listen(int backlog) 
-      throw (NetDriverException*) = 0;
+        virtual int getMaxBacklog() = 0;
 
-    virtual int getMaxBacklog() = 0;
+        virtual void unbind()
+        throw (NetDriverException *) = 0;
 
-    virtual void unbind()
-      throw (NetDriverException*) = 0;
-     
-    virtual ~INetBind() { };
-  };
+        virtual ~INetBind() { };
+    };
 }
 
 #endif
-

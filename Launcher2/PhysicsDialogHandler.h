@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "options_value_manager.h"
@@ -7,27 +6,23 @@
 
 namespace frozenbyte
 {
+    namespace launcher
+    {
+        class PhysicsDialogHandler : public DlgHandlerImpl {
+            OptionsValueManager manager;
+        public:
 
-	namespace launcher
-	{
+            PhysicsDialogHandler(HWND parent);
+            ~PhysicsDialogHandler();
 
-		class PhysicsDialogHandler : public DlgHandlerImpl
-		{
-			OptionsValueManager manager;
-		public:
+            void initDialog();
+            void applyOptions();
+            void loadOptions();
 
-			 PhysicsDialogHandler( HWND parent );
-			~PhysicsDialogHandler( );
+            BOOL handleMessages(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-			void initDialog( );
-			void applyOptions( );
-			void loadOptions( );
+        };
 
-			BOOL handleMessages(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-		};
-
-	}
+    }
 
 }
-

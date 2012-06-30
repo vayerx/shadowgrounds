@@ -4,14 +4,12 @@
 #include <DatatypeDef.h>
 
 namespace util {
+    class ITriggerListener {
+    public:
+        virtual ~ITriggerListener() { }
 
-class ITriggerListener
-{
-public:
-	virtual ~ITriggerListener() {}
-
-	virtual void activate(int triggerId, void *data) = 0;
-};
+        virtual void activate(int triggerId, void *data) = 0;
+    };
 
 } // util
 

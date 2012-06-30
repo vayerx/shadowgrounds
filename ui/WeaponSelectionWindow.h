@@ -1,14 +1,11 @@
-
 #ifndef WEAPONSELECTIONWINDOW_H
 #define WEAPONSELECTIONWINDOW_H
 
-
 #define WEAPONSELECTIONWINDOW_MAX_WEAPONS 8
-
 
 namespace game
 {
-	class Game;
+    class Game;
 }
 
 class Ogui;
@@ -18,39 +15,34 @@ class IOguiImage;
 
 namespace ui
 {
-	class WeaponSelectionWindow
-	{
-		public:
+    class WeaponSelectionWindow {
+    public:
 
-			WeaponSelectionWindow(game::Game *game, Ogui *ogui, 
-				int cornerNumber, int weaponsMask);
-				
-			~WeaponSelectionWindow();
+        WeaponSelectionWindow(game::Game *game, Ogui *ogui,
+                              int cornerNumber, int weaponsMask);
 
-			void setSelectedWeapon(int selectionNumber);
+        ~WeaponSelectionWindow();
 
-			bool advanceTimeout();
+        void setSelectedWeapon(int selectionNumber);
 
-		private:
+        bool advanceTimeout();
 
-			int selectionNumber;
-			game::Game *game;
-			Ogui *ogui;
+    private:
 
-			OguiWindow *win;
-			IOguiImage *selectionImage;
-			OguiButton *selection;
+        int selectionNumber;
+        game::Game *game;
+        Ogui *ogui;
 
-			IOguiImage *weaponImages[WEAPONSELECTIONWINDOW_MAX_WEAPONS];
-			OguiButton *weaponButtons[WEAPONSELECTIONWINDOW_MAX_WEAPONS];
+        OguiWindow *win;
+        IOguiImage *selectionImage;
+        OguiButton *selection;
 
-			void getWeaponPosition(int number, int *x, int *y);
+        IOguiImage *weaponImages[WEAPONSELECTIONWINDOW_MAX_WEAPONS];
+        OguiButton *weaponButtons[WEAPONSELECTIONWINDOW_MAX_WEAPONS];
 
-	};
+        void getWeaponPosition(int number, int *x, int *y);
+
+    };
 }
 
-
 #endif
-
-
-

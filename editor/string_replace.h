@@ -7,12 +7,11 @@
 #include <map>
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        typedef std::map<std::string, std::string> StringMap;
+        std::string replaceString(const std::string &source, const StringMap &strings, const StringMap &defaults);
 
-typedef std::map<std::string, std::string> StringMap;
-std::string replaceString(const std::string &source, const StringMap &strings, const StringMap &defaults);
-
-} // editor
-} // frozenbyte
+    } // editor
+}     // frozenbyte
 
 #endif

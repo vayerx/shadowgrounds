@@ -1,4 +1,3 @@
-
 #ifndef SPHEREPHYSICSOBJECT_H
 #define SPHEREPHYSICSOBJECT_H
 
@@ -7,24 +6,22 @@
 
 namespace game
 {
-	class GamePhysics;
+    class GamePhysics;
 
-	class SpherePhysicsObject : public AbstractPhysicsObject
-	{
-	public:
-		SpherePhysicsObject(GamePhysics *gamePhysics, float radius, float mass);
+    class SpherePhysicsObject : public AbstractPhysicsObject {
+    public:
+        SpherePhysicsObject(GamePhysics *gamePhysics, float radius, float mass);
 
-		~SpherePhysicsObject();
+        ~SpherePhysicsObject();
 
-	private:
-		PHYSICS_ACTOR createImplementationObject();
+    private:
+        PHYSICS_ACTOR createImplementationObject();
 
-		void syncImplementationObject(PHYSICS_ACTOR &obj);
+        void syncImplementationObject(PHYSICS_ACTOR &obj);
 
-		float radius;
-		float mass;
-	};
+        float radius;
+        float mass;
+    };
 }
 
 #endif
-

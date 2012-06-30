@@ -32,476 +32,459 @@
 #include "resource/resource.h"
 
 namespace frozenbyte {
-namespace editor {
-namespace {
-	struct SharedData
-	{
-		IMode *activeMode;
+    namespace editor {
+        namespace {
+            struct SharedData {
+                IMode *activeMode;
 
-		SharedData()
-		:	activeMode(0)
-		{
-		}
-	};
+                SharedData()
+                    :   activeMode(0)
+                {
+                }
+            };
 
-	class ModeCommand: public ICommand
-	{
-		SharedData &sharedData;
-		IMode *mode;
+            class ModeCommand : public ICommand {
+                SharedData &sharedData;
+                IMode *mode;
 
-	public:
-		ModeCommand(SharedData &sharedData_, IMode *mode_, Gui &gui, int id)
-		:	sharedData(sharedData_),
-			mode(mode_)
-		{
-			gui.setMenuCommand(id, this);
-		}
+            public:
+                ModeCommand(SharedData &sharedData_, IMode *mode_, Gui &gui, int id)
+                    :   sharedData(sharedData_),
+                    mode(mode_)
+                {
+                    gui.setMenuCommand(id, this);
+                }
 
-		void execute(int id)
-		{
-			sharedData.activeMode = mode;
-		}
-	};
-}
+                void execute(int id)
+                {
+                    sharedData.activeMode = mode;
+                }
+            };
+        }
 
-struct EditorStateData
-{
-	Gui &gui;
-	SharedData sharedData;
-	Camera &camera;
-	Storm &storm;
+        struct EditorStateData {
+            Gui                 &gui;
+            SharedData           sharedData;
+            Camera              &camera;
+            Storm               &storm;
 
-	TerrainColorMap colorMap;
-	TerrainLightMap lightMap;
+            TerrainColorMap      colorMap;
+            TerrainLightMap      lightMap;
 
-	TerrainMode terrainMode;
-	SceneMode sceneMode;
-	ObjectMode objectMode;
-	BuildingMode buildingMode;
-	UnitMode unitMode;
-	DecoratorMode decoratorMode;
-	LightMode lightMode;
+            TerrainMode          terrainMode;
+            SceneMode            sceneMode;
+            ObjectMode           objectMode;
+            BuildingMode         buildingMode;
+            UnitMode             unitMode;
+            DecoratorMode        decoratorMode;
+            LightMode            lightMode;
 
-	std::vector<IMode *> modes;
+            std::vector<IMode *> modes;
 
-	bool updateHeightmap;
-	bool updateTexturing;
-	bool updateShadows;
-	bool updateObjects;
+            bool                 updateHeightmap;
+            bool                 updateTexturing;
+            bool                 updateShadows;
+            bool                 updateObjects;
 
-	bool lastShowGridState;
-	bool lastShowFoldsState;
-	bool lastShowTriggersState;
-	bool lastShowUnitsState;
+            bool                 lastShowGridState;
+            bool                 lastShowFoldsState;
+            bool                 lastShowTriggersState;
+            bool                 lastShowUnitsState;
 
-	bool lastShowHelpersState;
-	bool lastShowIncompleteState;
-	bool lastShowStaticState;
-	bool lastShowDynamicState;
-	bool lastShowNoCollisionState;
+            bool                 lastShowHelpersState;
+            bool                 lastShowIncompleteState;
+            bool                 lastShowStaticState;
+            bool                 lastShowDynamicState;
+            bool                 lastShowNoCollisionState;
 
-	ModeCommand terrainCommand;
-	ModeCommand sceneCommand;
-	ModeCommand objectCommand;
-	ModeCommand buildingCommand;
-	ModeCommand unitCommand;
-	ModeCommand decoratorCommand;
-	ModeCommand lightCommand;
+            ModeCommand          terrainCommand;
+            ModeCommand          sceneCommand;
+            ModeCommand          objectCommand;
+            ModeCommand          buildingCommand;
+            ModeCommand          unitCommand;
+            ModeCommand          decoratorCommand;
+            ModeCommand          lightCommand;
 
-	bool flashEnabled;
-	int flashTimer;
+            bool                 flashEnabled;
+            int flashTimer;
 
-	EditorStateData(Gui &gui_, Storm &storm_, IEditorState &state, Camera &camera_)
-	:	gui(gui_),
-		camera(camera_),
-		storm(storm_),
-		colorMap(storm),
-		lightMap(storm),
+            EditorStateData(Gui &gui_, Storm &storm_, IEditorState &state, Camera &camera_)
+                :   gui(gui_),
+                camera(camera_),
+                storm(storm_),
+                colorMap(storm),
+                lightMap(storm),
 
-		terrainMode(gui, storm, state),
-		sceneMode(gui, storm, state),
-		objectMode(gui, storm, state),
-		buildingMode(gui, storm, state),
-		unitMode(gui, storm, state),
-		decoratorMode(gui, storm, state),
-		lightMode(gui, storm, state),
+                terrainMode(gui, storm, state),
+                sceneMode(gui, storm, state),
+                objectMode(gui, storm, state),
+                buildingMode(gui, storm, state),
+                unitMode(gui, storm, state),
+                decoratorMode(gui, storm, state),
+                lightMode(gui, storm, state),
 
-		terrainCommand(sharedData, &terrainMode, gui, IDC_MENU_TERRAIN),
-		sceneCommand(sharedData, &sceneMode, gui, IDC_MENU_SCENE),
-		objectCommand(sharedData, &objectMode, gui, IDC_MENU_OBJECTS),
-		buildingCommand(sharedData, &buildingMode, gui, IDC_MENU_BUILDINGS),
-		unitCommand(sharedData, &unitMode, gui, IDC_MENU_UNIT),
-		decoratorCommand(sharedData, &decoratorMode, gui, IDC_MENU_DECORATORS),
-		lightCommand(sharedData, &lightMode, gui, IDC_MENU_LIGHTS),
-		flashEnabled(false),
-		flashTimer(0)
-	{
-		reset();
+                terrainCommand(sharedData, &terrainMode, gui, IDC_MENU_TERRAIN),
+                sceneCommand(sharedData, &sceneMode, gui, IDC_MENU_SCENE),
+                objectCommand(sharedData, &objectMode, gui, IDC_MENU_OBJECTS),
+                buildingCommand(sharedData, &buildingMode, gui, IDC_MENU_BUILDINGS),
+                unitCommand(sharedData, &unitMode, gui, IDC_MENU_UNIT),
+                decoratorCommand(sharedData, &decoratorMode, gui, IDC_MENU_DECORATORS),
+                lightCommand(sharedData, &lightMode, gui, IDC_MENU_LIGHTS),
+                flashEnabled(false),
+                flashTimer(0)
+            {
+                reset();
 
-		lastShowGridState = true;
-		lastShowTriggersState = true;
-		lastShowHelpersState = true;
-		lastShowUnitsState = true;
-		lastShowFoldsState = false;
+                lastShowGridState = true;
+                lastShowTriggersState = true;
+                lastShowHelpersState = true;
+                lastShowUnitsState = true;
+                lastShowFoldsState = false;
 
-		modes.push_back(&terrainMode);
-		modes.push_back(&sceneMode);
-		modes.push_back(&objectMode);
-		modes.push_back(&buildingMode);
-		modes.push_back(&decoratorMode);
-		modes.push_back(&unitMode);
-		modes.push_back(&lightMode);
+                modes.push_back(&terrainMode);
+                modes.push_back(&sceneMode);
+                modes.push_back(&objectMode);
+                modes.push_back(&buildingMode);
+                modes.push_back(&decoratorMode);
+                modes.push_back(&unitMode);
+                modes.push_back(&lightMode);
 
-		sharedData.activeMode = &terrainMode;
-	}
+                sharedData.activeMode = &terrainMode;
+            }
 
-	void enableUpdate()
-	{
-		enableDialogItem(gui.getMenuDialog(), IDC_MENU_UPDATE, true);
-	}
+            void enableUpdate()
+            {
+                enableDialogItem(gui.getMenuDialog(), IDC_MENU_UPDATE, true);
+            }
 
-	void update()
-	{
-		if(updateHeightmap)
-		{
-			HeightmapData &heightmapData = terrainMode.loadHeightmap();
-		
-			terrainMode.setHeightmap();
-			objectMode.resetTerrain();
-		}
+            void update()
+            {
+                if (updateHeightmap) {
+                    HeightmapData &heightmapData = terrainMode.loadHeightmap();
 
-		if(updateHeightmap || updateTexturing || updateShadows)
-		{
-			sceneMode.setLightning();
-			terrainMode.setTexturing();
-		}
+                    terrainMode.setHeightmap();
+                    objectMode.resetTerrain();
+                }
 
-		objectMode.restoreTerrain();
-		for(unsigned int i = 0; i < modes.size(); ++i)
-			modes[i]->update();
+                if (updateHeightmap || updateTexturing || updateShadows) {
+                    sceneMode.setLightning();
+                    terrainMode.setTexturing();
+                }
 
-		decoratorMode.setTerrainLegacy();
+                objectMode.restoreTerrain();
+                for (unsigned int i = 0; i < modes.size(); ++i) {
+                    modes[i]->update();
+                }
 
-		updateHeightmap = false;
-		updateTexturing = false;
-		updateShadows = false;
-		updateObjects = false;
+                decoratorMode.setTerrainLegacy();
 
-		enableDialogItem(gui.getMenuDialog(), IDC_MENU_UPDATE, false);
-	}
+                updateHeightmap = false;
+                updateTexturing = false;
+                updateShadows = false;
+                updateObjects = false;
 
-	void tick(int ms)
-	{
-		static int flashFreq = 500;
-		if(flashEnabled)
-		{
-			flashTimer += ms;
-			if(flashTimer >= flashFreq)
-			{
-				FlashWindow(gui.getMainWindow().getWindowHandle(), TRUE);
-				flashTimer -= flashFreq;
-			}
-		}
-	}
+                enableDialogItem(gui.getMenuDialog(), IDC_MENU_UPDATE, false);
+            }
 
-	void reset()
-	{
-		updateHeightmap = false;
-		updateTexturing = false;
-		updateShadows = false;
-		updateObjects = false;
+            void tick(int ms)
+            {
+                static int flashFreq = 500;
+                if (flashEnabled) {
+                    flashTimer += ms;
+                    if (flashTimer >= flashFreq) {
+                        FlashWindow(gui.getMainWindow().getWindowHandle(), TRUE);
+                        flashTimer -= flashFreq;
+                    }
+                }
+            }
 
-		for(unsigned int i = 0; i < modes.size(); ++i)
-			modes[i]->reset();
-	}
-};
+            void reset()
+            {
+                updateHeightmap = false;
+                updateTexturing = false;
+                updateShadows = false;
+                updateObjects = false;
 
-EditorState::EditorState(Gui &gui, Storm &storm, Camera &camera)
-{
-	boost::scoped_ptr<EditorStateData> tempData(new EditorStateData(gui, storm, *this, camera));
-	data.swap(tempData);
-}
+                for (unsigned int i = 0; i < modes.size(); ++i) {
+                    modes[i]->reset();
+                }
+            }
+        };
 
-EditorState::~EditorState()
-{
-}
+        EditorState::EditorState(Gui &gui, Storm &storm, Camera &camera)
+        {
+            boost::scoped_ptr<EditorStateData> tempData( new EditorStateData(gui, storm, *this, camera) );
+            data.swap(tempData);
+        }
 
-void EditorState::tick()
-{
-	int ms = int(getTimeDelta() * 1000.f);
+        EditorState::~EditorState()
+        {
+        }
 
-	if(data->sharedData.activeMode)
-		data->sharedData.activeMode->tick();
+        void EditorState::tick()
+        {
+            int ms = int(getTimeDelta() * 1000.f);
 
-	if(data->storm.lightManager)
-	{
-		VC3 pos = data->camera.getPosition();
-		data->storm.lightManager->update(pos, pos, ms);
-	}
+            if (data->sharedData.activeMode)
+                data->sharedData.activeMode->tick();
 
-	data->decoratorMode.guiTick();
-	//data->colorMap.debugRender();
-	//data->lightMap.debugRender();
-	
-	data->tick(ms);
-}
+            if (data->storm.lightManager) {
+                VC3 pos = data->camera.getPosition();
+                data->storm.lightManager->update(pos, pos, ms);
+            }
 
-void EditorState::update()
-{
-	data->update();
-}
+            data->decoratorMode.guiTick();
+            //data->colorMap.debugRender();
+            //data->lightMap.debugRender();
 
-void EditorState::reset()
-{
-	data->reset();
-}
+            data->tick(ms);
+        }
 
-Camera &EditorState::getCamera()
-{
-	return data->camera;
-}
+        void EditorState::update()
+        {
+            data->update();
+        }
 
-TerrainColorMap &EditorState::getColorMap()
-{
-	return data->colorMap;
-}
+        void EditorState::reset()
+        {
+            data->reset();
+        }
 
-TerrainLightMap &EditorState::getLightMap()
-{
-	return data->lightMap;
-}
+        Camera &EditorState::getCamera()
+        {
+            return data->camera;
+        }
 
-void EditorState::hideObjects()
-{
-	data->objectMode.hideObjects();
-	data->unitMode.hideObjects();
-	data->lightMode.hideObjects();
-}
+        TerrainColorMap &EditorState::getColorMap()
+        {
+            return data->colorMap;
+        }
 
-void EditorState::showObjects()
-{
-	data->objectMode.showObjects();
-	data->unitMode.showObjects();
-	data->lightMode.showObjects();
-}
+        TerrainLightMap &EditorState::getLightMap()
+        {
+            return data->lightMap;
+        }
 
-void EditorState::roofCollision(bool collision)
-{
-	data->buildingMode.roofCollision(collision);
-}
+        void EditorState::hideObjects()
+        {
+            data->objectMode.hideObjects();
+            data->unitMode.hideObjects();
+            data->lightMode.hideObjects();
+        }
+
+        void EditorState::showObjects()
+        {
+            data->objectMode.showObjects();
+            data->unitMode.showObjects();
+            data->lightMode.showObjects();
+        }
+
+        void EditorState::roofCollision(bool collision)
+        {
+            data->buildingMode.roofCollision(collision);
+        }
 
 // (crap. i want direct access to this!)
-LightMode &EditorState::getLightMode()
-{
-	return data->lightMode;
-}
+        LightMode &EditorState::getLightMode()
+        {
+            return data->lightMode;
+        }
 
-void EditorState::getLights(std::vector<TerrainLightMap::PointLight> &lights)
-{
-	data->lightMode.getLights(lights, false);
-}
+        void EditorState::getLights(std::vector<TerrainLightMap::PointLight> &lights)
+        {
+            data->lightMode.getLights(lights, false);
+        }
 
-void EditorState::getBuildingLights(std::vector<TerrainLightMap::PointLight> &lights)
-{
-	data->lightMode.getLights(lights, true);
-}
+        void EditorState::getBuildingLights(std::vector<TerrainLightMap::PointLight> &lights)
+        {
+            data->lightMode.getLights(lights, true);
+        }
 
-void EditorState::updateHeightmap()
-{
-	data->updateHeightmap = true;
-	data->enableUpdate();
-}
+        void EditorState::updateHeightmap()
+        {
+            data->updateHeightmap = true;
+            data->enableUpdate();
+        }
 
-void EditorState::updateTexturing()
-{
-	data->updateTexturing = true;
-	data->enableUpdate();
-}
+        void EditorState::updateTexturing()
+        {
+            data->updateTexturing = true;
+            data->enableUpdate();
+        }
 
-void EditorState::updateShadows()
-{
-	data->updateShadows = true;
-	data->enableUpdate();
-}
+        void EditorState::updateShadows()
+        {
+            data->updateShadows = true;
+            data->enableUpdate();
+        }
 
-void EditorState::updateObjects()
-{
-	data->updateObjects = true;
-	data->enableUpdate();
-}
+        void EditorState::updateObjects()
+        {
+            data->updateObjects = true;
+            data->enableUpdate();
+        }
 
-void EditorState::updateLighting()
-{
-	// Reset lights on manager?
+        void EditorState::updateLighting()
+        {
+            // Reset lights on manager?
 
-	data->objectMode.updateLighting();
-	data->buildingMode.updateLighting();
-	data->unitMode.updateLighting();
-}
+            data->objectMode.updateLighting();
+            data->buildingMode.updateLighting();
+            data->unitMode.updateLighting();
+        }
 
-VC3 EditorState::getSunDirection() const
-{
-	return data->sceneMode.getSunDirection();
-}
+        VC3 EditorState::getSunDirection() const
+        {
+            return data->sceneMode.getSunDirection();
+        }
 
-void EditorState::getEditorObjectStates(EditorObjectState &states) const
-{
-	data->objectMode.getEditorObjectStates(states);
-}
+        void EditorState::getEditorObjectStates(EditorObjectState &states) const
+        {
+            data->objectMode.getEditorObjectStates(states);
+        }
 
-void EditorState::setEditorObjectStates(const EditorObjectState &states)
-{
-	data->objectMode.setEditorObjectStates(states);
-}
+        void EditorState::setEditorObjectStates(const EditorObjectState &states)
+        {
+            data->objectMode.setEditorObjectStates(states);
+        }
 
-void EditorState::visualizeCompletion()
-{
-	data->flashEnabled = true;
-}
+        void EditorState::visualizeCompletion()
+        {
+            data->flashEnabled = true;
+        }
 
-void EditorState::endCompletionVisualization()
-{
-	data->flashEnabled = false;
-}
+        void EditorState::endCompletionVisualization()
+        {
+            data->flashEnabled = false;
+        }
 
-void EditorState::exportData(const ExportOptions &options) const
-{
-	Exporter exporter;
-	HeightmapData &heightmapData = data->terrainMode.loadHeightmap();
+        void EditorState::exportData(const ExportOptions &options) const
+        {
+            Exporter exporter;
+            HeightmapData &heightmapData = data->terrainMode.loadHeightmap();
 
-	exporter.getScene().setHeightmap(heightmapData.heightMap, heightmapData.mapSize, heightmapData.realSize);
+            exporter.getScene().setHeightmap(heightmapData.heightMap, heightmapData.mapSize, heightmapData.realSize);
 
-	for(unsigned int i = 0; i < data->modes.size(); ++i)
-		data->modes[i]->doExport(exporter);
+            for (unsigned int i = 0; i < data->modes.size(); ++i) {
+                data->modes[i]->doExport(exporter);
+            }
 
-	exporter.save(options);
-}
+            exporter.save(options);
+        }
 
-filesystem::OutputStream &EditorState::writeStream(filesystem::OutputStream &stream) const
-{
-	for(unsigned int i = 0; i < data->modes.size(); ++i)
-	{
-		if(i >= 6)
-			break;
+        filesystem::OutputStream &EditorState::writeStream(filesystem::OutputStream &stream) const
+        {
+            for (unsigned int i = 0; i < data->modes.size(); ++i) {
+                if (i >= 6)
+                    break;
 
-		stream << *data->modes[i];
-	}
+                stream << *data->modes[i];
+            }
 
-	stream << int(2);
-	writeColors(stream);
+            stream << int(2);
+            writeColors(stream);
 
-	stream << data->lightMode;
+            stream << data->lightMode;
 
-	return stream;
-}
+            return stream;
+        }
 
-filesystem::InputStream &EditorState::readStream(filesystem::InputStream &stream)
-{
-	reset();
+        filesystem::InputStream &EditorState::readStream(filesystem::InputStream &stream)
+        {
+            reset();
 
-	for(unsigned int i = 0; i < data->modes.size(); ++i)
-	{
-		if(i >= 6)
-			break;
+            for (unsigned int i = 0; i < data->modes.size(); ++i) {
+                if (i >= 6)
+                    break;
 
-		stream >> *data->modes[i];
-	}
+                stream >> *data->modes[i];
+            }
 
-	int version = 0;
-	stream >> version;
+            int version = 0;
+            stream >> version;
 
-	readColors(stream);
+            readColors(stream);
 
-	if(version > 1)
-		stream >> data->lightMode;
+            if (version > 1)
+                stream >> data->lightMode;
 
-	data->updateHeightmap = true;
-	data->updateTexturing = true;
-	data->updateShadows = true;
+            data->updateHeightmap = true;
+            data->updateTexturing = true;
+            data->updateShadows = true;
 
-	return stream;
-}
+            return stream;
+        }
 
-void EditorState::updateGrid(bool force)
-{
-	if (force || data->lastShowGridState != data->sceneMode.doesShowGrid())
-	{
-		data->lastShowGridState = data->sceneMode.doesShowGrid();
-		data->unitMode.setGridUnitVisibility(data->lastShowGridState);
-	}
-}
+        void EditorState::updateGrid(bool force)
+        {
+            if ( force || data->lastShowGridState != data->sceneMode.doesShowGrid() ) {
+                data->lastShowGridState = data->sceneMode.doesShowGrid();
+                data->unitMode.setGridUnitVisibility(data->lastShowGridState);
+            }
+        }
 
-void EditorState::updateTriggersVisibility(bool force)
-{
-	if (force || data->lastShowTriggersState != data->sceneMode.doesShowTriggers())
-	{
-		data->lastShowTriggersState = data->sceneMode.doesShowTriggers();
-		data->unitMode.setTriggersVisibility(data->lastShowTriggersState);
-	}
-}
+        void EditorState::updateTriggersVisibility(bool force)
+        {
+            if ( force || data->lastShowTriggersState != data->sceneMode.doesShowTriggers() ) {
+                data->lastShowTriggersState = data->sceneMode.doesShowTriggers();
+                data->unitMode.setTriggersVisibility(data->lastShowTriggersState);
+            }
+        }
 
-void EditorState::updateUnitsVisibility(bool force)
-{
-	if (force || data->lastShowUnitsState != data->sceneMode.doesShowUnits())
-	{
-		data->lastShowUnitsState = data->sceneMode.doesShowUnits();
-		data->unitMode.setUnitsVisibility(data->lastShowUnitsState);
-	}
-}
+        void EditorState::updateUnitsVisibility(bool force)
+        {
+            if ( force || data->lastShowUnitsState != data->sceneMode.doesShowUnits() ) {
+                data->lastShowUnitsState = data->sceneMode.doesShowUnits();
+                data->unitMode.setUnitsVisibility(data->lastShowUnitsState);
+            }
+        }
 
-void EditorState::updateHelpersVisibility(bool force)
-{
-	if (force || data->lastShowHelpersState != data->sceneMode.doesShowHelpers())
-	{
-		data->lastShowHelpersState = data->sceneMode.doesShowHelpers();
-		data->objectMode.setHelpersVisibility(data->lastShowHelpersState);
-	}
-}
+        void EditorState::updateHelpersVisibility(bool force)
+        {
+            if ( force || data->lastShowHelpersState != data->sceneMode.doesShowHelpers() ) {
+                data->lastShowHelpersState = data->sceneMode.doesShowHelpers();
+                data->objectMode.setHelpersVisibility(data->lastShowHelpersState);
+            }
+        }
 
-void EditorState::updateIncompleteVisibility(bool force)
-{
-	if (force || data->lastShowIncompleteState != data->sceneMode.doesShowIncomplete())
-	{
-		data->lastShowIncompleteState = data->sceneMode.doesShowIncomplete();
-		data->objectMode.setIncompleteVisibility(data->lastShowIncompleteState);
-	}
-}
+        void EditorState::updateIncompleteVisibility(bool force)
+        {
+            if ( force || data->lastShowIncompleteState != data->sceneMode.doesShowIncomplete() ) {
+                data->lastShowIncompleteState = data->sceneMode.doesShowIncomplete();
+                data->objectMode.setIncompleteVisibility(data->lastShowIncompleteState);
+            }
+        }
 
-void EditorState::updateStaticVisibility(bool force)
-{
-	if (force || data->lastShowStaticState != data->sceneMode.doesShowStatic())
-	{
-		data->lastShowStaticState = data->sceneMode.doesShowStatic();
-		data->objectMode.setStaticVisibility(data->lastShowStaticState);
-	}
-}
+        void EditorState::updateStaticVisibility(bool force)
+        {
+            if ( force || data->lastShowStaticState != data->sceneMode.doesShowStatic() ) {
+                data->lastShowStaticState = data->sceneMode.doesShowStatic();
+                data->objectMode.setStaticVisibility(data->lastShowStaticState);
+            }
+        }
 
-void EditorState::updateDynamicVisibility(bool force)
-{
-	if (force || data->lastShowDynamicState != data->sceneMode.doesShowDynamic())
-	{
-		data->lastShowDynamicState = data->sceneMode.doesShowDynamic();
-		data->objectMode.setDynamicVisibility(data->lastShowDynamicState);
-	}
-}
+        void EditorState::updateDynamicVisibility(bool force)
+        {
+            if ( force || data->lastShowDynamicState != data->sceneMode.doesShowDynamic() ) {
+                data->lastShowDynamicState = data->sceneMode.doesShowDynamic();
+                data->objectMode.setDynamicVisibility(data->lastShowDynamicState);
+            }
+        }
 
-void EditorState::updateNoCollisionVisibility(bool force)
-{
-	if (force || data->lastShowNoCollisionState != data->sceneMode.doesShowNoCollision())
-	{
-		data->lastShowNoCollisionState = data->sceneMode.doesShowNoCollision();
-		data->objectMode.setNoCollisionVisibility(data->lastShowNoCollisionState);
-	}
-}
+        void EditorState::updateNoCollisionVisibility(bool force)
+        {
+            if ( force || data->lastShowNoCollisionState != data->sceneMode.doesShowNoCollision() ) {
+                data->lastShowNoCollisionState = data->sceneMode.doesShowNoCollision();
+                data->objectMode.setNoCollisionVisibility(data->lastShowNoCollisionState);
+            }
+        }
 
-void EditorState::updateFolds(bool force)
-{
-	if (force || data->lastShowFoldsState != data->sceneMode.doesShowFolds())
-	{
-		data->lastShowFoldsState = data->sceneMode.doesShowFolds();
-		// TODO: ...
-	}
-}
+        void EditorState::updateFolds(bool force)
+        {
+            if ( force || data->lastShowFoldsState != data->sceneMode.doesShowFolds() )
+                data->lastShowFoldsState = data->sceneMode.doesShowFolds();
+                // TODO: ...
+        }
 
-} // end of namespace editor
-} // end of namespace frozenbyte
+    } // end of namespace editor
+}     // end of namespace frozenbyte

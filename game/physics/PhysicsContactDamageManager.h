@@ -1,4 +1,3 @@
-
 #ifndef PHYSICSCONTACTDAMAGEMANAGER_H
 #define PHYSICSCONTACTDAMAGEMANAGER_H
 
@@ -7,24 +6,22 @@
 
 namespace game
 {
-	class IGamePhysicsObject;
-	class Game;
-	class PhysicsContactDamageManagerImpl;
+    class IGamePhysicsObject;
+    class Game;
+    class PhysicsContactDamageManagerImpl;
 
+    class PhysicsContactDamageManager : public IPhysicsContactListener {
+    public:
+        PhysicsContactDamageManager(Game *game);
+        ~PhysicsContactDamageManager();
 
-	class PhysicsContactDamageManager : public IPhysicsContactListener
-	{
-	public:
-		PhysicsContactDamageManager(Game *game);
-		~PhysicsContactDamageManager();
+        void reloadConfiguration();
 
-		void reloadConfiguration();
+        virtual void physicsContact(const PhysicsContact &contact);
 
-		virtual void physicsContact(const PhysicsContact &contact);
-
-	private:
-		PhysicsContactDamageManagerImpl *impl;
-	};
+    private:
+        PhysicsContactDamageManagerImpl *impl;
+    };
 }
 
 #endif

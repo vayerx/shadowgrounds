@@ -11,30 +11,30 @@
 
 @interface Launcher : NSObject <NSApplicationDelegate>
 {
-	IBOutlet NSWindow *window;
-	IBOutlet NSTextFieldCell *languageText;
-	IBOutlet NSTextFieldCell *spokenText;
-	IBOutlet NSTextFieldCell *resolutionText;
-	IBOutlet NSTextFieldCell *detailText;
-	IBOutlet NSTextFieldCell *antialiasingText;
-	IBOutlet NSTextFieldCell *anisotrophyText;
-	IBOutlet NSTextFieldCell *textureText;
-	IBOutlet NSTextFieldCell *physicsText;
-	IBOutlet NSButton *launchButton;
-	IBOutlet NSButton *halfButton;
-	IBOutlet NSButton *windowedButton;
-	IBOutlet NSButton *glowButton;
-	IBOutlet NSButton *distortionButton;
-	IBOutlet NSButton *soundsButton;
-	IBOutlet NSButton *videosButton;
-	IBOutlet NSComboBox *languageCombo;
-	IBOutlet NSComboBox *spokenCombo;
-	IBOutlet NSComboBox *resolutionCombo;
-	IBOutlet NSComboBox *detailCombo;
-	IBOutlet NSComboBox *antialiasingCombo;
-	IBOutlet NSComboBox *anisotrophyCombo;
-	IBOutlet NSComboBox *textureCombo;
-	IBOutlet NSComboBox *physicsCombo;
+    IBOutlet NSWindow *window;
+    IBOutlet NSTextFieldCell *languageText;
+    IBOutlet NSTextFieldCell *spokenText;
+    IBOutlet NSTextFieldCell *resolutionText;
+    IBOutlet NSTextFieldCell *detailText;
+    IBOutlet NSTextFieldCell *antialiasingText;
+    IBOutlet NSTextFieldCell *anisotrophyText;
+    IBOutlet NSTextFieldCell *textureText;
+    IBOutlet NSTextFieldCell *physicsText;
+    IBOutlet NSButton *launchButton;
+    IBOutlet NSButton *halfButton;
+    IBOutlet NSButton *windowedButton;
+    IBOutlet NSButton *glowButton;
+    IBOutlet NSButton *distortionButton;
+    IBOutlet NSButton *soundsButton;
+    IBOutlet NSButton *videosButton;
+    IBOutlet NSComboBox *languageCombo;
+    IBOutlet NSComboBox *spokenCombo;
+    IBOutlet NSComboBox *resolutionCombo;
+    IBOutlet NSComboBox *detailCombo;
+    IBOutlet NSComboBox *antialiasingCombo;
+    IBOutlet NSComboBox *anisotrophyCombo;
+    IBOutlet NSComboBox *textureCombo;
+    IBOutlet NSComboBox *physicsCombo;
 }
 
 @property (assign) IBOutlet NSWindow *window;

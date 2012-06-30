@@ -1,4 +1,3 @@
-
 #include "precompiled.h"
 
 #include "ProgressBar.h"
@@ -15,337 +14,287 @@
 #include "../util/fb_assert.h"
 #include "../util/Debug_MemoryManager.h"
 
-
-#define PROGRESSBAR_PLAYER_MOVE_TRESHOLD 1.0f
+#define PROGRESSBAR_PLAYER_MOVE_TRESHOLD   1.0f
 #define PROGRESSBAR_PLAYER_ROTATE_TRESHOLD 60.0f
 
 // (ticks)
-#define PROGRESSBAR_VISIBLE_AFTER_STOP (2000 / GAME_TICK_MSEC)
-
+#define PROGRESSBAR_VISIBLE_AFTER_STOP     (2000 / GAME_TICK_MSEC)
 
 namespace game
 {
-	ProgressBar::ProgressBar()
-	{
-		interruptPercent = 1.0f;
+    ProgressBar::ProgressBar()
+    {
+        interruptPercent = 1.0f;
 
-		timeDone = 0;
-		timeTotal = 1;
-		timeTick = 0;
+        timeDone = 0;
+        timeTotal = 1;
+        timeTick = 0;
 
-		unit = NULL;
+        unit = NULL;
 
-		label = NULL;
-		doneLabel = NULL;
-		interruptedLabel = NULL;
+        label = NULL;
+        doneLabel = NULL;
+        interruptedLabel = NULL;
 
-		borderImage = NULL;
-		barImage = NULL;
+        borderImage = NULL;
+        barImage = NULL;
 
-		visible = false;
-		visibilityLeftCounter = 0;
+        visible = false;
+        visibilityLeftCounter = 0;
 
-		doneTriggered = false;
-		nextTickTrigger = 0;
+        doneTriggered = false;
+        nextTickTrigger = 0;
 
-		progressing = false;
-		triggerInterrupted = false;
+        progressing = false;
+        triggerInterrupted = false;
 
-		progressPosition = VC3(0,0,0);
-		progressAngle = 0;
+        progressPosition = VC3(0, 0, 0);
+        progressAngle = 0;
 
-		restartedWhileVisible = false;
-	}
+        restartedWhileVisible = false;
+    }
 
+    ProgressBar::~ProgressBar()
+    {
+        // NOTE: ProgressBarActor handles visualization deletion?
+        if ( isProgressing() )
+            stopProgress();
+    }
 
-	ProgressBar::~ProgressBar()
-	{
-		// NOTE: ProgressBarActor handles visualization deletion?
-		if (isProgressing())
-		{
-			stopProgress();
-		}
-	}
+    void ProgressBar::setInterruptPercent(int percent)
+    {
+        interruptPercent = ( (float)percent / 100.0f );
+    }
 
+    bool ProgressBar::isProgressing() const
+    {
+        return progressing;
+    }
 
-	void ProgressBar::setInterruptPercent( int percent )
-	{
-		interruptPercent = ( (float)percent / 100.0f );
-	}
+    bool ProgressBar::isDone() const
+    {
+        if (interruptPercent >= 1.0f) {
+            if (timeDone >= timeTotal)
+                return true;
+            else
+                return false;
+        } else {
+            if ( timeDone >= (int)( (float)timeTotal * interruptPercent + 0.5f ) )
+                return true;
+            else
+                return false;
+        }
+    }
 
+    void ProgressBar::run(const VC3 &playerPosition, float playerAngle,
+                          bool continueKeyPressed, bool interruptKeyPressed)
+    {
+        if ( isProgressing() ) {
+            // has player moved/rotated too much to interrupt the progress
+            bool playerInterrupted = interruptKeyPressed;
 
-	bool ProgressBar::isProgressing() const
-	{
-		return progressing;
-	}
+            if (!continueKeyPressed)
+                playerInterrupted = true;
 
+            VC3 moved = playerPosition - this->progressPosition;
+            if (moved.GetSquareLength() > PROGRESSBAR_PLAYER_MOVE_TRESHOLD * PROGRESSBAR_PLAYER_MOVE_TRESHOLD)
+                playerInterrupted = true;
 
-	bool ProgressBar::isDone() const
-	{
-		if( interruptPercent >= 1.0f )
-		{
-			if (timeDone >= timeTotal)
-				return true;
-			else
-				return false;
-		}
-		else
-		{
-			if( timeDone >= (int)( (float)timeTotal * interruptPercent + 0.5f ) )
-				return true;
-			else
-				return false;
-		}
-	}
+            float rotAngle = util::AngleRotationCalculator::getFactoredRotationForAngles(playerAngle,
+                                                                                         this->progressAngle,
+                                                                                         0.0f);
+            if (fabs(rotAngle) > PROGRESSBAR_PLAYER_ROTATE_TRESHOLD)
+                playerInterrupted = true;
 
+            if (playerInterrupted) {
+                progressing = false;
+                triggerInterrupted = true;
+                visibilityLeftCounter = PROGRESSBAR_VISIBLE_AFTER_STOP;
+            }
 
-	void ProgressBar::run(const VC3 &playerPosition, float playerAngle,
-		bool continueKeyPressed, bool interruptKeyPressed)
-	{
-		if (isProgressing())
-		{
-			// has player moved/rotated too much to interrupt the progress
-			bool playerInterrupted = interruptKeyPressed;
+            if ( !isDone() ) {
+                timeDone++;
+            } else {
+                progressing = false;
+                visibilityLeftCounter = PROGRESSBAR_VISIBLE_AFTER_STOP;
+            }
+        } else {
+            if (visibilityLeftCounter > 0) {
+                visibilityLeftCounter--;
+                if (visibilityLeftCounter == 0)
+                    visible = false;
+            }
+        }
+    }
 
-			if (!continueKeyPressed)
-				playerInterrupted = true;
+    bool ProgressBar::doesTriggerDone()
+    {
+        if ( isDone() ) {
+            if (doneTriggered) {
+                return false;
+            } else {
+                doneTriggered = true;
+                return true;
+            }
+        } else {
+            return false;
+        }
+    }
 
-			VC3 moved = playerPosition - this->progressPosition;
-			if (moved.GetSquareLength() > PROGRESSBAR_PLAYER_MOVE_TRESHOLD*PROGRESSBAR_PLAYER_MOVE_TRESHOLD)
-				playerInterrupted = true;
+    bool ProgressBar::doesTriggerTick()
+    {
+        if (timeTick > 0) {
+            if (timeDone >= nextTickTrigger && timeDone != timeTotal) {
+                nextTickTrigger += timeTick;
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
 
-			float rotAngle = util::AngleRotationCalculator::getFactoredRotationForAngles(playerAngle, this->progressAngle, 0.0f);
-			if (fabs(rotAngle) > PROGRESSBAR_PLAYER_ROTATE_TRESHOLD)
-				playerInterrupted = true;
+    bool ProgressBar::doesTriggerInterrupted()
+    {
+        if (triggerInterrupted) {
+            triggerInterrupted = false;
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-			if (playerInterrupted)
-			{
-				progressing = false;
-				triggerInterrupted = true;
-				visibilityLeftCounter = PROGRESSBAR_VISIBLE_AFTER_STOP;
-			}
+    //bool ProgressBar::doesTriggerResumed(); (done at item execute)
+    //{
+    //}
 
-			if (!isDone())
-			{
-				timeDone++;
-			} else {
-				progressing = false;
-				visibilityLeftCounter = PROGRESSBAR_VISIBLE_AFTER_STOP;
-			}
-		} else {
-			if (visibilityLeftCounter > 0)
-			{
-				visibilityLeftCounter--;
-				if (visibilityLeftCounter == 0)
-				{
-					visible = false;
-				}
-			}
-		}
-	}
+    void ProgressBar::setLabel(const char *label)
+    {
+        if (this->label != NULL) {
+            delete[] this->label;
+            this->label = NULL;
+        }
+        if (label != NULL) {
+            this->label = new char[strlen(label) + 1];
+            strcpy(this->label, label);
+        }
+    }
 
+    void ProgressBar::setDoneLabel(const char *doneLabel)
+    {
+        if (this->doneLabel != NULL) {
+            delete[] this->doneLabel;
+            this->doneLabel = NULL;
+        }
+        if (doneLabel != NULL) {
+            this->doneLabel = new char[strlen(doneLabel) + 1];
+            strcpy(this->doneLabel, doneLabel);
+        }
+    }
 
-	bool ProgressBar::doesTriggerDone()
-	{
-		if (isDone())
-		{
-			if (doneTriggered)
-			{
-				return false;
-			} else {
-				doneTriggered = true;
-				return true;
-			}
-		} else {
-			return false;
-		}
-	}
+    void ProgressBar::setInterruptedLabel(const char *interruptedLabel)
+    {
+        if (this->interruptedLabel != NULL) {
+            delete[] this->interruptedLabel;
+            this->interruptedLabel = NULL;
+        }
+        if (interruptedLabel != NULL) {
+            this->interruptedLabel = new char[strlen(interruptedLabel) + 1];
+            strcpy(this->interruptedLabel, interruptedLabel);
+        }
+    }
 
+    void ProgressBar::setBarImage(const char *barImage)
+    {
+        if (this->barImage != NULL) {
+            delete[] this->barImage;
+            this->barImage = NULL;
+        }
+        if (barImage != NULL) {
+            this->barImage = new char[strlen(barImage) + 1];
+            strcpy(this->barImage, barImage);
+        }
+    }
 
-	bool ProgressBar::doesTriggerTick()
-	{
-		if (timeTick > 0)
-		{
-			if (timeDone >= nextTickTrigger && timeDone != timeTotal)
-			{
-				nextTickTrigger += timeTick;
-				return true;
-			} else {
-				return false;
-			}
-		} else {
-			return false;
-		}
-	}
+    void ProgressBar::setBorderImage(const char *borderImage)
+    {
+        if (this->borderImage != NULL) {
+            delete[] this->borderImage;
+            this->borderImage = NULL;
+        }
+        if (borderImage != NULL) {
+            this->borderImage = new char[strlen(borderImage) + 1];
+            strcpy(this->borderImage, borderImage);
+        }
+    }
 
+    void ProgressBar::stopProgress()
+    {
+        this->progressing = false;
+        this->triggerInterrupted = false;
+        this->doneTriggered = false;
+        this->timeDone = 0;
+        this->nextTickTrigger = 0;
+    }
 
-	bool ProgressBar::doesTriggerInterrupted()
-	{
-		if (triggerInterrupted)
-		{
-			triggerInterrupted = false;
-			return true;
-		} else {
-			return false;
-		}
-	}
+    void ProgressBar::interruptProgress()
+    {
+        this->progressing = false;
+        this->triggerInterrupted = true;
+        this->doneTriggered = false;
+    }
 
+    void ProgressBar::startProgress(Unit *unit, const VC3 &playerPosition, float playerAngle)
+    {
+        fb_assert(!this->progressing);
 
-	//bool ProgressBar::doesTriggerResumed(); (done at item execute)
-	//{
-	//}
+        if ( isDone() )
+            return;
 
+        this->unit = unit;
 
-	void ProgressBar::setLabel(const char *label)
-	{
-		if (this->label != NULL)
-		{
-			delete [] this->label;
-			this->label = NULL;
-		}
-		if (label != NULL)
-		{
-			this->label = new char[strlen(label) + 1];
-			strcpy(this->label, label);
-		}
-	}
+        this->progressPosition = playerPosition;
+        this->progressAngle = playerAngle;
+        this->progressing = true;
+        this->triggerInterrupted = false;
+        this->doneTriggered = false;
 
+        if (this->visibilityLeftCounter > 0)
+            this->restartedWhileVisible = true;
+        else
+            this->restartedWhileVisible = 0;
 
-	void ProgressBar::setDoneLabel(const char *doneLabel)
-	{
-		if (this->doneLabel != NULL)
-		{
-			delete [] this->doneLabel;
-			this->doneLabel = NULL;
-		}
-		if (doneLabel != NULL)
-		{
-			this->doneLabel = new char[strlen(doneLabel) + 1];
-			strcpy(this->doneLabel, doneLabel);
-		}
-	}
+        this->visibilityLeftCounter = 0;
+        this->visible = true;
+    }
 
+    void ProgressBar::restartProgress()
+    {
+        VC3 tmp = this->progressPosition;
+        float tmp2 = this->progressAngle;
+        stopProgress();
+        startProgress(this->unit, tmp, tmp2);
+    }
 
-	void ProgressBar::setInterruptedLabel(const char *interruptedLabel)
-	{
-		if (this->interruptedLabel != NULL)
-		{
-			delete [] this->interruptedLabel;
-			this->interruptedLabel = NULL;
-		}
-		if (interruptedLabel != NULL)
-		{
-			this->interruptedLabel = new char[strlen(interruptedLabel) + 1];
-			strcpy(this->interruptedLabel, interruptedLabel);
-		}
-	}
+    int ProgressBar::getProgressDone() const
+    {
+        return this->timeDone;
+    }
 
+    int ProgressBar::getProgressDonePercentage() const
+    {
+        return (this->timeDone * 100) / this->timeTotal;
+    }
 
-	void ProgressBar::setBarImage(const char *barImage)
-	{
-		if (this->barImage != NULL)
-		{
-			delete [] this->barImage;
-			this->barImage = NULL;
-		}
-		if (barImage != NULL)
-		{
-			this->barImage = new char[strlen(barImage) + 1];
-			strcpy(this->barImage, barImage);
-		}
-	}
+    void ProgressBar::setTotalTime(int totalTime)
+    {
+        this->timeTotal = totalTime;
+    }
 
-
-	void ProgressBar::setBorderImage(const char *borderImage)
-	{
-		if (this->borderImage != NULL)
-		{
-			delete [] this->borderImage;
-			this->borderImage = NULL;
-		}
-		if (borderImage != NULL)
-		{
-			this->borderImage = new char[strlen(borderImage) + 1];
-			strcpy(this->borderImage, borderImage);
-		}
-	}
-
-
-	void ProgressBar::stopProgress()
-	{
-		this->progressing = false;
-		this->triggerInterrupted = false;
-		this->doneTriggered = false;
-		this->timeDone = 0;
-		this->nextTickTrigger = 0;
-	}
-
-
-	void ProgressBar::interruptProgress()
-	{
-		this->progressing = false;
-		this->triggerInterrupted = true;
-		this->doneTriggered = false;
-	}
-
-
-	void ProgressBar::startProgress(Unit *unit, const VC3 &playerPosition, float playerAngle)
-	{
-		fb_assert(!this->progressing);
-
-		if (isDone())
-			return;
-
-		this->unit = unit;
-
-		this->progressPosition = playerPosition;
-		this->progressAngle = playerAngle;
-		this->progressing = true;
-		this->triggerInterrupted = false;
-		this->doneTriggered = false;
-
-		if (this->visibilityLeftCounter > 0)
-		{
-			this->restartedWhileVisible = true;
-		} else {
-			this->restartedWhileVisible = 0;
-		}
-
-		this->visibilityLeftCounter = 0;
-		this->visible = true;
-	}
-
-	
-	void ProgressBar::restartProgress()
-	{
-		VC3 tmp = this->progressPosition;
-		float tmp2 = this->progressAngle;
-		stopProgress();
-		startProgress(this->unit, tmp, tmp2);
-	}
-
-
-	int ProgressBar::getProgressDone() const
-	{
-		return this->timeDone;
-	}
-
-
-	int ProgressBar::getProgressDonePercentage() const
-	{
-		return (this->timeDone * 100) / this->timeTotal;
-	}
-
-	void ProgressBar::setTotalTime(int totalTime)
-	{
-		this->timeTotal = totalTime;
-	}
-
-	void ProgressBar::setTickTime(int tickTime)
-	{
-		this->timeTick = tickTime;
-	}
-
+    void ProgressBar::setTickTime(int tickTime)
+    {
+        this->timeTick = tickTime;
+    }
 
 }
-

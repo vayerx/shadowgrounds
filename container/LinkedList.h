@@ -2,7 +2,7 @@
 #define container_LinkedList_h
 
 #ifdef _MSC_VER
-#pragma warning( disable : 4290 ) 
+#  pragma warning( disable : 4290 )
 #endif
 
 //
@@ -20,7 +20,7 @@
 #include "EmptyLinkedListException.h"
 #include "EmptyIteratorException.h"
 
-#define throws(x) throw(x)
+#define throws(x) throw (x)
 #define null NULL
 
 // proto...
@@ -28,16 +28,13 @@ class LinkedList;
 class LinkedListIterator;
 class SafeLinkedListIterator;
 
-
 // just to clean up the linkedlist node pool after use.
 // if pool not in use, does nothing.
 extern void uninitLinkedListNodePool();
 
-
 #ifdef LINKEDLIST_USE_NODE_POOL
-class ListNode
-{
-  public:
+class ListNode {
+public:
     ListNode();
     int poolIndex;
     ListNode(void *ptr);
@@ -46,32 +43,30 @@ class ListNode
     ListNode *prev;
     void *item;
 
-  friend class LinkedList;
-  friend class LinkedListIterator;
-  friend class SafeLinkedListIterator;
+    friend class LinkedList;
+    friend class LinkedListIterator;
+    friend class SafeLinkedListIterator;
 };
 
 #else
 
-class ListNode
-{
-  public:
+class ListNode {
+public:
     ListNode(void *ptr);
 
     ListNode *next;
     ListNode *prev;
     void *item;
 
-  friend class LinkedList;
-  friend class LinkedListIterator;
-  friend class SafeLinkedListIterator;
+    friend class LinkedList;
+    friend class LinkedListIterator;
+    friend class SafeLinkedListIterator;
 };
 
 #endif
 
-class LinkedList
-{
-  private:
+class LinkedList {
+private:
     ListNode *first;
     ListNode *last;
     ListNode *walk_node;
@@ -79,16 +74,16 @@ class LinkedList
     int remove_count;
     friend class LinkedListIterator;
 
-  public:
+public:
     LinkedList();
     ~LinkedList();
     void prepend(void *ptr);
     void append(void *ptr);
     void remove(void *ptr);
-    void *popFirst() throws (EmptyLinkedListException *);
-    void *popLast() throws (EmptyLinkedListException *);
-    void *peekFirst() throws (EmptyLinkedListException *);
-    void *peekLast() throws (EmptyLinkedListException *);
+    void *popFirst() throws(EmptyLinkedListException *);
+    void *popLast() throws(EmptyLinkedListException *);
+    void *peekFirst() throws(EmptyLinkedListException *);
+    void *peekLast() throws(EmptyLinkedListException *);
     bool isEmpty();
 
     // these are for real hacking... usually not recommended
@@ -98,69 +93,64 @@ class LinkedList
 
     // iteration
     // deprecated: use the seperate iterators instead
-    void *iterateNext() throws (EmptyIteratorException *);
+    void *iterateNext() throws(EmptyIteratorException *);
     bool iterateAvailable();
     void resetIterate();
 };
 
 // basic iterator
 // items should not be deleted from the list while using iterator.
-class LinkedListIterator
-{
-  private:
+class LinkedListIterator {
+private:
     const LinkedList *linkedList;
     const ListNode *walk_node;
     int remove_count;
 
-  public:
+public:
     LinkedListIterator(const LinkedList *linkedList);
     ~LinkedListIterator();
     inline bool iterateAvailable()
     {
-      if (walk_node == null)
-        return false;
-      else
-        return true;
+        if (walk_node == null)
+            return false;
+        else
+            return true;
     }
     inline void *iterateNext()
     {
-      void *ret;
+        void *ret;
 
-      #ifdef _DEBUG
+#ifdef _DEBUG
         // this is to catch unsafe node removals while iterating.
         // (as that may cause undefined behaviour)
         if (linkedList->remove_count != this->remove_count)
-        {
-          abort();
-        }
-      #endif
-  
-      if (walk_node == null)
-      { 
-        throw(new EmptyIteratorException());
-      }
-  
-      ret = walk_node->item;
-      walk_node = walk_node->next;
-  
-      return ret;
+            abort();
+
+#endif
+
+        if (walk_node == null)
+            throw ( new EmptyIteratorException() );
+
+        ret = walk_node->item;
+        walk_node = walk_node->next;
+
+        return ret;
     }
 };
 
-// safe iterator, keeps an internal copy of the linked list, making it 
+// safe iterator, keeps an internal copy of the linked list, making it
 // possible to delete items from the list safely while using iterator.
 // not very effective though.
-class SafeLinkedListIterator
-{
-  private:
+class SafeLinkedListIterator {
+private:
     LinkedList *linkedList;
     const ListNode *walk_node;
 
-  public:
+public:
     SafeLinkedListIterator(const LinkedList *linkedList);
     ~SafeLinkedListIterator();
     bool iterateAvailable();
-    void *iterateNext() throws (EmptyIteratorException *);
+    void *iterateNext() throws(EmptyIteratorException *);
 };
 
 #endif

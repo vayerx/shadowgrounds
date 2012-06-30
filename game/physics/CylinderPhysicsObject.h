@@ -1,4 +1,3 @@
-
 #ifndef CYLINDERPHYSICSOBJECT_H
 #define CYLINDERPHYSICSOBJECT_H
 
@@ -7,26 +6,29 @@
 
 namespace game
 {
-	class GamePhysics;
+    class GamePhysics;
 
-	class CylinderPhysicsObject : public AbstractPhysicsObject
-	{
-	public:
-		CylinderPhysicsObject(GamePhysics *gamePhysics, float height, float radius, float mass, int collisionGroup, const VC3 &position);
+    class CylinderPhysicsObject : public AbstractPhysicsObject {
+    public:
+        CylinderPhysicsObject(GamePhysics *gamePhysics,
+                              float        height,
+                              float        radius,
+                              float        mass,
+                              int          collisionGroup,
+                              const VC3   &position);
 
-		~CylinderPhysicsObject();
+        ~CylinderPhysicsObject();
 
-	private:
-		PHYSICS_ACTOR createImplementationObject();
+    private:
+        PHYSICS_ACTOR createImplementationObject();
 
-		void syncImplementationObject(PHYSICS_ACTOR &obj);
+        void syncImplementationObject(PHYSICS_ACTOR &obj);
 
-		float radius;
-		float height;
-		float mass;
-		int collisionGroup;
-	};
+        float radius;
+        float height;
+        float mass;
+        int collisionGroup;
+    };
 }
 
 #endif
-

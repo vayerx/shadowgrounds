@@ -1,4 +1,3 @@
-
 #ifndef PROGRESSBAR_H
 #define PROGRESSBAR_H
 
@@ -6,91 +5,89 @@
 
 namespace game
 {
-	class Unit;
+    class Unit;
 
-	class ProgressBar
-	{
-		public:
-			ProgressBar();
-			
-			~ProgressBar();
+    class ProgressBar {
+    public:
+        ProgressBar();
 
-			bool isProgressing() const;
+        ~ProgressBar();
 
-			bool isDone() const;
+        bool isProgressing() const;
 
-			void run(const VC3 &playerPosition, float playerAngle,
-				bool continueKeyPressed, bool interruptKeyPressed);
+        bool isDone() const;
 
-			bool doesTriggerDone();
-			bool doesTriggerTick();
-			bool doesTriggerInterrupted();
-			//bool doesTriggerResumed(); (done at item execute)
+        void run(const VC3 &playerPosition, float playerAngle,
+                 bool continueKeyPressed, bool interruptKeyPressed);
 
-			void setInterruptPercent( int percent );
+        bool doesTriggerDone();
+        bool doesTriggerTick();
+        bool doesTriggerInterrupted();
+        //bool doesTriggerResumed(); (done at item execute)
 
-			void setLabel(const char *label);
+        void setInterruptPercent(int percent);
 
-			void setDoneLabel(const char *doneLabel);
+        void setLabel(const char *label);
 
-			void setInterruptedLabel(const char *interruptedLabel);
+        void setDoneLabel(const char *doneLabel);
 
-			void setBarImage(const char *barImage);
+        void setInterruptedLabel(const char *interruptedLabel);
 
-			void setBorderImage(const char *borderImage);
+        void setBarImage(const char *barImage);
 
-			void stopProgress();
+        void setBorderImage(const char *borderImage);
 
-			void interruptProgress();
+        void stopProgress();
 
-			void startProgress(Unit *unit, const VC3 &playerPosition, float playerAngle);
+        void interruptProgress();
 
-			void restartProgress();
+        void startProgress(Unit *unit, const VC3 &playerPosition, float playerAngle);
 
-			int getProgressDone() const;
+        void restartProgress();
 
-			int getProgressDonePercentage() const;
+        int getProgressDone() const;
 
-			void setTotalTime(int totalTime);
-			void setTickTime(int tickTime);
+        int getProgressDonePercentage() const;
 
-			Unit *getUnit() { return unit; }
+        void setTotalTime(int totalTime);
+        void setTickTime(int tickTime);
 
-		private:
+        Unit *getUnit() { return unit; }
 
-			float interruptPercent;
+    private:
 
-			// (these in game ticks)
-			int timeDone;
-			int timeTotal;
-			int timeTick;
+        float interruptPercent;
 
-			char *label;
-			char *doneLabel;
-			char *interruptedLabel;
+        // (these in game ticks)
+        int timeDone;
+        int timeTotal;
+        int timeTick;
 
-			char *borderImage;
-			char *barImage;
+        char *label;
+        char *doneLabel;
+        char *interruptedLabel;
 
-			bool visible;
-			int visibilityLeftCounter;
+        char *borderImage;
+        char *barImage;
 
-			bool doneTriggered;
-			int nextTickTrigger;
+        bool visible;
+        int visibilityLeftCounter;
 
-			bool progressing;
-			bool triggerInterrupted;
+        bool doneTriggered;
+        int nextTickTrigger;
 
-			VC3 progressPosition;
-			float progressAngle;
+        bool progressing;
+        bool triggerInterrupted;
 
-			bool restartedWhileVisible;
+        VC3 progressPosition;
+        float progressAngle;
 
-			Unit *unit;
+        bool restartedWhileVisible;
 
-			friend class ProgressBarActor;
-	};
+        Unit *unit;
+
+        friend class ProgressBarActor;
+    };
 }
 
 #endif
-

@@ -4,31 +4,29 @@
 #define INCLUDED_LIGHTOBJECT_H
 
 #ifdef _MSC_VER
-#pragma warning(disable: 4514) // removed unreferenced inline function (stl)
+#  pragma warning(disable: 4514) // removed unreferenced inline function (stl)
 #endif
 
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
 namespace frozenbyte {
-namespace exporter {
+    namespace exporter {
+        class Object;
+        class Material;
 
-class Object;
-class Material;
+        struct LightObjects {
+            std::vector<boost::shared_ptr<Object> > objects;
+            std::vector<boost::shared_ptr<Object> > roofObjects;
+            std::vector<Material> materials;
 
-struct LightObjects
-{
-	std::vector<boost::shared_ptr<Object> >objects;
-	std::vector<boost::shared_ptr<Object> > roofObjects;
-	std::vector<Material> materials;
+            void combine();
+        };
 
-	void combine();
-};
+        void insertLightObjects(LightObjects &result, const Object &source, const std::vector<Material> &materials);
+        void adjustMaterialIndices(LightObjects &result, int baseIndex);
 
-void insertLightObjects(LightObjects &result, const Object &source, const std::vector<Material> &materials);
-void adjustMaterialIndices(LightObjects &result, int baseIndex);
-
-} // export
-} //frozenbyte
+    } // export
+}     //frozenbyte
 
 #endif

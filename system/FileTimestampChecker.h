@@ -1,4 +1,3 @@
-
 #ifndef FILETIMESTAMPCHECKER_H
 #define FILETIMESTAMPCHECKER_H
 
@@ -12,30 +11,29 @@
  *
  */
 
-class FileTimestampChecker
-{
+class FileTimestampChecker {
 public:
 
-  /**
-   *
-   * Check if given file with given name has been modified after another
-   * file of given name.
-   * @param file  char *, the name of the file to check.
-   * @param thanfile  char *, the name of the file to check against.
-   * @return bool, true if given "file" is newer than given "thanfile".
-   *
-   */
+    /**
+     *
+     * Check if given file with given name has been modified after another
+     * file of given name.
+     * @param file  char *, the name of the file to check.
+     * @param thanfile  char *, the name of the file to check against.
+     * @return bool, true if given "file" is newer than given "thanfile".
+     *
+     */
 
-	static bool isFileNewerThanFile(const char *file, const char *thanfile);
-	static bool isFileNewerOrSameThanFile(const char *file, const char *thanfile);
-	static bool isFileNewerOrAlmostSameThanFile(const char *file, const char *thanfile);
+    static bool isFileNewerThanFile(const char *file, const char *thanfile);
+    static bool isFileNewerOrSameThanFile(const char *file, const char *thanfile);
+    static bool isFileNewerOrAlmostSameThanFile(const char *file, const char *thanfile);
 
-	static bool isFileUpToDateComparedTo(const char *file, const char *thanfile);
+    static bool isFileUpToDateComparedTo(const char *file, const char *thanfile);
 
 //private:
-	// ok, we want access to this too...
+    // ok, we want access to this too...
 
-	static int getFileTimestamp(const char *file);
+    static int getFileTimestamp(const char *file);
 };
 
 #endif

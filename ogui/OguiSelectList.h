@@ -1,4 +1,3 @@
-
 #ifndef OGUISELECTLIST_H
 #define OGUISELECTLIST_H
 
@@ -9,20 +8,29 @@
 #include "OguiButton.h"
 
 //
-// Select list 
+// Select list
 //
 // v1.0.0 - 10.4.2002 - jpkokkon
 //
 
-
 class OguiWindow;
 
-
-class OguiSelectList : public IOguiButtonListener
-{
-  public:
+class OguiSelectList : public IOguiButtonListener {
+public:
     // never try to use the constructor directly, use ogui to contruct these
-    OguiSelectList(int x, int y, int defsel, bool multisel, int amount, const char **values, const char **descs, OguiButton **listButs, OguiButton *upBut, OguiButton *downBut, OguiSelectListStyle *style, int id, void *argument);
+    OguiSelectList(int                  x,
+                   int                  y,
+                   int                  defsel,
+                   bool                 multisel,
+                   int                  amount,
+                   const char         **values,
+                   const char         **descs,
+                   OguiButton         **listButs,
+                   OguiButton          *upBut,
+                   OguiButton          *downBut,
+                   OguiSelectListStyle *style,
+                   int                  id,
+                   void                *argument);
 
     // oldstuff... dummy constructor / destructor
     //OguiSelectList();
@@ -56,15 +64,15 @@ class OguiSelectList : public IOguiButtonListener
     void setSelected(int position, bool selected);
 
     // add an item to the list
-		// position -1 can be used to add after last item (0 adds before first item)
-		// WARNING: calling this inside a select event may invalidate value pointers 
-		// given to event listener
-    void addItem(const char *value, const char *desc, bool selected = false, 
-      int position = -1);
+    // position -1 can be used to add after last item (0 adds before first item)
+    // WARNING: calling this inside a select event may invalidate value pointers
+    // given to event listener
+    void addItem(const char *value, const char *desc, bool selected = false,
+                 int position = -1);
 
-	// added by Pete
-	// 
-	void highlightItem( int position, bool highlight );
+    // added by Pete
+    //
+    void highlightItem(int position, bool highlight);
 
     // add an item to the list
     void deleteItem(int position = -1);
@@ -75,18 +83,30 @@ class OguiSelectList : public IOguiButtonListener
     // part of internal implementation
     void CursorEvent(OguiButtonEvent *eve);
 
-		OguiButton *getUpScrollBut() { return upScrollBut; }
-		OguiButton *getDownScrollBut() { return downScrollBut; }
+    OguiButton *getUpScrollBut() { return upScrollBut; }
+    OguiButton *getDownScrollBut() { return downScrollBut; }
 
-  protected:
+protected:
     // this is here to make things easier for extending classes (FileList)
-    void init(int x, int y, int defsel, bool multisel, int amount, const char **values, const char **descs, OguiButton **listButs, OguiButton *upBut, OguiButton *downBut, OguiSelectListStyle *style, int id, void *argument);
+    void init(int                  x,
+              int                  y,
+              int                  defsel,
+              bool                 multisel,
+              int                  amount,
+              const char         **values,
+              const char         **descs,
+              OguiButton         **listButs,
+              OguiButton          *upBut,
+              OguiButton          *downBut,
+              OguiSelectListStyle *style,
+              int                  id,
+              void                *argument);
 
-  private:
+private:
     void uninit(); // called by destructor
 
-  protected:
- 
+protected:
+
     OguiSelectListStyle *style;
 
     OguiWindow *parent;
@@ -114,8 +134,8 @@ class OguiSelectList : public IOguiButtonListener
     int allocedAmount;
     bool multiSelectable;
     bool *selected;
-	bool *highlighted;
-	bool highlightNew;
+    bool *highlighted;
+    bool highlightNew;
     int scrolly;
     char **values;
     char **descs;
@@ -124,6 +144,4 @@ class OguiSelectList : public IOguiButtonListener
     int id;
 };
 
-
 #endif
-

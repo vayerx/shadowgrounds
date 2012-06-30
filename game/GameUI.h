@@ -1,4 +1,3 @@
-
 #ifndef GAMEUI_H
 #define GAMEUI_H
 
@@ -29,33 +28,24 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
-
-
-
-#define GAMEUI_CAMERA_NORMAL 0
-#define GAMEUI_CAMERA_TACTICAL 1
+#define GAMEUI_CAMERA_NORMAL     0
+#define GAMEUI_CAMERA_TACTICAL   1
 #define GAMEUI_CAMERA_CINEMATIC1 2
 #define GAMEUI_CAMERA_CINEMATIC2 3
 
-#define GAMEUI_CAMERA_AMOUNT 4
-
-
+#define GAMEUI_CAMERA_AMOUNT     4
 
 // NOTE: this value must equal the MESSAGE_TYPE enum last value + 1
-#define MESSAGE_TYPES_AMOUNT 6
-
+#define MESSAGE_TYPES_AMOUNT     6
 
 // HACK: some way to detect real errors versus sounds being too far.
-enum GAMEUI_SOUND_EFFECT_ERRORCODE
-{
-	GAMEUI_SOUND_EFFECT_ERRORCODE_NONE,
-	GAMEUI_SOUND_EFFECT_ERRORCODE_TOO_FAR,
-	GAMEUI_SOUND_EFFECT_ERRORCODE_NO_SOUNDS,
-	GAMEUI_SOUND_EFFECT_ERRORCODE_OTHER
+enum GAMEUI_SOUND_EFFECT_ERRORCODE {
+    GAMEUI_SOUND_EFFECT_ERRORCODE_NONE,
+    GAMEUI_SOUND_EFFECT_ERRORCODE_TOO_FAR,
+    GAMEUI_SOUND_EFFECT_ERRORCODE_NO_SOUNDS,
+    GAMEUI_SOUND_EFFECT_ERRORCODE_OTHER
 };
 extern GAMEUI_SOUND_EFFECT_ERRORCODE gameui_sound_effect_errorcode;
-
-
 
 class Ogui;
 class OguiStormDriver;
@@ -65,633 +55,644 @@ class IStorm3D_Terrain;
 class CursorRayTracer;
 
 namespace sfx {
-	class SoundLooper;
-	class SoundMixer;
-	class MusicPlaylist;
-	class AmbientAreaManager;
+    class SoundLooper;
+    class SoundMixer;
+    class MusicPlaylist;
+    class AmbientAreaManager;
 }
-
 
 class Terrain;
 
 namespace frozenbyte
 {
-	class TextureCache;
+    class TextureCache;
 }
 
 namespace util
 {
-	class TextureSwitcher;
-	class LipsyncManager;
-	class GridOcclusionCuller;
+    class TextureSwitcher;
+    class LipsyncManager;
+    class GridOcclusionCuller;
 }
 
 namespace ui
 {
-	class VisualEffectManager;
-	class TerrainCreator;
-	class ArmorConstructWindow;
-	class MenuCollection;
-	class StorageWindow;
-	class LoadingWindow;
-	class AniRecorderWindow;
-	class CombatWindow;
-	class UpgradeWindow;
-	class GameController;
-	class MessageBoxWindow;
-	class Visual2D;
-	class SelectionBox;
-	class UIEffects;
-	class PlayerUnitCameraBoundary;
-	class ErrorWindow;
-	class GameConsole;
-	class AmbientSoundManager;
-	class JoystickAimer;
-	class VisualEffect;
-	class LightManager;
-	class DynamicLightManager;
+    class VisualEffectManager;
+    class TerrainCreator;
+    class ArmorConstructWindow;
+    class MenuCollection;
+    class StorageWindow;
+    class LoadingWindow;
+    class AniRecorderWindow;
+    class CombatWindow;
+    class UpgradeWindow;
+    class GameController;
+    class MessageBoxWindow;
+    class Visual2D;
+    class SelectionBox;
+    class UIEffects;
+    class PlayerUnitCameraBoundary;
+    class ErrorWindow;
+    class GameConsole;
+    class AmbientSoundManager;
+    class JoystickAimer;
+    class VisualEffect;
+    class LightManager;
+    class DynamicLightManager;
 #ifdef GUI_BUILD_MAP_WINDOW
-	class MapWindow;
+    class MapWindow;
 #endif
 #ifdef GUI_BUILD_LOG_WINDOW
-	class LogWindow;
+    class LogWindow;
 #endif
-	class LogManager;
+    class LogManager;
 #ifdef GUI_BUILD_INGAME_GUI_TABS
-	class IngameGuiTabs;
+    class IngameGuiTabs;
 #endif
-	class TerminalManager;
-	class CinematicScreen;
-	class ICameraSystem;
-	// for survivor
-	class ScoreWindow;
-	class MissionFailureWindow;
-	class MissionSelectionWindow;
-	class SurvivorUpgradeWindow;
-	class VehicleWindow;
+    class TerminalManager;
+    class CinematicScreen;
+    class ICameraSystem;
+    // for survivor
+    class ScoreWindow;
+    class MissionFailureWindow;
+    class MissionSelectionWindow;
+    class SurvivorUpgradeWindow;
+    class VehicleWindow;
 }
-
 
 // TODO: using namespace in header - REMOVE!!!
 using namespace ui;
 
-
 namespace game
 {
+    class Game;
+    class BuildingAdder;
+    class Unit;
 
-	class Game;
-	class BuildingAdder;
-	class Unit;
+    class SceneSelection {
+    public:
+        SceneSelection() { hit = false; scaledMapX = 0; scaledMapY = 0; unit = NULL; };
+        bool hit;         // hit somewhere on map or some unit
+        float scaledMapX; // map coordinates (of unit if not null, else just map)
+        float scaledMapY;
+        Unit *unit;
+    };
 
+    class GameUI : public IMessageBoxListener, ui::IGameControllerKeyreader {
+    public:
 
-	class SceneSelection
-	{
-	public:
-		SceneSelection() { hit=false; scaledMapX=0; scaledMapY=0; unit=NULL; };
-		bool hit; // hit somewhere on map or some unit
-		float scaledMapX; // map coordinates (of unit if not null, else just map)
-		float scaledMapY;
-		Unit *unit;
-	};
+        // NOTE: MESSAGE_TYPE_AMOUNT define must equal this enum's last value + 1
+        enum MESSAGE_TYPE {
+            MESSAGE_TYPE_NORMAL = 0,
+            MESSAGE_TYPE_RADIO = 1,
+            MESSAGE_TYPE_RADIO2 = 2,
+            MESSAGE_TYPE_CENTER_BIG = 3,
+            MESSAGE_TYPE_HINT = 4,
+            MESSAGE_TYPE_EXECUTE_TIP = 5
+        };
 
+        enum WINDOW_TYPE {
+            WINDOW_TYPE_MAP = 0,
+            WINDOW_TYPE_UPGRADE = 1,
+            WINDOW_TYPE_LOG = 2
+        };
 
-	class GameUI : public IMessageBoxListener, ui::IGameControllerKeyreader
-	{
-	public:
+        GameUI(Ogui *ogui, Game *game, IStorm3D *s3d, IStorm3D_Scene *scene, sfx::SoundMixer *soundMixer);
+        ~GameUI();
 
-		// NOTE: MESSAGE_TYPE_AMOUNT define must equal this enum's last value + 1
-		enum MESSAGE_TYPE
-		{
-			MESSAGE_TYPE_NORMAL = 0,
-			MESSAGE_TYPE_RADIO = 1,
-			MESSAGE_TYPE_RADIO2 = 2,
-			MESSAGE_TYPE_CENTER_BIG = 3,
-			MESSAGE_TYPE_HINT = 4,
-			MESSAGE_TYPE_EXECUTE_TIP = 5
-		};
+        // by Pete
+        IStorm3D_Scene *getStormScene() const { return scene; }
 
-		enum WINDOW_TYPE
-		{
-			WINDOW_TYPE_MAP = 0,
-			WINDOW_TYPE_UPGRADE = 1,
-			WINDOW_TYPE_LOG = 2
-		};
+        float getVideoVolume() const;
+        void detachVisualEffects();
 
-		GameUI(Ogui *ogui, Game *game, IStorm3D *s3d, IStorm3D_Scene *scene, sfx::SoundMixer *soundMixer);
-		~GameUI();
+        void createCameras();
+        void deleteCameras();
 
-		// by Pete
-		IStorm3D_Scene* getStormScene() const { return scene; }
+        void openArmorConstructWindow(int player);
+        void closeArmorConstructWindow(int player);
+        void refreshArmorConstructWindow(int player);
 
-		float getVideoVolume() const;
-		void detachVisualEffects();	
+        void openCommandWindow(int player);
+        void closeCommandWindow(int player);
+        void startCommandWindow(int player);
+        // unnecessary(?): void refreshCommandWindow(int player);
 
-		void createCameras();
-		void deleteCameras();
+        // added by Pete to open main menu from game, when pressed esc
+        void openMainmenuFromGame(int menu = 0);
 
-		void openArmorConstructWindow(int player);
-		void closeArmorConstructWindow(int player);
-		void refreshArmorConstructWindow(int player);
+        // added by Pete to close main menu and resuma game
+        void resumeGame();
 
-		void openCommandWindow(int player);
-		void closeCommandWindow(int player);
-		void startCommandWindow(int player);
-		// unnecessary(?): void refreshCommandWindow(int player);
+        void openStorageWindow(int player);
+        void closeStorageWindow(int player);
 
-		// added by Pete to open main menu from game, when pressed esc
-		void openMainmenuFromGame( int menu = 0 );
+        void openLoadingWindow(int player);
+        void closeLoadingWindow(int player);
+        void redrawLoadingWindow(int player);
 
-		// added by Pete to close main menu and resuma game 
-		void resumeGame();
+        void doneLoading(int player);
 
+        // scoreWindow methods by Pete to allow score window haxoring
+        // tells us if a score window should open at the end of a level
+        bool isScoreWindowInUse() const;
+        // tells us if a score window is visible
+        bool isScoreWindowOpen() const;
+        bool scoreWindowAllowsLoading() const;
+        void openScoreWindow(int player);
+        void closeScoreWindow(int player);
 
-		void openStorageWindow(int player);
-		void closeStorageWindow(int player);
+        void openMissionFailureWindow();
+        void closeMissionFailureWindow();
+        bool isMissionFailureWindowOpen() const;
 
-		void openLoadingWindow(int player);
-		void closeLoadingWindow(int player);
-		void redrawLoadingWindow(int player);
+        void openCharacterSelectionWindow(const char *params);
+        void closeCharacterSelectionWindow();
+        bool isCharacterSelectionWindowOpen() const;
 
-		void doneLoading(int player);
+        // added for survivor by Pete
+        void openMissionSelectionWindow();
+        void closeMissionSelectionWindow();
+        MissionSelectionWindow *getMissionSelectionWindow() const;
 
-		// scoreWindow methods by Pete to allow score window haxoring
-		// tells us if a score window should open at the end of a level
-		bool isScoreWindowInUse() const;	
-		// tells us if a score window is visible
-		bool isScoreWindowOpen() const;
-		bool scoreWindowAllowsLoading() const;
-		void openScoreWindow( int player );
-		void closeScoreWindow( int player );
+        void openAniRecorderWindow(int player);
+        void closeAniRecorderWindow(int player);
 
-		void openMissionFailureWindow();
-		void closeMissionFailureWindow();
-		bool isMissionFailureWindowOpen() const;
-
-
-		void openCharacterSelectionWindow(const char *params);
-		void closeCharacterSelectionWindow();
-		bool isCharacterSelectionWindowOpen() const;
-
-		// added for survivor by Pete
-		void openMissionSelectionWindow();
-		void closeMissionSelectionWindow();
-		MissionSelectionWindow* getMissionSelectionWindow() const;
-
-		void openAniRecorderWindow(int player);
-		void closeAniRecorderWindow(int player);
-
-		void openWindow( WINDOW_TYPE type, int player = 0 );
-		void closeWindow( WINDOW_TYPE type, bool save_changes = true, int player = 0);
+        void openWindow(WINDOW_TYPE type, int player = 0);
+        void closeWindow(WINDOW_TYPE type, bool save_changes = true, int player = 0);
 #ifdef GUI_BUILD_INGAME_GUI_TABS
-		void updateIngameTabs();
+        void updateIngameTabs();
 #endif
 
-		bool openUpgradeWindow(Unit *unit);
-		void prepareCloseUpgradeWindow(Unit *unit);
-		void closeUpgradeWindow(Unit *unit);
+        bool openUpgradeWindow(Unit *unit);
+        void prepareCloseUpgradeWindow(Unit *unit);
+        void closeUpgradeWindow(Unit *unit);
 #ifdef GUI_BUILD_MAP_WINDOW
-		bool openMapWindow();
-		void closeMapWindow();
+        bool openMapWindow();
+        void closeMapWindow();
 #endif
 #ifdef GUI_BUILD_LOG_WINDOW
-		bool openLogWindow();
-		void prepareCloseLogWindow();
-		void closeLogWindow();
+        bool openLogWindow();
+        void prepareCloseLogWindow();
+        void closeLogWindow();
 #endif
 
-		void openTerminalWindow( const std::string& name );
-		void closeTerminalWindow();
+        void openTerminalWindow(const std::string &name);
+        void closeTerminalWindow();
 
-		void openCinematicScreen( const std::string& name );
-		bool isCinematicScreenOpen() const;
-		void closeCinematicScreen();
+        void openCinematicScreen(const std::string &name);
+        bool isCinematicScreenOpen() const;
+        void closeCinematicScreen();
 
-		void			openCombatWindow(int player, bool invisible = false);
-		void			closeCombatWindow(int player);
-		CombatWindow*	getCombatWindow( int player ) const;
-		// MenuCollection*	getCommandWindow( int player ) const;
+        void            openCombatWindow(int player, bool invisible = false);
+        void            closeCombatWindow(int player);
+        CombatWindow *getCombatWindow(int player) const;
+        // MenuCollection*    getCommandWindow( int player ) const;
 
-		void openArmorIncompleteConfirm(int player, bool notAnyArmor, bool incompleteArmor, bool noArmor, bool notPaid);
+        void openArmorIncompleteConfirm(int player, bool notAnyArmor, bool incompleteArmor, bool noArmor, bool notPaid);
 
-		virtual void messageBoxClosed(MessageBoxWindow *msgbox, int id, int choice);
+        virtual void messageBoxClosed(MessageBoxWindow *msgbox, int id, int choice);
 
-		// TODO: get rid of this, should be done with request
-		//bool readyToRockNRoll();
+        // TODO: get rid of this, should be done with request
+        //bool readyToRockNRoll();
 
-		// Sets the map (terrain) to render, NULLs for not to render any terrain
-		void setRenderMap(GameMap *gameMap, char *configFile);
+        // Sets the map (terrain) to render, NULLs for not to render any terrain
+        void setRenderMap(GameMap *gameMap, char *configFile);
 
-		// runs the game ui
-		void runUI(int gameTimer);
+        // runs the game ui
+        void runUI(int gameTimer);
 
-		// tell the UI that a mission has just started
-		void missionStarted();
+        // tell the UI that a mission has just started
+        void missionStarted();
 
-		// cursor stuff
-		void setCursorControllers(bool allowJoystick = true);
+        // cursor stuff
+        void setCursorControllers(bool allowJoystick = true);
 
-		// tell the UI that a mission has just ended
-		void missionEnded();
+        // tell the UI that a mission has just ended
+        void missionEnded();
 
-		// returns true if the program should terminate
-		bool isQuitRequested();
+        // returns true if the program should terminate
+        bool isQuitRequested();
 
-		// requests that the program should terminate
-		void setQuitRequested();
+        // requests that the program should terminate
+        void setQuitRequested();
 
-		// Sets the background music. It's as simple as that.
-		// NULL parameter means no music.
-		//void setMusic(char *filename);
+        // Sets the background music. It's as simple as that.
+        // NULL parameter means no music.
+        //void setMusic(char *filename);
 
-		// returns true if music is fading in or out
-		//bool isMusicFading();
+        // returns true if music is fading in or out
+        //bool isMusicFading();
 
-		// returns camera to be modified... (what about player number???)
-		GameCamera *getGameCamera();
+        // returns camera to be modified... (what about player number???)
+        GameCamera *getGameCamera();
 
-		// return the what's under players cursor
-		SceneSelection *getSceneSelection(int clientNumber);
+        // return the what's under players cursor
+        SceneSelection *getSceneSelection(int clientNumber);
 
-		// return the game controller for this _client_
-		GameController *getController(int clientNumber);
+        // return the game controller for this _client_
+        GameController *getController(int clientNumber);
 
-		int getClientNumberForUnit(Unit *unit);
+        int getClientNumberForUnit(Unit *unit);
 
-		VisualEffectManager *getVisualEffectManager();
+        VisualEffectManager *getVisualEffectManager();
 
-		void setPointersChangedFlag(int player);
+        void setPointersChangedFlag(int player);
 
-		void setUnitDamagedFlag(int player);
+        void setUnitDamagedFlag(int player);
 
-		void setUnitDestroyedFlag(int player);
+        void setUnitDestroyedFlag(int player);
 
-		bool isAbortingMission();
+        bool isAbortingMission();
 
-		void setAbortingMission(bool abortFlag);
+        void setAbortingMission(bool abortFlag);
 
-		void selectCamera(int camera);
-		int getCameraNumber();
+        void selectCamera(int camera);
+        int getCameraNumber();
 
-		// We need to access this later
-		Terrain *getTerrain()
-		{
-			return renderTerrain;
-		}
+        // We need to access this later
+        Terrain *getTerrain()
+        {
+            return renderTerrain;
+        }
 
-		bool isLoadingWindowVisible();
+        bool isLoadingWindowVisible();
 
-		bool isAnyIngameWindowVisible();
+        bool isAnyIngameWindowVisible();
 
-		int playGUISound(const char *filename, int relativeVolume = 100);
-		
-		// added by Pete, for the use of OptionsMenu
-		int playGUISpeech( const char* filename, int relativeVolume = 100 ); 
+        int playGUISound(const char *filename, int relativeVolume = 100);
 
-		int playSoundEffect(const char *filename, float x, float y, float z, bool loop, int volume, float range, int priority, bool ambient = false);
+        // added by Pete, for the use of OptionsMenu
+        int playGUISpeech(const char *filename, int relativeVolume = 100);
 
-		int parseSoundFromDefinitionString(const char *sounddef, 
-			float x, float y, float z, bool *looped, int *handle, 
-			int *key, bool continueOldSound, float range, int priority, bool muteVolume = false, bool ambient = false);
+        int playSoundEffect(const char *filename,
+                            float       x,
+                            float       y,
+                            float       z,
+                            bool        loop,
+                            int         volume,
+                            float       range,
+                            int         priority,
+                            bool        ambient = false);
 
-		int playSpeech(const char *filename, float x, float y, float z, bool loop, int volume, bool volume_adjust = true);
+        int parseSoundFromDefinitionString(const char *sounddef,
+                                           float       x,
+                                           float       y,
+                                           float       z,
+                                           bool       *looped,
+                                           int        *handle,
+                                           int        *key,
+                                           bool        continueOldSound,
+                                           float       range,
+                                           int         priority,
+                                           bool        muteVolume = false,
+                                           bool        ambient = false);
 
-		void stopSound(int handle);
+        int playSpeech(const char *filename,
+                       float       x,
+                       float       y,
+                       float       z,
+                       bool        loop,
+                       int         volume,
+                       bool        volume_adjust = true);
 
-		void setSoundFrequencyFactor(float freqFactor);
+        void stopSound(int handle);
 
-		void preloadSound(const char *filename, bool temporaryCache);
+        void setSoundFrequencyFactor(float freqFactor);
 
-		void cleanSoundCache(bool temporaryCache);
+        void preloadSound(const char *filename, bool temporaryCache);
 
-		void clearGameMessage(MESSAGE_TYPE messageType);
-		void clearGameMessageDuration(MESSAGE_TYPE messageType);
+        void cleanSoundCache(bool temporaryCache);
 
-		void gameMessage(const char *message, ui::Visual2D *imagefile = NULL, 
-			int priority = 1, int duration = 4000, 
-			MESSAGE_TYPE messageType = MESSAGE_TYPE_NORMAL);
+        void clearGameMessage(MESSAGE_TYPE messageType);
+        void clearGameMessageDuration(MESSAGE_TYPE messageType);
 
-		bool isLocalPlayerDirectControlOn(int control, Unit *unit);
+        void gameMessage(const char *message, ui::Visual2D *imagefile = NULL,
+                         int priority = 1, int duration = 4000,
+                         MESSAGE_TYPE messageType = MESSAGE_TYPE_NORMAL);
 
-		Unit *getFirstPerson(int clientNumber);
+        bool isLocalPlayerDirectControlOn(int control, Unit *unit);
 
-		ICameraSystem *getCameraSystem();
+        Unit *getFirstPerson(int clientNumber);
 
-		bool isCursorActive(int player);
+        ICameraSystem *getCameraSystem();
 
-		bool isThirdPersonView(int player);
+        bool isCursorActive(int player);
 
-		bool isControlModeDirect(int player);
+        bool isThirdPersonView(int player);
 
-		// trace cursor coordinates to scene
-		// return unit and terrain coords.
-		SceneSelection cursorRayTrace(int x, int y, bool terrainOnly, bool accurate);
-		SceneSelection cursorRayTracePlayer(int player, bool terrainOnly, bool accurate);
+        bool isControlModeDirect(int player);
 
-		void setCameraRange(float range);
-		float getCameraRange();
-		void restoreCameraRange();
+        // trace cursor coordinates to scene
+        // return unit and terrain coords.
+        SceneSelection cursorRayTrace(int x, int y, bool terrainOnly, bool accurate);
+        SceneSelection cursorRayTracePlayer(int player, bool terrainOnly, bool accurate);
 
-		sfx::MusicPlaylist *getMusicPlaylist(int player);
-		sfx::AmbientAreaManager *getAmbientAreaManager();
-		sfx::SoundLooper *getSoundLooper() { return soundLooper; }
+        void setCameraRange(float range);
+        float getCameraRange();
+        void restoreCameraRange();
 
-		int getCursorScreenX(int clientNumber, bool exact = false);
-		int getCursorScreenY(int clientNumber, bool exact = false);
+        sfx::MusicPlaylist *getMusicPlaylist(int player);
+        sfx::AmbientAreaManager *getAmbientAreaManager();
+        sfx::SoundLooper *getSoundLooper() { return soundLooper; }
 
-		void setGUIVisibility(int player, bool visible);
+        int getCursorScreenX(int clientNumber, bool exact = false);
+        int getCursorScreenY(int clientNumber, bool exact = false);
 
-		bool pushUIState();
-		bool popUIState();
+        void setGUIVisibility(int player, bool visible);
 
-		void setCameraTimeFactor(float factor);
-		float getCameraTimeFactor();
+        bool pushUIState();
+        bool popUIState();
 
-		void setUIPauseState(bool paused);
+        void setCameraTimeFactor(float factor);
+        float getCameraTimeFactor();
 
-		void setTacticalClickExpected(int player, int cursorType);
+        void setUIPauseState(bool paused);
 
-		SelectionBox *getSelectionBox();
+        void setTacticalClickExpected(int player, int cursorType);
 
-		UIEffects *getEffects() { return effects; }
+        SelectionBox *getSelectionBox();
 
-		void addHostileUnitPointer(int player, Unit *unit);
+        UIEffects *getEffects() { return effects; }
 
-		void removeHostileUnitPointer(int player, Unit *unit);
+        void addHostileUnitPointer(int player, Unit *unit);
 
-		void doUnitClick(int player, Unit *unit);
+        void removeHostileUnitPointer(int player, Unit *unit);
 
-		void setUnitHighlight(int player, Unit *unit);
-		void setTerrainHighlight(int player, VC3 &position);
-		void clearHighlight(int player);
-		void lockHighlight(int player);
-		void unlockHighlight(int player);
+        void doUnitClick(int player, Unit *unit);
 
-		void setErrorWindow(ui::ErrorWindow *errorWin);
-		ErrorWindow *getErrorWindow() { return this->errorWindow; }
+        void setUnitHighlight(int player, Unit *unit);
+        void setTerrainHighlight(int player, VC3 &position);
+        void clearHighlight(int player);
+        void lockHighlight(int player);
+        void unlockHighlight(int player);
 
-		virtual void readKey(char ascii, int keycode, 
-			const char *keycodeName);
+        void setErrorWindow(ui::ErrorWindow *errorWin);
+        ErrorWindow *getErrorWindow() { return this->errorWindow; }
 
-		void hideConsole();
-		void showConsole();
+        virtual void readKey(char ascii, int keycode,
+                             const char *keycodeName);
 
-		void setLeftDirectRotation(bool rotationOn);
-		void setRightDirectRotation(bool rotationOn);
+        void hideConsole();
+        void showConsole();
 
-		void setControlsEnabled(int player, bool enabled);
+        void setLeftDirectRotation(bool rotationOn);
+        void setRightDirectRotation(bool rotationOn);
 
-		ui::AmbientSoundManager* getAmbientSoundManager();
+        void setControlsEnabled(int player, bool enabled);
 
-		void setCamerasWaterManager();
+        ui::AmbientSoundManager *getAmbientSoundManager();
 
-		void setFirstPerson(int player, Unit *unit, int clientNumber);
+        void setCamerasWaterManager();
 
-		void nextInterfaceGeneration();
-		void setOguiStormDriver(OguiStormDriver *driver);
-		OguiStormDriver *getOguiStormDriver();
-		
-		void setUnitsChangedFlag(int player);
+        void setFirstPerson(int player, Unit *unit, int clientNumber);
 
-		void setScrollyEnabled(bool enabled);
-		void setScrollyTemporarilyDisabled(bool disabled);
+        void nextInterfaceGeneration();
+        void setOguiStormDriver(OguiStormDriver *driver);
+        OguiStormDriver *getOguiStormDriver();
 
-    // TODO: environmentEffects class or something??
-    void setEnvironmentLightning(VC3 &fromPosition);
+        void setUnitsChangedFlag(int player);
 
-		frozenbyte::TextureCache *getTextureCache();
+        void setScrollyEnabled(bool enabled);
+        void setScrollyTemporarilyDisabled(bool disabled);
 
-		util::TextureSwitcher *getTextureSwitcher();
+        // TODO: environmentEffects class or something??
+        void setEnvironmentLightning(VC3 &fromPosition);
 
-		IStorm3D *getStorm3D();
+        frozenbyte::TextureCache *getTextureCache();
 
-		ui::LightManager *getLightManager();
-		ui::DynamicLightManager *getDynamicLightManager();
+        util::TextureSwitcher *getTextureSwitcher();
 
-		ui::AniRecorderWindow *getAniRecorderWindow();
+        IStorm3D *getStorm3D();
 
-		ui::GameConsole *getConsole();
+        ui::LightManager *getLightManager();
+        ui::DynamicLightManager *getDynamicLightManager();
 
-		VC3 getListenerPosition();
+        ui::AniRecorderWindow *getAniRecorderWindow();
 
-		void playStreamedSound(const char *filename);
-		void stopAllStreamedSounds();
+        ui::GameConsole *getConsole();
+
+        VC3 getListenerPosition();
+
+        void playStreamedSound(const char *filename);
+        void stopAllStreamedSounds();
 
 #ifdef GUI_BUILD_MAP_WINDOW
-		MapWindow *getMapWindow();
+        MapWindow *getMapWindow();
 #endif
 
-		void forceBuildingRoofHide();
-		void forceBuildingRoofShow();
-		void endForcedBuildingRoof();
+        void forceBuildingRoofHide();
+        void forceBuildingRoofShow();
+        void endForcedBuildingRoof();
 
-		void updateUnitLighting(bool onlyNearPlayer);
-		void updateCameraDependedElements();
+        void updateUnitLighting(bool onlyNearPlayer);
+        void updateCameraDependedElements();
 
-		void setPlayerSelfIlluminationEnabled(bool enabled);
-		util::LipsyncManager *getLipsyncManager();
+        void setPlayerSelfIlluminationEnabled(bool enabled);
+        util::LipsyncManager *getLipsyncManager();
 
-		util::GridOcclusionCuller *getGridOcclusionCuller() { return this->gridOcclusionCuller; }
+        util::GridOcclusionCuller *getGridOcclusionCuller() { return this->gridOcclusionCuller; }
 
-		VC3 getOcclusionCheckPosition();
+        VC3 getOcclusionCheckPosition();
 
-		void createBuildingLighting();
+        void createBuildingLighting();
 
-		// for option applier :)
-		sfx::SoundMixer *getSoundMixer() { return this->soundMixer; }
+        // for option applier :)
+        sfx::SoundMixer *getSoundMixer() { return this->soundMixer; }
 
-		void setFiresPreviously(Unit *unit, bool primaryPressed, bool secondaryPressed);
-		void setConversationNoise(int index, int value);
+        void setFiresPreviously(Unit *unit, bool primaryPressed, bool secondaryPressed);
+        void setConversationNoise(int index, int value);
 
-		void openVehicleGUI(const char *params);
-		void closeVehicleGUI();
-		bool isVehicleGUIOpen();
+        void openVehicleGUI(const char *params);
+        void closeVehicleGUI();
+        bool isVehicleGUIOpen();
 
-		void forceCursorVisibility(bool enabled);
+        void forceCursorVisibility(bool enabled);
 
-		void enableAlphaTestPass(bool enabled);
+        void enableAlphaTestPass(bool enabled);
 
-		inline boost::shared_ptr<LoadingWindow> getLoadingWindow() const { return loadingWindow; };
+        inline boost::shared_ptr<LoadingWindow> getLoadingWindow() const { return loadingWindow; };
 
-		void setTimeFactor(float factor);
+        void setTimeFactor(float factor);
 
-		void setMovieAspectRatio(bool enabled);
+        void setMovieAspectRatio(bool enabled);
 
-		int getLastRunUITime() const;
+        int getLastRunUITime() const;
 
-		void SwapCursorImages(int cursor1, int cursor2);
-		void ResetSwappedCursorImages();
-	private:
+        void SwapCursorImages(int cursor1, int cursor2);
+        void ResetSwappedCursorImages();
+    private:
 
-		bool wasKeyClicked( int key );
+        bool wasKeyClicked(int key);
 
-		OguiStormDriver *oguiStormDriver;
+        OguiStormDriver *oguiStormDriver;
 
-		Ogui *ogui;
-		Game *game;
-		IStorm3D *storm3d;
-		IStorm3D_Scene *scene;
-		GameMap *renderMap;
-		//IStorm3D_Terrain *renderTerrain;
-		
-		GameCamera *gameCamera; // the camera in use
-		GameCamera *cameras[GAMEUI_CAMERA_AMOUNT];
+        Ogui *ogui;
+        Game *game;
+        IStorm3D *storm3d;
+        IStorm3D_Scene *scene;
+        GameMap *renderMap;
+        //IStorm3D_Terrain *renderTerrain;
 
-		Terrain *renderTerrain;
-		sfx::SoundMixer *soundMixer;
-		CursorRayTracer *cursorRayTracer;
+        GameCamera *gameCamera; // the camera in use
+        GameCamera *cameras[GAMEUI_CAMERA_AMOUNT];
 
-		sfx::MusicPlaylist *musicPlaylist;
-		sfx::AmbientAreaManager *ambientAreaManager;
+        Terrain *renderTerrain;
+        sfx::SoundMixer *soundMixer;
+        CursorRayTracer *cursorRayTracer;
 
-		sfx::SoundLooper *soundLooper;
+        sfx::MusicPlaylist *musicPlaylist;
+        sfx::AmbientAreaManager *ambientAreaManager;
 
-		ICameraSystem *cameraSystem;
+        sfx::SoundLooper *soundLooper;
 
-		bool quitRequested;
+        ICameraSystem *cameraSystem;
 
-		bool msgBoxIsOpen;
+        bool quitRequested;
 
-		int movieAspectRatioGUIVisible;
+        bool msgBoxIsOpen;
 
-		bool forceCursorVisible;
+        int movieAspectRatioGUIVisible;
 
-		float aimOffset; // Rotating flashlight/camera with the mouse
-		float oldAimOffset; // Rotating flashlight/camera with the mouse
-		VC3 positionOffset;
-		
-		TerrainCreator *terrainCreator;
+        bool forceCursorVisible;
 
-		SceneSelection *sceneSelection[MAX_PLAYERS_PER_CLIENT];
+        float aimOffset;    // Rotating flashlight/camera with the mouse
+        float oldAimOffset; // Rotating flashlight/camera with the mouse
+        VC3 positionOffset;
 
-		ArmorConstructWindow **armorConstructWindows;
-		MenuCollection **commandWindows;
-		StorageWindow **storageWindows;
-		CombatWindow **combatWindows;
-		boost::shared_ptr<LoadingWindow> loadingWindow;
-		AniRecorderWindow *aniRecorderWindow;
-		MessageBoxWindow **armorIncompleteConfirmWindows;
-		MessageBoxWindow **quitBox;
-		TerminalManager* terminalManager;
-		CinematicScreen* cinematicScreen;
+        TerrainCreator *terrainCreator;
 
-		ui::ErrorWindow *errorWindow;
+        SceneSelection *sceneSelection[MAX_PLAYERS_PER_CLIENT];
+
+        ArmorConstructWindow **armorConstructWindows;
+        MenuCollection **commandWindows;
+        StorageWindow **storageWindows;
+        CombatWindow **combatWindows;
+        boost::shared_ptr<LoadingWindow> loadingWindow;
+        AniRecorderWindow *aniRecorderWindow;
+        MessageBoxWindow **armorIncompleteConfirmWindows;
+        MessageBoxWindow **quitBox;
+        TerminalManager *terminalManager;
+        CinematicScreen *cinematicScreen;
+
+        ui::ErrorWindow *errorWindow;
 
 #ifdef GUI_BUILD_MAP_WINDOW
-		ui::MapWindow *mapWindow;
+        ui::MapWindow *mapWindow;
 #endif
 #ifdef GUI_BUILD_LOG_WINDOW
-		ui::LogWindow* logWindow;
+        ui::LogWindow *logWindow;
 #endif
-		ui::LogManager* logManager;
+        ui::LogManager *logManager;
 #ifdef PROJECT_SURVIVOR
-		SurvivorUpgradeWindow *upgradeWindow;
+        SurvivorUpgradeWindow *upgradeWindow;
 #else
-		UpgradeWindow *upgradeWindow;
+        UpgradeWindow *upgradeWindow;
 #endif
 #ifdef GUI_BUILD_INGAME_GUI_TABS
-		ui::IngameGuiTabs*	ingameGuiTabs;
+        ui::IngameGuiTabs *ingameGuiTabs;
 #endif
-		VehicleWindow *vehicleWindow;
-		CharacterSelectionWindow *characterSelectionWindow;
+        VehicleWindow *vehicleWindow;
+        CharacterSelectionWindow *characterSelectionWindow;
 
-		// score window variables, added by Pete
-		bool useScoreWindow;
-		ui::ScoreWindow* scoreWindow;
+        // score window variables, added by Pete
+        bool useScoreWindow;
+        ui::ScoreWindow *scoreWindow;
 
-		ui::MissionFailureWindow* missionFailureWindow;
+        ui::MissionFailureWindow *missionFailureWindow;
 
-		// missionSelection window variables
-		ui::MissionSelectionWindow* missionSelectionWindow;
+        // missionSelection window variables
+        ui::MissionSelectionWindow *missionSelectionWindow;
 
-		bool abortMission;
+        bool abortMission;
 
-		ui::UIEffects *effects;
+        ui::UIEffects *effects;
 
-		PlayerUnitCameraBoundary *unitCameraBoundary;
+        PlayerUnitCameraBoundary *unitCameraBoundary;
 
-		ui::VisualEffectManager *visualEffectManager;
+        ui::VisualEffectManager *visualEffectManager;
 
-		ui::GameController *gameController[MAX_PLAYERS_PER_CLIENT];
-		frozenbyte::BuildingHandler buildingHandler;
+        ui::GameController *gameController[MAX_PLAYERS_PER_CLIENT];
+        frozenbyte::BuildingHandler buildingHandler;
 
-		bool pointersChanged;
-		bool unitsDestroyed;
-		bool unitsDamaged;
+        bool pointersChanged;
+        bool unitsDestroyed;
+        bool unitsDamaged;
 
-		int meterUpdateTime;
-		int guiAnimationUpdateTime;
+        int meterUpdateTime;
+        int guiAnimationUpdateTime;
 
-		int buildingHandlerUpdateTime;
+        int buildingHandlerUpdateTime;
 
-		int lastRunUITime;
+        int lastRunUITime;
 
-		int lastGameMessagePriority[MESSAGE_TYPES_AMOUNT];
-		int lastGameMessageDuration[MESSAGE_TYPES_AMOUNT];
-		int lastGameMessageCounter[MESSAGE_TYPES_AMOUNT];
+        int lastGameMessagePriority[MESSAGE_TYPES_AMOUNT];
+        int lastGameMessageDuration[MESSAGE_TYPES_AMOUNT];
+        int lastGameMessageCounter[MESSAGE_TYPES_AMOUNT];
 
-		Unit *firstPerson[MAX_PLAYERS_PER_CLIENT];
-		bool thirdPersonView;
+        Unit *firstPerson[MAX_PLAYERS_PER_CLIENT];
+        bool thirdPersonView;
 
-		float cameraRange;
+        float cameraRange;
 
-		LinkedList *uiStateStack;
+        LinkedList *uiStateStack;
 
-		float cameraTimeFactor;
+        float cameraTimeFactor;
 
-		float originalTimeFactor;
+        float originalTimeFactor;
 
-		int keyreaderId;
-		ui::GameConsole *console;
+        int keyreaderId;
+        ui::GameConsole *console;
 
-		ui::AmbientSoundManager* ambientSoundManager;
+        ui::AmbientSoundManager *ambientSoundManager;
 
-		bool controlModeDirect;
-		bool leftDirectRotation;
-		bool rightDirectRotation;
+        bool controlModeDirect;
+        bool leftDirectRotation;
+        bool rightDirectRotation;
 
-		JoystickAimer *joystickAimer[MAX_PLAYERS_PER_CLIENT];
+        JoystickAimer *joystickAimer[MAX_PLAYERS_PER_CLIENT];
 
-		// HACK for keeping character facing the correct direction
-		VC2 oldJoystickXY[MAX_PLAYERS_PER_CLIENT];
+        // HACK for keeping character facing the correct direction
+        VC2 oldJoystickXY[MAX_PLAYERS_PER_CLIENT];
 
-		bool leftMovementEnabled[MAX_PLAYERS_PER_CLIENT];
-		bool rightMovementEnabled[MAX_PLAYERS_PER_CLIENT];
-		bool upMovementEnabled[MAX_PLAYERS_PER_CLIENT];
-		bool downMovementEnabled[MAX_PLAYERS_PER_CLIENT];
+        bool leftMovementEnabled[MAX_PLAYERS_PER_CLIENT];
+        bool rightMovementEnabled[MAX_PLAYERS_PER_CLIENT];
+        bool upMovementEnabled[MAX_PLAYERS_PER_CLIENT];
+        bool downMovementEnabled[MAX_PLAYERS_PER_CLIENT];
 
-		int lastPrimaryWeapon[MAX_PLAYERS_PER_CLIENT];
-		int lastSecondaryWeapon[MAX_PLAYERS_PER_CLIENT];
+        int lastPrimaryWeapon[MAX_PLAYERS_PER_CLIENT];
+        int lastSecondaryWeapon[MAX_PLAYERS_PER_CLIENT];
 
-		bool fireKeyDownPreviously[MAX_PLAYERS_PER_CLIENT];
-		bool fireSecondaryKeyDownPreviously[MAX_PLAYERS_PER_CLIENT];
+        bool fireKeyDownPreviously[MAX_PLAYERS_PER_CLIENT];
+        bool fireSecondaryKeyDownPreviously[MAX_PLAYERS_PER_CLIENT];
 
-		VC2 clientUnitScreenPos[MAX_PLAYERS_PER_CLIENT];
+        VC2 clientUnitScreenPos[MAX_PLAYERS_PER_CLIENT];
 
-    // TODO: move this to own class...
-    ui::VisualEffect *lightningVisualEffect;
-    int lightningTime;
+        // TODO: move this to own class...
+        ui::VisualEffect *lightningVisualEffect;
+        int lightningTime;
 
-		bool scrollyEnabled;
-		bool scrollyTemporarilyDisabled;
-		bool playerSelfIllumEnabled;
+        bool scrollyEnabled;
+        bool scrollyTemporarilyDisabled;
+        bool playerSelfIllumEnabled;
 
-		frozenbyte::TextureCache *textureCache;
-		util::TextureSwitcher *textureSwitcher;
+        frozenbyte::TextureCache *textureCache;
+        util::TextureSwitcher *textureSwitcher;
 
-		ui::LightManager *lightManager;
-		ui::DynamicLightManager *dynamicLightManager;
-		boost::scoped_ptr<util::LipsyncManager> lipsyncManager;
+        ui::LightManager *lightManager;
+        ui::DynamicLightManager *dynamicLightManager;
+        boost::scoped_ptr<util::LipsyncManager> lipsyncManager;
 
-		VC3 listenerPosition;
-		std::vector<int> loopingSoundEffectHandles;
+        VC3 listenerPosition;
+        std::vector<int> loopingSoundEffectHandles;
 
-		util::GridOcclusionCuller *gridOcclusionCuller;
+        util::GridOcclusionCuller *gridOcclusionCuller;
 
-		// a horrible solution...
-		friend class Game;
-		friend class BuildingAdder;
-		friend class PhysicsContactSoundManager;
-	};
+        // a horrible solution...
+        friend class Game;
+        friend class BuildingAdder;
+        friend class PhysicsContactSoundManager;
+    };
 
 }
 

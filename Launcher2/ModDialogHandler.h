@@ -1,5 +1,3 @@
-
-
 #pragma once
 
 #include "options_value_manager.h"
@@ -8,31 +6,26 @@
 
 namespace frozenbyte
 {
+    namespace launcher
+    {
+        class ModDialogHandler : public DlgHandlerImpl {
+            OptionsValueManager manager;
+        public:
 
-	namespace launcher
-	{
+            ModDialogHandler(HWND parent);
+            ~ModDialogHandler();
 
-		class ModDialogHandler : public DlgHandlerImpl
-		{
-			OptionsValueManager manager;
-		public:
+            void initDialog();
+            void applyOptions();
+            void loadOptions();
 
-			 ModDialogHandler( HWND parent );
-			~ModDialogHandler( );
+            void setActivateButton(bool);   // Changes activatebutton's text.
+            void loadMods();
 
-			void initDialog( );
-			void applyOptions( );
-			void loadOptions( );
+            BOOL handleMessages(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-			void setActivateButton( bool );	// Changes activatebutton's text.
-			void loadMods();
+        };
 
-			BOOL handleMessages(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-		};
-
-	}
+    }
 
 }
-
-

@@ -9,38 +9,35 @@ class NxScene;
 class NxConvexMesh;
 
 namespace frozenbyte {
-namespace physics {
+    namespace physics {
+        class ConvexActor;
 
-class ConvexActor;
+        class ConvexMesh {
+            NxPhysicsSDK &sdk;
+            NxConvexMesh *mesh;
 
-class ConvexMesh
-{
-	NxPhysicsSDK &sdk;
-	NxConvexMesh *mesh;
+        public:
+            ConvexMesh(NxPhysicsSDK &sdk, const char *filename);
+            ~ConvexMesh();
 
-public:
-	ConvexMesh(NxPhysicsSDK &sdk, const char *filename);
-	~ConvexMesh();
+            bool isValidForHardware() const;
+            bool isValid() const;
 
-	bool isValidForHardware() const;
-	bool isValid() const;
+            friend class ConvexActor;
+        };
 
-	friend class ConvexActor;
-};
+        class ConvexActor : public ActorBase {
+            boost::shared_ptr<ConvexMesh> mesh;
 
-class ConvexActor: public ActorBase
-{
-	boost::shared_ptr<ConvexMesh> mesh;
+        public:
+            ConvexActor(NxScene &scene, const boost::shared_ptr<ConvexMesh> &mesh, const VC3 &position);
+            ~ConvexActor();
 
-public:
-	ConvexActor(NxScene &scene, const boost::shared_ptr<ConvexMesh> &mesh, const VC3 &position);
-	~ConvexActor();
+            // Extended stuff
+            bool isValid() const;
+        };
 
-	// Extended stuff
-	bool isValid() const;
-};
-
-} // physics
-} // frozenbyte
+    } // physics
+}     // frozenbyte
 
 #endif

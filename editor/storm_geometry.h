@@ -9,18 +9,17 @@ class IStorm3D_Mesh;
 class IStorm3D_Model;
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        struct Storm;
 
-struct Storm;
+        IStorm3D_Mesh *createWireframeObject(Storm &storm, IStorm3D_Model *model, const COL &color, const char *name);
+        void addBox(IStorm3D_Mesh *mesh, const VC3 &center, float radius);
+        void addLine(IStorm3D_Mesh *mesh, const VC3 &start, const VC3 &end, float thickness, const VC3 &normal);
+        void addCone(IStorm3D_Mesh *mesh, const VC3 &origo, float xAngle, float fov, float range, int circleVertices);
 
-IStorm3D_Mesh *createWireframeObject(Storm &storm, IStorm3D_Model *model, const COL &color, const char *name);
-void addBox(IStorm3D_Mesh *mesh, const VC3 &center, float radius);
-void addLine(IStorm3D_Mesh *mesh, const VC3 &start, const VC3 &end, float thickness, const VC3 &normal);
-void addCone(IStorm3D_Mesh *mesh, const VC3 &origo, float xAngle, float fov, float range, int circleVertices);
+        VC3 getSize(IStorm3D_Model *model);
 
-VC3 getSize(IStorm3D_Model *model);
-
-} // editor
-} // frozenbyte
+    } // editor
+}     // frozenbyte
 
 #endif

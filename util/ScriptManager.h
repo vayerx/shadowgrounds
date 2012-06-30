@@ -1,4 +1,3 @@
-
 #ifndef SCRIPTMANAGER_H
 #define SCRIPTMANAGER_H
 
@@ -13,76 +12,78 @@ class LinkedList;
 
 namespace util
 {
+    typedef std::map<int, Script *>                          ScriptHashType;
 
-	typedef std::map<int, Script *> ScriptHashType;
+    // < hashcode, < filename, timestamp > >
+    typedef std::map<int, std::pair<char *, unsigned long> > ScriptFileHashType;
 
-	// < hashcode, < filename, timestamp > >
-	typedef std::map<int, std::pair<char *, unsigned long> > ScriptFileHashType;
+    class ScriptManager {
+    public:
 
-	class ScriptManager
-	{
-	public:
+        ScriptManager();
+        ~ScriptManager();
 
-		ScriptManager();
-		~ScriptManager();
+        static ScriptManager *getInstance();
 
-		static ScriptManager *getInstance();
+        static void cleanInstance();
 
-		static void cleanInstance();
+        void loadScripts(const char *filename, const char *relativeToFilenamePath, bool replace = false);
 
-		void loadScripts(const char *filename, const char *relativeToFilenamePath, bool replace = false);
+        void loadMemoryScripts(const char *filename, char *buf, int buflen, bool replace);
 
-		void loadMemoryScripts(const char *filename, char *buf, int buflen, bool replace);
+        // returns the amount of scripts that were reloaded.
+        int reloadChangedScripts();
 
-		// returns the amount of scripts that were reloaded.
-		int reloadChangedScripts();
+        // returns true on success. bufOut assigned to newly allocated buffer, bufLenOut contains used buffer size
+        // (note, used buffer size may still be slightly smaller than actually allocated memory block size)
+        bool doInternalPreprocess(const char *filename,
+                                  char      **bufOut,
+                                  int        *bufLenOut,
+                                  const char *sourceBuf,
+                                  int         sourceBufLen);
 
-		// returns true on success. bufOut assigned to newly allocated buffer, bufLenOut contains used buffer size
-		// (note, used buffer size may still be slightly smaller than actually allocated memory block size)
-		bool doInternalPreprocess(const char *filename, char **bufOut, int *bufLenOut, const char *sourceBuf, int sourceBufLen);
+        void setKeywords(int amount, const char **keywords, int *datatypes);
 
-		void setKeywords(int amount, const char **keywords, int *datatypes);
-		
-		void setProcessor(IScriptProcessor *processor);
+        void setProcessor(IScriptProcessor *processor);
 
-		Script *getScript(const char *scriptName);
+        Script *getScript(const char *scriptName);
 
-		void setForcePreprocessForNextLoad(bool forcepp);
+        void setForcePreprocessForNextLoad(bool forcepp);
 
-		// For Script class access only...
-		void scriptCompileError(const char *err, bool isError);
+        // For Script class access only...
+        void scriptCompileError(const char *err, bool isError);
 
-		void loadInternalPreprocessorMacros(const char *filename);
-		void clearInternalPreprocessorMacros();
+        void loadInternalPreprocessorMacros(const char *filename);
+        void clearInternalPreprocessorMacros();
 
-		int getScriptAmount();
-		std::string getStatusInfo();
+        int getScriptAmount();
+        std::string getStatusInfo();
 
-	private:
+    private:
 
-		void error(const char *err, int linenum, bool isError);
+        void error(const char *err, int linenum, bool isError);
 
-		static ScriptManager *instance;
+        static ScriptManager *instance;
 
-		ScriptHashType *scriptNameHash;
+        ScriptHashType *scriptNameHash;
 
-		ScriptFileHashType *fileHash;
+        ScriptFileHashType *fileHash;
 
-		IScriptProcessor *processor;
+        IScriptProcessor *processor;
 
-		int keywordsAmount;
-		char **keywords;
-		int *keywordDatatypes;
+        int keywordsAmount;
+        char **keywords;
+        int *keywordDatatypes;
 
-		std::vector<std::pair<std::string, std::string> > internalMacros;
+        std::vector<std::pair<std::string, std::string> > internalMacros;
 
-		LinkedList *allScripts;
+        LinkedList *allScripts;
 
 // TEMP: argh.
 // FIXME: oh please, get rid of this.
-friend class Script;
+        friend class Script;
 
-	};
+    };
 
 }
 

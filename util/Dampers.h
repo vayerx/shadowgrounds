@@ -4,33 +4,31 @@
 #include <DatatypeDef.h>
 
 namespace util {
+    class VectorDamper {
+    protected:
+        VC3 pos;
+        VC3 speed;
+        VC3 target;
+        float k;
+        float c;
+        float mass;
+        float overdampFactor;
 
-class VectorDamper
-{
-protected:
-	VC3 pos;
-	VC3 speed;
-	VC3 target;
-	float k;
-	float c;
-	float mass;
-	float overdampFactor;
+        void calculateC();
+    public:
+        VectorDamper();
+        ~VectorDamper();
 
-	void calculateC();
-public:
-	VectorDamper();
-	~VectorDamper();
+        void update(int ms);
+        void setTarget(VC3 target);
 
-	void update(int ms);
-	void setTarget(VC3 target);
+        void setK(float k);
+        void setOverdampFactor(float overdampFactor);
 
-	void setK(float k);
-	void setOverdampFactor(float overdampFactor);
+        void cutToTarget();
 
-	void cutToTarget();
-
-	VC3 getPosition();
-};
+        VC3 getPosition();
+    };
 
 } // util
 

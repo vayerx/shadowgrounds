@@ -9,7 +9,7 @@
 // TODO: proper destructor!
 
 #ifndef __GNUC__
-#pragma warning( disable : 4290 )
+#  pragma warning( disable : 4290 )
 #endif
 
 // #include "csp/compat.h"
@@ -17,39 +17,36 @@
 #include "StackEmptyException.h"
 
 #define null NULL
-#define throws(x) throw(x)
+#define throws(x) throw (x)
 
 /* ---------------------------------- */
 // StackObject class
 
-class StackObject
-{
-  public:
+class StackObject {
+public:
     StackObject *next;
     void *data;
 
     StackObject(StackObject *next, void *data)
     {
-      this->next = next;
-      this->data = data;
+        this->next = next;
+        this->data = data;
     }
 };
 
 /* ---------------------------------- */
 // Stack class (prototype) definition
 
-class Stack
-{
-  private:
+class Stack {
+private:
     StackObject *first_obj;
 
-  public:
+public:
     Stack();
     bool isEmpty();
     void push(void *data);
-    void *pop() throws (StackEmptyException *);
-    void *peek() throws (StackEmptyException *);
+    void *pop() throws(StackEmptyException *);
+    void *peek() throws(StackEmptyException *);
 };
-
 
 #endif

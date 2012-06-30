@@ -4,17 +4,17 @@
 #define INCLUDED_FACE_H
 
 #ifdef _MSC_VER
-#pragma warning(disable: 4514) // removed unreferenced inline function (stl)
+#  pragma warning(disable: 4514) // removed unreferenced inline function (stl)
 #endif
 
 #ifndef INCLUDED_DATATYPEDEF_H
-#define INCLUDED_DATATYPEDEF_H
-#include <DataTypeDef.h>
+#  define INCLUDED_DATATYPEDEF_H
+#  include <DataTypeDef.h>
 #endif
 
 #ifndef INCLUDED_VECTOR
-#define INCLUDED_VECTOR
-#include <vector>
+#  define INCLUDED_VECTOR
+#  include <vector>
 #endif
 
 #include "Export_Types.h"
@@ -23,32 +23,30 @@
 #pragma pack(1)
 
 namespace frozenbyte {
-namespace exporter {
+    namespace exporter {
+        class Face {
+            int indices[3];
+            short int materialId;
 
-class Face
-{
-	int indices[3];
-	short int materialId;
+            FBVector normal;
 
-	FBVector normal;
+        public:
+            Face();
+            ~Face();
 
-public:
-	Face();
-	~Face();
+            int getVertexIndex(int index) const;
+            int getMaterialId() const;
+            const FBVector&getNormal() const;
 
-	int getVertexIndex(int index) const;
-	int getMaterialId() const;
-	const FBVector &getNormal() const;
+            void setVertexIndex(int index, int vertex_index);
+            void setMaterialId(int id);
+            void setNormal(const FBVector &normal);
 
-	void setVertexIndex(int index, int vertex_index);
-	void setMaterialId(int id);
-	void setNormal(const FBVector &normal);
+            void correctMaterialIndices(const std::vector<int> &newIndices);
+        };
 
-	void correctMaterialIndices(const std::vector<int> &newIndices);
-};
-
-} // end of namespace export
-} // end of namespace frozenbyte
+    } // end of namespace export
+}     // end of namespace frozenbyte
 
 #pragma pack(pop, export_face_h)
 

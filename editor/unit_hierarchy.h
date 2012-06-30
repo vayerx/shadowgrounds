@@ -5,33 +5,31 @@
 #include <string>
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        class UnitScripts;
 
-class UnitScripts;
+        class UnitHierarchy {
+            struct Data;
+            boost::scoped_ptr<Data> data;
 
-class UnitHierarchy
-{
-	struct Data;
-	boost::scoped_ptr<Data> data;
+        public:
+            explicit UnitHierarchy(UnitScripts &scripts);
+            ~UnitHierarchy();
 
-public:
-	explicit UnitHierarchy(UnitScripts &scripts);
-	~UnitHierarchy();
+            void init();
 
-	void init();
+            int getPrimaryAmount() const;
+            int getSecondaryAmount(int primaryIndex) const;
+            const std::string&getPrimaryName(int primaryIndex) const;
+            const std::string&getSecondaryName(int primaryIndex, int secondaryIndex) const;
 
-	int getPrimaryAmount() const;
-	int getSecondaryAmount(int primaryIndex) const;
-	const std::string &getPrimaryName(int primaryIndex) const;
-	const std::string &getSecondaryName(int primaryIndex, int secondaryIndex) const;
+            bool setGroups(int primaryIndex, int secondaryIndex);
+            int getUnitScriptAmount() const;
+            int getUnitScriptIndex(int listIndex) const;
+            int getUnitListIndex(int scriptIndex) const;
+        };
 
-	bool setGroups(int primaryIndex, int secondaryIndex);
-	int getUnitScriptAmount() const;
-	int getUnitScriptIndex(int listIndex) const;
-	int getUnitListIndex(int scriptIndex) const;
-};
-
-} // editor
-} // frozenbyte
+    } // editor
+}     // frozenbyte
 
 #endif

@@ -1,4 +1,3 @@
-
 #ifndef PARTTYPEAVAILABILITYLIST_H
 #define PARTTYPEAVAILABILITYLIST_H
 
@@ -10,36 +9,32 @@
 #include "GameObject.h"
 #include "PartType.h"
 
-
 namespace game
 {
+    class PartTypeAvailabilityList : public GameObject {
+    public:
+        PartTypeAvailabilityList();
+        ~PartTypeAvailabilityList();
 
-  class PartTypeAvailabilityList : public GameObject
-  {
-  public:
-    PartTypeAvailabilityList();
-    ~PartTypeAvailabilityList();
+        virtual SaveData *getSaveData() const;
 
-    virtual SaveData *getSaveData() const;
+        virtual const char *getStatusInfo() const;
 
-    virtual const char *getStatusInfo() const;
+        int getAvailablePartTypesAmount(int player);
 
-    int getAvailablePartTypesAmount(int player);
+        // returns a linked list containing PartType objects
+        // (may want to change in future - to contain avail.amount for each type)
+        LinkedList *getAvailablePartTypes(int player);
 
-    // returns a linked list containing PartType objects
-    // (may want to change in future - to contain avail.amount for each type)
-    LinkedList *getAvailablePartTypes(int player);
+        bool isPartTypeAvailable(int player, PartType *partType);
 
-    bool isPartTypeAvailable(int player, PartType *partType);
+        void addPartType(int player, PartType *partType);
+        void removePartType(int player, PartType *partType);
 
-    void addPartType(int player, PartType *partType);
-    void removePartType(int player, PartType *partType);
-
-  private:
-    LinkedList **ownedPartTypes;
-  };
+    private:
+        LinkedList **ownedPartTypes;
+    };
 
 }
 
 #endif
-

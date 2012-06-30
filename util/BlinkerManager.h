@@ -5,21 +5,19 @@
 #include <boost/shared_ptr.hpp>
 
 namespace util {
+    class BuildingBlinker;
 
-class BuildingBlinker;
+    class BlinkerManager {
+        struct Data;
+        boost::scoped_ptr<Data> data;
 
-class BlinkerManager 
-{
-	struct Data;
-	boost::scoped_ptr<Data> data;
+    public:
+        BlinkerManager();
+        ~BlinkerManager();
 
-public:
-	BlinkerManager();
-	~BlinkerManager();
-
-	void addBlinker(boost::shared_ptr<BuildingBlinker> blinker);
-	void update(int timeDelta);
-}; 
+        void addBlinker(boost::shared_ptr<BuildingBlinker> blinker);
+        void update(int timeDelta);
+    };
 
 } // util
 

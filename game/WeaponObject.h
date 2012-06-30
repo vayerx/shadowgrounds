@@ -1,4 +1,3 @@
-
 #ifndef WEAPONOBJECT_H
 #define WEAPONOBJECT_H
 
@@ -6,31 +5,28 @@
 
 namespace game
 {
+    class WeaponObject : public Part {
+    protected:
+        int ammoAmount;
+        int maxAmmoAmount;
 
-  class WeaponObject : public Part
-  {
-  protected:
-    int ammoAmount;
-    int maxAmmoAmount;
+    public:
 
-  public:
+        WeaponObject();
 
-    WeaponObject();
+        virtual SaveData *getSaveData() const;
 
-    virtual SaveData *getSaveData() const;
+        virtual const char *getStatusInfo() const;
 
-		virtual const char *getStatusInfo() const;
+        int getReloadPrice();
+        void reload();
 
-    int getReloadPrice();
-    void reload();
-
-    inline int getAmmoAmount() { return ammoAmount; }
-    inline void setAmmoAmount(int amount) { this->ammoAmount = amount; }
-    inline int getMaxAmmoAmount() { return maxAmmoAmount; }
-    inline void setMaxAmmoAmount(int maxAmount) { this->maxAmmoAmount = maxAmount; }
-  };
+        inline int getAmmoAmount() { return ammoAmount; }
+        inline void setAmmoAmount(int amount) { this->ammoAmount = amount; }
+        inline int getMaxAmmoAmount() { return maxAmmoAmount; }
+        inline void setMaxAmmoAmount(int maxAmount) { this->maxAmmoAmount = maxAmount; }
+    };
 
 }
 
 #endif
-

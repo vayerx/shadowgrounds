@@ -10,120 +10,111 @@ class OguiButton;
 class Ogui;
 class OguiWindow;
 
-
 namespace ui
 {
+    enum directions {
+        topleft = 0,
+        topright = 1,
+        bottomright = 2,
+        bottomleft = 3,
+        buttontext = 4
+    };
 
-enum directions
-{
-	topleft = 0,
-	topright = 1,
-	bottomright = 2,
-	bottomleft = 3,
-	buttontext = 4
-};
+    class TargetDisplayWindowButton {
+    public:
 
-class TargetDisplayWindowButton
-{
-public:
+        typedef TargetDisplayButtonManager::ButtonData button;
 
-	typedef TargetDisplayButtonManager::ButtonData button;
+        TargetDisplayWindowButton();
+        TargetDisplayWindowButton(int style);
+        TargetDisplayWindowButton(const TargetDisplayWindowButton &button);
+        virtual ~TargetDisplayWindowButton();
 
-	TargetDisplayWindowButton();
-	TargetDisplayWindowButton( int style );
-	TargetDisplayWindowButton( const TargetDisplayWindowButton& button );
-	virtual ~TargetDisplayWindowButton();
+        // virtual
+        unsigned int updatedInTick;
 
-	// virtual
-	unsigned int updatedInTick;
+        void operator =(const TargetDisplayWindowButton &button);
 
-	void operator=( const TargetDisplayWindowButton& button );
+        virtual void updateRect(void);
+        virtual void setRect(int x, int y, int w, int h, float distance = 0.0f);
+        virtual void setText(const std::string &text);
+        virtual void setSliderValue(float v, float scale);
 
-	virtual void updateRect(void);
-	virtual void setRect( int x, int y, int w, int h, float distance = 0.0f );
-	virtual void setText( const std::string& text );
-	virtual void setSliderValue( float v, float scale );
+        virtual bool hasSlider() const;
 
-	virtual bool hasSlider() const;
+        virtual void hide();
+        void show();
 
-	virtual void hide();
-	void show();
+        virtual bool hasEnded() const { return false; }
 
-	virtual bool hasEnded() const { return false; }
+        virtual bool isAniOver() const { return beginAnimPos == 0.0f; }
+        virtual int timeActive() const;
 
-	virtual bool isAniOver() const { return beginAnimPos == 0.0f; }
-	virtual int timeActive() const;
+        virtual void resetAni();
+        virtual void release();
 
-	virtual void resetAni();
-	virtual void release();
+        bool isEmpty() const;
 
-	bool isEmpty() const;
+        virtual int  getStyle() const;
 
-	virtual int  getStyle() const;
+        static void setManager(TargetDisplayButtonManager *manager)
+        {
+            buttonManager = manager;
+        }
 
-	static void setManager( TargetDisplayButtonManager* manager )
-	{
-		buttonManager = manager;
-	}
+        static bool isRegistered(int style)
+        {
+            if (buttonManager)
+                return buttonManager->isRegistered(style);
+            else
+                return false;
+        }
 
-	static bool isRegistered( int style )
-	{
-		if( buttonManager )
-		{
-			return buttonManager->isRegistered( style );
-		}
-		else
-		{
-			return false;
-		}
-	}
-	
-protected:
-	
-	void setButtonPosition( int i, int x, int y, int transparency );
-	void setButtonTextPosition( int x, int y, int bottomx, int transparency );
-	void setButtonSliderPosition( int x, int y, int bottomx, int transparency );
-	void hideButton( int i );
-	void showButton( int i );
-	void hideSlider();
-	void showSlider();
+    protected:
 
-	float getAnimPos( int x );
+        void setButtonPosition(int i, int x, int y, int transparency);
+        void setButtonTextPosition(int x, int y, int bottomx, int transparency);
+        void setButtonSliderPosition(int x, int y, int bottomx, int transparency);
+        void hideButton(int i);
+        void showButton(int i);
+        void hideSlider();
+        void showSlider();
 
-	button b;
-	
-	float beginAnimInitialPosition;
-	float beginAnimPos;
-	int imageWidth;
-	int imageHeight;
-	int style;
-	unsigned int	startTicks;
-	int createTime;
+        float getAnimPos(int x);
 
-	int oldW;
-	int oldH;
+        button b;
 
-	static TargetDisplayButtonManager* buttonManager;
+        float beginAnimInitialPosition;
+        float beginAnimPos;
+        int imageWidth;
+        int imageHeight;
+        int style;
+        unsigned int startTicks;
+        int createTime;
 
-};
+        int oldW;
+        int oldH;
 
-class TargetDisplayRisingScoreButton : public TargetDisplayWindowButton
-{
-public:
-	TargetDisplayRisingScoreButton() { amIDead = false; }
-	TargetDisplayRisingScoreButton( int style ) : TargetDisplayWindowButton( style ) { amIDead = false; }
-	~TargetDisplayRisingScoreButton() { }
-	
-	virtual void updateRect(void);
-	virtual void setRect( int x, int y, int w, int h, float distance = 0.0f );
-	virtual bool hasEnded() const { return amIDead; }
+        static TargetDisplayButtonManager *buttonManager;
 
-	bool amIDead;
-	int oldx;
-	int oldy;
-	int oldw;
-	int oldh;
-};
+    };
+
+    class TargetDisplayRisingScoreButton : public TargetDisplayWindowButton {
+    public:
+        TargetDisplayRisingScoreButton() { amIDead = false; }
+        TargetDisplayRisingScoreButton(int style) : TargetDisplayWindowButton(style) { amIDead = false; }
+        ~TargetDisplayRisingScoreButton() { }
+
+        virtual void updateRect(void);
+        virtual void setRect(int x, int y, int w, int h, float distance = 0.0f);
+        virtual bool hasEnded() const { return amIDead; }
+
+        bool amIDead;
+        int oldx;
+        int oldy;
+        int oldw;
+        int oldh;
+    };
 
 } // end of namespace ui
 #endif

@@ -1,30 +1,26 @@
 #ifndef PARTICLE_PARSE_UTIL_H
 #define PARTICLE_PARSE_UTIL_H
 
-
 namespace frozenbyte
 {
-namespace particle
-{
+    namespace particle
+    {
+        class KeyControl;
+        class editor::ParserGroup;
 
-class KeyControl;
-class editor::ParserGroup;
+        Vector convertVectorFromString(const std::string &str);
+        std::string convertVectorToString(const Vector &v);
 
-Vector convertVectorFromString(const std::string& str);
-std::string convertVectorToString(const Vector& v);
-
-void parseFloatKeyControlFrom(const editor::ParserGroup& g, KeyControl* kc);
+        void parseFloatKeyControlFrom(const editor::ParserGroup &g, KeyControl *kc);
 //void parseFloatKeyControlTo(editor::ParserGroup& g, KeyControl* kc);
 
-void parseVectorKeyControlFrom(const editor::ParserGroup& g, KeyControl* kc);
+        void parseVectorKeyControlFrom(const editor::ParserGroup &g, KeyControl *kc);
 //void parseVectorKeyControlTo(editor::ParserGroup& g, KeyControl* kc);
 
-void parseParamBlockFrom(const editor::ParserGroup& g, ParamBlock& pb);
+        void parseParamBlockFrom(const editor::ParserGroup &g, ParamBlock &pb);
 //void parseParamBlockTo(editor::ParserGroup& g, ParamBlock& pb);
 
-
-} // particle
-} // frozenbyte
-
+    } // particle
+}     // frozenbyte
 
 #endif

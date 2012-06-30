@@ -1,4 +1,3 @@
-
 #ifndef PHYSICSCONTACTFEEDBACK_H
 #define PHYSICSCONTACTFEEDBACK_H
 
@@ -7,24 +6,22 @@
 
 namespace game
 {
-	class IGamePhysicsObject;
-	class PhysicsContactFeedbackImpl;
-	class Game;
+    class IGamePhysicsObject;
+    class PhysicsContactFeedbackImpl;
+    class Game;
 
+    class PhysicsContactFeedback : public IPhysicsContactListener {
+    public:
+        PhysicsContactFeedback(Game *game);
+        ~PhysicsContactFeedback();
 
-	class PhysicsContactFeedback : public IPhysicsContactListener
-	{
-	public:
-		PhysicsContactFeedback(Game *game);
-		~PhysicsContactFeedback();
+        virtual void physicsContact(const PhysicsContact &contact);
 
-		virtual void physicsContact(const PhysicsContact &contact);
+        void tick();
 
-		void tick();
-
-	private:
-		PhysicsContactFeedbackImpl *impl;
-	};
+    private:
+        PhysicsContactFeedbackImpl *impl;
+    };
 }
 
 #endif

@@ -1,4 +1,3 @@
-
 #ifndef AMMOPACK_H
 #define AMMOPACK_H
 
@@ -7,16 +6,14 @@
 
 namespace game
 {
+    class AmmoPack : public ItemPack {
+    public:
+        AmmoPack();
+        AmmoPack(int id);
+        virtual ~AmmoPack();
 
-  class AmmoPack : public ItemPack
-  {
-  public:
-    AmmoPack();
-    AmmoPack(int id);
-    virtual ~AmmoPack();
-
-    virtual Part *getNewPartInstance();
-  };
+        virtual Part *getNewPartInstance();
+    };
 
 }
 

@@ -3,28 +3,26 @@
 
 class Ogui;
 namespace game {
-	class Game;
-	class Unit;
+    class Game;
+    class Unit;
 }
 
 namespace ui {
+    class VehicleWindow {
+    public:
+        VehicleWindow(Ogui *ogui, game::Game *game, game::Unit *unit, const char *params);
+        ~VehicleWindow();
 
-class VehicleWindow 
-{
-public:
-	VehicleWindow( Ogui *ogui, game::Game *game, game::Unit *unit, const char *params );
-	~VehicleWindow();
+        void update();
+        void setCombatWindowVisibility();
 
-	void update();
-	void setCombatWindowVisibility();
+        void hide();
+        void show();
 
-	void hide();
-	void show();
-
-private:
-	class VehicleWindowImpl;
-	VehicleWindowImpl* impl;
-}; 
+    private:
+        class VehicleWindowImpl;
+        VehicleWindowImpl *impl;
+    };
 
 } // end of namespace ui
 

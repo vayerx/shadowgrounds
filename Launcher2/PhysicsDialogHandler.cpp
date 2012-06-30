@@ -1,67 +1,62 @@
-
 #include <windows.h>
 #include "resource.h"
 #include "PhysicsDialogHandler.h"
 
 namespace frozenbyte
 {
-namespace launcher
-{
+    namespace launcher
+    {
+        PhysicsDialogHandler::PhysicsDialogHandler(HWND parent)
+        {
+            dialogData = new DialogData(IDD_PHYSICSDIALOG, parent, DialogData::ATTACH_NONE, this);
+        }
 
-PhysicsDialogHandler::PhysicsDialogHandler( HWND parent )
-{
-	dialogData = new DialogData( IDD_PHYSICSDIALOG, parent, DialogData::ATTACH_NONE, this );
-}
+        PhysicsDialogHandler::~PhysicsDialogHandler()
+        {
+            delete dialogData;
+        }
 
-PhysicsDialogHandler::~PhysicsDialogHandler( )
-{
-	delete dialogData;
-}
+        void PhysicsDialogHandler::initDialog()
+        {
+            HWND hwnd = dialogData->getHwnd();
 
-void PhysicsDialogHandler::initDialog()
-{
+            // Load localizations texts.
+            setDescriptionText( GetDlgItem(hwnd, IDC_PSTATIC1) );
+            setDescriptionText( GetDlgItem(hwnd, IDC_PSTATIC2) );
+            setDescriptionText( GetDlgItem(hwnd, IDC_PCHECK1) );
+            setDescriptionText( GetDlgItem(hwnd, IDC_PCHECK2) );
 
-	HWND hwnd = dialogData->getHwnd();
+            // Load combobox items.
+            addComboItems( GetDlgItem(hwnd, IDC_PCOMBO1), manager.getOptionNames(
+                               "Physics Quality"), manager.getTheOneInUse("Physics Quality") );
 
-	// Load localizations texts.
-	setDescriptionText ( GetDlgItem( hwnd, IDC_PSTATIC1));
-	setDescriptionText ( GetDlgItem( hwnd, IDC_PSTATIC2));
-	setDescriptionText ( GetDlgItem( hwnd, IDC_PCHECK1));
-	setDescriptionText ( GetDlgItem( hwnd, IDC_PCHECK2));
+        }
 
-	// Load combobox items.
-	addComboItems( GetDlgItem( hwnd, IDC_PCOMBO1 ), manager.getOptionNames( "Physics Quality" ), manager.getTheOneInUse( "Physics Quality" ) );
+        void PhysicsDialogHandler::loadOptions()
+        {
+            HWND hwnd = dialogData->getHwnd();
 
-}
+            setCheckBox( hwnd, IDC_PCHECK1, manager.getTheOneInUse("Physics Hardware") );
+            setCheckBox( hwnd, IDC_PCHECK2, manager.getTheOneInUse("MultipleInputDevices") );
 
-void PhysicsDialogHandler::loadOptions( )
-{
+            setComboBoxSelection( GetDlgItem(hwnd, IDC_PCOMBO1), manager.getTheOneInUse("Physics Quality") );
 
-	HWND hwnd = dialogData->getHwnd();
+        }
 
-	setCheckBox( hwnd, IDC_PCHECK1, manager.getTheOneInUse("Physics Hardware") );
-	setCheckBox( hwnd, IDC_PCHECK2, manager.getTheOneInUse("MultipleInputDevices") );
+        void PhysicsDialogHandler::applyOptions()
+        {
+            HWND hwnd = dialogData->getHwnd();
 
-	setComboBoxSelection( GetDlgItem( hwnd, IDC_PCOMBO1 ), manager.getTheOneInUse( "Physics Quality" ) );
+            manager.applyOptions( "Physics Hardware", getCheckBoxValue(hwnd, IDC_PCHECK1) );
+            manager.applyOptions( "MultipleInputDevices", getCheckBoxValue(hwnd, IDC_PCHECK2) );
+            manager.applyOptions( "Physics Quality", getComboBoxSelection( GetDlgItem(hwnd, IDC_PCOMBO1) ) );
 
-}
+        }
 
-void PhysicsDialogHandler::applyOptions( )
-{
+        BOOL PhysicsDialogHandler::handleMessages(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+        {
+            return FALSE;
+        }
 
-	HWND hwnd = dialogData->getHwnd();
-
-	manager.applyOptions( "Physics Hardware", getCheckBoxValue(	hwnd, IDC_PCHECK1 ) );
-	manager.applyOptions( "MultipleInputDevices", getCheckBoxValue(	hwnd, IDC_PCHECK2 ) );
-	manager.applyOptions( "Physics Quality", getComboBoxSelection( GetDlgItem( hwnd, IDC_PCOMBO1 ) ) );
-
-}
-
-BOOL PhysicsDialogHandler::handleMessages(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-
-	return FALSE;
-}
-
-}
+    }
 }

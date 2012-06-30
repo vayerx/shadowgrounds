@@ -13,57 +13,54 @@ class OguiEffectEvent;
 
 namespace game
 {
-	class Game;
+    class Game;
 }
 
 namespace ui {
-
 ///////////////////////////////////////////////////////////////////////////////
 
-class TargetDisplayButtonManager;
+    class TargetDisplayButtonManager;
 
 ///////////////////////////////////////////////////////////////////////////////
 
 // Displays the square on top of a game target
-class TargetDisplayWindow
-{
-public:
-	TargetDisplayWindow( Ogui *ogui, game::Game *game, int player = 0 );
-	~TargetDisplayWindow();
+    class TargetDisplayWindow {
+    public:
+        TargetDisplayWindow(Ogui *ogui, game::Game *game, int player = 0);
+        ~TargetDisplayWindow();
 
-	bool setRisingText( void* p, int x, int y, int w, int h, float distance = 0.0f, int style = 0 );
+        bool setRisingText(void *p, int x, int y, int w, int h, float distance = 0.0f, int style = 0);
 
-	bool setRect( void* p, int x, int y, int w, int h, float distance = 0.0f, int style = 0 );
-	void updateRect( void *p );
-	void clearRect( void *p );
-	void setText( void* p, const std::string& text );
-	bool hasEnded( void* p );
-	bool isAniOver( void* p );
-	int timeActive( void* p );
-	void setSliderValue( void *p, float v, float scale );
-	void hideRest();
-	void removeRest();
+        bool setRect(void *p, int x, int y, int w, int h, float distance = 0.0f, int style = 0);
+        void updateRect(void *p);
+        void clearRect(void *p);
+        void setText(void *p, const std::string &text);
+        bool hasEnded(void *p);
+        bool isAniOver(void *p);
+        int timeActive(void *p);
+        void setSliderValue(void *p, float v, float scale);
+        void hideRest();
+        void removeRest();
 
-	inline TargetDisplayButtonManager *getManager(void) { return manager; }
+        inline TargetDisplayButtonManager *getManager(void) { return manager; }
 
-	void hide( int fadeTime = 0 );
-	void show( int fadeTime = 0 );
-		
-	void EffectEvent( OguiEffectEvent *e );
+        void hide(int fadeTime = 0);
+        void show(int fadeTime = 0);
 
-private:
-	int maxAmountOnScreen;
+        void EffectEvent(OguiEffectEvent *e);
 
-	std::map< void*, TargetDisplayWindowButton* > buttons;
+    private:
+        int maxAmountOnScreen;
 
-	OguiWindow* window;
-	Ogui*		ogui;
-	
-	TargetDisplayButtonManager* manager;
+        std::map< void *, TargetDisplayWindowButton * > buttons;
 
-	unsigned int	currentTicks;
-};
+        OguiWindow *window;
+        Ogui *ogui;
 
+        TargetDisplayButtonManager *manager;
+
+        unsigned int currentTicks;
+    };
 
 } // end of namespace ui
 

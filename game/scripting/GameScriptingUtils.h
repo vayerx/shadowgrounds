@@ -1,4 +1,3 @@
-
 #ifndef GAMESCRIPTINGUTILS_H
 #define GAMESCRIPTINGUTILS_H
 
@@ -6,17 +5,16 @@
 
 namespace game
 {
-	class GameMap;
+    class GameMap;
 
-	// you are likely to want to use this.
-  bool gs_coordinate_param(GameMap *gameMap, const char *stringData, VC3 *result);
+    // you are likely to want to use this.
+    bool gs_coordinate_param(GameMap *gameMap, const char *stringData, VC3 *result);
 
-	// unlikely to want to use this (old stuff).
-  //bool gs_coordinate_convert(const char *stringData, int *x, int *y, 
-	//  bool *scaled, float *scaledX, float *scaledY);
+    // unlikely to want to use this (old stuff).
+    //bool gs_coordinate_convert(const char *stringData, int *x, int *y,
+    //  bool *scaled, float *scaledX, float *scaledY);
 
-  bool gs_tricoord_param(const char *stringData, VC3 *result);
+    bool gs_tricoord_param(const char *stringData, VC3 *result);
 }
 
 #endif
-

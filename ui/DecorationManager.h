@@ -1,50 +1,44 @@
-
 #ifndef DECORATIONMANAGER_H
 #define DECORATIONMANAGER_H
 
-#define DECORID_LOWEST_POSSIBLE_VALUE 100000
+#define DECORID_LOWEST_POSSIBLE_VALUE  100000
 #define DECORID_HIGHEST_POSSIBLE_VALUE 999999
 
 class LinkedList;
 
 namespace util
 {
-	class ColorMap;
+    class ColorMap;
 }
 
 namespace ui
 {
+    class Decoration;
 
-  class Decoration;
-
-  class DecorationManager
-  {
+    class DecorationManager {
     public:
-      DecorationManager();
+        DecorationManager();
 
-      ~DecorationManager();
+        ~DecorationManager();
 
-      Decoration *createDecoration();
+        Decoration *createDecoration();
 
-      void deleteDecoration(Decoration *decoration);
+        void deleteDecoration(Decoration *decoration);
 
-      Decoration *getDecorationByName(const char *name) const;
+        Decoration *getDecorationByName(const char *name) const;
 
-			int getIdForDecoration(Decoration *decor);
-			Decoration *getDecorationById(int id);
+        int getIdForDecoration(Decoration *decor);
+        Decoration *getDecorationById(int id);
 
-      void run();
+        void run();
 
-      void synchronizeAllDecorations() const;
+        void synchronizeAllDecorations() const;
 
-			void updateDecorationIllumination(util::ColorMap *colorMap);
+        void updateDecorationIllumination(util::ColorMap *colorMap);
 
     private:
-      LinkedList *decorList;
-  };
+        LinkedList *decorList;
+    };
 }
 
 #endif
-
-
-

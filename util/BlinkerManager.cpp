@@ -1,4 +1,3 @@
-
 #include "precompiled.h"
 
 #include "BlinkerManager.h"
@@ -9,41 +8,39 @@ using namespace std;
 using namespace boost;
 
 namespace util {
+    struct BlinkerManager::Data {
+        vector<shared_ptr<BuildingBlinker> > blinkers;
 
-struct BlinkerManager::Data
-{
-	vector<shared_ptr<BuildingBlinker> > blinkers;
+        void update(int timeDelta)
+        {
+            for (unsigned int i = 0; i < blinkers.size(); ++i) {
+                blinkers[i]->update(timeDelta);
+            }
+        }
+    };
 
-	void update(int timeDelta)
-	{
-		for(unsigned int i = 0; i < blinkers.size(); ++i)
-			blinkers[i]->update(timeDelta);
-	}
-};
+    BlinkerManager::BlinkerManager()
+        :   data( new Data() )
+    {
+    }
 
-BlinkerManager::BlinkerManager()
-:	data(new Data())
-{
-}
+    BlinkerManager::~BlinkerManager()
+    {
+    }
 
-BlinkerManager::~BlinkerManager()
-{
-}
+    void BlinkerManager::addBlinker(shared_ptr<BuildingBlinker> blinker)
+    {
+        if (!blinker) {
+            assert(!"Whopps");
+            return;
+        }
 
-void BlinkerManager::addBlinker(shared_ptr<BuildingBlinker> blinker)
-{
-	if(!blinker)
-	{
-		assert(!"Whopps");
-		return;
-	}
+        data->blinkers.push_back(blinker);
+    }
 
-	data->blinkers.push_back(blinker);
-}
-
-void BlinkerManager::update(int timeDelta)
-{
-	data->update(timeDelta);
-}
+    void BlinkerManager::update(int timeDelta)
+    {
+        data->update(timeDelta);
+    }
 
 } // util

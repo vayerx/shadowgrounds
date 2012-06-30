@@ -1,4 +1,3 @@
-
 #ifndef HEAD_H
 #define HEAD_H
 
@@ -6,16 +5,14 @@
 
 namespace game
 {
+    class Head : public PartType {
+    public:
+        Head();
+        Head(int id);
+        virtual ~Head();
+    };
 
-  class Head : public PartType
-  {
-  public:
-    Head();
-    Head(int id);
-    virtual ~Head();
-  };
-
-  //extern Head head;
+    //extern Head head;
 
 }
 

@@ -1,12 +1,11 @@
-
 #ifndef VISUALEFFECTMANAGER_H
 #define VISUALEFFECTMANAGER_H
 
 #include <DatatypeDef.h>
 
 #ifndef INCLUDED_BOOST_SHARED_PTR_HPP
-#define INCLUDED_BOOST_SHARED_PTR_HPP
-#include <boost/shared_ptr.hpp>
+#  define INCLUDED_BOOST_SHARED_PTR_HPP
+#  include <boost/shared_ptr.hpp>
 #endif
 
 class LinkedList;
@@ -17,132 +16,127 @@ class IStorm3D_Model;
 
 namespace game
 {
-	class GameScene;
-	class Game;
-	class GameMap;
+    class GameScene;
+    class Game;
+    class GameMap;
 }
 
 namespace util
 {
-	class ColorMap;
+    class ColorMap;
 }
 
 namespace frozenbyte
 {
-	namespace particle
-	{
-		class ParticleEffectManager;
-		class IParticleEffect;
-		class ParticlePhysics;
-	}
+    namespace particle
+    {
+        class ParticleEffectManager;
+        class IParticleEffect;
+        class ParticlePhysics;
+    }
 
-	class DecalSystem;
+    class DecalSystem;
 }
-
 
 namespace ui
 {
-	class IPointableObject;
-	class VisualEffect;
-	class LightManager;
-	class ParticleCollision;
-	class FluidParticleCollision;
-	class ParticleArea;
+    class IPointableObject;
+    class VisualEffect;
+    class LightManager;
+    class ParticleCollision;
+    class FluidParticleCollision;
+    class ParticleArea;
 
-	class VisualEffectManager
-	{
+    class VisualEffectManager {
+    public:
+        VisualEffectManager(IStorm3D *storm3d, IStorm3D_Scene *scene);
 
-		public:
-			VisualEffectManager(IStorm3D *storm3d, IStorm3D_Scene *scene);
+        ~VisualEffectManager();
 
-			~VisualEffectManager();
+        /**
+         * Creates a new PARTLY UNMANAGED visual effect. Meaning that the caller must
+         * handle appropriate visual effect addReference/freeReference calls as well
+         * appropriate deleteVisualEffect call for the effect.
+         */
+        VisualEffect *createNewVisualEffect(int visualEffectId,
+                                            IPointableObject *object, IPointableObject *origin,
+                                            const VC3 &position, const VC3 &endPosition,
+                                            const VC3 &rotation, const VC3 &velocity, game::Game *game,
+                                            int muzzleflashBarrelNumber = 1, IStorm3D_Model *spawnModel = NULL);
 
-			/**
-			 * Creates a new PARTLY UNMANAGED visual effect. Meaning that the caller must
-			 * handle appropriate visual effect addReference/freeReference calls as well
-			 * appropriate deleteVisualEffect call for the effect.
-			 */
-			VisualEffect *createNewVisualEffect(int visualEffectId,
-				IPointableObject *object, IPointableObject *origin,
-				const VC3 &position, const VC3 &endPosition, 
-				const VC3 &rotation, const VC3 &velocity, game::Game *game,
-				int muzzleflashBarrelNumber = 1, IStorm3D_Model *spawnModel = NULL);
+        /**
+         * Creates a new FULLY MANAGED visual effect. Meaning that the
+         * caller should not permanently store the returned visualeffect
+         * pointer. The VisualEffectManager will have full ownership
+         * of the effect and will handle destruction of the created effect.
+         */
+        VisualEffect *createNewManagedVisualEffect(int visualEffectId,
+                                                   int lifetimeInTicks,
+                                                   IPointableObject *object, IPointableObject *origin,
+                                                   const VC3 &position, const VC3 &endPosition,
+                                                   const VC3 &rotation, const VC3 &velocity, game::Game *game,
+                                                   int muzzleflashBarrelNumber = 1, IStorm3D_Model *spawnModel = NULL);
 
-			/**
-			 * Creates a new FULLY MANAGED visual effect. Meaning that the
-			 * caller should not permanently store the returned visualeffect 
-			 * pointer. The VisualEffectManager will have full ownership
-			 * of the effect and will handle destruction of the created effect.
-			 */
-			VisualEffect *createNewManagedVisualEffect(int visualEffectId,
-				int lifetimeInTicks,
-				IPointableObject *object, IPointableObject *origin,
-				const VC3 &position, const VC3 &endPosition, 
-				const VC3 &rotation, const VC3 &velocity, game::Game *game,
-				int muzzleflashBarrelNumber = 1, IStorm3D_Model *spawnModel = NULL);
+        void updateSpotlightPosition(VisualEffect *v,
+                                     const VC3 &position, IPointableObject *origin, const VC3 &rotation);
 
-			void updateSpotlightPosition(VisualEffect *v,
-				const VC3 &position, IPointableObject *origin, const VC3 &rotation);
+        void deleteVisualEffect(VisualEffect *v);
 
-			void deleteVisualEffect(VisualEffect *v);
+        // had to change this to static for easy access from
+        // bullet code.
+        static int getVisualEffectIdByName(const char *effectname);
 
-			// had to change this to static for easy access from 
-			// bullet code.
-			static int getVisualEffectIdByName(const char *effectname);
+        void loadParticleEffects();
 
-			void loadParticleEffects();
+        void freeParticleEffects();
 
-			void freeParticleEffects();
-			
-			void loadDecalEffects();
+        void loadDecalEffects();
 
-			void freeDecalEffects();
-			
-			void run();
+        void freeDecalEffects();
 
-			void prepareForRender(game::GameMap *gameMap, util::ColorMap *colorMap, ui::LightManager *lightManager);
+        void run();
 
-			void setTerrain(IStorm3D_Terrain *terrain);
+        void prepareForRender(game::GameMap *gameMap, util::ColorMap *colorMap, ui::LightManager *lightManager);
 
-			void setGameScene(game::GameScene *gameScene);
-			void enableParticleInsideCheck(bool enable);
+        void setTerrain(IStorm3D_Terrain *terrain);
 
-			void detachVisualEffectsFromUnits();
+        void setGameScene(game::GameScene *gameScene);
+        void enableParticleInsideCheck(bool enable);
 
-			// oh crap...
-			frozenbyte::particle::ParticleEffectManager *getParticleEffectManager();
+        void detachVisualEffectsFromUnits();
 
-		private:
-			LinkedList *visualEffects;
+        // oh crap...
+        frozenbyte::particle::ParticleEffectManager *getParticleEffectManager();
 
-			IStorm3D *storm3d;
-			IStorm3D_Scene *scene;
-			IStorm3D_Terrain *terrain;
+    private:
+        LinkedList *visualEffects;
 
-			game::GameScene *gameScene;
+        IStorm3D *storm3d;
+        IStorm3D_Scene *scene;
+        IStorm3D_Terrain *terrain;
 
-			frozenbyte::DecalSystem *decalSystem;
+        game::GameScene *gameScene;
 
-			//bool particleRunTwice;
-			int particleRunCounter;
+        frozenbyte::DecalSystem *decalSystem;
 
-			//ParticleManager *particleManager;
+        //bool particleRunTwice;
+        int particleRunCounter;
 
-			LinkedList *managedEffects;
+        //ParticleManager *particleManager;
 
-			boost::shared_ptr<ParticleCollision> particleCollision;
-			boost::shared_ptr<FluidParticleCollision> fluidParticleCollision;
-			boost::shared_ptr<ParticleArea> particleArea;
-			frozenbyte::particle::ParticleEffectManager* particleEffectManager;
+        LinkedList *managedEffects;
 
-			static void loadVisualEffectTypes();
-			static void unloadVisualEffectTypes();
+        boost::shared_ptr<ParticleCollision> particleCollision;
+        boost::shared_ptr<FluidParticleCollision> fluidParticleCollision;
+        boost::shared_ptr<ParticleArea> particleArea;
+        frozenbyte::particle::ParticleEffectManager *particleEffectManager;
 
-			void deleteManagedEffects();
-			void updateManagedEffects();
-	};
+        static void loadVisualEffectTypes();
+        static void unloadVisualEffectTypes();
+
+        void deleteManagedEffects();
+        void updateManagedEffects();
+    };
 }
 
 #endif
-
-

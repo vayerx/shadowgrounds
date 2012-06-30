@@ -4,15 +4,13 @@
 #include <DatatypeDef.h>
 
 namespace util {
+    class ITrackable {
+    public:
+        virtual ~ITrackable() { }
 
-class ITrackable
-{
-public:
-	virtual ~ITrackable() {}
-
-	virtual VC3 getTrackablePosition() const = 0;
-	virtual float getTrackableRadius2d() const = 0;
-};
+        virtual VC3 getTrackablePosition() const = 0;
+        virtual float getTrackableRadius2d() const = 0;
+    };
 
 } // util
 

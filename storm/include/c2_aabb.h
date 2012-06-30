@@ -6,21 +6,19 @@
 #pragma once
 #include "c2_vectors.h"
 
-template<class T>
-struct TAABB
-{
-	Vec3<T> mmin;
-	Vec3<T> mmax;
+template <class T> struct TAABB {
+    Vec3<T> mmin;
+    Vec3<T> mmax;
 
-	TAABB(const Vec3<T> &min_, const Vec3<T> &max_)
-	:	mmin(min_),
-		mmax(max_)
-	{
-	}
+    TAABB(const Vec3<T> &min_, const Vec3<T> &max_)
+        :   mmin(min_),
+        mmax(max_)
+    {
+    }
 
-	TAABB()
-	{
-	}
+    TAABB()
+    {
+    }
 };
 
 typedef TAABB<float> AABB;

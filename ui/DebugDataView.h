@@ -1,39 +1,36 @@
-
 #ifndef DEBUGDATAVIEW_H
 #define DEBUGDATAVIEW_H
 
 namespace game
 {
-	class Game;
+    class Game;
 }
 
 namespace ui
 {
-	class DebugDataViewImpl;
+    class DebugDataViewImpl;
 
-	class DebugDataView
-	{
-		public:
-			DebugDataView(game::Game *game);
+    class DebugDataView {
+    public:
+        DebugDataView(game::Game *game);
 
-			~DebugDataView();
+        ~DebugDataView();
 
-			void run();
+        void run();
 
-			void cleanup();
+        void cleanup();
 
-			//void setSpecialImageARGB(unsigned char *argbBuf);
-			//void setSpecialImageValue(unsigned char *valueBuf);
+        //void setSpecialImageARGB(unsigned char *argbBuf);
+        //void setSpecialImageValue(unsigned char *valueBuf);
 
-			static DebugDataView *getInstance(game::Game *game);
+        static DebugDataView *getInstance(game::Game *game);
 
-			static void cleanInstance();
+        static void cleanInstance();
 
-		private:
-			DebugDataViewImpl *impl;
-			static DebugDataView *instance;
-	};
+    private:
+        DebugDataViewImpl *impl;
+        static DebugDataView *instance;
+    };
 }
 
 #endif
-

@@ -5,20 +5,19 @@
 
 namespace frozenbyte
 {
-namespace particle
-{
+    namespace particle
+    {
+        struct VectorTrackDialogData;
+        class VectorTrackDialog {
+            boost::scoped_ptr<VectorTrackDialogData> data;
+        public:
+            VectorTrackDialog();
+            ~VectorTrackDialog();
+            void open(editor::Dialog &parent, int resourceID, editor::ParserGroup &parser, bool floatMode = false);
+//    const editor::ParserGroup& getParserGroup();
+        };
 
-struct VectorTrackDialogData;
-class VectorTrackDialog {
-	boost::scoped_ptr<VectorTrackDialogData> data;
-public:
-	VectorTrackDialog();
-	~VectorTrackDialog();
-	void open(editor::Dialog& parent, int resourceID, editor::ParserGroup& parser, bool floatMode=false);
-//	const editor::ParserGroup& getParserGroup();
-};
-
-} // particle
-} // frozenbyte
+    } // particle
+}     // frozenbyte
 
 #endif

@@ -4,11 +4,10 @@
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR param, int)
 {
-	
-	Logger::createInstanceForLogfile( "launcher.log" );
+    Logger::createInstanceForLogfile("launcher.log");
 
-	frozenbyte::launcher::Application application;
-	application.run();
+    frozenbyte::launcher::Application application;
+    application.run();
 
-	return 0;
+    return 0;
 }

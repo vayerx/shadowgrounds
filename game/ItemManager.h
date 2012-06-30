@@ -1,4 +1,3 @@
-
 #ifndef ITEMMANAGER_H
 #define ITEMMANAGER_H
 
@@ -8,112 +7,110 @@ class LinkedList;
 
 namespace game
 {
-	class Game;
-	class Item;
-	class ItemType;
-	class IItemListener;
-	class Unit;
+    class Game;
+    class Item;
+    class ItemType;
+    class IItemListener;
+    class Unit;
 
-	struct ItemSpawnerGroup;
+    struct ItemSpawnerGroup;
 
-	struct ItemSpawner
-	{
-		int item_id;
-		std::string item_name;
-		// time in ticks to wait until respawn
-		int respawn_time;
-		// gameTimer value for next spawn
-		int next_respawn;
-		// last spawned item (if any)
-		Item *spawned_item;
-		VC3 position;
-		float radius;
-		ItemSpawnerGroup *group;
-	};
+    struct ItemSpawner {
+        int item_id;
+        std::string       item_name;
+        // time in ticks to wait until respawn
+        int               respawn_time;
+        // gameTimer value for next spawn
+        int               next_respawn;
+        // last spawned item (if any)
+        Item             *spawned_item;
+        VC3               position;
+        float             radius;
+        ItemSpawnerGroup *group;
+    };
 
-	struct ItemSpawnerGroup
-	{
-		std::string name;
-		bool active;
-		// all spawners in this group
-		std::vector<ItemSpawner *> spawners;
-		// spawners currently waiting to spawn
-		std::vector<ItemSpawner *> spawnQueue;
-	};
+    struct ItemSpawnerGroup {
+        std::string name;
+        bool        active;
+        // all spawners in this group
+        std::vector<ItemSpawner *> spawners;
+        // spawners currently waiting to spawn
+        std::vector<ItemSpawner *> spawnQueue;
+    };
 
-	class ItemManager
-	{
-		public:
-			ItemManager(Game *game);
+    class ItemManager {
+    public:
+        ItemManager(Game *game);
 
-			~ItemManager();
-			
-			// added by Pete
-			void setListener( IItemListener* listener );
+        ~ItemManager();
 
-			ItemType *getItemTypeById(int itemId);
+        // added by Pete
+        void setListener(IItemListener *listener);
 
-			Item *createNewItem(int itemId, const VC3 &position);
+        ItemType *getItemTypeById(int itemId);
 
-			void deleteItem(Item *i);
+        Item *createNewItem(int itemId, const VC3 &position);
 
-			// added by Pete
-			void enablePhysics( Item* item, int itemType );
+        void deleteItem(Item *i);
 
-			void changeItemVisual(Item *i, const char *modelFilename);
+        // added by Pete
+        void enablePhysics(Item *item, int itemType);
 
-			static int getItemIdByName(const char *itemname);
+        void changeItemVisual(Item *i, const char *modelFilename);
 
-			void run();
+        static int getItemIdByName(const char *itemname);
 
-			void prepareForRender();
+        void run();
 
-			Item *getNearestItemOfType(const VC3 &position, ItemType *itemType);
+        void prepareForRender();
 
-			void disableItem(Item *i, int disableTime);
+        Item *getNearestItemOfType(const VC3 &position, ItemType *itemType);
 
-			//void setExecuteUnit(Unit *unit);
+        void disableItem(Item *i, int disableTime);
 
-			bool doItemExecute(Unit *unit);
+        //void setExecuteUnit(Unit *unit);
 
-			// permanently delete all items that have been disabled for more than 24 hours
-			// (those items are actully "deleted" but have a possibility for respawn if
-			// player should die and respawn)
-			void deleteAllLongTimeDisabledItems();
+        bool doItemExecute(Unit *unit);
 
-			// re-enable ("respawn") all time disabled items. permanently disabled won't
-			// be re-enabled
-			void reEnableAllTimeDisabledItems();
+        // permanently delete all items that have been disabled for more than 24 hours
+        // (those items are actully "deleted" but have a possibility for respawn if
+        // player should die and respawn)
+        void deleteAllLongTimeDisabledItems();
 
-		public:
-			ItemSpawner *createSpawner(const char *group_name, int item_id, const std::string &item_name, int respawn_time, const VC3 &position, float radius);
-			void clearAllSpawners(void);
+        // re-enable ("respawn") all time disabled items. permanently disabled won't
+        // be re-enabled
+        void reEnableAllTimeDisabledItems();
 
-			ItemSpawnerGroup *getSpawnerGroup(const char *group_name);
-			ItemSpawnerGroup *createSpawnerGroup(const char *group_name);
+    public:
+        ItemSpawner *createSpawner(const char        *group_name,
+                                   int                item_id,
+                                   const std::string &item_name,
+                                   int                respawn_time,
+                                   const VC3         &position,
+                                   float              radius);
+        void clearAllSpawners(void);
 
-			void setSpawnerGroupActive(ItemSpawnerGroup *group, bool active);
+        ItemSpawnerGroup *getSpawnerGroup(const char *group_name);
+        ItemSpawnerGroup *createSpawnerGroup(const char *group_name);
 
-		private:
-			static void loadItemTypes();
+        void setSpawnerGroupActive(ItemSpawnerGroup *group, bool active);
 
-			static void unloadItemTypes();
+    private:
+        static void loadItemTypes();
 
-			void queueForSpawn(ItemSpawner *spawner, bool instantly);
-			void spawnItem(ItemSpawner *spawner);
-			void runSpawners();
+        static void unloadItemTypes();
 
-			Game *game;
-			IItemListener* listener;
-			//Unit *executeUnit;
+        void queueForSpawn(ItemSpawner *spawner, bool instantly);
+        void spawnItem(ItemSpawner *spawner);
+        void runSpawners();
 
+        Game *game;
+        IItemListener *listener;
+        //Unit *executeUnit;
 
-			
-			std::vector<ItemSpawnerGroup *> spawnerGroups;
+        std::vector<ItemSpawnerGroup *> spawnerGroups;
 
-	};
+    };
 }
 
 #endif
-
-

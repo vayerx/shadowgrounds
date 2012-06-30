@@ -1,4 +1,3 @@
-
 #ifndef TORSO_H
 #define TORSO_H
 
@@ -6,16 +5,14 @@
 
 namespace game
 {
+    class Torso : public PartType {
+    public:
+        Torso();
+        Torso(int id);
+        virtual ~Torso();
+    };
 
-  class Torso : public PartType
-  {
-  public:
-    Torso();
-    Torso(int id);
-    virtual ~Torso();
-  };
-
-  //extern Torso torso;
+    //extern Torso torso;
 
 }
 

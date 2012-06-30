@@ -10,108 +10,104 @@
 #include <windows.h>
 
 namespace frozenbyte {
-namespace exporter {
-
-namespace {
-	HINSTANCE moduleHandle = 0;
-}
-
-/*
-  Exporter function. LW calls this to activate us
-*/
-extern "C" XCALL_(int) 
-Export(long, GlobalFunc *global, LWLayoutGeneric *layoutGeneric, void *)
-{
-	assert(moduleHandle);
-
-	std::auto_ptr<Manager> manager(new Manager(layoutGeneric));
-	manager.get()->setGlobal(global);
-
-	// Get all relevant data (pushes it to managers exporter)
-	LWScene().collectData();
-
-	// Export 
-	createExportDialog(manager->getExporter(), moduleHandle);	
-
-	// That's all folks!
-	return AFUNC_OK;
-}
-
+    namespace exporter {
+        namespace {
+            HINSTANCE moduleHandle = 0;
+        }
 
 /*
-  Lightwave definitions. Identifies our plugin
-*/
+   Exporter function. LW calls this to activate us
+ */
+        extern "C" XCALL_(int)
+        Export(long, GlobalFunc * global, LWLayoutGeneric * layoutGeneric, void *) {
+            assert(moduleHandle);
+
+            std::auto_ptr<Manager> manager( new Manager(layoutGeneric) );
+            manager.get()->setGlobal(global);
+
+            // Get all relevant data (pushes it to managers exporter)
+            LWScene().collectData();
+
+            // Export
+            createExportDialog(manager->getExporter(), moduleHandle);
+
+            // That's all folks!
+            return AFUNC_OK;
+        }
+
+/*
+   Lightwave definitions. Identifies our plugin
+ */
 
 // Server tags
-extern "C"
-ServerTagInfo server_tags[] = 
-{
+        extern "C"
+        ServerTagInfo server_tags[] =
+        {
 #ifdef _DEBUG
-	{
-		"Frozenbyte DEBUG! Exporter",
-		SRVTAG_USERNAME | LANGID_USENGLISH
-	},
+        {
+            "Frozenbyte DEBUG! Exporter",
+            SRVTAG_USERNAME | LANGID_USENGLISH
+        },
 #elif FB_FAST_BUILD
-	{
-		"Frozenbyte Fast! Exporter",
-		SRVTAG_USERNAME | LANGID_USENGLISH
-	},
+        {
+            "Frozenbyte Fast! Exporter",
+            SRVTAG_USERNAME | LANGID_USENGLISH
+        },
 #else
-	{
-		"Frozenbyte Exporter",
-		SRVTAG_USERNAME | LANGID_USENGLISH
-	},
+        {
+            "Frozenbyte Exporter",
+            SRVTAG_USERNAME | LANGID_USENGLISH
+        },
 #endif
-	{
-		"file",
-		SRVTAG_CMDGROUP | LANGID_USENGLISH
-	},
+        {
+            "file",
+            SRVTAG_CMDGROUP | LANGID_USENGLISH
+        },
 
-	{
-		"export/storm",
-		SRVTAG_MENU | LANGID_USENGLISH
-	},
+        {
+            "export/storm",
+            SRVTAG_MENU | LANGID_USENGLISH
+        },
 
-	// Indicates end. Otherwise LW simply crashes, no good :)
-	{
-		(const char *) NULL
-	}
-};
+        // Indicates end. Otherwise LW simply crashes, no good :)
+        {
+            (const char *) NULL
+        }
+        };
 
-// Plugin information  
-extern "C"
-ServerRecord ServerDesc[] = 
-{
-	// Our exporter
-	{ 
-		LWLAYOUTGENERIC_CLASS, 
+// Plugin information
+        extern "C"
+        ServerRecord ServerDesc[] =
+        {
+        // Our exporter
+        {
+            LWLAYOUTGENERIC_CLASS,
 
 #ifdef _DEBUG
-		"Frozenbyte DEBUG! Exporter", 
+            "Frozenbyte DEBUG! Exporter",
 #elif FB_FAST_BUILD
-		"Frozenbyte Fast! Exporter",
+            "Frozenbyte Fast! Exporter",
 #else
-		"Frozenbyte Exporter",
+            "Frozenbyte Exporter",
 #endif
 
-		(ActivateFunc *) Export,
-		server_tags
-	},
-	
-	// Indicates that we don´t have any more plugins
-	{ 
-		(const char *) NULL 
-	}
-};
+            (ActivateFunc *) Export,
+            server_tags
+        },
 
+        // Indicates that we don´t have any more plugins
+        {
+            (const char *) NULL
+        }
+        };
 
-extern "C" 
-BOOL WINAPI DllMain(HINSTANCE handle, DWORD, LPVOID)
-{
-	// Grab instance (for resource usage)
-	moduleHandle = handle;
-	return TRUE;
-}
+        extern "C"
+        BOOL WINAPI DllMain(HINSTANCE handle, DWORD, LPVOID)
+        {
+            // Grab instance (for resource usage)
+            moduleHandle = handle;
+            return TRUE;
+        }
 
-} // end of namespace export
-} // end of namespace frozenbyte
+    } // end of namespace export
+}     // end of namespace frozenbyte

@@ -1,4 +1,3 @@
-
 #ifndef GAMEPHYSICS_H
 #define GAMEPHYSICS_H
 
@@ -13,71 +12,70 @@ class NxActor;
 
 namespace frozenbyte
 {
-namespace physics
-{
-	class PhysicsLib;
-}
-namespace particle
-{
-	class ParticleEffectManager;
-}
+    namespace physics
+    {
+        class PhysicsLib;
+    }
+    namespace particle
+    {
+        class ParticleEffectManager;
+    }
 }
 
 class IStorm3D_Scene;
 
 namespace game
 {
-	class GamePhysicsImpl;
-	class IGamePhysicsObject;
+    class GamePhysicsImpl;
+    class IGamePhysicsObject;
 
-	class GamePhysics
-	{
-	public:
-		GamePhysics();
-		~GamePhysics();
+    class GamePhysics {
+    public:
+        GamePhysics();
+        ~GamePhysics();
 
-		void createPhysics(IGamePhysicsScriptRunner *scriptRunner);
-		void deletePhysics();
-		void prepareForDelete();
+        void createPhysics(IGamePhysicsScriptRunner *scriptRunner);
+        void deletePhysics();
+        void prepareForDelete();
 
-		void runPhysics(IStorm3D_Scene *stormScene, frozenbyte::particle::ParticleEffectManager *particleEffectManager);
+        void runPhysics(IStorm3D_Scene *stormScene, frozenbyte::particle::ParticleEffectManager *particleEffectManager);
 
 #ifdef PHYSICS_PHYSX
-		frozenbyte::physics::PhysicsLib *getPhysicsLib();
+        frozenbyte::physics::PhysicsLib *getPhysicsLib();
 #endif
 
-		void renderedScene();
+        void renderedScene();
 
-		void addPhysicsContactListener(IPhysicsContactListener *contactListener);
+        void addPhysicsContactListener(IPhysicsContactListener *contactListener);
 
-		void removePhysicsContactListener(IPhysicsContactListener *contactListener);
+        void removePhysicsContactListener(IPhysicsContactListener *contactListener);
 
-		// set the physics simulation "focus" to specified ground height,
-		// at the moment, this affects the fluid simulation containment - the fluids are contained
-		// to hover near the given ground height and not to raise significantly above it.
-		void setGroundFocusHeight(float height);
+        // set the physics simulation "focus" to specified ground height,
+        // at the moment, this affects the fluid simulation containment - the fluids are contained
+        // to hover near the given ground height and not to raise significantly above it.
+        void setGroundFocusHeight(float height);
 
-		// creates an expanding fluid pushing sphere at given position
-		void createFluidPushPoint(const VC3 &position, float range, int timeTicks);
+        // creates an expanding fluid pushing sphere at given position
+        void createFluidPushPoint(const VC3 &position, float range, int timeTicks);
 
-		// required for physics stabilization... (so that objects won't break or anything)
-		void setIgnoreContacts(bool ignoreContacts);
+        // required for physics stabilization... (so that objects won't break or anything)
+        void setIgnoreContacts(bool ignoreContacts);
 
-		// "private:"
-		// called by AbstractPhysicsObject constructor/destructor. don't call these directly.
-		void addNewObject(IGamePhysicsObject *obj);
-		void removeObject(IGamePhysicsObject *obj);
+        // "private:"
+        // called by AbstractPhysicsObject constructor/destructor. don't call these directly.
+        void addNewObject(IGamePhysicsObject *obj);
+        void removeObject(IGamePhysicsObject *obj);
 
-		IGamePhysicsObject *getInterfaceObjectForHandle(int handle);
+        IGamePhysicsObject *getInterfaceObjectForHandle(int handle);
 
 #ifdef PROJECT_CLAW_PROTO
-		// HACK: get the implementing physx object...
-		NxActor *getImplementingObject(IGamePhysicsObject *interfaceObject);
+        // HACK: get the implementing physx object...
+        NxActor *getImplementingObject(IGamePhysicsObject *interfaceObject);
 #endif
 
-	private:
-		GamePhysicsImpl *impl;
-	};
+    private:
+        GamePhysicsImpl *impl;
+    };
 }
 
 #endif

@@ -5,21 +5,19 @@
 class IStorm3D_Model_Object;
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        class EditorObjectState {
+            std::map<IStorm3D_Model_Object *, bool> collision;
 
-class EditorObjectState
-{
-	std::map<IStorm3D_Model_Object *, bool> collision;
+        public:
+            EditorObjectState();
+            ~EditorObjectState();
 
-public:
-	EditorObjectState();
-	~EditorObjectState();
+            void setCollision(IStorm3D_Model_Object *o);
+            bool hasCollision(IStorm3D_Model_Object *o) const;
+        };
 
-	void setCollision(IStorm3D_Model_Object *o);
-	bool hasCollision(IStorm3D_Model_Object *o) const;
-};
-
-} // editor
-} // frozenbyte
+    } // editor
+}     // frozenbyte
 
 #endif

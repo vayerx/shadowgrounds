@@ -9,49 +9,46 @@
 
 namespace net
 {
-  namespace file
-  {
-    // proto
-    class FileDriver;
-
-
-    /**
-     * File net bind interface.
-     */
-    class FileBind : public INetBind
+    namespace file
     {
-    public:
-      FileBind(const char *name);
+        // proto
+        class FileDriver;
 
-      virtual INetConnection *acceptConnection() 
-        throw (NetDriverException*);
+        /**
+         * File net bind interface.
+         */
+        class FileBind : public INetBind {
+        public:
+            FileBind(const char *name);
 
-      virtual void listen(int backlog) 
-        throw (NetDriverException*);
+            virtual INetConnection *acceptConnection()
+            throw (NetDriverException *);
 
-      virtual int getMaxBacklog();
+            virtual void listen(int backlog)
+            throw (NetDriverException *);
 
-      virtual void unbind() 
-        throw (NetDriverException*);
-     
-      virtual ~FileBind();
+            virtual int getMaxBacklog();
 
-      const char *getName();
+            virtual void unbind()
+            throw (NetDriverException *);
 
-    private:
-      char *name;
-      int acceptAmount;
+            virtual ~FileBind();
 
-      LinkedList *acceptedConnections;
+            const char *getName();
 
-      void addAcceptedConnection(FileConnection *connection);
+        private:
+            char *name;
+            int acceptAmount;
 
-      bool isAcceptingConnections();
+            LinkedList *acceptedConnections;
 
-      friend FileDriver;
-    };
-  }
+            void addAcceptedConnection(FileConnection *connection);
+
+            bool isAcceptingConnections();
+
+            friend FileDriver;
+        };
+    }
 }
 
 #endif
-

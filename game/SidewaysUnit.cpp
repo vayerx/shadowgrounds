@@ -1,4 +1,3 @@
-
 #include "precompiled.h"
 
 #include "SidewaysUnit.h"
@@ -8,12 +7,10 @@
 
 namespace game
 {
-
-  SidewaysUnit::SidewaysUnit(int player)
-  {
-		setOwner(player);
-    //unitTypeId = getUnitTypeByName("Sideways");
-  }
+    SidewaysUnit::SidewaysUnit(int player)
+    {
+        setOwner(player);
+        //unitTypeId = getUnitTypeByName("Sideways");
+    }
 
 }
-

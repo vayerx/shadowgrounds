@@ -1,4 +1,3 @@
-
 #ifndef LEG_H
 #define LEG_H
 
@@ -6,21 +5,19 @@
 
 namespace game
 {
+    class Leg : public PartType {
+    public:
+        Leg();
+        Leg(int id);
+        virtual ~Leg();
 
-  class Leg : public PartType
-  {
-  public:
-    Leg();
-    Leg(int id);
-    virtual ~Leg();
+        virtual bool setData(const char *key, char *value);
 
-    virtual bool setData(const char *key, char *value);
+    private:
+        int carryingCapacity;
+    };
 
-  private:
-    int carryingCapacity;
-  };
-
-  //extern Leg leg;
+    //extern Leg leg;
 
 }
 

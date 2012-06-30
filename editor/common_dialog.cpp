@@ -16,190 +16,182 @@
 #pragma warning(disable: 4786)
 
 namespace frozenbyte {
-namespace editor {
-namespace {
-	char filter[1024] = "s3d files\0*.s3d\0\0";
-	char filter2[1024];
-	char fileName[2048] = { 0 };
-	char currentDirectory[1024] = { 0 };
+    namespace editor {
+        namespace {
+            char filter[1024] = "s3d files\0*.s3d\0\0";
+            char filter2[1024];
+            char fileName[2048] = { 0 };
+            char currentDirectory[1024] = { 0 };
 
-	class DirKeeper
-	{
-	public:
-		DirKeeper()
-		{
-			GetCurrentDirectory(sizeof(currentDirectory), currentDirectory);
-		}
-		~DirKeeper()
-		{
-			SetCurrentDirectory(currentDirectory);
-		}
-	};
+            class DirKeeper {
+            public:
+                DirKeeper()
+                {
+                    GetCurrentDirectory(sizeof(currentDirectory), currentDirectory);
+                }
+                ~DirKeeper()
+                {
+                    SetCurrentDirectory(currentDirectory);
+                }
+            };
 
-	char *createFilter(const std::string &extension)
-	{		
-		filter[0] = extension.c_str()[0];
-		filter[1] = extension.c_str()[1];
-		filter[2] = extension.c_str()[2];
+            char *createFilter(const std::string &extension)
+            {
+                filter[0] = extension.c_str()[0];
+                filter[1] = extension.c_str()[1];
+                filter[2] = extension.c_str()[2];
 
-		filter[12] = extension.c_str()[0];
-		filter[13] = extension.c_str()[1];
-		filter[14] = extension.c_str()[2];
-		return filter;
-	}
+                filter[12] = extension.c_str()[0];
+                filter[13] = extension.c_str()[1];
+                filter[14] = extension.c_str()[2];
+                return filter;
+            }
 
-	char *createFileName()
-	{
-		fileName[0] = '\0';
-		return fileName;
-	}
+            char *createFileName()
+            {
+                fileName[0] = '\0';
+                return fileName;
+            }
 
-	OPENFILENAME createStruct(const std::string &extension, const std::string &defaultDir, bool useFilter)
-	{
-		OPENFILENAME fileStruct = { 0 };
-		fileStruct.lStructSize = sizeof(OPENFILENAME);
+            OPENFILENAME createStruct(const std::string &extension, const std::string &defaultDir, bool useFilter)
+            {
+                OPENFILENAME fileStruct = { 0 };
+                fileStruct.lStructSize = sizeof(OPENFILENAME);
 
-		if(!useFilter) 
-		{
-			memset(filter2, 0, sizeof(filter2));
-			for(unsigned int i = 0; i < extension.size(); ++i)
-				filter2[i] = extension[i];
+                if (!useFilter) {
+                    memset( filter2, 0, sizeof(filter2) );
+                    for (unsigned int i = 0; i < extension.size(); ++i) {
+                        filter2[i] = extension[i];
+                    }
 
-			fileStruct.lpstrFilter = filter2;
-		} 
-		else
-			fileStruct.lpstrFilter = createFilter(extension);
-		
-		fileStruct.lpstrFile = createFileName();
-		fileStruct.nMaxFile = sizeof(fileName);
-		fileStruct.lpstrInitialDir = defaultDir.c_str();
+                    fileStruct.lpstrFilter = filter2;
+                } else {
+                    fileStruct.lpstrFilter = createFilter(extension);
+                }
 
-		
-		return fileStruct;
-	}
+                fileStruct.lpstrFile = createFileName();
+                fileStruct.nMaxFile = sizeof(fileName);
+                fileStruct.lpstrInitialDir = defaultDir.c_str();
 
-	std::string getRelativeFileName(std::string fullFileName)
-	{
-		std::string workingDirectory = currentDirectory;
+                return fileStruct;
+            }
 
-		int workingSize = workingDirectory.size();
-		int fullSize = fullFileName.size();
+            std::string getRelativeFileName(std::string fullFileName)
+            {
+                std::string workingDirectory = currentDirectory;
 
-		{
-			for(unsigned int i = 0; i < fullFileName.size(); ++i)
-				fullFileName[i] = tolower(fullFileName[i]);
-		}
-		{
-			for(unsigned int i = 0; i < workingDirectory.size(); ++i)
-				workingDirectory[i] = tolower(workingDirectory[i]);
-		}
+                int workingSize = workingDirectory.size();
+                int fullSize = fullFileName.size();
 
-		if((workingSize < fullSize) && (fullFileName.substr(0, workingSize) == workingDirectory))
-			return fullFileName.substr(workingSize + 1, fullSize - workingSize - 1);
+                {
+                    for (unsigned int i = 0; i < fullFileName.size(); ++i) {
+                        fullFileName[i] = tolower(fullFileName[i]);
+                    }
+                }
+                {
+                    for (unsigned int i = 0; i < workingDirectory.size(); ++i) {
+                        workingDirectory[i] = tolower(workingDirectory[i]);
+                    }
+                }
 
-		return fullFileName;
-	}
-}
+                if ( (workingSize < fullSize) && (fullFileName.substr(0, workingSize) == workingDirectory) )
+                    return fullFileName.substr(workingSize + 1, fullSize - workingSize - 1);
 
-std::string getSaveFileName(const std::string &extension, const std::string &defaultDir, bool useFilter)
-{
-	DirKeeper keepDirectory;
+                return fullFileName;
+            }
+        }
 
-	OPENFILENAME fileStruct = createStruct(extension, defaultDir, useFilter);
-	if(GetSaveFileName(&fileStruct))
-	{
-		std::string fn = fileStruct.lpstrFile;
+        std::string getSaveFileName(const std::string &extension, const std::string &defaultDir, bool useFilter)
+        {
+            DirKeeper keepDirectory;
 
-		if(useFilter)
-		{
-			std::string ext = std::string(".") + extension;
-			if(fn.substr(fn.size() - 4, 4) != ext)
-				fn += ext;
-		}
-		else
-		{
-			std::string ext = std::string(".foo");
-			unsigned int i1 = extension.find_first_of(" ");
-			if(i1 != extension.npos)
-				ext = std::string(".") + extension.substr(0, i1);
+            OPENFILENAME fileStruct = createStruct(extension, defaultDir, useFilter);
+            if ( GetSaveFileName(&fileStruct) ) {
+                std::string fn = fileStruct.lpstrFile;
 
-			int i2 = fn.find_last_of(".");
-			if(i2 == fn.npos)
-				i2 = fn.size();
+                if (useFilter) {
+                    std::string ext = std::string(".") + extension;
+                    if (fn.substr(fn.size() - 4, 4) != ext)
+                        fn += ext;
+                } else {
+                    std::string ext = std::string(".foo");
+                    unsigned int i1 = extension.find_first_of(" ");
+                    if (i1 != extension.npos)
+                        ext = std::string(".") + extension.substr(0, i1);
 
-			fn = fn.substr(0, i2);
-			fn += ext;
-		}
+                    int i2 = fn.find_last_of(".");
+                    if (i2 == fn.npos)
+                        i2 = fn.size();
 
-		return getRelativeFileName(fn);
-	}
+                    fn = fn.substr(0, i2);
+                    fn += ext;
+                }
 
-	return "";
-}
+                return getRelativeFileName(fn);
+            }
 
-std::string getOpenFileName(const std::string &extension, const std::string &defaultDir, bool useFilter)
-{
-	DirKeeper keepDirectory;
+            return "";
+        }
 
-	OPENFILENAME fileStruct = createStruct(extension, defaultDir, useFilter);
-	if(GetOpenFileName(&fileStruct))
-	{
-		std::string fileName = fileStruct.lpstrFile;
-		if(fileExists(fileName))
-			return getRelativeFileName(fileName);
-	}
+        std::string getOpenFileName(const std::string &extension, const std::string &defaultDir, bool useFilter)
+        {
+            DirKeeper keepDirectory;
 
-	return "";
-}
+            OPENFILENAME fileStruct = createStruct(extension, defaultDir, useFilter);
+            if ( GetOpenFileName(&fileStruct) ) {
+                std::string fileName = fileStruct.lpstrFile;
+                if ( fileExists(fileName) )
+                    return getRelativeFileName(fileName);
+            }
 
+            return "";
+        }
 
-std::vector<std::string> getMultipleOpenFileName(const std::string &extension, const std::string &defaultDir)
-{
-	DirKeeper keepDirectory;
+        std::vector<std::string> getMultipleOpenFileName(const std::string &extension, const std::string &defaultDir)
+        {
+            DirKeeper keepDirectory;
 
-	OPENFILENAME fileStruct = createStruct(extension, defaultDir, true);
-	fileStruct.Flags |= OFN_ALLOWMULTISELECT | OFN_EXPLORER | OFN_NOCHANGEDIR;
+            OPENFILENAME fileStruct = createStruct(extension, defaultDir, true);
+            fileStruct.Flags |= OFN_ALLOWMULTISELECT | OFN_EXPLORER | OFN_NOCHANGEDIR;
 
-	if(GetOpenFileName(&fileStruct))
-	{
-		std::vector<std::string> fileNames;
-		std::string directory = getRelativeFileName(fileStruct.lpstrFile);
-		
-		if(fileExists(directory))
-		{
-			fileNames.push_back(directory);
-			return fileNames;
-		}
+            if ( GetOpenFileName(&fileStruct) ) {
+                std::vector<std::string> fileNames;
+                std::string directory = getRelativeFileName(fileStruct.lpstrFile);
 
-		directory += '\\';
+                if ( fileExists(directory) ) {
+                    fileNames.push_back(directory);
+                    return fileNames;
+                }
 
-		const char *p = fileStruct.lpstrFile;
-		int fileBegin = std::string(fileStruct.lpstrFile).size() + 1;
-		int position = fileBegin;
+                directory += '\\';
 
-		for(;;)
-		{
-			char c = p[position++];
-			if(c != '\0')
-				continue;
+                const char *p = fileStruct.lpstrFile;
+                int fileBegin = std::string(fileStruct.lpstrFile).size() + 1;
+                int position = fileBegin;
 
-			std::string fileName = directory;;
-			for(int i = fileBegin; i < position - 1; ++i)
-				fileName.push_back(p[i]);
+                for (;; ) {
+                    char c = p[position++];
+                    if (c != '\0')
+                        continue;
 
-			if(fileExists(fileName))
-				fileNames.push_back(fileName);
+                    std::string fileName = directory;;
+                    for (int i = fileBegin; i < position - 1; ++i) {
+                        fileName.push_back(p[i]);
+                    }
 
-			fileBegin = position;
-			if(p[position] == '\0')
-				break;
-		}
+                    if ( fileExists(fileName) )
+                        fileNames.push_back(fileName);
 
-		return fileNames;
-	}
+                    fileBegin = position;
+                    if (p[position] == '\0')
+                        break;
+                }
 
-	return std::vector<std::string> ();
-}
+                return fileNames;
+            }
 
-} // end of namespace editor
-} // end of namespace frozenbyte
+            return std::vector<std::string>();
+        }
+
+    } // end of namespace editor
+}     // end of namespace frozenbyte

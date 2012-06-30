@@ -4,32 +4,30 @@
 #define INCLUDED_FILESYSTEM_OUTPUT_FILE_STREAM_H
 
 #ifndef INCLUDED_BOOST_SCOPED_PTR_HPP
-#define INCLUDED_BOOST_SCOPED_PTR_HPP
-#include <boost/scoped_ptr.hpp>
+#  define INCLUDED_BOOST_SCOPED_PTR_HPP
+#  include <boost/scoped_ptr.hpp>
 #endif
 #ifndef INCLUDED_FILESYSTEM_OUTPUT_STREAM_H
-#include "output_stream.h"
+#  include "output_stream.h"
 #endif
 
 namespace frozenbyte {
-namespace filesystem {
+    namespace filesystem {
+        struct OutputFileStreamBufferData;
 
-struct OutputFileStreamBufferData;
+        class OutputFileStreamBuffer : public IOutputStreamBuffer {
+            boost::scoped_ptr<OutputFileStreamBufferData> data;
 
-class OutputFileStreamBuffer: public IOutputStreamBuffer
-{
-	boost::scoped_ptr<OutputFileStreamBufferData> data;
+        public:
+            OutputFileStreamBuffer(const std::string &fileName);
+            ~OutputFileStreamBuffer();
 
-public:
-	OutputFileStreamBuffer(const std::string &fileName);
-	~OutputFileStreamBuffer();
+            void putByte(unsigned char c);
+        };
 
-	void putByte(unsigned char c);
-};
+        OutputStream createOutputFileStream(const std::string &fileName);
 
-OutputStream createOutputFileStream(const std::string &fileName);
-
-} // end of namespace filesystem
-} // end of namespace frozenbyte
+    } // end of namespace filesystem
+}     // end of namespace frozenbyte
 
 #endif

@@ -1,4 +1,3 @@
-
 #include "precompiled.h"
 
 #include <string.h>
@@ -25,165 +24,143 @@
 #include "../filesystem/input_stream_wrapper.h"
 #include "../util/Debug_MemoryManager.h"
 
-
 #define DEFAULT_UNIT_TYPE_NAME "Armor"
 using namespace frozenbyte;
 
 namespace game
 {
-  const char *mp_currentfile = "";
+    const char *mp_currentfile = "";
 
-  MissionParser::MissionParser()
-  {
-    // nop
-  }
-
-  MissionParser::~MissionParser()
-  {
-    // nop
-  }
-
-  void MissionParser::error(const char *err, int linenum, bool isError)
-  {
-    char *buf = new char[strlen(err) + 1 + 60 + strlen(mp_currentfile)];
-    strcpy(buf, err);
-    strcat(buf, " (file ");
-    strcat(buf, mp_currentfile);
-    strcat(buf, ", line ");
-    strcat(buf, int2str(linenum));
-    strcat(buf, ")");
-    if (isError)
-      (Logger::getInstance())->error(buf);
-    else
-      (Logger::getInstance())->warning(buf);
-    delete [] buf;
-  }
-
-  void MissionParser::parseMission(Game *game, const char *filename, int section)
-  {
-		if (filename == NULL)
-			return;
-
-    mp_currentfile = filename;
-
-		if (section == MISSIONPARSER_SECTION_BEFORE)
-		{
-			game->setMissionId(NULL);
-		}
-
-    filesystem::FB_FILE *f = filesystem::fb_fopen(filename, "rb");
-
-    if (f == NULL)
+    MissionParser::MissionParser()
     {
-      error("Could not open mission file.", 0);
-      return;
+        // nop
     }
 
-    //fseek(f, 0, SEEK_END);
-    //int flen = ftell(f);
-    //fseek(f, 0, SEEK_SET);
-    int flen = filesystem::fb_fsize(f);
-
-    char *buf = new char[flen + 1];
-
-    int datalen = filesystem::fb_fread(buf, sizeof(char), flen, f);
-    buf[datalen] = '\0';
-
-    int lineNumber = 1;
-    int lastpos = 0;
-    int i;
-    int atSection = 0;
-    bool okSection = false;
-    for (i = 0; i < datalen; i++)
+    MissionParser::~MissionParser()
     {
-      if (buf[i] == '\r' || buf[i] == '\n')
-      {
-        // TODO: linenumbering goes wrong if carriage return missing 
-        // so if non-windows text format, it's real line number + 1 
-        if (buf[i] == '\n') lineNumber++;
+        // nop
+    }
 
-        buf[i] = '\0';
+    void MissionParser::error(const char *err, int linenum, bool isError)
+    {
+        char *buf = new char[strlen(err) + 1 + 60 + strlen(mp_currentfile)];
+        strcpy(buf, err);
+        strcat(buf, " (file ");
+        strcat(buf, mp_currentfile);
+        strcat(buf, ", line ");
+        strcat( buf, int2str(linenum) );
+        strcat(buf, ")");
+        if (isError)
+            ( Logger::getInstance() )->error(buf);
+        else
+            ( Logger::getInstance() )->warning(buf);
+        delete[] buf;
+    }
 
-        // remove trailing spaces
-        for (int j = i - 1; j >= lastpos; j--)
-        {
-          if (buf[j] == ' ') 
-            buf[j] = '\0';
-          else 
-            break;
+    void MissionParser::parseMission(Game *game, const char *filename, int section)
+    {
+        if (filename == NULL)
+            return;
+
+        mp_currentfile = filename;
+
+        if (section == MISSIONPARSER_SECTION_BEFORE)
+            game->setMissionId(NULL);
+
+        filesystem::FB_FILE *f = filesystem::fb_fopen(filename, "rb");
+
+        if (f == NULL) {
+            error("Could not open mission file.", 0);
+            return;
         }
 
-        // process if not empty and not start with comments
-        if (buf[lastpos] != '\0' 
-          && strncmp(&buf[lastpos], "//", 2) != 0)
-        {
-          int tokenSep = -1;
-          for (int k = lastpos; k < i; k++)
-          {
-            if (buf[k] == ' ')
-            {
-              buf[k] = '\0';
-              tokenSep = k;
-              break;
-            }
-          }
-          char *cmd = &buf[lastpos];
-          char *data = NULL;
-          if (tokenSep != -1) 
-            data = &buf[tokenSep + 1];
+        //fseek(f, 0, SEEK_END);
+        //int flen = ftell(f);
+        //fseek(f, 0, SEEK_SET);
+        int flen = filesystem::fb_fsize(f);
 
-          bool lineok = false;
+        char *buf = new char[flen + 1];
 
-          if (strcmp(cmd, "section") == 0)
-          {
-            if (strcmp(data, "before") == 0)
-            {
-              atSection = MISSIONPARSER_SECTION_BEFORE;
-            }
-            if (strcmp(data, "combat") == 0)
-            {
-              atSection = MISSIONPARSER_SECTION_COMBAT;
-            }
-            if (strcmp(data, "after") == 0)
-            {
-              atSection = MISSIONPARSER_SECTION_AFTER;
-            }
-            if (section == atSection)
-              okSection = true;
-            else 
-              okSection = false;
-            lineok = true;
-          }
+        int datalen = filesystem::fb_fread(buf, sizeof(char), flen, f);
+        buf[datalen] = '\0';
 
-          if (strcmp(cmd, "includeScript") == 0)
-          {
-            if (data != NULL)
-            { 
-							if (data[0] == '\"')
-							{
-								char *stringedData = new char[strlen(&data[1]) + 1];
-								strcpy(stringedData, &data[1]);
-								for (int stfix = strlen(stringedData) - 1; stfix >= 0; stfix--)
-								{
-									if (stringedData[stfix] == '\"')
-									{
-										stringedData[stfix] = '\0';
-										break;
-									}
-								}
-	              game->gameScripting->loadScripts(stringedData, filename);
-								delete [] stringedData;
-							} else {
-	              game->gameScripting->loadScripts(data, filename);
-							}
-            } else {
-              error("Missing script filename.", lineNumber);
-            }
-            lineok = true;
-          }
+        int lineNumber = 1;
+        int lastpos = 0;
+        int i;
+        int atSection = 0;
+        bool okSection = false;
+        for (i = 0; i < datalen; i++) {
+            if (buf[i] == '\r' || buf[i] == '\n') {
+                // TODO: linenumbering goes wrong if carriage return missing
+                // so if non-windows text format, it's real line number + 1
+                if (buf[i] == '\n') lineNumber++;
 
-          if (okSection)
-          {
+                buf[i] = '\0';
+
+                // remove trailing spaces
+                for (int j = i - 1; j >= lastpos; j--) {
+                    if (buf[j] == ' ')
+                        buf[j] = '\0';
+                    else
+                        break;
+                }
+
+                // process if not empty and not start with comments
+                if (buf[lastpos] != '\0'
+                    && strncmp(&buf[lastpos], "//", 2) != 0)
+                {
+                    int tokenSep = -1;
+                    for (int k = lastpos; k < i; k++) {
+                        if (buf[k] == ' ') {
+                            buf[k] = '\0';
+                            tokenSep = k;
+                            break;
+                        }
+                    }
+                    char *cmd = &buf[lastpos];
+                    char *data = NULL;
+                    if (tokenSep != -1)
+                        data = &buf[tokenSep + 1];
+
+                    bool lineok = false;
+
+                    if (strcmp(cmd, "section") == 0) {
+                        if (strcmp(data, "before") == 0)
+                            atSection = MISSIONPARSER_SECTION_BEFORE;
+                        if (strcmp(data, "combat") == 0)
+                            atSection = MISSIONPARSER_SECTION_COMBAT;
+                        if (strcmp(data, "after") == 0)
+                            atSection = MISSIONPARSER_SECTION_AFTER;
+                        if (section == atSection)
+                            okSection = true;
+                        else
+                            okSection = false;
+                        lineok = true;
+                    }
+
+                    if (strcmp(cmd, "includeScript") == 0) {
+                        if (data != NULL) {
+                            if (data[0] == '\"') {
+                                char *stringedData = new char[strlen(&data[1]) + 1];
+                                strcpy(stringedData, &data[1]);
+                                for (int stfix = strlen(stringedData) - 1; stfix >= 0; stfix--) {
+                                    if (stringedData[stfix] == '\"') {
+                                        stringedData[stfix] = '\0';
+                                        break;
+                                    }
+                                }
+                                game->gameScripting->loadScripts(stringedData, filename);
+                                delete[] stringedData;
+                            } else {
+                                game->gameScripting->loadScripts(data, filename);
+                            }
+                        } else {
+                            error("Missing script filename.", lineNumber);
+                        }
+                        lineok = true;
+                    }
+
+                    if (okSection) {
 /*
             if (strcmp(cmd, "setPlayer") == 0)
             {
@@ -196,7 +173,7 @@ namespace game
               }
               lineok = true;
             }
-*/
+ */
 /*
             if (strcmp(cmd, "addMoney") == 0)
             {
@@ -257,7 +234,7 @@ namespace game
               }
               lineok = true;
             }
-*/
+ */
 /*
             if (strcmp(cmd, "setCoordinates") == 0)
             {
@@ -295,69 +272,60 @@ namespace game
               }
               lineok = true;
             }
-						*/
+ */
 
-						/*
-            if (strcmp(cmd, "addBuilding") == 0)
-            {
-              Building *building = new Building(data, coordX, coordY);
-              game->buildings->addBuilding(building);
-              lineok = true;
-            }
-						*/
+                        /*
+                           if (strcmp(cmd, "addBuilding") == 0)
+                           {
+                           Building *building = new Building(data, coordX, coordY);
+                           game->buildings->addBuilding(building);
+                           lineok = true;
+                           }
+                         */
 
-            if (strcmp(cmd, "setMapConfig") == 0)
-            {
-              if (game->currentMap != NULL)
-              {
-                delete [] game->currentMap;
-                game->currentMap = NULL;
-              }
-              if (data != NULL)
-              {
-                game->currentMap = new char[strlen(data) + 1];
-                strcpy(game->currentMap, data);
-              } else {
-                error("setMapConfig parameter expected.", lineNumber);
-              }
-              lineok = true;
-            }
+                        if (strcmp(cmd, "setMapConfig") == 0) {
+                            if (game->currentMap != NULL) {
+                                delete[] game->currentMap;
+                                game->currentMap = NULL;
+                            }
+                            if (data != NULL) {
+                                game->currentMap = new char[strlen(data) + 1];
+                                strcpy(game->currentMap, data);
+                            } else {
+                                error("setMapConfig parameter expected.", lineNumber);
+                            }
+                            lineok = true;
+                        }
 
-            if (strcmp(cmd, "setMissionScript") == 0)
-            {
-              game->setMissionScript(data);
-              lineok = true;
-            }
+                        if (strcmp(cmd, "setMissionScript") == 0) {
+                            game->setMissionScript(data);
+                            lineok = true;
+                        }
 
-            if (strcmp(cmd, "setMissionId") == 0)
-            {
-              game->setMissionId(data);
-              lineok = true;
-            }
+                        if (strcmp(cmd, "setMissionId") == 0) {
+                            game->setMissionId(data);
+                            lineok = true;
+                        }
 
-            if (strcmp(cmd, "setSectionScript") == 0)
-            {
-              game->setSectionScript(data);
-              lineok = true;
-            }
+                        if (strcmp(cmd, "setSectionScript") == 0) {
+                            game->setSectionScript(data);
+                            lineok = true;
+                        }
 
-            if (strcmp(cmd, "setBuildingsScript") == 0)
-            {
-              game->setBuildingsScript(data);
-              lineok = true;
-            }
+                        if (strcmp(cmd, "setBuildingsScript") == 0) {
+                            game->setBuildingsScript(data);
+                            lineok = true;
+                        }
 
-            if (strcmp(cmd, "setFailureMission") == 0)
-            {
-              game->setFailureMission(data);
-              lineok = true;
-            }
+                        if (strcmp(cmd, "setFailureMission") == 0) {
+                            game->setFailureMission(data);
+                            lineok = true;
+                        }
 
-            if (strcmp(cmd, "setSuccessMission") == 0)
-            {
-              game->setSuccessMission(data);
-              lineok = true;
-            }
+                        if (strcmp(cmd, "setSuccessMission") == 0) {
+                            game->setSuccessMission(data);
+                            lineok = true;
+                        }
 
 /*
             if (strcmp(cmd, "allowPartType") == 0)
@@ -370,8 +338,8 @@ namespace game
                   error("Illegal part type id.", lineNumber);
               } else {
                 PartType *pt = getPartTypeById(PARTTYPE_ID_STRING_TO_INT(data));
-                if (pt == NULL) 
-                { 
+                if (pt == NULL)
+                {
                   error("Reference to unloaded part type.", lineNumber);
                 } else {
                   if (game->partTypesAvailable->isPartTypeAvailable(player, pt))
@@ -384,7 +352,7 @@ namespace game
               }
               lineok = true;
             }
-*/
+ */
 /*
             if (strcmp(cmd, "addCharacter") == 0)
             {
@@ -406,7 +374,7 @@ namespace game
               }
               lineok = true;
             }
-*/
+ */
 /*
             if (strcmp(cmd, "addUnit") == 0)
             {
@@ -434,7 +402,7 @@ namespace game
               }
               lineok = true;
             }
-*/
+ */
 /*
             if (strcmp(cmd, "addStoragePart") == 0)
             {
@@ -446,8 +414,8 @@ namespace game
                   error("Illegal part type id.", lineNumber);
               } else {
                 PartType *pt = getPartTypeById(PARTTYPE_ID_STRING_TO_INT(data));
-                if (pt == NULL) 
-                { 
+                if (pt == NULL)
+                {
                   error("Reference to unloaded part type.", lineNumber);
                 } else {
                   part = pt->getNewPartInstance();
@@ -458,7 +426,7 @@ namespace game
               }
               lineok = true;
             }
-*/
+ */
 /*
             if (strcmp(cmd, "addUnitRootPart") == 0)
             {
@@ -470,8 +438,8 @@ namespace game
                   error("Illegal part type id.", lineNumber);
               } else {
                 PartType *pt = getPartTypeById(PARTTYPE_ID_STRING_TO_INT(data));
-                if (pt == NULL) 
-                { 
+                if (pt == NULL)
+                {
                   error("Reference to unloaded part type.", lineNumber);
                 } else {
                   if (unit == NULL)
@@ -489,7 +457,7 @@ namespace game
               }
               lineok = true;
             }
-*/
+ */
 /*
             if (strcmp(cmd, "setUnitCoordinates") == 0)
             {
@@ -532,7 +500,7 @@ namespace game
               }
               lineok = true;
             }
-*/
+ */
 /*
             if (strcmp(cmd, "addSubPart") == 0)
             {
@@ -544,8 +512,8 @@ namespace game
                   error("Illegal part type id.", lineNumber);
               } else {
                 PartType *pt = getPartTypeById(PARTTYPE_ID_STRING_TO_INT(data));
-                if (pt == NULL) 
-                { 
+                if (pt == NULL)
+                {
                   error("Reference to unloaded part type.", lineNumber);
                 } else {
                   if (!partInUnit || part == NULL)
@@ -557,7 +525,7 @@ namespace game
                     int slot;
                     for (slot = 0; slot < slotamount; slot++)
                     {
-                      if (parentPart->getSubPart(slot) == NULL 
+                      if (parentPart->getSubPart(slot) == NULL
                         && pt->isInherited(parentPart->getType()->getSlotType(slot)))
                       break;
                     }
@@ -576,7 +544,7 @@ namespace game
               }
               lineok = true;
             }
-*/
+ */
 /*
             if (strcmp(cmd, "toParentPart") == 0)
             {
@@ -591,9 +559,9 @@ namespace game
                   part = part->getParent();
                 }
               }
-              lineok = true; 
+              lineok = true;
             }
-*/
+ */
 /*
             if (strcmp(cmd, "setScript") == 0)
             {
@@ -610,38 +578,32 @@ namespace game
               }
               lineok = true;
             }
-*/
+ */
 
-          }
+                    }
 
-          // TODO: lots of commands...
+                    // TODO: lots of commands...
 
-          if (!lineok && okSection)
-          {
-            error("Unknown command.", lineNumber, false);
-          }
+                    if (!lineok && okSection)
+                        error("Unknown command.", lineNumber, false);
+                }
+
+                // skip leading spaces for next entry
+                while (buf[i + 1] == ' ') {
+                    i++;
+                }
+                lastpos = i + 1;
+            }
         }
 
-        // skip leading spaces for next entry
-        while (buf[i + 1] == ' ') 
-        { 
-          i++; 
-        }
-        lastpos = i + 1;
-      }
+        delete[] buf;
+
+        filesystem::fb_fclose(f);
+
+        if (game->getMissionId() == NULL)
+            Logger::getInstance()->error("MissionParser::parseMission - Mission id missing from mission file.");
+
+        return;
     }
 
-    delete [] buf;
-
-    filesystem::fb_fclose(f);
-
-		if (game->getMissionId() == NULL)
-		{
-			Logger::getInstance()->error("MissionParser::parseMission - Mission id missing from mission file.");
-		}
-
-    return;
-  }
-
 }
-

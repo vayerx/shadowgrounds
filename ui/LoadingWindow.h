@@ -1,4 +1,3 @@
-
 #ifndef LOADINGWINDOW_H
 #define LOADINGWINDOW_H
 
@@ -15,119 +14,114 @@ class IStorm3D_VideoStreamer;
 
 namespace game
 {
-	class Game;
+    class Game;
 }
 
 namespace ui
 {
-	class CharacterSelectionWindow;
+    class CharacterSelectionWindow;
 
-	class LoadingWindow 
-		: private IOguiButtonListener, private IOguiEffectListener
-	{
-	public:
-		LoadingWindow(Ogui *ogui, game::Game *game, int player);
-		~LoadingWindow();
+    class LoadingWindow
+        : private IOguiButtonListener, private IOguiEffectListener {
+    public:
+        LoadingWindow(Ogui *ogui, game::Game *game, int player);
+        ~LoadingWindow();
 
-		virtual void CursorEvent(OguiButtonEvent *eve);
+        virtual void CursorEvent(OguiButtonEvent *eve);
 
-		virtual void EffectEvent(OguiEffectEvent *eve);
+        virtual void EffectEvent(OguiEffectEvent *eve);
 
-		void reloadWindows();
+        void reloadWindows();
 
-		void enableClose();
-		bool isCloseEnabled();
+        void enableClose();
+        bool isCloseEnabled();
 
-		void raise();
+        void raise();
 
-		bool isFadingOut();
+        bool isFadingOut();
 
-		void closeWindow();
-		void update();
+        void closeWindow();
+        void update();
 
-		bool shouldAutoClose();
+        bool shouldAutoClose();
 
-	private:
-		void startScrolling();
+    private:
+        void startScrolling();
 
-		void createWindows();
-		void destroyWindows();
+        void createWindows();
+        void destroyWindows();
 
-		void createUpgradeButton();
+        void createUpgradeButton();
 
-		Ogui		*ogui;
-		OguiWindow	*win;
-		game::Game	*game;
+        Ogui *ogui;
+        OguiWindow *win;
+        game::Game *game;
 
-		int	player;
+        int player;
 
-		bool fadingOut;
+        bool fadingOut;
 
-		bool closeEnabled;
-		int closeEnabledTime;
+        bool closeEnabled;
+        int closeEnabledTime;
 
-		OguiFormattedText* briefingArea;
-		// OguiTextLabel *briefingArea;
-		OguiButton *closebut;
-		OguiButton *loadingbut;
-		OguiButton* upgradeMenuBut;
+        OguiFormattedText *briefingArea;
+        // OguiTextLabel *briefingArea;
+        OguiButton *closebut;
+        OguiButton *loadingbut;
+        OguiButton *upgradeMenuBut;
 
-		OguiTextLabel*	headerText;
-		OguiTextLabel*	missionText;
-	
-		IOguiFont*	headerFont;
-		IOguiFont*	missionFont;
-		IOguiFont*	fontNormal;
-		IOguiFont*	fontBold;
-		IOguiFont*	fontItalic;
-		IOguiFont*	fontUnderline;
+        OguiTextLabel *headerText;
+        OguiTextLabel *missionText;
 
-		// start and close button font
-		IOguiFont*	fontButton;
-		IOguiFont*	fontButtonDisabled;
-		IOguiFont*	fontButtonHighlighted;
-		
+        IOguiFont *headerFont;
+        IOguiFont *missionFont;
+        IOguiFont *fontNormal;
+        IOguiFont *fontBold;
+        IOguiFont *fontItalic;
+        IOguiFont *fontUnderline;
 
-		std::string mission_brief2_locale;
-		OguiFormattedText *scrollingText;
-		OguiWindow *scrollingFader;
-		float scrollingSpeed;
-		int lastScrollTime;
-		float scrollTimeDeltaAvg;
-		bool scrollingStarted;
-		float nextScrollAmount;
-		int totalScrollAmount;
-		int speechSound;
-		int speechSoundStartTime;
-		bool playedMusic;
-		int scrollingLimit;
+        // start and close button font
+        IOguiFont *fontButton;
+        IOguiFont *fontButtonDisabled;
+        IOguiFont *fontButtonHighlighted;
 
-		IOguiImage* briefVideo;
-		IStorm3D_VideoStreamer*	briefVideoStream;
-		bool videoStarted;
+        std::string mission_brief2_locale;
+        OguiFormattedText *scrollingText;
+        OguiWindow *scrollingFader;
+        float scrollingSpeed;
+        int lastScrollTime;
+        float scrollTimeDeltaAvg;
+        bool scrollingStarted;
+        float nextScrollAmount;
+        int totalScrollAmount;
+        int speechSound;
+        int speechSoundStartTime;
+        bool playedMusic;
+        int scrollingLimit;
 
-		std::string cinematic;
-		bool cinematicStarted;
-		bool cinematicFinished;
+        IOguiImage *briefVideo;
+        IStorm3D_VideoStreamer *briefVideoStream;
+        bool videoStarted;
 
-		int lastUpdateTime;
-		bool updateStarted;
+        std::string cinematic;
+        bool cinematicStarted;
+        bool cinematicFinished;
 
+        int lastUpdateTime;
+        bool updateStarted;
 
-	  const char *scrolling_font_file;
-		const char *scrolling_font_bold_file;
-		const char *scrolling_font_italic_file;
-		const char *scrolling_font_h1_file;
+        const char *scrolling_font_file;
+        const char *scrolling_font_bold_file;
+        const char *scrolling_font_italic_file;
+        const char *scrolling_font_h1_file;
 
+        IOguiImage *background_image;
 
-		IOguiImage* background_image;
-
-
-	public:
-		static bool showCharacterSelection;
-		static bool showUpgradeWindowOnClose;
-		static bool autoCloseEnabled;
-	};
+    public:
+        static bool showCharacterSelection;
+        static bool showUpgradeWindowOnClose;
+        static bool autoCloseEnabled;
+    };
 
 }
 

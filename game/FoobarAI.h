@@ -1,21 +1,18 @@
-
 #ifndef FOOBARAI_H
 #define FOOBARAI_H
 
 namespace game
 {
-  class Game;
+    class Game;
 }
 
-class FoobarAI
-{
+class FoobarAI {
 public:
-  FoobarAI(game::Game *game, int player);
-  void doStuff();
+    FoobarAI(game::Game *game, int player);
+    void doStuff();
 private:
-  game::Game *game;
-  int player;
+    game::Game *game;
+    int player;
 };
 
 #endif
-

@@ -4,20 +4,18 @@
 #include <boost/scoped_ptr.hpp>
 
 namespace frozenbyte {
-namespace particle {
+    namespace particle {
+        class IParticleArea {
+        public:
+            virtual ~IParticleArea() { }
 
-class IParticleArea
-{
-public:
-	virtual ~IParticleArea() {}
+            virtual void biasValues(const VC3 &position, VC3 &velocity) const = 0;
+            virtual float getObstacleHeight(const VC3 &position) const = 0;
+            virtual float getBaseHeight(const VC3 &position) const = 0;
+            virtual bool isInside(const VC3 &position) const = 0;
+        };
 
-	virtual void biasValues(const VC3 &position, VC3 &velocity) const = 0;
-	virtual float getObstacleHeight(const VC3 &position) const = 0;
-	virtual float getBaseHeight(const VC3 &position) const = 0;
-	virtual bool isInside(const VC3 &position) const = 0;
-};
-
-} // particle
-} // frozenbyte
+    } // particle
+}     // frozenbyte
 
 #endif

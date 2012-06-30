@@ -10,60 +10,57 @@ class OguiFormattedText;
 #include "../ogui/Ogui.h"
 #include "ICombatSubWindow.h"
 
-
 namespace game
 {
-	class Game;
+    class Game;
 }
 
 namespace ui
 {
-	class GenericTextWindow;
+    class GenericTextWindow;
 
-	class IGenericTextWindowUpdator
-	{
-	public:
-		virtual ~IGenericTextWindowUpdator() {}
-		virtual void update(GenericTextWindow *win) = 0;
-	};
+    class IGenericTextWindowUpdator {
+    public:
+        virtual ~IGenericTextWindowUpdator() { }
+        virtual void update(GenericTextWindow *win) = 0;
+    };
 
-	class GenericTextWindow : public ICombatSubWindow
-	{
-	public:
-		GenericTextWindow( Ogui* ogui, game::Game* game, int player );
-		~GenericTextWindow();
+    class GenericTextWindow : public ICombatSubWindow {
+    public:
+        GenericTextWindow(Ogui *ogui, game::Game *game, int player);
+        ~GenericTextWindow();
 
-		void setUpdator(IGenericTextWindowUpdator *updator);
-		void loadDataFromLocales( const std::string& locale_name );
+        void setUpdator(IGenericTextWindowUpdator *updator);
+        void loadDataFromLocales(const std::string &locale_name);
 
-		void setText(const std::string &str);
+        void setText(const std::string &str);
 
-		inline OguiFormattedText *getText() { return text; }
-		inline OguiWindow *getWindow() { return win; }
+        inline OguiFormattedText *getText() { return text; }
+        inline OguiWindow *getWindow() { return win; }
 
-		inline bool isHidden() const { return reallyHidden; }
-		void hide( int time = 0 );
-		void show( int time = 0 );
-		void update();
+        inline bool isHidden() const { return reallyHidden; }
+        void hide(int time = 0);
+        void show(int time = 0);
+        void update();
 
-		void move(int x, int y);
-		int getX();
-		int getY();
+        void move(int x, int y);
+        int getX();
+        int getY();
 
-		static GenericTextWindow *last_opened_window;
+        static GenericTextWindow *last_opened_window;
 
-	private:
-		Ogui* ogui;
-		game::Game* game;
-		int player;
+    private:
+        Ogui *ogui;
+        game::Game *game;
+        int player;
 
-		OguiWindow* win;
-		OguiFormattedText *text;
-		OguiLocaleWrapper *oguiLoader;
+        OguiWindow *win;
+        OguiFormattedText *text;
+        OguiLocaleWrapper *oguiLoader;
 
-		bool reallyHidden;
-		IGenericTextWindowUpdator *updator;
-	};
+        bool reallyHidden;
+        IGenericTextWindowUpdator *updator;
+    };
 
 }
 #endif

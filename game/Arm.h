@@ -1,4 +1,3 @@
-
 #ifndef ARM_H
 #define ARM_H
 
@@ -6,16 +5,14 @@
 
 namespace game
 {
+    class Arm : public PartType {
+    public:
+        Arm();
+        Arm(int id);
+        virtual ~Arm();
+    };
 
-  class Arm : public PartType
-  {
-  public:
-    Arm();
-    Arm(int id);
-    virtual ~Arm();
-  };
-
-  //extern Arm arm;
+    //extern Arm arm;
 
 }
 

@@ -4,16 +4,14 @@
 #define INCLUDED_EDITOR_ICOMMAND_H
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        class ICommand {
+        public:
+            virtual ~ICommand() { }
+            virtual void execute(int id) = 0;
+        };
 
-class ICommand
-{
-public:
-	virtual ~ICommand() {}
-	virtual void execute(int id) = 0;
-};
-
-} // end of namespace editor
-} // end of namespace frozenbyte
+    } // end of namespace editor
+}     // end of namespace frozenbyte
 
 #endif

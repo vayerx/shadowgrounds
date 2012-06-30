@@ -4,29 +4,27 @@
 #define INCLUDED_EDITOR_COMMAND_LIST_H
 
 #ifndef INCLUDED_BOOST_SHARED_PTR_HPP
-#define INCLUDED_BOOST_SHARED_PTR_HPP
-#include <boost/shared_ptr.hpp>
+#  define INCLUDED_BOOST_SHARED_PTR_HPP
+#  include <boost/shared_ptr.hpp>
 #endif
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        class ICommand;
+        struct CommandListData;
 
-class ICommand;
-struct CommandListData;
+        class CommandList {
+            boost::shared_ptr<CommandListData> data;
 
-class CommandList
-{
-	boost::shared_ptr<CommandListData> data;
+        public:
+            CommandList();
+            ~CommandList();
 
-public:
-	CommandList();
-	~CommandList();
+            void addCommand(int id, ICommand *command);
+            void execute(int id);
+        };
 
-	void addCommand(int id, ICommand *command);
-	void execute(int id);
-};
-
-} // end of namespace editor
-} // end of namespace frozenbyte
+    } // end of namespace editor
+}     // end of namespace frozenbyte
 
 #endif

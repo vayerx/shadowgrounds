@@ -1,4 +1,3 @@
-
 #ifndef ITEMPACK_H
 #define ITEMPACK_H
 
@@ -6,25 +5,23 @@
 
 namespace game
 {
+    class ItemPack : public PartType {
+    public:
+        ItemPack();
+        ItemPack(int id);
+        virtual ~ItemPack();
 
-  class ItemPack : public PartType
-  {
-  public:
-    ItemPack();
-    ItemPack(int id);
-    virtual ~ItemPack();
+        virtual bool setData(const char *key, char *value);
 
-    virtual bool setData(const char *key, char *value);
+        int getAmount();
 
-    int getAmount();
+        virtual void prepareNewForInherit(PartType *partType);
+        virtual void saveOriginals();
 
-    virtual void prepareNewForInherit(PartType *partType);
-		virtual void saveOriginals();
+    protected:
+        int amount;
 
-  protected:
-    int amount;
-
-  };
+    };
 
 }
 

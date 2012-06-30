@@ -1,60 +1,57 @@
-
 #ifndef UPGRADETYPE_H
 #define UPGRADETYPE_H
 
 namespace game
 {
-  class UpgradeType
-	{
-		public:
+    class UpgradeType {
+    public:
 
-			UpgradeType();
+        UpgradeType();
 
-			~UpgradeType();
+        ~UpgradeType();
 
-			inline const char *getName() const
-			{
-				return name;
-			}
+        inline const char *getName() const
+        {
+            return name;
+        }
 
-			inline const char *getScript() const
-			{
-				return script;
-			}
+        inline const char *getScript() const
+        {
+            return script;
+        }
 
-			inline const char *getDescription() const
-			{
-				return description;
-			}
+        inline const char *getDescription() const
+        {
+            return description;
+        }
 
-			inline int getCost() const
-			{
-				return cost;
-			}
+        inline int getCost() const
+        {
+            return cost;
+        }
 
-			inline const char *getPart() const
-			{
-				return part;
-			}
+        inline const char *getPart() const
+        {
+            return part;
+        }
 
-			void setName(const char *name);
+        void setName(const char *name);
 
-			void setScript(const char *script);
+        void setScript(const char *script);
 
-			void setDescription(const char *description);
+        void setDescription(const char *description);
 
-			void setCost(int cost);
+        void setCost(int cost);
 
-			void setPart(const char *part);
+        void setPart(const char *part);
 
-		private:
-			char *name;
-			char *script;
-			char *description;
-			char *part;
-			int cost;
-	};
+    private:
+        char *name;
+        char *script;
+        char *description;
+        char *part;
+        int cost;
+    };
 }
 
 #endif
-

@@ -9,606 +9,591 @@
 #include "nvtristrip.h"
 
 namespace frozenbyte {
-namespace exporter {
+    namespace exporter {
+        Object::Object(const std::string &name_, const std::string &parent_)
+            :   name(name_),
+            parentName(parent_),
 
-Object::Object(const std::string &name_, const std::string &parent_)
-:	name(name_),
-	parentName(parent_),
+            cameraVisibility(true),
+            collisionVisibility(true),
+            lightObject(false)
+        {
+        }
 
-	cameraVisibility(true),
-	collisionVisibility(true),
-	lightObject(false)
-{
-}
+        Object::Object()
+            :   cameraVisibility(true),
+            collisionVisibility(true),
+            lightObject(false)
+        {
+        }
 
-Object::Object()
-:	cameraVisibility(true),
-	collisionVisibility(true),
-	lightObject(false)
-{
-}
+        Object::~Object()
+        {
+        }
 
-Object::~Object()
-{
-}
+        void Object::setStrings(const std::string &name_, const std::string &parent_)
+        {
+            name = name_;
+            parentName = parent_;
+        }
 
-void Object::setStrings(const std::string &name_, const std::string &parent_)
-{
-	name = name_;
-	parentName = parent_;
-}
+        void Object::setLightObject()
+        {
+            lightObject = true;
+        }
 
-void Object::setLightObject()
-{
-	lightObject = true;
-}
+        int Object::getVertexAmount() const
+        {
+            return vertices.size();
+        }
 
-int Object::getVertexAmount() const
-{
-	return vertices.size();
-}
+        int Object::getFaceAmount() const
+        {
+            return faces.size();
+        }
 
-int Object::getFaceAmount() const
-{
-	return faces.size();
-}
+        FBMatrix Object::getTm() const
+        {
+            //return transform * pivotTransform.GetInverse();
+            //return pivotTransform * transform;
+            return transform.GetInverse();
+        }
 
-FBMatrix Object::getTm() const
-{
-	//return transform * pivotTransform.GetInverse();
-	//return pivotTransform * transform;
-	return transform.GetInverse();
-}
+        int Object::getMaterialAmount() const
+        {
+            std::vector<int> materials;
+            int materialAmount = 0;
 
-int Object::getMaterialAmount() const
-{
-	std::vector<int> materials;
-	int materialAmount = 0;
+            for (unsigned int i = 0; i < faces.size(); ++i) {
+                if ( std::find( materials.begin(), materials.end(), faces[i].getMaterialId() ) == materials.end() ) {
+                    materials.push_back( faces[i].getMaterialId() );
+                    ++materialAmount;
+                }
+            }
 
-	for(unsigned int i = 0; i < faces.size(); ++i)
-	{
-		if(std::find(materials.begin(), materials.end(), faces[i].getMaterialId()) == materials.end())
-		{
-			materials.push_back(faces[i].getMaterialId());
-			++materialAmount;
-		}
-	}
+            return materialAmount;
+        }
 
-	return materialAmount;
-}
+        const std::string &Object::getName() const
+        {
+            return name;
+        }
 
-const std::string &Object::getName() const
-{
-	return name;
-}
+        const std::string &Object::getParentName() const
+        {
+            return parentName;
+        }
 
-const std::string &Object::getParentName() const
-{
-	return parentName;
-}
+        const std::vector<Face> &Object::getFaces() const
+        {
+            return faces;
+        }
 
-const std::vector<Face> &Object::getFaces() const
-{
-	return faces;
-}
+        const std::vector<Vertex> &Object::getVertices() const
+        {
+            return vertices;
+        }
 
-const std::vector<Vertex> &Object::getVertices() const
-{
-	return vertices;
-}
+        std::vector<Face> &Object::getFaces()
+        {
+            return faces;
+        }
 
-std::vector<Face> &Object::getFaces()
-{
-	return faces;
-}
+        std::vector<Vertex> &Object::getVertices()
+        {
+            return vertices;
+        }
 
-std::vector<Vertex> &Object::getVertices()
-{
-	return vertices;
-}
+        std::vector<int> Object::getMaterialIndices(bool includeNoMaterial) const
+        {
+            std::vector<int> usedMaterials;
 
-std::vector<int> Object::getMaterialIndices(bool includeNoMaterial) const
-{
-	std::vector<int> usedMaterials;
+            // Loop all(tm)
+            for (unsigned int i = 0; i < faces.size(); ++i) {
+                if ( std::find( usedMaterials.begin(), usedMaterials.end(),
+                                faces[i].getMaterialId() ) == usedMaterials.end() ) {
+                    int id = faces[i].getMaterialId();
+                    {
+                        if ( (includeNoMaterial == true) && (id == -1) )
+                            continue;
 
-	// Loop all(tm)
-	for(unsigned int i = 0; i < faces.size(); ++i)
-	{
-		if(std::find(usedMaterials.begin(), usedMaterials.end(), faces[i].getMaterialId()) == usedMaterials.end())
-		{
-			int id = faces[i].getMaterialId();
-			{
-				if((includeNoMaterial == true) && (id == -1))
-					continue;
-			
-				usedMaterials.push_back(id);
-			}
-		}
-	}
+                        usedMaterials.push_back(id);
+                    }
+                }
+            }
 
-	return usedMaterials;
-}
+            return usedMaterials;
+        }
 
-const FBMatrix &Object::getTransform() const
-{
-	return transform;
-}
+        const FBMatrix &Object::getTransform() const
+        {
+            return transform;
+        }
 
-const FBMatrix &Object::getPivotTransform() const
-{
-	return pivotTransform;
-}
+        const FBMatrix &Object::getPivotTransform() const
+        {
+            return pivotTransform;
+        }
 
-void Object::setTransform(const FBMatrix &tm)
-{
-	transform = tm;
-}
+        void Object::setTransform(const FBMatrix &tm)
+        {
+            transform = tm;
+        }
 
-void Object::setPivotTransform(const FBMatrix &tm)
-{
-	pivotTransform = tm;
-}
+        void Object::setPivotTransform(const FBMatrix &tm)
+        {
+            pivotTransform = tm;
+        }
 
-void Object::addVertex(const Vertex &vertex)
-{
-	vertices.push_back(vertex);
-}
+        void Object::addVertex(const Vertex &vertex)
+        {
+            vertices.push_back(vertex);
+        }
 
-void Object::addFace(const Face &face)
-{
-	faces.push_back(face);
-}
+        void Object::addFace(const Face &face)
+        {
+            faces.push_back(face);
+        }
 
-void Object::setProperties(bool cameraVisibility_, bool collisionVisibility_)
-{
-	cameraVisibility = cameraVisibility_;
-	collisionVisibility = collisionVisibility_;
-}
+        void Object::setProperties(bool cameraVisibility_, bool collisionVisibility_)
+        {
+            cameraVisibility = cameraVisibility_;
+            collisionVisibility = collisionVisibility_;
+        }
 
-bool Object::hasCollisionFlag() const
-{
-	if(hasNoCollisionFlag())
-		return false;
+        bool Object::hasCollisionFlag() const
+        {
+            if ( hasNoCollisionFlag() )
+                return false;
 
-	std::string collisionString("Collision");
+            std::string collisionString("Collision");
 
-	if(name.size() > collisionString.size())
-	for(unsigned int i = 0; i < name.size() - collisionString.size() + 1; ++i)
-	{
-		std::string chunk = name.substr(i, collisionString.size());
-		if(chunk == collisionString)
-			return true;
-	}
+            if ( name.size() > collisionString.size() )
+                for (unsigned int i = 0; i < name.size() - collisionString.size() + 1; ++i) {
+                    std::string chunk = name.substr( i, collisionString.size() );
+                    if (chunk == collisionString)
+                        return true;
+                }
 
-	return false;
-}
+            return false;
+        }
 
-bool Object::hasNoCollisionFlag() const
-{
-	std::string collisionString("NoCollision");
+        bool Object::hasNoCollisionFlag() const
+        {
+            std::string collisionString("NoCollision");
 
-	if(name.size() > collisionString.size())
-	for(unsigned int i = 0; i < name.size() - collisionString.size() + 1; ++i)
-	{
-		std::string chunk = name.substr(i, collisionString.size());
-		if(chunk == collisionString)
-			return true;
-	}
+            if ( name.size() > collisionString.size() )
+                for (unsigned int i = 0; i < name.size() - collisionString.size() + 1; ++i) {
+                    std::string chunk = name.substr( i, collisionString.size() );
+                    if (chunk == collisionString)
+                        return true;
+                }
 
-	return false;
-}
+            return false;
+        }
 
-bool Object::hasNoVisibilityFlag() const
-{
-	std::string collisionString1("BuildingFloor");
-	std::string collisionString2("NoVisibility");
+        bool Object::hasNoVisibilityFlag() const
+        {
+            std::string collisionString1("BuildingFloor");
+            std::string collisionString2("NoVisibility");
 
-	if(name.size() > collisionString1.size())
-	for(unsigned int i = 0; i < name.size() - collisionString1.size() + 1; ++i)
-	{
-		std::string chunk = name.substr(i, collisionString1.size());
-		if(chunk == collisionString1)
-			return true;
-	}
+            if ( name.size() > collisionString1.size() )
+                for (unsigned int i = 0; i < name.size() - collisionString1.size() + 1; ++i) {
+                    std::string chunk = name.substr( i, collisionString1.size() );
+                    if (chunk == collisionString1)
+                        return true;
+                }
 
-	if(name.size() > collisionString2.size())
-	for(unsigned int i = 0; i < name.size() - collisionString2.size() + 1; ++i)
-	{
-		std::string chunk = name.substr(i, collisionString2.size());
-		if(chunk == collisionString2)
-			return true;
-	}
+            if ( name.size() > collisionString2.size() )
+                for (unsigned int i = 0; i < name.size() - collisionString2.size() + 1; ++i) {
+                    std::string chunk = name.substr( i, collisionString2.size() );
+                    if (chunk == collisionString2)
+                        return true;
+                }
 
-	return false;
-}
+            return false;
+        }
 
-bool Object::hasBuildingRoofFlag() const
-{
-	std::string collisionString("BuildingRoof");
+        bool Object::hasBuildingRoofFlag() const
+        {
+            std::string collisionString("BuildingRoof");
 
-	if(name.size() > collisionString.size())
-	for(unsigned int i = 0; i < name.size() - collisionString.size() + 1; ++i)
-	{
-		std::string chunk = name.substr(i, collisionString.size());
-		if(chunk == collisionString)
-			return true;
-	}
+            if ( name.size() > collisionString.size() )
+                for (unsigned int i = 0; i < name.size() - collisionString.size() + 1; ++i) {
+                    std::string chunk = name.substr( i, collisionString.size() );
+                    if (chunk == collisionString)
+                        return true;
+                }
 
-	return false;
-}
+            return false;
+        }
 
-bool Object::hasBuildingOuterWallFlag() const
-{
-	std::string collisionString("BuildingOuterWall");
+        bool Object::hasBuildingOuterWallFlag() const
+        {
+            std::string collisionString("BuildingOuterWall");
 
-	if(name.size() > collisionString.size())
-	for(unsigned int i = 0; i < name.size() - collisionString.size() + 1; ++i)
-	{
-		std::string chunk = name.substr(i, collisionString.size());
-		if(chunk == collisionString)
-			return true;
-	}
+            if ( name.size() > collisionString.size() )
+                for (unsigned int i = 0; i < name.size() - collisionString.size() + 1; ++i) {
+                    std::string chunk = name.substr( i, collisionString.size() );
+                    if (chunk == collisionString)
+                        return true;
+                }
 
-	return false;
-}
+            return false;
+        }
 
-bool Object::hasDecalFlag() const
-{
-	std::string collisionString("Decal");
+        bool Object::hasDecalFlag() const
+        {
+            std::string collisionString("Decal");
 
-	if(name.size() > collisionString.size())
-	for(unsigned int i = 0; i < name.size() - collisionString.size() + 1; ++i)
-	{
-		std::string chunk = name.substr(i, collisionString.size());
-		if(chunk == collisionString)
-			return true;
-	}
+            if ( name.size() > collisionString.size() )
+                for (unsigned int i = 0; i < name.size() - collisionString.size() + 1; ++i) {
+                    std::string chunk = name.substr( i, collisionString.size() );
+                    if (chunk == collisionString)
+                        return true;
+                }
 
-	return false;
-}
+            return false;
+        }
 
-bool Object::hasEditorOnlyFlag() const
-{
-	std::string collisionString("EditorOnly");
+        bool Object::hasEditorOnlyFlag() const
+        {
+            std::string collisionString("EditorOnly");
 
-	if(name.size() > collisionString.size())
-	for(unsigned int i = 0; i < name.size() - collisionString.size() + 1; ++i)
-	{
-		std::string chunk = name.substr(i, collisionString.size());
-		if(chunk == collisionString)
-			return true;
-	}
+            if ( name.size() > collisionString.size() )
+                for (unsigned int i = 0; i < name.size() - collisionString.size() + 1; ++i) {
+                    std::string chunk = name.substr( i, collisionString.size() );
+                    if (chunk == collisionString)
+                        return true;
+                }
 
-	return false;
-}
+            return false;
+        }
 
-bool Object::hasCameraVisibility() const
-{
-	return cameraVisibility;
-}
+        bool Object::hasCameraVisibility() const
+        {
+            return cameraVisibility;
+        }
 
-bool Object::hasCollisionVisibility() const
-{
-	return collisionVisibility;
-}
+        bool Object::hasCollisionVisibility() const
+        {
+            return collisionVisibility;
+        }
 
-bool Object::isLightObject() const
-{
-	return lightObject;
-}
+        bool Object::isLightObject() const
+        {
+            return lightObject;
+        }
 
-void Object::correctBoneIndices(const std::vector<int> &newIndices)
-{
-	for(unsigned int i = 0; i < vertices.size(); ++i)
-		vertices[i].correctBoneIndices(newIndices);
-}
+        void Object::correctBoneIndices(const std::vector<int> &newIndices)
+        {
+            for (unsigned int i = 0; i < vertices.size(); ++i) {
+                vertices[i].correctBoneIndices(newIndices);
+            }
+        }
 
-void Object::correctMaterialIndices(const std::vector<int> &newIndices)
-{
-	for(unsigned int i = 0; i < faces.size(); ++i)
-		faces[i].correctMaterialIndices(newIndices);
-}
+        void Object::correctMaterialIndices(const std::vector<int> &newIndices)
+        {
+            for (unsigned int i = 0; i < faces.size(); ++i) {
+                faces[i].correctMaterialIndices(newIndices);
+            }
+        }
 
-void Object::remapIndices()
-{
+        void Object::remapIndices()
+        {
 /*
-	enum PrimType
-	{
-		PT_LIST,
-		PT_STRIP,
-		PT_FAN
-	};
+    enum PrimType
+    {
+        PT_LIST,
+        PT_STRIP,
+        PT_FAN
+    };
 
-	struct PrimitiveGroup
-	{
-		PrimType type;
-		unsigned int numIndices;
-		unsigned short* indices;
+    struct PrimitiveGroup
+    {
+        PrimType type;
+        unsigned int numIndices;
+        unsigned short* indices;
 
-	////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////
 
-		PrimitiveGroup() : type(PT_STRIP), numIndices(0), indices(NULL) {}
-		~PrimitiveGroup()
-		{
-			if(indices)
-				delete[] indices;
-			indices = NULL;
-		}
-	};
-*/
-	//void RemapIndices(const PrimitiveGroup* in_primGroups, const unsigned short numGroups, const unsigned short numVerts, PrimitiveGroup** remappedGroups);
-/*	
-	//unsigned int *indices = new unsigned int[faces.size() * 3];
-	PrimitiveGroup oldPrimitives;
+        PrimitiveGroup() : type(PT_STRIP), numIndices(0), indices(NULL) {}
+        ~PrimitiveGroup()
+        {
+            if(indices)
+                delete[] indices;
+            indices = NULL;
+        }
+    };
+ */
+            //void RemapIndices(const PrimitiveGroup* in_primGroups, const unsigned short numGroups, const unsigned short numVerts, PrimitiveGroup** remappedGroups);
+/*
+    //unsigned int *indices = new unsigned int[faces.size() * 3];
+    PrimitiveGroup oldPrimitives;
 
-	// Fill old stuff
-	oldPrimitives.type = PT_LIST;
-	oldPrimitives.numIndices = faces[0].size() * 3;
-	oldPrimitives.indices = new unsigned short[faces[0].size() * 3];
+    // Fill old stuff
+    oldPrimitives.type = PT_LIST;
+    oldPrimitives.numIndices = faces[0].size() * 3;
+    oldPrimitives.indices = new unsigned short[faces[0].size() * 3];
 
-	for(unsigned int i = 0; i < faces[0].size(); ++i)
-	for(unsigned int j = 0; j < 3; ++j)
-		oldPrimitives.indices[i*3 + j] = static_cast<unsigned short> (faces[0][i].getVertexIndex(j));
+    for(unsigned int i = 0; i < faces[0].size(); ++i)
+    for(unsigned int j = 0; j < 3; ++j)
+        oldPrimitives.indices[i*3 + j] = static_cast<unsigned short> (faces[0][i].getVertexIndex(j));
 
-	// Nvidia remap 
-	PrimitiveGroup *newPrimitives = 0;
-	RemapIndices(&oldPrimitives, 1, static_cast<unsigned short> (vertices.size()), &newPrimitives);
+    // Nvidia remap
+    PrimitiveGroup *newPrimitives = 0;
+    RemapIndices(&oldPrimitives, 1, static_cast<unsigned short> (vertices.size()), &newPrimitives);
 
-	// Remap our stuff
-	std::vector<Vertex> newVertices;
-	newVertices.reserve(vertices.size());
+    // Remap our stuff
+    std::vector<Vertex> newVertices;
+    newVertices.reserve(vertices.size());
 
-	int *indexCache = new int[vertices.size()];
-	for(i = 0; i < vertices.size(); ++i)
-		indexCache[i] = -1;
+    int *indexCache = new int[vertices.size()];
+    for(i = 0; i < vertices.size(); ++i)
+        indexCache[i] = -1;
 
-	// What's happening? ;-)
-	for(i = 0; i < faces[0].size(); ++i)
-	for(unsigned int j = 0; j < 3; ++j)
-	{
-		int vertexIndex = faces[0][i].getVertexIndex(j);
-		int cacheIndex = indexCache[vertexIndex];
-		if(cacheIndex == -1)
-		{
-			newVertices.push_back(vertices[vertexIndex]);
-			faces[0][i].setVertexIndex(j, newVertices.size() - 1);
-			indexCache[vertexIndex] = newVertices.size() - 1;
-		}
-		else
-			faces[0][i].setVertexIndex(j, cacheIndex);
-	}
+    // What's happening? ;-)
+    for(i = 0; i < faces[0].size(); ++i)
+    for(unsigned int j = 0; j < 3; ++j)
+    {
+        int vertexIndex = faces[0][i].getVertexIndex(j);
+        int cacheIndex = indexCache[vertexIndex];
+        if(cacheIndex == -1)
+        {
+            newVertices.push_back(vertices[vertexIndex]);
+            faces[0][i].setVertexIndex(j, newVertices.size() - 1);
+            indexCache[vertexIndex] = newVertices.size() - 1;
+        }
+        else
+            faces[0][i].setVertexIndex(j, cacheIndex);
+    }
 
-	vertices = newVertices;
-	delete[] newPrimitives;
-	delete[] indexCache;
+    vertices = newVertices;
+    delete[] newPrimitives;
+    delete[] indexCache;
 
-	// Now, generate new face indices
-	{
-		unsigned short *oldIndices = new unsigned short[faces[0].size() * 3];
-		for(unsigned int i = 0; i < faces[0].size(); ++i)
-		for(int j = 0; j < 3; ++j)
-			oldIndices[i *  3 + j] = faces[0][i].getVertexIndex(j);
+    // Now, generate new face indices
+    {
+        unsigned short *oldIndices = new unsigned short[faces[0].size() * 3];
+        for(unsigned int i = 0; i < faces[0].size(); ++i)
+        for(int j = 0; j < 3; ++j)
+            oldIndices[i *  3 + j] = faces[0][i].getVertexIndex(j);
 
-		PrimitiveGroup *primitiveGroup = 0;
-		unsigned short groupAmount = 0;
+        PrimitiveGroup *primitiveGroup = 0;
+        unsigned short groupAmount = 0;
 
-		SetCacheSize(CACHESIZE_GEFORCE3);
-		SetListsOnly(true);
-		
-		GenerateStrips(oldIndices, faces[0].size() * 3, &primitiveGroup, &groupAmount);
+        SetCacheSize(CACHESIZE_GEFORCE3);
+        SetListsOnly(true);
 
-		for(i = 0; i < faces[0].size(); ++i)
-		for(int j = 0; j < 3; ++j)
-			faces[0][i].setVertexIndex(j, primitiveGroup->indices[i * 3 + j]);
+        GenerateStrips(oldIndices, faces[0].size() * 3, &primitiveGroup, &groupAmount);
 
-		delete[] oldIndices;
-		delete[] primitiveGroup;
-	}
-*/
-}
+        for(i = 0; i < faces[0].size(); ++i)
+        for(int j = 0; j < 3; ++j)
+            faces[0][i].setVertexIndex(j, primitiveGroup->indices[i * 3 + j]);
 
-extern int actualObjectAmount;
+        delete[] oldIndices;
+        delete[] primitiveGroup;
+    }
+ */
+        }
 
-void Object::writeToFile(FILE *fp, const FBMatrix &tm, const FBMatrix &pivotTm, const std::vector<int> &usedMaterials, bool optimizeVcache, bool factorPivot) const
-{
-	std::vector<int> materials = getMaterialIndices();
+        extern int actualObjectAmount;
 
-	/*
-	// Common data
-	FBMatrix relativeTransform = transform;// * parentTm.GetInverse();
-	Vector position = convert(relativeTransform.GetTranslation());
-	Rotation rotation = convert(relativeTransform.GetRotation());
-	Vector scale = convert(relativeTransform.GetScale());
-	FBMatrix inversePivot = pivotTm; //pivotTm.GetInverse();
-	*/
+        void Object::writeToFile(FILE                   *fp,
+                                 const FBMatrix         &tm,
+                                 const FBMatrix         &pivotTm,
+                                 const std::vector<int> &usedMaterials,
+                                 bool                    optimizeVcache,
+                                 bool                    factorPivot) const
+        {
+            std::vector<int> materials = getMaterialIndices();
 
-	Vector position = convert(tm.GetTranslation());
-	Rotation rotation = convert(tm.GetRotation());
-	Vector scale = convert(tm.GetScale());
+            /*
+               // Common data
+               FBMatrix relativeTransform = transform;// * parentTm.GetInverse();
+               Vector position = convert(relativeTransform.GetTranslation());
+               Rotation rotation = convert(relativeTransform.GetRotation());
+               Vector scale = convert(relativeTransform.GetScale());
+               FBMatrix inversePivot = pivotTm; //pivotTm.GetInverse();
+             */
 
-	for(unsigned int i = 0; i < materials.size(); ++i)
-	{
-		++actualObjectAmount;
+            Vector position = convert( tm.GetTranslation() );
+            Rotation rotation = convert( tm.GetRotation() );
+            Vector scale = convert( tm.GetScale() );
 
-		// ToDo: generate some fancy names for splitted objects
-		fwrite(name.c_str(), 1, name.size() + 1, fp);
-		fwrite(parentName.c_str(), 1, parentName.size() + 1, fp);
+            for (unsigned int i = 0; i < materials.size(); ++i) {
+                ++actualObjectAmount;
 
-		short int materialIndex = -1;
-		for(unsigned int j = 0; j < usedMaterials.size(); ++j)
-		{
-			if(usedMaterials[j] == materials[i])
-			{
-				materialIndex = static_cast<short int> (j);
-				break;
-			}
-		}
-		
-		fwrite(&materialIndex, sizeof(short int), 1, fp); // Material index
-		fwrite(&position, sizeof(float), 3, fp); // position
-		fwrite(&rotation, sizeof(float), 4, fp); // rotation
-		fwrite(&scale, sizeof(float), 3, fp); // scale
+                // ToDo: generate some fancy names for splitted objects
+                fwrite(name.c_str(), 1, name.size() + 1, fp);
+                fwrite(parentName.c_str(), 1, parentName.size() + 1, fp);
 
-		char noCollision = 0;
-		char noRender = 0;
-		char isLightObject = 0;
+                short int materialIndex = -1;
+                for (unsigned int j = 0; j < usedMaterials.size(); ++j) {
+                    if (usedMaterials[j] == materials[i]) {
+                        materialIndex = static_cast<short int>(j);
+                        break;
+                    }
+                }
 
-		if(!cameraVisibility)
-			noRender = 1;
-		if(!collisionVisibility)
-			noCollision = 1;
-		if(lightObject)
-			isLightObject = 1;
+                fwrite(&materialIndex, sizeof(short int), 1, fp); // Material index
+                fwrite(&position, sizeof(float), 3, fp);          // position
+                fwrite(&rotation, sizeof(float), 4, fp);          // rotation
+                fwrite(&scale, sizeof(float), 3, fp);             // scale
 
-		fwrite(&noCollision, sizeof(char), 1, fp); // no_collision
-		fwrite(&noRender, sizeof(char), 1, fp); // no_render
-		fwrite(&isLightObject, sizeof(char), 1, fp); // lightobject
+                char noCollision = 0;
+                char noRender = 0;
+                char isLightObject = 0;
 
-		// For this material
-		std::vector<Face> tempFaces;
-		std::vector<Vertex> tempVertices;
-		char hasWeights = 0;
+                if (!cameraVisibility)
+                    noRender = 1;
+                if (!collisionVisibility)
+                    noCollision = 1;
+                if (lightObject)
+                    isLightObject = 1;
 
-		// Build faces
-		for(unsigned int j = 0; j < faces.size(); ++j)
-		{
-			if(faces[j].getMaterialId() == materials[i])
-				tempFaces.push_back(faces[j]);
-		}
+                fwrite(&noCollision, sizeof(char), 1, fp);   // no_collision
+                fwrite(&noRender, sizeof(char), 1, fp);      // no_render
+                fwrite(&isLightObject, sizeof(char), 1, fp); // lightobject
 
-		std::vector<int> newVertexIndex(vertices.size());
-		std::hash_set<int> tempVertexIndices;
+                // For this material
+                std::vector<Face> tempFaces;
+                std::vector<Vertex> tempVertices;
+                char hasWeights = 0;
 
-		for(unsigned int j = 0; j < tempFaces.size(); ++j)
-		for(unsigned int k = 0; k < 3; ++k)
-		{
-			int index = tempFaces[j].getVertexIndex(k);
-			assert(index >= 0 && index < int(vertices.size()));
+                // Build faces
+                for (unsigned int j = 0; j < faces.size(); ++j) {
+                    if (faces[j].getMaterialId() == materials[i])
+                        tempFaces.push_back(faces[j]);
+                }
 
-			if(tempVertexIndices.find(index) == tempVertexIndices.end())
-			{
-				tempVertexIndices.insert(index);
+                std::vector<int> newVertexIndex( vertices.size() );
+                std::hash_set<int> tempVertexIndices;
 
-				if(vertices[index].hasBoneWeights() == true)
-					hasWeights = 1;
+                for (unsigned int j = 0; j < tempFaces.size(); ++j) {
+                    for (unsigned int k = 0; k < 3; ++k) {
+                        int index = tempFaces[j].getVertexIndex(k);
+                        assert( index >= 0 && index < int( vertices.size() ) );
 
-				newVertexIndex[index] = tempVertices.size();
-				tempVertices.push_back(vertices[index]);
-			}
-		}
+                        if ( tempVertexIndices.find(index) == tempVertexIndices.end() ) {
+                            tempVertexIndices.insert(index);
 
-		for(unsigned int j = 0; j < tempFaces.size(); ++j)
-		for(unsigned int k = 0; k < 3; ++k)
-		{
-			// Grab index and convert it to temp mesh vertex buffer
-			int vertexIndex = tempFaces[j].getVertexIndex(k);
-			int newIndex = newVertexIndex[vertexIndex];
+                            if (vertices[index].hasBoneWeights() == true)
+                                hasWeights = 1;
 
-			assert(newIndex >= 0 && newIndex < int(tempVertices.size()));
-			tempFaces[j].setVertexIndex(k, newIndex);
-		}
+                            newVertexIndex[index] = tempVertices.size();
+                            tempVertices.push_back(vertices[index]);
+                        }
+                    }
+                }
 
-		Lod lod(tempVertices, tempFaces, optimizeVcache);
-		//if(generateLods)
-		//	lod.generateLods(lodDetail);
+                for (unsigned int j = 0; j < tempFaces.size(); ++j) {
+                    for (unsigned int k = 0; k < 3; ++k) {
+                        // Grab index and convert it to temp mesh vertex buffer
+                        int vertexIndex = tempFaces[j].getVertexIndex(k);
+                        int newIndex = newVertexIndex[vertexIndex];
 
-		const std::vector<Vertex> &lodVertices = lod.getVertices();
-		const std::vector<Face> &lodFaces = lod.getFaceBuffer(0);
+                        assert( newIndex >= 0 && newIndex < int( tempVertices.size() ) );
+                        tempFaces[j].setVertexIndex(k, newIndex);
+                    }
+                }
 
-		int vertexAmountInt = lodVertices.size();
-		uint16_t vertexAmount = static_cast<uint16_t> (lodVertices.size());
-		uint16_t faceAmount = static_cast<uint16_t> (lodFaces.size());
+                Lod lod(tempVertices, tempFaces, optimizeVcache);
+                //if(generateLods)
+                //    lod.generateLods(lodDetail);
 
-		char hasLods = 0; //generateLods;
+                const std::vector<Vertex> &lodVertices = lod.getVertices();
+                const std::vector<Face> &lodFaces = lod.getFaceBuffer(0);
 
-		fwrite(&vertexAmount, sizeof(uint16_t), 1, fp); // vertex count
-		fwrite(&faceAmount, sizeof(uint16_t), 1, fp); // face count
-		fwrite(&hasLods, sizeof(char), 1, fp); // lod info
-		fwrite(&hasWeights, sizeof(char), 1, fp); // vertex weights
+                int vertexAmountInt = lodVertices.size();
+                uint16_t vertexAmount = static_cast<uint16_t>( lodVertices.size() );
+                uint16_t faceAmount = static_cast<uint16_t>( lodFaces.size() );
 
-		// Vertex data
-		for(int j = 0; j < vertexAmount; ++j)
-		{
-			FBVector positionTmp = lodVertices[j].getPosition();
-			Vector normal = convert(lodVertices[j].getNormal());
-			Vector2D uv = convert(lodVertices[j].getUv());
-			Vector2D uv2 = convert(lodVertices[j].getUv2());
+                char hasLods = 0;                               //generateLods;
 
-			if(factorPivot)
-				pivotTm.TransformVector(positionTmp);
+                fwrite(&vertexAmount, sizeof(uint16_t), 1, fp); // vertex count
+                fwrite(&faceAmount, sizeof(uint16_t), 1, fp);   // face count
+                fwrite(&hasLods, sizeof(char), 1, fp);          // lod info
+                fwrite(&hasWeights, sizeof(char), 1, fp);       // vertex weights
 
-			Vector position = convert(positionTmp);
+                // Vertex data
+                for (int j = 0; j < vertexAmount; ++j) {
+                    FBVector positionTmp = lodVertices[j].getPosition();
+                    Vector normal = convert( lodVertices[j].getNormal() );
+                    Vector2D uv = convert( lodVertices[j].getUv() );
+                    Vector2D uv2 = convert( lodVertices[j].getUv2() );
 
-			fwrite(&position, sizeof(float), 3, fp); // position
-			fwrite(&normal, sizeof(float), 3, fp); // normal
-			fwrite(&uv, sizeof(float), 2, fp); // texture coordinates
-			fwrite(&uv2, sizeof(float), 2, fp); // texture coordinates
-		}
+                    if (factorPivot)
+                        pivotTm.TransformVector(positionTmp);
 
-		// Face data
-		for(int j = 0; int(j) < lod.getFaceBufferCount(); ++j)
-		{
-			const std::vector<Face> &lodFaces = lod.getFaceBuffer(j);
-			uint16_t faceCount = lodFaces.size();
+                    Vector position = convert(positionTmp);
 
-			if(j > 0)
-			{
-				fwrite(&faceCount, sizeof(uint16_t), 1, fp);
-			}
+                    fwrite(&position, sizeof(float), 3, fp); // position
+                    fwrite(&normal, sizeof(float), 3, fp);   // normal
+                    fwrite(&uv, sizeof(float), 2, fp);       // texture coordinates
+                    fwrite(&uv2, sizeof(float), 2, fp);      // texture coordinates
+                }
 
-			for(unsigned int i = 0; i < faceAmount; ++i)
-			for(unsigned int k = 0; k < 3; ++k)
-			{
-				const Face &face = lodFaces[i];
-				uint16_t vertexIndex = uint16_t(face.getVertexIndex(k));
+                // Face data
+                for (int j = 0; int(j) < lod.getFaceBufferCount(); ++j) {
+                    const std::vector<Face> &lodFaces = lod.getFaceBuffer(j);
+                    uint16_t faceCount = lodFaces.size();
 
-				int a = face.getVertexIndex(k);
-				int b = int(lodVertices.size());
-				assert(face.getVertexIndex(k) < int(lodVertices.size()));
-				assert(vertexIndex >= 0 && vertexIndex < vertexAmount);
+                    if (j > 0)
+                        fwrite(&faceCount, sizeof(uint16_t), 1, fp);
 
-				uint16_t index = vertexIndex;
-				fwrite(&index, sizeof(uint16_t), 1, fp);
-			}
-		}
+                    for (unsigned int i = 0; i < faceAmount; ++i) {
+                        for (unsigned int k = 0; k < 3; ++k) {
+                            const Face &face = lodFaces[i];
+                            uint16_t vertexIndex = uint16_t( face.getVertexIndex(k) );
 
-		// Weight data (if has)
-		if(hasWeights == 1)
-		{
-			static const int MAX_WEIGHTS = 2;
+                            int a = face.getVertexIndex(k);
+                            int b = int( lodVertices.size() );
+                            assert( face.getVertexIndex(k) < int( lodVertices.size() ) );
+                            assert(vertexIndex >= 0 && vertexIndex < vertexAmount);
 
-			for(unsigned int j = 0; j < lodVertices.size(); ++j)
-			{
-				int indices[MAX_WEIGHTS] = { -1 };
-				signed char weights[MAX_WEIGHTS] = { 0 };
+                            uint16_t index = vertexIndex;
+                            fwrite(&index, sizeof(uint16_t), 1, fp);
+                        }
+                    }
+                }
 
-				for(int k = 0; k < 2; ++k)
-				{
-					indices[k] = lodVertices[j].getBoneIndex(k);
+                // Weight data (if has)
+                if (hasWeights == 1) {
+                    static const int MAX_WEIGHTS = 2;
 
-					float weight = lodVertices[j].getBoneWeight(k);
-					weights[k] = static_cast<signed char> (100.f * weight + .5f);
-				}
+                    for (unsigned int j = 0; j < lodVertices.size(); ++j) {
+                        int indices[MAX_WEIGHTS] = { -1 };
+                        signed char weights[MAX_WEIGHTS] = { 0 };
 
-				// Indices
-				for(int k = 0; k < 2; ++k)
-					fwrite(&indices[k], sizeof(int), 1, fp);
+                        for (int k = 0; k < 2; ++k) {
+                            indices[k] = lodVertices[j].getBoneIndex(k);
 
-				// Weights
-				for(int k = 0; k < 2; ++k)
-					fwrite(&weights[k], sizeof(signed char), 1, fp);
-			}
-		}
-	}
-}
+                            float weight = lodVertices[j].getBoneWeight(k);
+                            weights[k] = static_cast<signed char>(100.f * weight + .5f);
+                        }
 
-bool operator < (const Object &lhs, const Object &rhs)
-{
-	if(lhs.getName() == rhs.getParentName())
-		return false;
+                        // Indices
+                        for (int k = 0; k < 2; ++k) {
+                            fwrite(&indices[k], sizeof(int), 1, fp);
+                        }
 
-	return true;
-}	
+                        // Weights
+                        for (int k = 0; k < 2; ++k) {
+                            fwrite(&weights[k], sizeof(signed char), 1, fp);
+                        }
+                    }
+                }
+            }
+        }
 
-} // end of namespace export
-} // end of namespace frozenbyte
+        bool operator < (const Object &lhs, const Object &rhs)
+        {
+            if ( lhs.getName() == rhs.getParentName() )
+                return false;
+
+            return true;
+        }
+
+    } // end of namespace export
+}     // end of namespace frozenbyte

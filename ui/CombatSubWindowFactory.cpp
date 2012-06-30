@@ -14,19 +14,18 @@
 #include "WeaponWindowCoop.h"
 
 namespace ui {
-
-void RegisterGlobalCombatSubwindows() {
-	REGISTER_COMBATSUBWINDOW( AmmoWindow );
-	REGISTER_COMBATSUBWINDOW( AmmoWindowCoop );
-	REGISTER_COMBATSUBWINDOW( ComboWindow );
-	REGISTER_COMBATSUBWINDOW( ElaborateHintMessageWindow );
-	REGISTER_COMBATSUBWINDOW( FlashlightWindow );
-	REGISTER_COMBATSUBWINDOW( HealthWindow );
-	REGISTER_COMBATSUBWINDOW( HealthWindowCoop );
-	REGISTER_COMBATSUBWINDOW( UnitHealthBarWindow );
-	REGISTER_COMBATSUBWINDOW( UpgradeAvailableWindow );
-	REGISTER_COMBATSUBWINDOW( WeaponWindow );
-	REGISTER_COMBATSUBWINDOW( WeaponWindowCoop );
-}
+    void RegisterGlobalCombatSubwindows() {
+        REGISTER_COMBATSUBWINDOW(AmmoWindow);
+        REGISTER_COMBATSUBWINDOW(AmmoWindowCoop);
+        REGISTER_COMBATSUBWINDOW(ComboWindow);
+        REGISTER_COMBATSUBWINDOW(ElaborateHintMessageWindow);
+        REGISTER_COMBATSUBWINDOW(FlashlightWindow);
+        REGISTER_COMBATSUBWINDOW(HealthWindow);
+        REGISTER_COMBATSUBWINDOW(HealthWindowCoop);
+        REGISTER_COMBATSUBWINDOW(UnitHealthBarWindow);
+        REGISTER_COMBATSUBWINDOW(UpgradeAvailableWindow);
+        REGISTER_COMBATSUBWINDOW(WeaponWindow);
+        REGISTER_COMBATSUBWINDOW(WeaponWindowCoop);
+    }
 
 } // end of namespace ui

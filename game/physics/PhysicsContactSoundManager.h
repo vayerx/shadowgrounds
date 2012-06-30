@@ -1,4 +1,3 @@
-
 #ifndef PHYSICSCONTACTSOUNDMANAGER_H
 #define PHYSICSCONTACTSOUNDMANAGER_H
 
@@ -7,24 +6,22 @@
 
 namespace game
 {
-	class IGamePhysicsObject;
-	class GameUI;
-	class PhysicsContactSoundManagerImpl;
+    class IGamePhysicsObject;
+    class GameUI;
+    class PhysicsContactSoundManagerImpl;
 
+    class PhysicsContactSoundManager : public IPhysicsContactListener {
+    public:
+        PhysicsContactSoundManager(GameUI *gameUI);
+        ~PhysicsContactSoundManager();
 
-	class PhysicsContactSoundManager : public IPhysicsContactListener
-	{
-	public:
-		PhysicsContactSoundManager(GameUI *gameUI);
-		~PhysicsContactSoundManager();
+        virtual void physicsContact(const PhysicsContact &contact);
 
-		virtual void physicsContact(const PhysicsContact &contact);
+        void reloadConfiguration();
 
-		void reloadConfiguration();
-
-	private:
-		PhysicsContactSoundManagerImpl *impl;
-	};
+    private:
+        PhysicsContactSoundManagerImpl *impl;
+    };
 }
 
 #endif

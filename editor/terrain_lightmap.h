@@ -9,64 +9,65 @@
 #include <vector>
 
 namespace frozenbyte {
-namespace filesystem {
-	class InputStream;
-	class OutputStream;
-} // filesystem
+    namespace filesystem {
+        class InputStream;
+        class OutputStream;
+    } // filesystem
 
-namespace editor {
+    namespace editor {
+        struct Storm;
+        class Exporter;
 
-struct Storm;
-class Exporter;
+        class TerrainLightMap {
+            struct Data;
+            boost::scoped_ptr<Data> data;
 
-class TerrainLightMap
-{
-	struct Data;
-	boost::scoped_ptr<Data> data;
+        public:
 
-public:
+            struct PointLight {
+                VC3   position;
+                float range;
+                float strength;
+                COL   color;
 
-	struct PointLight
-	{
-		VC3 position;
-		float range;
-		float strength;
-		COL color;
+                PointLight()
+                    :   range(0.f),
+                    strength(0.f)
+                {
+                }
+            };
 
-		PointLight()
-		:	range(0.f),
-			strength(0.f)
-		{
-		}
-	};
+            TerrainLightMap(Storm &storm);
+            ~TerrainLightMap();
 
-	TerrainLightMap(Storm &storm);
-	~TerrainLightMap();
+            void reset();
+            void create(const std::vector<PointLight> &lights, int area, int quality, const VC3 &sunDir);
+            void debugRender();
+            void apply();
 
-	void reset();
-	void create(const std::vector<PointLight> &lights, int area, int quality, const VC3 &sunDir);
-	void debugRender();
-	void apply();
+            COL getColor(const VC2 &position) const;
+            void setShadow(const VC2                     &position,
+                           float                          value,
+                           const VC2                     &rect,
+                           const std::vector<PointLight> &lights,
+                           const VC3                     &sunDir);
 
-	COL getColor(const VC2 &position) const;
-	void setShadow(const VC2 &position, float value, const VC2 &rect, const std::vector<PointLight> &lights, const VC3 &sunDir);
+            void doExport(Exporter &exporter) const;
+            filesystem::OutputStream&writeStream(filesystem::OutputStream &stream) const;
+            filesystem::InputStream&readStream(filesystem::InputStream &stream);
+        };
 
-	void doExport(Exporter &exporter) const;
-	filesystem::OutputStream &writeStream(filesystem::OutputStream &stream) const;
-	filesystem::InputStream &readStream(filesystem::InputStream &stream);
-};
+        inline filesystem::OutputStream &operator << (filesystem::OutputStream &stream, const TerrainLightMap &map)
+        {
+            return map.writeStream(stream);
+        }
 
-inline filesystem::OutputStream &operator << (filesystem::OutputStream &stream, const TerrainLightMap &map)
-{ 
-	return map.writeStream(stream);
-}
+        inline filesystem::InputStream &operator >> (filesystem::InputStream &stream, TerrainLightMap &map)
+        {
+            return map.readStream(stream);
+        }
 
-inline filesystem::InputStream &operator >> (filesystem::InputStream &stream, TerrainLightMap &map)
-{ 
-	return map.readStream(stream);
-}
-
-} // editor
-} // frozenbyte
+    } // editor
+}     // frozenbyte
 
 #endif

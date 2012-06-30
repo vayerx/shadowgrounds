@@ -7,38 +7,35 @@
 #include <string>
 
 namespace frozenbyte {
-namespace filesystem {
-	class OutputStream;
-	class InputStream;
-}
+    namespace filesystem {
+        class OutputStream;
+        class InputStream;
+    }
 
-namespace editor {
+    namespace editor {
+        struct UnitProperties {
+            enum Difficulty {
+                All = 0,
+                EasyOnly = 1,
+                HardOnly = 2
+            };
 
-struct UnitProperties
-{
-	enum Difficulty
-	{
-		All = 0,
-		EasyOnly = 1,
-		HardOnly = 2
-	};
+            std::map<std::string, std::string> strings;
 
-	std::map<std::string, std::string> strings;
-	
-	Difficulty difficulty;
-	int layout;
+            Difficulty difficulty;
+            int        layout;
 
-	UnitProperties()
-	:	difficulty(All),
-		layout(0)
-	{
-	}
+            UnitProperties()
+                :   difficulty(All),
+                layout(0)
+            {
+            }
 
-	void writeStream(filesystem::OutputStream &stream) const;
-	void readStream(filesystem::InputStream &stream);
-};
+            void writeStream(filesystem::OutputStream &stream) const;
+            void readStream(filesystem::InputStream &stream);
+        };
 
-} // editor
-} // frozenbyte
+    } // editor
+}     // frozenbyte
 
 #endif

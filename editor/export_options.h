@@ -4,40 +4,39 @@
 #define INCLUDED_EDITOR_EXPORT_OPTIONS_H
 
 #ifndef INCLUDED_STRING
-#define INCLUDED_STRING
-#include <string>
+#  define INCLUDED_STRING
+#  include <string>
 #endif
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        struct ExportOptions {
+            std::string fileName;
+            std::string id;
 
-struct ExportOptions
-{
-	std::string fileName;
-	std::string id;
+            bool        onlyScripts;
 
-	bool onlyScripts;
+            ExportOptions()
+                :   onlyScripts(false)
+            {
+            }
+        };
 
-	ExportOptions()
-	:	onlyScripts(false)
-	{
-	}
-};
+        inline std::string makeMissionIdFromFileName(const std::string &fileName)
+        {
+            int index = fileName.find_last_of("/\\");
+            assert( index < int( fileName.size() ) );
 
-inline std::string makeMissionIdFromFileName(const std::string &fileName)
-{
-	int index = fileName.find_last_of("/\\");
-	assert(index < int(fileName.size()));
+            std::string id = fileName.substr(index + 1, fileName.size() - index - 1);
 
-	std::string id = fileName.substr(index + 1, fileName.size() - index - 1);
+            for (unsigned int i = 0; i < id.size(); ++i) {
+                id[i] = tolower(id[i]);
+            }
 
-	for(unsigned int i = 0; i < id.size(); ++i)
-		id[i] = tolower(id[i]);
+            return id;
+        }
 
-	return id;
-}
-
-} // end of namespace editor
-} // end of namespace frozenbyte
+    } // end of namespace editor
+}     // end of namespace frozenbyte
 
 #endif

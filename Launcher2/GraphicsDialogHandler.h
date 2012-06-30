@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "options_value_manager.h"
@@ -7,28 +6,23 @@
 
 namespace frozenbyte
 {
+    namespace launcher
+    {
+        class GraphicsDialogHandler : public DlgHandlerImpl {
+            OptionsValueManager manager;
+        public:
 
-	namespace launcher
-	{
-		
+            GraphicsDialogHandler(HWND parent);
+            ~GraphicsDialogHandler();
 
-		class GraphicsDialogHandler : public DlgHandlerImpl
-		{
-			OptionsValueManager manager;
-		public:
+            void initDialog();
+            void applyOptions();
+            void loadOptions();
 
-			 GraphicsDialogHandler( HWND parent );
-			~GraphicsDialogHandler( );
+            BOOL handleMessages(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-			void initDialog( );
-			void applyOptions( );
-			void loadOptions( );
+        };
 
-			BOOL handleMessages(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-		};
-
-	}
+    }
 
 }
-

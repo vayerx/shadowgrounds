@@ -1,4 +1,3 @@
-
 #ifndef FLASHLIGHT_H
 #define FLASHLIGHT_H
 
@@ -6,84 +5,80 @@
 
 namespace util
 {
-	class ColorMap;
+    class ColorMap;
 }
 
 namespace ui
 {
-	class VisualObject;
+    class VisualObject;
 }
 
 namespace game
 {
-	class Game;
+    class Game;
 
-	class FlashlightImpl;
+    class FlashlightImpl;
 
-	class Flashlight
-	{
-		public:
-			// TODO: replace colormap with the alienscare lightmap??
-			/**
-			 * @param VisualObject* origin, the originating visual object
-			 *        that the flashlight is attached to (the object will
-			 *        not be drawn in the flashlight's shadowmap)
-			 */
-			Flashlight(Game *game, ui::VisualObject *origin);
+    class Flashlight {
+    public:
+        // TODO: replace colormap with the alienscare lightmap??
+        /**
+         * @param VisualObject* origin, the originating visual object
+         *        that the flashlight is attached to (the object will
+         *        not be drawn in the flashlight's shadowmap)
+         */
+        Flashlight(Game *game, ui::VisualObject *origin);
 
-			~Flashlight();
+        ~Flashlight();
 
-			void resetOrigin(ui::VisualObject *origin);
+        void resetOrigin(ui::VisualObject *origin);
 
-			void run(const VC3 &position);
+        void run(const VC3 &position);
 
-			void setTemporaryBrightnessFactor(float brightness);
+        void setTemporaryBrightnessFactor(float brightness);
 
-			void prepareForRender();
+        void prepareForRender();
 
-			void setFlashlightOperable(bool operable);
+        void setFlashlightOperable(bool operable);
 
-			void setRotation(float angle);
-			void setRotationToward(float angle, int timeElapsed);
+        void setRotation(float angle);
+        void setRotationToward(float angle, int timeElapsed);
 
-			void setBetaRotation(float betaAngle);
+        void setBetaRotation(float betaAngle);
 
-			void setOffset(float offset);
+        void setOffset(float offset);
 
-			void setSwayFactor(float factor);
-			void setSwayTime(int time);
+        void setSwayFactor(float factor);
+        void setSwayTime(int time);
 
-			void setShakeFactor(float factor);
-			void setShakeTime(int time);
+        void setShakeFactor(float factor);
+        void setShakeTime(int time);
 
-			void setImpact(float factor);
+        void setImpact(float factor);
 
+        void toggleOn();
+        bool isFlashlightOn() const;
+        void setFlashlightOn(bool flashlightOn);
 
-			void toggleOn();
-			bool isFlashlightOn() const;
-			void setFlashlightOn(bool flashlightOn);
+        int getFlashlightEnergy();
+        void setFlashlightEnergy(int energyPercentage);
 
-			int getFlashlightEnergy();
-			void setFlashlightEnergy(int energyPercentage);
+        float getFlashlightIlluminationFactor();
 
-			float getFlashlightIlluminationFactor();
+        //void setLightRecharge(bool lightRecharge);
+        //void setAutomaticRecharge(bool automaticRecharge);
+        //void setConsumesEnergy(bool consumesEnergy);
 
-			//void setLightRecharge(bool lightRecharge);
-			//void setAutomaticRecharge(bool automaticRecharge);
-			//void setConsumesEnergy(bool consumesEnergy);
+        //void setFlashlightEnergyBonus(bool energyBonus);
 
-			//void setFlashlightEnergyBonus(bool energyBonus);
+        bool doesNeedRecharge();
+        int getRechargingAmount();
 
-			bool doesNeedRecharge();
-			int getRechargingAmount();
+    private:
+        FlashlightImpl *impl;
 
-		private:
-			FlashlightImpl *impl;
-
-	};
+    };
 
 }
 
 #endif
-
-

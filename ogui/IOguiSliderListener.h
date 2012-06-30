@@ -3,14 +3,12 @@
 
 #include "OguiSliderEvent.h"
 
-class IOguiSliderListener
-{
+class IOguiSliderListener {
 public:
-	IOguiSliderListener() { }
-	virtual ~IOguiSliderListener() { }
+    IOguiSliderListener() { }
+    virtual ~IOguiSliderListener() { }
 
-	virtual void sliderEvent( OguiSliderEvent* eve ) = 0;
+    virtual void sliderEvent(OguiSliderEvent *eve) = 0;
 };
-
 
 #endif

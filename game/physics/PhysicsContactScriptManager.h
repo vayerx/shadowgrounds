@@ -1,4 +1,3 @@
-
 #ifndef PHYSICSCONTACTSCRIPTMANAGER_H
 #define PHYSICSCONTACTSCRIPTMANAGER_H
 
@@ -7,24 +6,22 @@
 
 namespace game
 {
-	class IGamePhysicsObject;
-	class GameUI;
-	class PhysicsContactScriptManagerImpl;
+    class IGamePhysicsObject;
+    class GameUI;
+    class PhysicsContactScriptManagerImpl;
 
+    class PhysicsContactScriptManager : public IPhysicsContactListener {
+    public:
+        PhysicsContactScriptManager(Game *game);
+        ~PhysicsContactScriptManager();
 
-	class PhysicsContactScriptManager : public IPhysicsContactListener
-	{
-	public:
-		PhysicsContactScriptManager(Game *game);
-		~PhysicsContactScriptManager();
+        virtual void physicsContact(const PhysicsContact &contact);
 
-		virtual void physicsContact(const PhysicsContact &contact);
+        void reloadConfiguration();
 
-		void reloadConfiguration();
-
-	private:
-		PhysicsContactScriptManagerImpl *impl;
-	};
+    private:
+        PhysicsContactScriptManagerImpl *impl;
+    };
 }
 
 #endif

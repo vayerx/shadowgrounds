@@ -7,32 +7,30 @@
 #include "options_value.h"
 
 namespace frozenbyte {
-namespace launcher {
+    namespace launcher {
+        class OptionsValueList {
+        public:
+            OptionsValueList();
+            OptionsValueList(const OptionsValueList &other);
+            ~OptionsValueList();
 
-class OptionsValueList
-{
-public:
-	OptionsValueList();
-	OptionsValueList( const OptionsValueList& other );
-	~OptionsValueList();
+            const OptionsValueList &operator =(const OptionsValueList &other);
 
-	const OptionsValueList& operator=( const OptionsValueList& other );
+            void addOptions(const std::string &name, const OptionsValue &options, int position = -1);
 
-	void addOptions( const std::string& name, const OptionsValue& options, int position = -1 );
+            std::vector< std::string >  getOptionNames() const;
+            std::string                 getTheOneInUse() const;
+            std::vector< OptionsValue > getOptions() const;
 
-	std::vector< std::string >	getOptionNames() const;
-	std::string					getTheOneInUse() const;
-	std::vector< OptionsValue > getOptions() const;
+            void                        applyByName(const std::string &name);
 
-	void						applyByName( const std::string& name );
+        private:
+            std::vector< std::string > names;
+            std::vector< OptionsValue > options;
+            // std::map< std::string, OptionsValue > options;
+        };
 
-private:
-	std::vector< std::string >			names;
-	std::vector< OptionsValue >			options;
-	// std::map< std::string, OptionsValue > options;
-};
-
-}
+    }
 }
 
 #endif

@@ -2,7 +2,6 @@
 
 #pragma once
 
-
 //------------------------------------------------------------------
 // Class Prototypes
 //------------------------------------------------------------------
@@ -55,49 +54,44 @@ class Storm3D_Terrain;
 struct CollisionFace;
 class TRBlock;
 
-
-
 //------------------------------------------------------------------
 // Typedefs
 //------------------------------------------------------------------
 typedef Storm3D_Model_Object *PStorm3D_Model_Object;
-typedef Storm3D_Model *PStorm3D_Model;
-typedef Storm3D_Material *PStorm3D_Material;
-typedef Storm3D_Texture *PStorm3D_Texture;
-
-
+typedef Storm3D_Model        *PStorm3D_Model;
+typedef Storm3D_Material     *PStorm3D_Material;
+typedef Storm3D_Texture      *PStorm3D_Texture;
 
 //------------------------------------------------------------------
 // Includes (etc)
 //------------------------------------------------------------------
 
-
 //------------------------------------------------------------------
 // Defines etc.
 //------------------------------------------------------------------
-#define STORM3DV2_MAX_ACTIVELIGHTS		8
-#define STORM3DV2_SHADOWMAP_SIZE		512
+#define STORM3DV2_MAX_ACTIVELIGHTS 8
+#define STORM3DV2_SHADOWMAP_SIZE   512
 
-#define SAFE_RELEASE(p)      {if(p) {(p)->Release();(p)=NULL;}}
+#define SAFE_RELEASE(p) { if (p) { (p)->Release(); (p) = NULL; } \
+}
 
-#define DOT(v1,v2) \
-      (((v1.x)*(v2.x))+((v1.y)*(v2.y))+((v1.z)*(v2.z)))
+#define DOT(v1, v2) \
+    ( ( (v1.x) * (v2.x) ) + ( (v1.y) * (v2.y) ) + ( (v1.z) * (v2.z) ) )
 
-#define CROSS(dest,v1,v2) \
-          dest.x=v1.y*v2.z-v1.z*v2.y; \
-          dest.y=v1.z*v2.x-v1.x*v2.z; \
-          dest.z=v1.x*v2.y-v1.y*v2.x;
+#define CROSS(dest, v1, v2) \
+    dest.x = v1.y * v2.z - v1.z * v2.y; \
+    dest.y = v1.z * v2.x - v1.x * v2.z; \
+    dest.z = v1.x * v2.y - v1.y * v2.x;
 
 // Sets
 #ifdef _MSC_VER
-#pragma warning(disable:4786)	// For sets (Microsoft rulez;)
-#pragma warning(disable:4103)
+#  pragma warning(disable:4786) // For sets (Microsoft rulez;)
+#  pragma warning(disable:4103)
 #endif
 #include <set>
-using namespace std;			// For sets
+using namespace std;            // For sets
 
 // "this used in constructor" warning disable
 #ifdef _MSC_VER
-#pragma warning(disable:4355)
+#  pragma warning(disable:4355)
 #endif
-

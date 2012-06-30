@@ -1,4 +1,3 @@
-
 #include "precompiled.h"
 
 #include "ProjectileTrackerObjectType.h"
@@ -12,9 +11,7 @@
 
 namespace game
 {
-
-	ProjectileTrackerObjectType ProjectileTrackerObjectType::instance = ProjectileTrackerObjectType();
-	IProjectileTrackerFactory *ProjectileTrackerObjectType::projectileTrackerFactory = NULL;
+    ProjectileTrackerObjectType ProjectileTrackerObjectType::instance = ProjectileTrackerObjectType();
+    IProjectileTrackerFactory *ProjectileTrackerObjectType::projectileTrackerFactory = NULL;
 
 }
-

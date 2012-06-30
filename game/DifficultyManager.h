@@ -1,31 +1,28 @@
-
 #ifndef DIFFICULTYMANAGER_H
 #define DIFFICULTYMANAGER_H
 
 namespace game
 {
-	class Game;
+    class Game;
 
-	class DifficultyManager
-	{
-		public:
-			DifficultyManager(Game *game);
+    class DifficultyManager {
+    public:
+        DifficultyManager(Game *game);
 
-			~DifficultyManager();
+        ~DifficultyManager();
 
-			void run();
+        void run();
 
-			float getPlayerDamageRatio();
+        float getPlayerDamageRatio();
 
-			//int getDamageAmountLevel();
+        //int getDamageAmountLevel();
 
-		private:
-			Game *game;
-			int ticksUntilUpdate;
-			int damageAmountLevel;
-	};
+    private:
+        Game *game;
+        int ticksUntilUpdate;
+        int damageAmountLevel;
+    };
 
 }
 
 #endif
-

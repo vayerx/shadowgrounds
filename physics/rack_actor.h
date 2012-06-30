@@ -4,20 +4,17 @@
 #include "actor_base.h"
 
 namespace frozenbyte {
-namespace physics {
+    namespace physics {
+        class RackActor : public ActorBase {
+        public:
+            RackActor(NxScene &scene, const VC3 &position);
+            ~RackActor();
 
-class RackActor: public ActorBase
-{
+            // Extended stuff
+            bool isValid() const;
+        };
 
-public:
-	RackActor(NxScene &scene, const VC3 &position);
-	~RackActor();
-
-	// Extended stuff
-	bool isValid() const;
-};
-
-} // physics
-} // frozenbyte
+    } // physics
+}     // frozenbyte
 
 #endif

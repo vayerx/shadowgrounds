@@ -13,178 +13,176 @@
 #include <cassert>
 
 namespace frozenbyte {
-namespace editor {
-namespace {
-	class DecorationInstance
-	{
-		ui::DecorationManager &manager;
+    namespace editor {
+        namespace {
+            class DecorationInstance {
+                ui::DecorationManager &manager;
 
-		// this won't do, as DecorationManager owns the Decoration, and it will
-		// delete it. changed to traditional pointer. -jpk
-		//boost::scoped_ptr<ui::Decoration> decoration;
-		ui::Decoration *decoration;
+                // this won't do, as DecorationManager owns the Decoration, and it will
+                // delete it. changed to traditional pointer. -jpk
+                //boost::scoped_ptr<ui::Decoration> decoration;
+                ui::Decoration *decoration;
 
-	public:
-		DecorationInstance(ui::DecorationManager &manager_)
-		:	manager(manager_),
-			decoration(manager.createDecoration())
-		{
-		}
+            public:
+                DecorationInstance(ui::DecorationManager &manager_)
+                    :   manager(manager_),
+                    decoration( manager.createDecoration() )
+                {
+                }
 
-		~DecorationInstance()
-		{
-			//manager.deleteDecoration(decoration.get());
-			manager.deleteDecoration(decoration);
-		}
+                ~DecorationInstance()
+                {
+                    //manager.deleteDecoration(decoration.get());
+                    manager.deleteDecoration(decoration);
+                }
 
-		ui::Decoration &get()
-		{
-			assert(decoration);
-			return *decoration;
-		}
-	};
+                ui::Decoration&get()
+                {
+                    assert(decoration);
+                    return *decoration;
+                }
+            };
 
-} // unnamed
+        } // unnamed
 
-struct TerrainDecoratorsData
-{
-	Storm &storm;
+        struct TerrainDecoratorsData {
+            Storm      &storm;
 
-	std::string waterName[2];
-	float waterHeight[2];
+            std::string waterName[2];
+            float       waterHeight[2];
 
-	ui::DecorationManager decorationManager;
-	boost::scoped_ptr<DecorationInstance> waterDecoration[2];
+            ui::DecorationManager decorationManager;
+            boost::scoped_ptr<DecorationInstance> waterDecoration[2];
 
-	TerrainDecoratorsData(Storm &storm_)
-	:	storm(storm_)
-	{
-		reset();
-	}
+            TerrainDecoratorsData(Storm &storm_)
+                :   storm(storm_)
+            {
+                reset();
+            }
 
-	void createWater(int index)
-	{
-		if(waterName[index].empty())
-			return;
+            void createWater(int index)
+            {
+                if ( waterName[index].empty() )
+                    return;
 
-		boost::scoped_ptr<DecorationInstance> decorationInstance(new DecorationInstance(decorationManager));
-		ui::Decoration &decoration = decorationInstance->get();
-		
-		ui::VisualObjectModel::setVisualStorm(storm.storm, storm.scene);
+                boost::scoped_ptr<DecorationInstance> decorationInstance( new DecorationInstance(decorationManager) );
+                ui::Decoration &decoration = decorationInstance->get();
 
-		decoration.setHeight(waterHeight[index]);
-		decoration.loadModel(waterName[index].c_str());
+                ui::VisualObjectModel::setVisualStorm(storm.storm, storm.scene);
 
-		if(index == 0)
-			decoration.setEffect(ui::Decoration::DECORATION_EFFECT_WAVE_X, true);
-		if(index == 1)
-			decoration.setEffect(ui::Decoration::DECORATION_EFFECT_WAVE_Z, true);
+                decoration.setHeight(waterHeight[index]);
+                decoration.loadModel( waterName[index].c_str() );
 
-		waterDecoration[index].swap(decorationInstance);
-	}
+                if (index == 0)
+                    decoration.setEffect(ui::Decoration::DECORATION_EFFECT_WAVE_X, true);
+                if (index == 1)
+                    decoration.setEffect(ui::Decoration::DECORATION_EFFECT_WAVE_Z, true);
 
-	void reset()
-	{
-		for(int i = 0; i < 2; ++i)
-		{
-			waterName[i] = "";
-			waterHeight[i] = 0;
-			waterDecoration[i].reset();
-		}
-	}
-};
+                waterDecoration[index].swap(decorationInstance);
+            }
 
-TerrainDecorators::TerrainDecorators(Storm &storm)
-{
-	boost::scoped_ptr<TerrainDecoratorsData> tempData(new TerrainDecoratorsData(storm));
-	data.swap(tempData);
+            void reset()
+            {
+                for (int i = 0; i < 2; ++i) {
+                    waterName[i] = "";
+                    waterHeight[i] = 0;
+                    waterDecoration[i].reset();
+                }
+            }
+        };
 
-	timeBeginPeriod(1);
-}
+        TerrainDecorators::TerrainDecorators(Storm &storm)
+        {
+            boost::scoped_ptr<TerrainDecoratorsData> tempData( new TerrainDecoratorsData(storm) );
+            data.swap(tempData);
 
-TerrainDecorators::~TerrainDecorators()
-{
-	timeEndPeriod(1);
-}
+            timeBeginPeriod(1);
+        }
 
-void TerrainDecorators::reset()
-{
-	data->reset();
-}
+        TerrainDecorators::~TerrainDecorators()
+        {
+            timeEndPeriod(1);
+        }
 
-void TerrainDecorators::setWaterModel(int index, const std::string &fileName)
-{
-	assert(index >= 0 && index < 2);
-	data->waterName[index] = fileName;
-	
-	data->createWater(index);
-}
+        void TerrainDecorators::reset()
+        {
+            data->reset();
+        }
 
-void TerrainDecorators::setWaterHeight(int index, float height)
-{
-	assert(index >= 0 && index < 2);
-	data->waterHeight[index] = height;
+        void TerrainDecorators::setWaterModel(int index, const std::string &fileName)
+        {
+            assert(index >= 0 && index < 2);
+            data->waterName[index] = fileName;
 
-	data->createWater(index);
-}
+            data->createWater(index);
+        }
 
-const std::string &TerrainDecorators::getWaterName(int index) const
-{
-	assert(index >= 0 && index < 2);
-	return data->waterName[index];
-}
+        void TerrainDecorators::setWaterHeight(int index, float height)
+        {
+            assert(index >= 0 && index < 2);
+            data->waterHeight[index] = height;
 
-float TerrainDecorators::getWaterHeight(int index) const
-{
-	assert(index >= 0 && index < 2);
-	return data->waterHeight[index];
-}
+            data->createWater(index);
+        }
 
-void TerrainDecorators::tick()
-{
-	// Hackety hack
-	static unsigned int lastTime = timeGetTime();
-	static int timeSinceLastUpdate = 0;
-	unsigned int currentTime = timeGetTime();
+        const std::string &TerrainDecorators::getWaterName(int index) const
+        {
+            assert(index >= 0 && index < 2);
+            return data->waterName[index];
+        }
 
-	timeSinceLastUpdate += (currentTime - lastTime);
+        float TerrainDecorators::getWaterHeight(int index) const
+        {
+            assert(index >= 0 && index < 2);
+            return data->waterHeight[index];
+        }
 
-	for(int i = 0; i < timeSinceLastUpdate / 10; ++i)
-		data->decorationManager.run();
+        void TerrainDecorators::tick()
+        {
+            // Hackety hack
+            static unsigned int lastTime = timeGetTime();
+            static int timeSinceLastUpdate = 0;
+            unsigned int currentTime = timeGetTime();
 
-	timeSinceLastUpdate %= 10;
-	lastTime = currentTime;
-}
+            timeSinceLastUpdate += (currentTime - lastTime);
 
-void TerrainDecorators::doExport(Exporter &exporter) const
-{
-}
+            for (int i = 0; i < timeSinceLastUpdate / 10; ++i) {
+                data->decorationManager.run();
+            }
 
-filesystem::OutputStream &TerrainDecorators::writeStream(filesystem::OutputStream &stream) const
-{
-	stream << int(1);
-	for(int i = 0; i < 2; ++i)
-		stream << data->waterName[i] << data->waterHeight[i];
+            timeSinceLastUpdate %= 10;
+            lastTime = currentTime;
+        }
 
-	return stream;
-}
+        void TerrainDecorators::doExport(Exporter &exporter) const
+        {
+        }
 
-filesystem::InputStream &TerrainDecorators::readStream(filesystem::InputStream &stream)
-{
-	int version = 0;
-	stream >> version;
+        filesystem::OutputStream &TerrainDecorators::writeStream(filesystem::OutputStream &stream) const
+        {
+            stream << int(1);
+            for (int i = 0; i < 2; ++i) {
+                stream << data->waterName[i] << data->waterHeight[i];
+            }
 
-	if(version == 0)
-		return stream;
+            return stream;
+        }
 
-	for(int i = 0; i < 2; ++i)
-	{
-		stream >> data->waterName[i] >> data->waterHeight[i];
-		data->createWater(i);
-	}
+        filesystem::InputStream &TerrainDecorators::readStream(filesystem::InputStream &stream)
+        {
+            int version = 0;
+            stream >> version;
 
-	return stream;
-}
+            if (version == 0)
+                return stream;
 
-} // end of namespace editor
-} // end of namespace frozenbyte
+            for (int i = 0; i < 2; ++i) {
+                stream >> data->waterName[i] >> data->waterHeight[i];
+                data->createWater(i);
+            }
+
+            return stream;
+        }
+
+    } // end of namespace editor
+}     // end of namespace frozenbyte

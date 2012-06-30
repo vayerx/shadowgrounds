@@ -3,17 +3,15 @@
 
 namespace frozenbyte
 {
-namespace particle
-{
+    namespace particle
+    {
+        enum DRAG_PARTICLE_FORCE_PARAMS {
+            PB_DRAG_FACTOR = GEN_PARTICLE_FORCE_PARAM_COUNT,
+        };
 
-enum DRAG_PARTICLE_FORCE_PARAMS {
-	PB_DRAG_FACTOR = GEN_PARTICLE_FORCE_PARAM_COUNT,
-};
+        ParticleForceClassDesc *getDragParticleForceClassDesc();
 
-ParticleForceClassDesc* getDragParticleForceClassDesc();
-
-} // particle
-} // frozenbyte
-
+    } // particle
+}     // frozenbyte
 
 #endif

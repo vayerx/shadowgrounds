@@ -4,93 +4,91 @@
 #define INCLUDED_LWEXPORT_MATERIAL_H
 
 #ifdef _MSC_VER
-#pragma warning(disable: 4786) // identifier truncate
+#  pragma warning(disable: 4786) // identifier truncate
 #endif
 
 #ifndef INCLUDED_DATATYPEDEF_H
-#define INCLUDED_DATATYPEDEF_H
-#include <DataTypeDef.h>
+#  define INCLUDED_DATATYPEDEF_H
+#  include <DataTypeDef.h>
 #endif
 
 #ifndef INCLUDED_VECTOR
-#define INCLUDED_VECTOR
-#include <vector>
+#  define INCLUDED_VECTOR
+#  include <vector>
 #endif
 #ifndef INCLUDED_STRING
-#define INCLUDED_STRING
-#include <string>
+#  define INCLUDED_STRING
+#  include <string>
 #endif
 
 #ifndef INCLUDED_LWSURF_H
-#define INCLUDED_LWSURF_H
-#include <lwsurf.h>
+#  define INCLUDED_LWSURF_H
+#  include <lwsurf.h>
 #endif
 
 namespace frozenbyte {
-namespace exporter {
-
+    namespace exporter {
 /**  @class LWMaterial
-  *  @brief Collects material data (textures / surface properties)
-  *  @author Juha Hiekkamäki
-  *  @version 1.0
-  *  @date 2001
-  */
-class LWMaterial
-{
-	LWSurfaceID lwId;
-	int exporterId;
+ *  @brief Collects material data (textures / surface properties)
+ *  @author Juha Hiekkamäki
+ *  @version 1.0
+ *  @date 2001
+ */
+        class LWMaterial {
+            LWSurfaceID lwId;
+            int exporterId;
 
-	std::string baseTexture;
-	std::string bumpTexture;
-	std::string reflectionTexture;
-	std::string distortionTexture;
-	mutable std::string luminosityTexture;
-	
-	// Textures id's. Get uv's from here
-	LWTextureID textureId;
-	mutable LWTextureID lightmapId;
-	LWTextureID reflectionId;
-	LWImageID distortionId;
-	LWTextureID alphaId;
+            std::string baseTexture;
+            std::string bumpTexture;
+            std::string reflectionTexture;
+            std::string distortionTexture;
+            mutable std::string luminosityTexture;
 
-	// Properties
-	std::string name;
-	std::string objectName;
-	
-	float smoothingAngle;
-	float transparency;
-	float glow;
-	float reflectionFactor;
+            // Textures id's. Get uv's from here
+            LWTextureID textureId;
+            mutable LWTextureID lightmapId;
+            LWTextureID reflectionId;
+            LWImageID distortionId;
+            LWTextureID alphaId;
 
-	bool doubleSided;
-	
-	Color diffuseColor;
-	Color luminosityColor;
-	bool additiveAlpha;
+            // Properties
+            std::string name;
+            std::string objectName;
 
-	VC2 scrollSpeed;
-	bool scrollAutoStart;
+            float smoothingAngle;
+            float transparency;
+            float glow;
+            float reflectionFactor;
 
-public:
-	explicit LWMaterial(LWSurfaceID id);
-	~LWMaterial();
+            bool doubleSided;
 
-	const std::string &getName() const;
-	const std::string &getObjectName() const;
-	
-	LWTextureID getTextureId() const;
-	LWTextureID getLightmapId() const;
-	float getSmoothingAngle() const;
-	bool isDoubleSided() const { return doubleSided; }
-	int getExporterId() const;
+            Color diffuseColor;
+            Color luminosityColor;
+            bool additiveAlpha;
 
-	bool collectProperties();
+            VC2 scrollSpeed;
+            bool scrollAutoStart;
 
-	void removeLightmap() const { luminosityTexture = ""; lightmapId = 0; }
-	void add();
-};
+        public:
+            explicit LWMaterial(LWSurfaceID id);
+            ~LWMaterial();
 
-} // end of namespace export
-} // end of namespace frozenbyte
+            const std::string&getName() const;
+            const std::string&getObjectName() const;
+
+            LWTextureID getTextureId() const;
+            LWTextureID getLightmapId() const;
+            float getSmoothingAngle() const;
+            bool isDoubleSided() const { return doubleSided; }
+            int getExporterId() const;
+
+            bool collectProperties();
+
+            void removeLightmap() const { luminosityTexture = ""; lightmapId = 0; }
+            void add();
+        };
+
+    } // end of namespace export
+}     // end of namespace frozenbyte
 
 #endif

@@ -3,13 +3,12 @@
 
 #include "OguiFormattedCommandImpl.h"
 
-class OguiFormattedCommandImg : public OguiFormattedCommandImpl
-{
+class OguiFormattedCommandImg : public OguiFormattedCommandImpl {
 public:
-	OguiFormattedCommandImg();
-	~OguiFormattedCommandImg();
+    OguiFormattedCommandImg();
+    ~OguiFormattedCommandImg();
 
-	void execute( OguiFormattedText* text, const std::string& paramters, OguiFormattedText::ParseData* data );
+    void execute(OguiFormattedText *text, const std::string &paramters, OguiFormattedText::ParseData *data);
 };
 
 #endif

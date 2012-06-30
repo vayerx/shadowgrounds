@@ -2,67 +2,64 @@
 #define AMBIENT_SOUND_MANAGER_H
 
 namespace sfx {
-	class SoundLooper;
+    class SoundLooper;
 } // sfx
 
-namespace game 
+namespace game
 {
-	class GameUI;
+    class GameUI;
 }
-
 
 namespace ui
 {
-	struct AmbientSoundManagerData;	
+    struct AmbientSoundManagerData;
 
-	class AmbientSoundManager 
-	{
+    class AmbientSoundManager {
+    public:
 
-	public:
+        AmbientSoundManager(game::GameUI *gameUI_, sfx::SoundLooper *looper_);
 
-		AmbientSoundManager(game::GameUI* gameUI_, sfx::SoundLooper* looper_);
+        virtual ~AmbientSoundManager();
 
-		virtual ~AmbientSoundManager();
+        void clearAllAmbientSounds();
 
-		void clearAllAmbientSounds(); 
-	 		
-		void setNextFreeAmbientSound();
+        void setNextFreeAmbientSound();
 
-		void setSelectedAmbientSound(int i); 
+        void setSelectedAmbientSound(int i);
 
-		int getSelectedAmbientSound();
+        int getSelectedAmbientSound();
 
-		void setAmbientSoundRange(int i, float f);
+        void setAmbientSoundRange(int i, float f);
 
-		void setAmbientSoundClip(int i, int clipQuarters);
+        void setAmbientSoundClip(int i, int clipQuarters);
 
-		void setAmbientSoundPosition(int i, const Vector& pos);
+        void setAmbientSoundPosition(int i, const Vector &pos);
 
-		void setAmbientSoundRollOff(int i, int rollOff);
+        void setAmbientSoundRollOff(int i, int rollOff);
 
-		void setAmbientSoundVolume(int i, int volume);
+        void setAmbientSoundVolume(int i, int volume);
 
-		void setAmbientSoundName(int i, const char *name);
+        void setAmbientSoundName(int i, const char *name);
 
-		void makeAmbientSoundFromDefString(int i, const char* defString);
-		
-		void startAmbientSound(int i);
+        void makeAmbientSoundFromDefString(int i, const char *defString);
 
-		void stopAmbientSound(int i, bool immediately);
+        void startAmbientSound(int i);
 
-		void setListenerPosition(const Vector& listenerPosition);
+        void stopAmbientSound(int i, bool immediately);
 
-		void run();
+        void setListenerPosition(const Vector &listenerPosition);
 
-		int getAmbientSoundNumberByName(const char *name);
+        void run();
 
-		void selectAmbientSoundByName(const char *name);
+        int getAmbientSoundNumberByName(const char *name);
 
-	private:
+        void selectAmbientSoundByName(const char *name);
 
-		AmbientSoundManagerData* m;	
+    private:
 
-	};
+        AmbientSoundManagerData *m;
+
+    };
 
 }
 

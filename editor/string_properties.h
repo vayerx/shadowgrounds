@@ -8,24 +8,22 @@
 #include <string>
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        struct StringProperties {
+            std::vector<std::string> strings;
+            std::map<std::string, std::string> defaults;
 
-struct StringProperties
-{
-	std::vector<std::string> strings;
-	std::map<std::string, std::string> defaults;
+            void        addProperty(const std::string &property);
+            void        addProperty(const std::string &property, const std::string &defaultValue);
+            void        add(const StringProperties &properties);
 
-	void addProperty(const std::string &property);
-	void addProperty(const std::string &property, const std::string &defaultValue);
-	void add(const StringProperties &properties);
+            int         getPropertyAmount() const;
+            std::string getProperty(int index) const;
+            bool        hasDefault(const std::string &property) const;
+            std::string getDefault(const std::string &property) const;
+        };
 
-	int getPropertyAmount() const;
-	std::string getProperty(int index) const;
-	bool hasDefault(const std::string &property) const;
-	std::string getDefault(const std::string &property) const;
-};
-
-} // editor
-} // frozenbyte
+    } // editor
+}     // frozenbyte
 
 #endif

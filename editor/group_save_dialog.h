@@ -7,25 +7,23 @@
 #include <string>
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        class GroupSaveDialog {
+            struct Data;
+            boost::scoped_ptr<Data> data;
 
-class GroupSaveDialog
-{
-	struct Data;
-	boost::scoped_ptr<Data> data;
+        public:
+            GroupSaveDialog();
+            ~GroupSaveDialog();
 
-public:
-	GroupSaveDialog();
-	~GroupSaveDialog();
+            const std::string&getGroup();
+            const std::string&getSubgroup();
+            const std::string&getName();
 
-	const std::string &getGroup();
-	const std::string &getSubgroup();
-	const std::string &getName();
+            bool show();
+        };
 
-	bool show();
-};
-
-} // editor
-} // frozenbyte
+    } // editor
+}     // frozenbyte
 
 #endif

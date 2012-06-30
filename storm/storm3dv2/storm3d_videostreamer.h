@@ -7,29 +7,32 @@
 class Storm3D;
 class IStorm3D_StreamBuilder;
 
-class Storm3D_VideoStreamer: public IStorm3D_VideoStreamer
-{
-	struct Data;
-	boost::scoped_ptr<Data> data;
+class Storm3D_VideoStreamer : public IStorm3D_VideoStreamer {
+    struct Data;
+    boost::scoped_ptr<Data> data;
 
 public:
-	Storm3D_VideoStreamer(Storm3D &storm, const char *fileName, IStorm3D_StreamBuilder *streamBuilder, bool loop, bool downscale, bool higherColorRange);
-	~Storm3D_VideoStreamer();
+    Storm3D_VideoStreamer(Storm3D                &storm,
+                          const char             *fileName,
+                          IStorm3D_StreamBuilder *streamBuilder,
+                          bool                    loop,
+                          bool                    downscale,
+                          bool                    higherColorRange);
+    ~Storm3D_VideoStreamer();
 
-	bool hasVideo() const;
-	bool hasEnded() const;
-	int getTime() const;
-	bool isPlaying() const;
+    bool hasVideo() const;
+    bool hasEnded() const;
+    int getTime() const;
+    bool isPlaying() const;
 
-	void stop();
+    void stop();
 
-	IStorm3D_Material *getMaterial();
-	void setPosition(const VC2 &position, const VC2 &size);
-	void setAlpha(float alpha);
-	void update();
-	void render(IStorm3D_Scene *scene);
-	void getTextureCoords(float &x, float &y);
+    IStorm3D_Material *getMaterial();
+    void setPosition(const VC2 &position, const VC2 &size);
+    void setAlpha(float alpha);
+    void update();
+    void render(IStorm3D_Scene *scene);
+    void getTextureCoords(float &x, float &y);
 };
 
 #endif
-

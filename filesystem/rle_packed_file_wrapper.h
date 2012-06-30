@@ -1,4 +1,3 @@
-
 // Copyright(C) Jukka Kokkonen, 2007
 
 #ifndef RLE_PACKED_FILE_WRAPPER_H
@@ -26,5 +25,3 @@ bool rle_packed_was_error(RLE_PACKED_FILE *stream);
 int rle_packed_fclose(RLE_PACKED_FILE *stream);
 
 #endif
-
-

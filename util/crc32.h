@@ -3,6 +3,6 @@
 
 #include "igios.h"
 
-unsigned int crc32_file(const char *filename) __attribute__((visibility("default")));
+unsigned int crc32_file(const char *filename) __attribute__( ( visibility("default") ) );
 
 #endif

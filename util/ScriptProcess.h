@@ -1,4 +1,3 @@
-
 #ifndef SCRIPTPROCESS_H
 #define SCRIPTPROCESS_H
 
@@ -10,115 +9,113 @@
 
 #ifndef FINAL_RELEASE_BUILD
 // defining this gives you checks for use of uninitialized script variables
-#define DEBUG_CHECK_FOR_UNINITIALIZED_SCRIPT_VALUE_USE
+#  define DEBUG_CHECK_FOR_UNINITIALIZED_SCRIPT_VALUE_USE
 #endif
 
 #ifdef DEBUG_CHECK_FOR_UNINITIALIZED_SCRIPT_VALUE_USE
 typedef CheckedIntValue ScriptLastValueType;
 #else
-typedef intptr_t ScriptLastValueType;
+typedef intptr_t        ScriptLastValueType;
 #endif
-
 
 // HACK: ...
 namespace game
 {
-  class GameScripting;
+    class GameScripting;
 }
 
 namespace util
 {
-	class Script;
+    class Script;
 
-	class ScriptProcess
-	{
-	private:
-		int ip;
+    class ScriptProcess {
+    private:
+        int ip;
 #ifdef DEBUG_CHECK_FOR_UNINITIALIZED_SCRIPT_VALUE_USE
-		CheckedIntValue lastValue;
+        CheckedIntValue lastValue;
 #else
-		intptr_t lastValue;
+        intptr_t lastValue;
 #endif
-		LinkedList *ipStack;	// used to store ip, ifDepth and thenBranch
-		LinkedList *userStack;	// used to store user push- and popValues
-		int userStackSize;
-		Script *script;
-		bool finished;
+        LinkedList *ipStack;    // used to store ip, ifDepth and thenBranch
+        LinkedList *userStack;  // used to store user push- and popValues
+        int userStackSize;
+        Script *script;
+        bool finished;
 #ifdef DEBUG_CHECK_FOR_UNINITIALIZED_SCRIPT_VALUE_USE
-		CheckedIntValue secondaryValue;
+        CheckedIntValue secondaryValue;
 #else
-		intptr_t secondaryValue;
+        intptr_t secondaryValue;
 #endif
-		int misbehaveCounter;
-		
-		intptr_t ifDepth;
-		bool thenBranch;
-		void *data;
+        int misbehaveCounter;
 
-		int *callParamStack;
-		int callParamStackUsed;
-		int callParamStackAlloced;
+        intptr_t ifDepth;
+        bool thenBranch;
+        void *data;
 
-		int *localVarStack;
-		int localVarStackUsed;
-		int localVarStackAlloced;
+        int *callParamStack;
+        int callParamStackUsed;
+        int callParamStackAlloced;
 
-		int *scopeStack;
-		int scopeStackUsed;
-		int scopeStackAlloced;
+        int *localVarStack;
+        int localVarStackUsed;
+        int localVarStackAlloced;
 
-		int pid;
+        int *scopeStack;
+        int scopeStackUsed;
+        int scopeStackAlloced;
 
-	public:
+        int pid;
 
-		ScriptProcess();
-		~ScriptProcess();
-		
-		inline bool isFinished() { return finished; }
+    public:
 
-		inline Script *getScript() { return script; }
+        ScriptProcess();
+        ~ScriptProcess();
 
-		inline void setData(void *data) { this->data = data; }
+        inline bool isFinished() { return finished; }
 
-		inline void *getData() { return data; }
+        inline Script *getScript() { return script; }
 
-		inline int getLastValue() { return lastValue; }
+        inline void setData(void *data) { this->data = data; }
 
-		inline int getSecondaryValue() { return secondaryValue; }
+        inline void *getData() { return data; }
 
-		inline void setLastValue(int lastValue) { this->lastValue = lastValue; }
+        inline int getLastValue() { return lastValue; }
 
-		inline void setSecondaryValue(int secondaryValue) { this->secondaryValue = secondaryValue; }
+        inline int getSecondaryValue() { return secondaryValue; }
 
-		inline int getId() { return pid; }
+        inline void setLastValue(int lastValue) { this->lastValue = lastValue; }
 
-		bool isUserStackEmpty();
+        inline void setSecondaryValue(int secondaryValue) { this->secondaryValue = secondaryValue; }
 
-		void error(const char *message);
-		void warning(const char *message);
-		void debug(const char *message);
+        inline int getId() { return pid; }
 
-		void copyFrom(ScriptProcess *otherScriptProcess);
+        bool isUserStackEmpty();
 
-		bool isCallParamStackEmpty();
-		void pushCallParamStack(int value);
-		int popCallParamStack();
+        void error(const char *message);
+        void warning(const char *message);
+        void debug(const char *message);
 
-		bool isLocalVarStackEmpty();
-		void pushLocalVarStack(int value);
-		int popLocalVarStack();
-		int getLocalVarStackSize();
-		int getLocalVarStackEntryValue(int index);
-		void setLocalVarStackEntryValue(int index, int value);
+        void copyFrom(ScriptProcess *otherScriptProcess);
 
-		void enterLocalScope();
-		void leaveLocalScope();
+        bool isCallParamStackEmpty();
+        void pushCallParamStack(int value);
+        int popCallParamStack();
 
-		friend class Script;
+        bool isLocalVarStackEmpty();
+        void pushLocalVarStack(int value);
+        int popLocalVarStack();
+        int getLocalVarStackSize();
+        int getLocalVarStackEntryValue(int index);
+        void setLocalVarStackEntryValue(int index, int value);
 
-		// HACK: ...
-		friend class game::GameScripting;
-	};
+        void enterLocalScope();
+        void leaveLocalScope();
+
+        friend class Script;
+
+        // HACK: ...
+        friend class game::GameScripting;
+    };
 
 }
 

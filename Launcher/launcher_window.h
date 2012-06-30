@@ -2,26 +2,22 @@
 #define INC_LAUNCHER_WINDOW_H
 
 namespace frozenbyte {
-namespace launcher {
-	
-class LauncherWindowImpl;
+    namespace launcher {
+        class LauncherWindowImpl;
 
+        class LauncherWindow {
+        public:
+            LauncherWindow();
+            ~LauncherWindow();
 
-class LauncherWindow
-{
-public:
-	LauncherWindow();
-	~LauncherWindow();
+            void openAdvanced();
+            void closeAdvanced();
 
-	void openAdvanced();
-	void closeAdvanced();
-	
-private:
-	LauncherWindowImpl* impl;
-};
+        private:
+            LauncherWindowImpl *impl;
+        };
 
-
-} // end of namespace launcher
-} // end of namespace frozenbyte
+    } // end of namespace launcher
+}     // end of namespace frozenbyte
 
 #endif

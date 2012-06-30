@@ -1,4 +1,3 @@
-
 #ifndef CONVEXPHYSICSOBJECT_H
 #define CONVEXPHYSICSOBJECT_H
 
@@ -9,34 +8,36 @@
 
 namespace game
 {
-	class GamePhysics;
-	class GamePhysicsImpl;
-	class ConvexPhysicsObjectImpl;
+    class GamePhysics;
+    class GamePhysicsImpl;
+    class ConvexPhysicsObjectImpl;
 
-	class ConvexPhysicsObject : public AbstractPhysicsObject
-	{
-	public:
-		ConvexPhysicsObject(GamePhysics *gamePhysics, const char *filename, float mass, int collisionGroup, const VC3 &position);
+    class ConvexPhysicsObject : public AbstractPhysicsObject {
+    public:
+        ConvexPhysicsObject(GamePhysics *gamePhysics,
+                            const char  *filename,
+                            float        mass,
+                            int          collisionGroup,
+                            const VC3   &position);
 
-		virtual ~ConvexPhysicsObject();
+        virtual ~ConvexPhysicsObject();
 
-	protected:
-		virtual boost::shared_ptr<frozenbyte::physics::ActorBase> createImplementationObject();
+    protected:
+        virtual boost::shared_ptr<frozenbyte::physics::ActorBase> createImplementationObject();
 
-		virtual void syncImplementationObject(boost::shared_ptr<frozenbyte::physics::ActorBase> &obj);
+        virtual void syncImplementationObject(boost::shared_ptr<frozenbyte::physics::ActorBase> &obj);
 
-	private:
-		ConvexPhysicsObjectImpl *impl;
+    private:
+        ConvexPhysicsObjectImpl *impl;
 
-		static void clearImplementationResources();
+        static void clearImplementationResources();
 
-		friend class GamePhysicsImpl;
+        friend class GamePhysicsImpl;
 
-		float mass;
-		int collisionGroup;
-	};
+        float mass;
+        int collisionGroup;
+    };
 }
 
 #endif
 #endif
-

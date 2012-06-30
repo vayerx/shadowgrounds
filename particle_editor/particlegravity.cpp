@@ -15,73 +15,68 @@
 #include "particlesystem.h"
 #include "particlegravity.h"
 
-
 namespace frozenbyte
 {
-namespace particle
-{
+    namespace particle
+    {
+        class ParticleGravity;
+        class ParticleGravityClassDesc;
 
-class ParticleGravity;
-class ParticleGravityClassDesc;
+        static ParamDesc theParticleGravityParamDesc[] = {
+            ParamDesc(PB_GRAVITY, "gravity", PARAM_FLOAT, false)
+        };
 
-static ParamDesc theParticleGravityParamDesc[] = {
-	ParamDesc(PB_GRAVITY, "gravity", PARAM_FLOAT, false)
-};
+        class ParticleGravity : public GenParticleForce {
+            float m_gravity;
+        public:
 
+            ParticleGravity() {
+            }
 
-class ParticleGravity : public GenParticleForce {
-	float m_gravity;
-public:
+            void create() {
+                GenParticleForce::create();
+                m_pb->addParams(theParticleGravityParamDesc, 1);
+            }
 
-	ParticleGravity() {
-	}
+            const char *getClassName() {
+                return "gravity";
+            }
 
-	void create() {
-		GenParticleForce::create();
-		m_pb->addParams(theParticleGravityParamDesc, 1);
-	}
-	
-	const char* getClassName() {
-		return "gravity";
-	}
+            const char *getSuperClassName() {
+                return "gen_force";
+            }
 
-	const char* getSuperClassName() {
-		return "gen_force";
-	}
-				
-	void parseFrom(const editor::ParserGroup& pg) {
-		GenParticleForce::parseFrom(pg);
-	}
-	
-	void parseTo(editor::ParserGroup& pg) {
-	
-	}
-	
-	void preCalculate(float t) {
-		m_pb->getValue(PB_GRAVITY, m_gravity);
-		m_gravity *= PARTICLE_TIME_SCALE;
-	}
-		
-	void calcForce(Vector& force, const Vector& pos, const Vector& vel) {
-		force.x = 0;
-		force.y = 0;
-		force.y = -m_gravity;
-	}
-	
-};
+            void parseFrom(const editor::ParserGroup &pg) {
+                GenParticleForce::parseFrom(pg);
+            }
 
-class ParticleGravityClassDesc : public ParticleForceClassDesc {
-public:
-	void* create() { return new ParticleGravity(); }
-	const char* getClassName() { return "gravity"; }
-};
+            void parseTo(editor::ParserGroup &pg) {
+            }
 
-static ParticleGravityClassDesc theParticleGravityClassDesc;
+            void preCalculate(float t) {
+                m_pb->getValue(PB_GRAVITY, m_gravity);
+                m_gravity *= PARTICLE_TIME_SCALE;
+            }
 
-ParticleForceClassDesc* getParticleGravityClassDesc() {
-	return &theParticleGravityClassDesc;
-}
+            void calcForce(Vector &force, const Vector &pos, const Vector &vel) {
+                force.x = 0;
+                force.y = 0;
+                force.y = -m_gravity;
+            }
 
+        };
 
-} // particle
-} // frozenbyte
+        class ParticleGravityClassDesc : public ParticleForceClassDesc {
+        public:
+            void *create() { return new ParticleGravity(); }
+            const char *getClassName() { return "gravity"; }
+        };
+
+        static ParticleGravityClassDesc theParticleGravityClassDesc;
+
+        ParticleForceClassDesc *getParticleGravityClassDesc() {
+            return &theParticleGravityClassDesc;
+        }
+
+    } // particle
+}     // frozenbyte

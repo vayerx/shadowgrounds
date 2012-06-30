@@ -4,14 +4,13 @@
 #include <string>
 
 namespace util {
+    void convertToWide(const std::string &source, std::wstring &destination);
+    void convertToWide(const char *source, std::wstring &destination);
+    wchar_t *convertToWide(const char *source);
 
-void convertToWide(const std::string &source, std::wstring &destination);
-void convertToWide(const char *source, std::wstring &destination);
-wchar_t *convertToWide(const char *source);
-
-void convertToMultiByte(const std::wstring &source, std::string &destination);
-void convertToMultiByte(const wchar_t *source, std::string &destination);
-char *convertToMultiByte(const wchar_t *source);
+    void convertToMultiByte(const std::wstring &source, std::string &destination);
+    void convertToMultiByte(const wchar_t *source, std::string &destination);
+    char *convertToMultiByte(const wchar_t *source);
 
 } // util
 

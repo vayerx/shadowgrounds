@@ -1,53 +1,48 @@
-
 #ifndef WATER_H
 #define WATER_H
 
 namespace ui
 {
-  class Decoration;
+    class Decoration;
 }
 
 namespace game
 {
-  class WaterManager;
+    class WaterManager;
 
-  class Water
-  {
+    class Water {
     public:
-      Water();
+        Water();
 
-      ~Water();
+        ~Water();
 
-      void setName(const char *name);
+        void setName(const char *name);
 
-      void setDecoration(ui::Decoration *decor);
+        void setDecoration(ui::Decoration *decor);
 
-      void setHeight(float height);
+        void setHeight(float height);
 
-      void setPosition(const VC3 &position);
+        void setPosition(const VC3 &position);
 
-      // based on current position and decoration...
-      void updateBoundaries();
+        // based on current position and decoration...
+        void updateBoundaries();
 
     private:
-      // boundaries (rectangle)      
-      float minY;
-      float maxY;
-      float minX;
-      float maxX;
-      float height; // = position.y
+        // boundaries (rectangle)
+        float minY;
+        float maxY;
+        float minX;
+        float maxX;
+        float height; // = position.y
 
-      char *name;
+        char *name;
 
-      VC3 position;
+        VC3 position;
 
-      ui::Decoration *decoration;
+        ui::Decoration *decoration;
 
-      friend class WaterManager;
-  };
+        friend class WaterManager;
+    };
 }
 
 #endif
-
-
-

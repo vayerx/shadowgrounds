@@ -19,126 +19,119 @@ class OguiSelectListStyle;
 
 namespace game
 {
-	class Game;
-	class GameProfiles;
+    class Game;
+    class GameProfiles;
 }
 
-
 namespace ui {
-
 ///////////////////////////////////////////////////////////////////////////////
 
-class CoopMenu : public MenuBaseImpl, private IOguiSelectListListener
-{
-public:
+    class CoopMenu : public MenuBaseImpl, private IOguiSelectListListener {
+    public:
 
-	//.........................................................................
-	
-	enum COMMANDS {
-		COMMANDS_STARTGAME = 1,
-		COMMANDS_LOADGAME,
-		COMMANDS_STARTSURVIVAL,
+        //.........................................................................
 
-		COMMANDS_PLAYER1,
-		COMMANDS_PLAYER2,
-		COMMANDS_PLAYER3,
-		COMMANDS_PLAYER4,
+        enum COMMANDS {
+            COMMANDS_STARTGAME = 1,
+            COMMANDS_LOADGAME,
+            COMMANDS_STARTSURVIVAL,
 
-		COMMANDS_PLAYER1_OPTIONS,
-		COMMANDS_PLAYER2_OPTIONS,
-		COMMANDS_PLAYER3_OPTIONS,
-		COMMANDS_PLAYER4_OPTIONS,
+            COMMANDS_PLAYER1,
+            COMMANDS_PLAYER2,
+            COMMANDS_PLAYER3,
+            COMMANDS_PLAYER4,
 
-		COMMANDS_EASY,
-		COMMANDS_NORMAL,
-		COMMANDS_HARD,
-		COMMANDS_VERY_HARD,
-		COMMANDS_EXTREMELY_HARD
-	};
+            COMMANDS_PLAYER1_OPTIONS,
+            COMMANDS_PLAYER2_OPTIONS,
+            COMMANDS_PLAYER3_OPTIONS,
+            COMMANDS_PLAYER4_OPTIONS,
 
-	enum OPTIONS {
-		OPTION_FRIENDLY_FIRE = 0,
-		NUM_OPTIONS = 1,
-	};
+            COMMANDS_EASY,
+            COMMANDS_NORMAL,
+            COMMANDS_HARD,
+            COMMANDS_VERY_HARD,
+            COMMANDS_EXTREMELY_HARD
+        };
 
-	//.........................................................................
+        enum OPTIONS {
+            OPTION_FRIENDLY_FIRE = 0,
+            NUM_OPTIONS = 1,
+        };
 
-	CoopMenu( MenuCollection* menu, MenuCollection::Fonts* fonts, Ogui* o_gui, game::Game* g );
-	~CoopMenu();
+        //.........................................................................
 
-	//.........................................................................
+        CoopMenu(MenuCollection *menu, MenuCollection::Fonts *fonts, Ogui *o_gui, game::Game *g);
+        ~CoopMenu();
 
-	static int convertToRunningNum( int i );
-	static CoopMenu::COMMANDS convertToPlayerNum( int i );
+        //.........................................................................
 
-	int getType() const;
+        static int convertToRunningNum(int i);
+        static CoopMenu::COMMANDS convertToPlayerNum(int i);
 
-	// bool wasQuitPressed() const;
+        int getType() const;
 
-	void closeMenu();
-	void openMenu( int m );
-	void applyChanges();
+        // bool wasQuitPressed() const;
 
-	//.........................................................................
+        void closeMenu();
+        void openMenu(int m);
+        void applyChanges();
 
-	void CursorEvent( OguiButtonEvent* eve );
-	void SelectEvent( OguiSelectListEvent *eve );
+        //.........................................................................
 
-	//.........................................................................
-	
-	void menuStartGame();
-	void menuLoadGame();
-	void menuStartSurvival();
+        void CursorEvent(OguiButtonEvent *eve);
+        void SelectEvent(OguiSelectListEvent *eve);
 
-	void menuOptions(int player);
+        //.........................................................................
 
-	static bool prepareCoopGameRestart(game::Game *game);
-	static bool enableCoopGameSettings(game::Game *game, bool test_only = false);
-	static void disableCoopGameSettings(game::Game *game);
+        void menuStartGame();
+        void menuLoadGame();
+        void menuStartSurvival();
 
-private:
+        void menuOptions(int player);
 
-	void				addText( const std::string& text, int x, int y, int w, int h, IOguiFont* font );
-	OguiButtonStyle*	loadStyle( const std::string& button_name );
+        static bool prepareCoopGameRestart(game::Game *game);
+        static bool enableCoopGameSettings(game::Game *game, bool test_only = false);
+        static void disableCoopGameSettings(game::Game *game);
 
+    private:
 
+        void                addText(const std::string &text, int x, int y, int w, int h, IOguiFont *font);
+        OguiButtonStyle *loadStyle(const std::string &button_name);
 
-	void		createCooperativeMenu();
-	void		freeCooperativeMenu();
-	std::string getCoopPlayerName( int i );
-	void		openCoopProfileMenu( int i );
-	void		closeCoopProfileMenu();
-	void		setCoopPlayer( int i, const std::string& name );
+        void        createCooperativeMenu();
+        void        freeCooperativeMenu();
+        std::string getCoopPlayerName(int i);
+        void        openCoopProfileMenu(int i);
+        void        closeCoopProfileMenu();
+        void        setCoopPlayer(int i, const std::string &name);
 
-	OguiTextLabel*					coopBigText;
-	OguiSelectList*					coopProfileList;
-	OguiButton*						coopProfileListSaver;
-	OguiButton*						coopCaptureEvents;
-	int								coopCurrentSelection;
+        OguiTextLabel *coopBigText;
+        OguiSelectList *coopProfileList;
+        OguiButton *coopProfileListSaver;
+        OguiButton *coopCaptureEvents;
+        int coopCurrentSelection;
 
-	static std::map< int, std::string >	coopPlayerNames;
-	static std::string				none;
+        static std::map< int, std::string > coopPlayerNames;
+        static std::string none;
 
-	game::GameProfiles*		gameProfiles;
+        game::GameProfiles *gameProfiles;
 
+        MenuCollection *menuCollection;
+        MenuCollection::Fonts *fonts;
 
-	MenuCollection*			menuCollection;
-	MenuCollection::Fonts*	fonts;
+        std::list< OguiButtonStyle * > styles;
+        OguiSelectListStyle *selectListStyle;
 
-	
-	std::list< OguiButtonStyle* >	styles;
-	OguiSelectListStyle*			selectListStyle;
+        std::list< OguiTextLabel * > textLabels;
+        OguiButton *startGame;
+        OguiButton *loadGame;
+        OguiButton *startSurvival;
 
-	std::list< OguiTextLabel* >		textLabels;
-	OguiButton* startGame;
-	OguiButton* loadGame;
-	OguiButton* startSurvival;
+        std::vector< OguiButton * > optionsButtons;
 
-	std::vector< OguiButton * > optionsButtons;
-
-	OguiTextLabel* optionsBigText;
-	std::vector<OguiCheckBox *> options;
-};
+        OguiTextLabel *optionsBigText;
+        std::vector<OguiCheckBox *> options;
+    };
 
 ///////////////////////////////////////////////////////////////////////////////
 

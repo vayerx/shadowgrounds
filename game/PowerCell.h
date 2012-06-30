@@ -1,4 +1,3 @@
-
 #ifndef POWERCELL_H
 #define POWERCELL_H
 
@@ -7,15 +6,13 @@
 
 namespace game
 {
+    class PowerCell : public ItemPack {
+    public:
+        PowerCell();
+        PowerCell(int id);
+        virtual ~PowerCell();
 
-  class PowerCell : public ItemPack
-  {
-  public:
-    PowerCell();
-    PowerCell(int id);
-    virtual ~PowerCell();
-
-  };
+    };
 
 }
 

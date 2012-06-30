@@ -14,109 +14,103 @@
 #include "resource/resource.h"
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        struct TextureLayerData {
+            TerrainTextures &terrainTextures;
+            Storm &storm;
 
-struct TextureLayerData
-{
-	TerrainTextures &terrainTextures;
-	Storm &storm;
+            TextureLayerData(TerrainTextures &terrainTextures_, Storm &storm_)
+                :   terrainTextures(terrainTextures_),
+                storm(storm_)
+            {
+            }
 
-	TextureLayerData(TerrainTextures &terrainTextures_, Storm &storm_)
-	:	terrainTextures(terrainTextures_),
-		storm(storm_)
-	{
-	}
+            ~TextureLayerData()
+            {
+            }
 
-	~TextureLayerData()
-	{
-	}
+            void initComboBox(HWND windowHandle, int id)
+            {
+                SendDlgItemMessage(windowHandle, id, CB_RESETCONTENT, 0, 0);
 
-	void initComboBox(HWND windowHandle, int id)
-	{
-		SendDlgItemMessage(windowHandle, id, CB_RESETCONTENT, 0, 0);
+                if (id == IDC_BOTTOM_TEXTURE)
+                    SendDlgItemMessage( windowHandle, id, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>("(none)") );
 
-		if(id == IDC_BOTTOM_TEXTURE)
-			SendDlgItemMessage(windowHandle, id, CB_ADDSTRING, 0, reinterpret_cast<LPARAM> ("(none)"));
+                for (int i = 0; i < terrainTextures.getTextureCount(); ++i) {
+                    std::string string = getFileName( terrainTextures.getTexture(i) );
+                    SendDlgItemMessage( windowHandle, id, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>( string.c_str() ) );
+                }
 
-		for(int i = 0; i < terrainTextures.getTextureCount(); ++i)
-		{
-			std::string string = getFileName(terrainTextures.getTexture(i));
-			SendDlgItemMessage(windowHandle, id, CB_ADDSTRING, 0, reinterpret_cast<LPARAM> (string.c_str()));
-		}
+                SendDlgItemMessage(windowHandle, id, CB_SETCURSEL, 0, 0);
+            }
 
-		SendDlgItemMessage(windowHandle, id, CB_SETCURSEL, 0, 0);
-	}
+            int getTexture(HWND windowHandle, int id)
+            {
+                int index = SendDlgItemMessage(windowHandle, id, CB_GETCURSEL, 0, 0);
+                if (id == IDC_BOTTOM_TEXTURE)
+                    return index - 1;
 
-	int getTexture(HWND windowHandle, int id)
-	{
-		int index = SendDlgItemMessage(windowHandle, id, CB_GETCURSEL, 0, 0);
-		if(id == IDC_BOTTOM_TEXTURE)
-			return index - 1;
-		
-		return index;
-	}
+                return index;
+            }
 
-	static BOOL CALLBACK DialogHandler(HWND windowHandle, UINT message,  WPARAM wParam, LPARAM lParam)
-	{
-		TextureLayerData *data = reinterpret_cast<TextureLayerData *> (GetWindowLong(windowHandle, GWL_USERDATA));
+            static BOOL CALLBACK DialogHandler(HWND windowHandle, UINT message,  WPARAM wParam, LPARAM lParam)
+            {
+                TextureLayerData *data = reinterpret_cast<TextureLayerData *>( GetWindowLong(windowHandle, GWL_USERDATA) );
 
-		if(message == WM_INITDIALOG)
-		{
-			SetWindowLong(windowHandle, GWL_USERDATA, lParam);
-			data = reinterpret_cast<TextureLayerData *> (lParam);
+                if (message == WM_INITDIALOG) {
+                    SetWindowLong(windowHandle, GWL_USERDATA, lParam);
+                    data = reinterpret_cast<TextureLayerData *>(lParam);
 
-			data->initComboBox(windowHandle, IDC_TERRAIN_TEXTURE1);
-			data->initComboBox(windowHandle, IDC_TERRAIN_TEXTURE2);
-			data->initComboBox(windowHandle, IDC_BOTTOM_TEXTURE);
-		}
-		else if(message == WM_COMMAND)
-		{
-			int command = LOWORD(wParam);
-			if(command == WM_DESTROY)
-				EndDialog(windowHandle, 0);
+                    data->initComboBox(windowHandle, IDC_TERRAIN_TEXTURE1);
+                    data->initComboBox(windowHandle, IDC_TERRAIN_TEXTURE2);
+                    data->initComboBox(windowHandle, IDC_BOTTOM_TEXTURE);
+                } else if (message == WM_COMMAND) {
+                    int command = LOWORD(wParam);
+                    if (command == WM_DESTROY)
+                        EndDialog(windowHandle, 0);
 
-			if(command == IDC_GENERATE)
-			{
-				TerrainTextureGenerator generator(data->storm, data->terrainTextures);
+                    if (command == IDC_GENERATE) {
+                        TerrainTextureGenerator generator(data->storm, data->terrainTextures);
 
-				generator.setTerrainTexture(0, data->getTexture(windowHandle, IDC_TERRAIN_TEXTURE1));
-				generator.setTerrainTexture(1, data->getTexture(windowHandle, IDC_TERRAIN_TEXTURE2));
-				generator.setWater(data->getTexture(windowHandle, IDC_BOTTOM_TEXTURE), 0);
-				
-				generator.generate();
-				EndDialog(windowHandle, 1);
-			}
-		}
+                        generator.setTerrainTexture( 0, data->getTexture(windowHandle, IDC_TERRAIN_TEXTURE1) );
+                        generator.setTerrainTexture( 1, data->getTexture(windowHandle, IDC_TERRAIN_TEXTURE2) );
+                        generator.setWater(data->getTexture(windowHandle, IDC_BOTTOM_TEXTURE), 0);
 
-		return 0;
-	}
+                        generator.generate();
+                        EndDialog(windowHandle, 1);
+                    }
+                }
 
-	bool show()
-	{
-		if(terrainTextures.getTextureCount() == 0)
-			return false;
+                return 0;
+            }
 
-		if(DialogBoxParam(GetModuleHandle(0), MAKEINTRESOURCE(IDD_TEXTURELAYERS), 0, DialogHandler, reinterpret_cast<LPARAM> (this)) == 1)
-			return true;
+            bool show()
+            {
+                if (terrainTextures.getTextureCount() == 0)
+                    return false;
 
-		return false;
-	}
-};
+                if (DialogBoxParam( GetModuleHandle(0), MAKEINTRESOURCE(IDD_TEXTURELAYERS), 0, DialogHandler,
+                                    reinterpret_cast<LPARAM>(this) ) == 1)
+                    return true;
 
-TextureLayer::TextureLayer(TerrainTextures &textures, Storm &storm)
-{
-	boost::scoped_ptr<TextureLayerData> tempData(new TextureLayerData(textures, storm));
-	data.swap(tempData);
-}
+                return false;
+            }
+        };
 
-TextureLayer::~TextureLayer()
-{
-}
+        TextureLayer::TextureLayer(TerrainTextures &textures, Storm &storm)
+        {
+            boost::scoped_ptr<TextureLayerData> tempData( new TextureLayerData(textures, storm) );
+            data.swap(tempData);
+        }
 
-bool TextureLayer::show()
-{
-	return data->show();
-}
+        TextureLayer::~TextureLayer()
+        {
+        }
 
-} // end of namespace editor
-} // end of namespace frozenbyte
+        bool TextureLayer::show()
+        {
+            return data->show();
+        }
+
+    } // end of namespace editor
+}     // end of namespace frozenbyte

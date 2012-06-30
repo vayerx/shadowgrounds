@@ -1,4 +1,3 @@
-
 #ifndef WEAPON_H
 #define WEAPON_H
 
@@ -7,356 +6,353 @@
 #include "AmmoPack.h"
 
 #define WEAPON_WALK_STOP_AT_PHASE_PREFIRE 0
-#define WEAPON_WALK_STOP_AT_PHASE_FIRE 1
+#define WEAPON_WALK_STOP_AT_PHASE_FIRE    1
 // NOTE: this last phase not yet supported
 //#define WEAPON_WALK_STOP_AT_PHASE_RELOAD 2
 
 namespace game
 {
+    class Weapon : public Tool {
+    public:
+        Weapon();
+        Weapon(int id);
+        virtual ~Weapon();
 
-  class Weapon : public Tool
-  {
-  public:
-    Weapon();
-    Weapon(int id);
-    virtual ~Weapon();
+        virtual bool setData(const char *key, char *value);
 
-    virtual bool setData(const char *key, char *value);
+        virtual Part *getNewPartInstance();
 
-    virtual Part *getNewPartInstance();
+        Bullet *getBulletType() const;
 
-    Bullet *getBulletType() const;
-  
-    AmmoPack *getAmmoType() const;
+        AmmoPack *getAmmoType() const;
 
-    const char *getFireSound() const;
+        const char *getFireSound() const;
 
-    const char *getRepeatSound() const;
+        const char *getRepeatSound() const;
 
-    const char *getPrepareFireSound() const;
- 
-    int getHeatGeneration() const;
-  
-    int getPowerUsage() const;
-  
-    int getAmmoUsage() const;
-  
-    int getMinAmmoForUsage() const;
+        const char *getPrepareFireSound() const;
 
-    int getWalkStopTime() const;
-  
-    int getWalkStopAtPhase() const;
-  
-    int getFireReloadTime() const;
+        int getHeatGeneration() const;
 
-    int getFireWaitTime() const;
-		bool getFireWaitReset() const;
+        int getPowerUsage() const;
 
-    int getFireReloadVary() const;
+        int getAmmoUsage() const;
 
-    int getFireWaitVary() const;
+        int getMinAmmoForUsage() const;
 
-		// NOTE: these should be named "charge" not "recharge"
-    int getRechargeMinTime() const { return this->rechargeMinTime; }
-    int getRechargeMaxTime() const { return this->rechargeMaxTime; }
-    int getRechargePeakTime() const { return this->rechargePeakTime; }
-    int getRechargeBulletSteps() const { return this->rechargeBulletSteps; }
-    const char *getRechargeSound() const { return this->rechargeSound; }
-    int getRechargeAmmoRate() const { return this->rechargeAmmoRate; }
-    int getRechargeAmmoPeakHoldRate() const { return this->rechargeAmmoPeakHoldRate; }
+        int getWalkStopTime() const;
 
-    float getRange() const;
+        int getWalkStopAtPhase() const;
 
-    int getAccuracy() const;
+        int getFireReloadTime() const;
 
-    int getLowAccuracy() const;
+        int getFireWaitTime() const;
+        bool getFireWaitReset() const;
 
-    int getInitialAmmoAmount() const;
+        int getFireReloadVary() const;
 
-    int getRaytraceAmount() const;
+        int getFireWaitVary() const;
 
-    int getRepeatAmount() const;
+        // NOTE: these should be named "charge" not "recharge"
+        int getRechargeMinTime() const { return this->rechargeMinTime; }
+        int getRechargeMaxTime() const { return this->rechargeMaxTime; }
+        int getRechargePeakTime() const { return this->rechargePeakTime; }
+        int getRechargeBulletSteps() const { return this->rechargeBulletSteps; }
+        const char *getRechargeSound() const { return this->rechargeSound; }
+        int getRechargeAmmoRate() const { return this->rechargeAmmoRate; }
+        int getRechargeAmmoPeakHoldRate() const { return this->rechargeAmmoPeakHoldRate; }
 
-    int getRepeatDelay() const;
+        float getRange() const;
 
-    int getRepeatSpread() const;
+        int getAccuracy() const;
 
-    bool isHeavyWeapon() const;
+        int getLowAccuracy() const;
 
-    bool isDropWeapon() const;
+        int getInitialAmmoAmount() const;
 
-    bool isManualWeapon() const;
+        int getRaytraceAmount() const;
 
-    bool isAntiVehicleWeapon() const;
+        int getRepeatAmount() const;
 
-    bool doesNeedRecon() const;
+        int getRepeatDelay() const;
 
-    int getKickback() const;
+        int getRepeatSpread() const;
 
-		int getClipSize() const;
+        bool isHeavyWeapon() const;
 
-		int getClipReloadTime() const;
+        bool isDropWeapon() const;
 
-		int getClipFirstReloadTime() const;
+        bool isManualWeapon() const;
 
-		const char *getClipReloadSound() const;
+        bool isAntiVehicleWeapon() const;
 
-		const char *getClipFirstReloadSound() const;
+        bool doesNeedRecon() const;
 
-		const char *getClipEmptySound() const;
+        int getKickback() const;
 
-		const char *getMuzzleflashEffect();
+        int getClipSize() const;
 
-		float getMinSpread() const;
+        int getClipReloadTime() const;
 
-		float getMaxSpread() const;
+        int getClipFirstReloadTime() const;
 
-		int getWeaponAnimationType() const;
+        const char *getClipReloadSound() const;
 
-    bool doesFireFromWeaponBarrel() const;
-    bool doesRaytraceFromWeaponBarrel() const;
+        const char *getClipFirstReloadSound() const;
 
-    bool isSingleShot() const;
+        const char *getClipEmptySound() const;
 
-    bool doesFiringRequireWalk() const;
+        const char *getMuzzleflashEffect();
 
-    bool doesDelayAllWeapons() const;
+        float getMinSpread() const;
 
-    bool isThrowable() const;
+        float getMaxSpread() const;
 
-    Weapon *getAttachedWeaponType() const;
-		void setAttachedWeaponType(Weapon *w) { attachedWeaponType = w; }
+        int getWeaponAnimationType() const;
 
-		bool isSharedClipAttachment() const;
+        bool doesFireFromWeaponBarrel() const;
+        bool doesRaytraceFromWeaponBarrel() const;
 
-		bool isSingleReloading() const;
+        bool isSingleShot() const;
 
-		int getBurstFireAmount() const;
+        bool doesFiringRequireWalk() const;
 
-		float getProjectileRange() const;
+        bool doesDelayAllWeapons() const;
 
-		bool isWeaponRayHeightFromBarrel() const;
+        bool isThrowable() const;
 
-		float getFlattenShootDirection() const;
+        Weapon *getAttachedWeaponType() const;
+        void setAttachedWeaponType(Weapon *w) { attachedWeaponType = w; }
 
-		bool hasIndependentFireDelay() const;
+        bool isSharedClipAttachment() const;
 
-		bool doesSweep() const;
-		int getSweepAngle() const;
+        bool isSingleReloading() const;
 
-		int getContinuousFireTime() const;
-		Bullet *getContinuousFireBulletType() const;
+        int getBurstFireAmount() const;
 
-		bool hasNoAutoAim() const;
+        float getProjectileRange() const;
 
-		int getBarrelNumber() const;
-		int getBarrelRotateFromNumber() const;
-		int getBarrelRotateToNumber() const;
+        bool isWeaponRayHeightFromBarrel() const;
 
-    virtual void prepareNewForInherit(PartType *partType);
-		virtual void saveOriginals();
+        float getFlattenShootDirection() const;
 
-		bool doesFireByClick() const;
+        bool hasIndependentFireDelay() const;
 
-		float getShootDirectionLimit() const;
+        bool doesSweep() const;
+        int getSweepAngle() const;
 
-		const char *getRechargeEffect() const;
-		const char *getEjectEffect() const;
-		const char *getClipreloadEffect() const;
+        int getContinuousFireTime() const;
+        Bullet *getContinuousFireBulletType() const;
 
-		int getEjectRate() const;
+        bool hasNoAutoAim() const;
 
-		int getBarrelEjectAngle(int i) const;
+        int getBarrelNumber() const;
+        int getBarrelRotateFromNumber() const;
+        int getBarrelRotateToNumber() const;
 
-		bool usesCustomTimeFactor(void) const { return useCustomTimeFactor; }
+        virtual void prepareNewForInherit(PartType *partType);
+        virtual void saveOriginals();
 
-		bool isRemoteTrigger(void) const { return remoteTrigger; }
+        bool doesFireByClick() const;
 
-		const char *getRemoteTriggerSound() const { return remoteTriggerSound; }
+        float getShootDirectionLimit() const;
 
-		bool hasTargetLock(void) const { return targetLock; }
-		int getTargetLockTime(void) const { return targetLockTime; }
-		int getTargetLockReleaseTime(void) const { return targetLockReleaseTime; }
-		int getTargetLockCancelTime(void) const { return targetLockCancelTime; }
-		const char *getTargetLockSound(void) const { return targetLockSound; }
+        const char *getRechargeEffect() const;
+        const char *getEjectEffect() const;
+        const char *getClipreloadEffect() const;
 
+        int getEjectRate() const;
 
-		const char *getPointerHelper() const { return pointerHelper; }
-		const char *getPointerVisualEffect() const { return pointerVisualEffect; }
-		const char *getPointerHitVisualEffect() const { return pointerHitVisualEffect; }
+        int getBarrelEjectAngle(int i) const;
 
-		int getCursor() const { return cursor; }
-		int getReloadCursor() const { return reloadCursor; }
+        bool usesCustomTimeFactor(void) const { return useCustomTimeFactor; }
 
-		bool allowsAttachedWeaponReload() const { return attachedWeaponReload; }
+        bool isRemoteTrigger(void) const { return remoteTrigger; }
 
-		// hack to delay secondary weapon but not attached weapon
-		bool usesFireDelayHack() const { return fireDelayHack; }
+        const char *getRemoteTriggerSound() const { return remoteTriggerSound; }
 
-		bool usesLaunchSpeed() const { return launchSpeed; }
-		bool usesLaunchSpeedAnimation() const { return launchSpeed && launchSpeedAnimation; }
-		float getLaunchSpeedMax() const { return launchSpeedMax; }
-		float getLaunchSpeedAdd() const { return launchSpeedAdd; }
+        bool hasTargetLock(void) const { return targetLock; }
+        int getTargetLockTime(void) const { return targetLockTime; }
+        int getTargetLockReleaseTime(void) const { return targetLockReleaseTime; }
+        int getTargetLockCancelTime(void) const { return targetLockCancelTime; }
+        const char *getTargetLockSound(void) const { return targetLockSound; }
 
-		bool usesCustomCamera() const { return customCamera; }
-		float getCustomCameraAngle() const { return customCameraAngle; }
-		float getCustomCameraZoom() const { return customCameraZoom; }
+        const char *getPointerHelper() const { return pointerHelper; }
+        const char *getPointerVisualEffect() const { return pointerVisualEffect; }
+        const char *getPointerHitVisualEffect() const { return pointerHitVisualEffect; }
 
-		bool isSelectableWithoutAmmo() const { return selectableWithoutAmmo; }
+        int getCursor() const { return cursor; }
+        int getReloadCursor() const { return reloadCursor; }
 
-		int getAimEndDelay() const { return aimEndDelay; }
+        bool allowsAttachedWeaponReload() const { return attachedWeaponReload; }
 
-		int getCriticalHitDamageMax() const { return criticalHitDamageMax; }
-		float getCriticalHitDamageMultiplier() const { return criticalHitDamageMultiplier; }
-		float getCriticalHitProbabilityMultiplier() const { return criticalHitProbabilityMultiplier; }
+        // hack to delay secondary weapon but not attached weapon
+        bool usesFireDelayHack() const { return fireDelayHack; }
 
-		const char *getReloadFinishedSound() const { return reloadFinishedSound; }
+        bool usesLaunchSpeed() const { return launchSpeed; }
+        bool usesLaunchSpeedAnimation() const { return launchSpeed && launchSpeedAnimation; }
+        float getLaunchSpeedMax() const { return launchSpeedMax; }
+        float getLaunchSpeedAdd() const { return launchSpeedAdd; }
 
-		const char *getCustomWeaponBarrelHelper() const { return customWeaponBarrelHelper; }
+        bool usesCustomCamera() const { return customCamera; }
+        float getCustomCameraAngle() const { return customCameraAngle; }
+        float getCustomCameraZoom() const { return customCameraZoom; }
 
-	public:
-		int *barrelEjectAngles;
-		int numBarrelEjectAngles;
+        bool isSelectableWithoutAmmo() const { return selectableWithoutAmmo; }
 
-  protected:
-    Bullet *bulletType;
-    AmmoPack *ammoType;
-    int ammoUsage;
-		int minAmmoForUsage;
-    int powerUsage;
-    int heatGeneration;
-    int fireWaitTime;
-    int fireReloadTime;
-    int fireWaitVary;
-    int fireReloadVary;
-    int walkStopTime;
-    int walkStopAtPhase;
-    float range;
-    int accuracy;
-    int lowAccuracy;
-    int initialAmmo;
-    char *fireSound;
-    char *prepareFireSound;
-    char *repeatSound;
-    int raytraceAmount;
-    int repeatAmount;
-    int repeatDelay;
-    int repeatSpread;
-    bool heavyWeapon;
-    bool dropWeapon;
-    bool manualWeapon;
-    bool antiVehicleWeapon;
-		bool needsRecon;
-		int kickback;
-		int clipSize;
-		int clipReloadTime;
-		char *clipReloadSound;
-		char *clipFirstReloadSound;
-		char *clipEmptySound;
-		char *muzzleflashEffect;
-		char *muzzleflashEffect2;
-		char *muzzleflashEffect3;
-		float minSpread;
-		float maxSpread;
-		int weaponAnimationType;
-		bool fireFromWeaponBarrel;
-		bool raytraceFromWeaponBarrel;
-		bool singleShot;
-		bool firingRequireWalk;
-		bool delayAllWeapons;
-		bool throwable;
-    Weapon *attachedWeaponType;
-		bool attachedWeaponReload;
-		bool sharedClipAttachment;
-		float projectileRange;
+        int getAimEndDelay() const { return aimEndDelay; }
 
-		bool singleReloading;
-		int burstFireAmount;
+        int getCriticalHitDamageMax() const { return criticalHitDamageMax; }
+        float getCriticalHitDamageMultiplier() const { return criticalHitDamageMultiplier; }
+        float getCriticalHitProbabilityMultiplier() const { return criticalHitProbabilityMultiplier; }
 
-		bool weaponRayHeightFromBarrel;
-		float flattenShootDirection;
+        const char *getReloadFinishedSound() const { return reloadFinishedSound; }
 
-		int lastMuzzleflashNumber;
+        const char *getCustomWeaponBarrelHelper() const { return customWeaponBarrelHelper; }
 
-		bool independentFireDelay;
+    public:
+        int *barrelEjectAngles;
+        int numBarrelEjectAngles;
 
-		int clipFirstReloadTime;
+    protected:
+        Bullet *bulletType;
+        AmmoPack *ammoType;
+        int ammoUsage;
+        int minAmmoForUsage;
+        int powerUsage;
+        int heatGeneration;
+        int fireWaitTime;
+        int fireReloadTime;
+        int fireWaitVary;
+        int fireReloadVary;
+        int walkStopTime;
+        int walkStopAtPhase;
+        float range;
+        int accuracy;
+        int lowAccuracy;
+        int initialAmmo;
+        char *fireSound;
+        char *prepareFireSound;
+        char *repeatSound;
+        int raytraceAmount;
+        int repeatAmount;
+        int repeatDelay;
+        int repeatSpread;
+        bool heavyWeapon;
+        bool dropWeapon;
+        bool manualWeapon;
+        bool antiVehicleWeapon;
+        bool needsRecon;
+        int kickback;
+        int clipSize;
+        int clipReloadTime;
+        char *clipReloadSound;
+        char *clipFirstReloadSound;
+        char *clipEmptySound;
+        char *muzzleflashEffect;
+        char *muzzleflashEffect2;
+        char *muzzleflashEffect3;
+        float minSpread;
+        float maxSpread;
+        int weaponAnimationType;
+        bool fireFromWeaponBarrel;
+        bool raytraceFromWeaponBarrel;
+        bool singleShot;
+        bool firingRequireWalk;
+        bool delayAllWeapons;
+        bool throwable;
+        Weapon *attachedWeaponType;
+        bool attachedWeaponReload;
+        bool sharedClipAttachment;
+        float projectileRange;
 
-		bool sweep;
-		bool noAutoAim;
+        bool singleReloading;
+        int burstFireAmount;
 
-		int barrelNumber;
-		int barrelRotateFromNumber;
-    int barrelRotateToNumber;
+        bool weaponRayHeightFromBarrel;
+        float flattenShootDirection;
 
-    Bullet *continuousFireBulletType;
-		int continuousFireTime;
+        int lastMuzzleflashNumber;
 
-		int sweepAngle; 
+        bool independentFireDelay;
 
-		int rechargeMinTime;
-		int rechargePeakTime;
-		int rechargeMaxTime;
-		int rechargeBulletSteps;
-		char *rechargeSound;
-		int rechargeAmmoRate;
-		int rechargeAmmoPeakHoldRate;
+        int clipFirstReloadTime;
 
-		bool fireByClick;
+        bool sweep;
+        bool noAutoAim;
 
-		float shootDirectionLimit;
+        int barrelNumber;
+        int barrelRotateFromNumber;
+        int barrelRotateToNumber;
 
-		char *rechargeEffect;
-		char *ejectEffect;
-		char *clipreloadEffect;
+        Bullet *continuousFireBulletType;
+        int continuousFireTime;
 
-		int ejectRate;
-		// resets the wait time when the target moves out of field of fire
-		bool fireWaitReset;
+        int sweepAngle;
 
-		bool useCustomTimeFactor;
+        int rechargeMinTime;
+        int rechargePeakTime;
+        int rechargeMaxTime;
+        int rechargeBulletSteps;
+        char *rechargeSound;
+        int rechargeAmmoRate;
+        int rechargeAmmoPeakHoldRate;
 
-		bool targetLock;
-		int targetLockTime;
-		int targetLockReleaseTime;
-		int targetLockCancelTime;
-		char *targetLockSound;
+        bool fireByClick;
 
-		bool remoteTrigger;
-		char *remoteTriggerSound;
+        float shootDirectionLimit;
 
-		char *pointerHelper;
-		char *pointerVisualEffect;
-		char *pointerHitVisualEffect;
+        char *rechargeEffect;
+        char *ejectEffect;
+        char *clipreloadEffect;
 
-		int cursor;
-		int reloadCursor;
+        int ejectRate;
+        // resets the wait time when the target moves out of field of fire
+        bool fireWaitReset;
 
-		// hack to delay secondary weapon but not attached weapon
-		bool fireDelayHack;
+        bool useCustomTimeFactor;
 
-		bool launchSpeed;
-		bool launchSpeedAnimation;
-		float launchSpeedMax;
-		float launchSpeedAdd;
+        bool targetLock;
+        int targetLockTime;
+        int targetLockReleaseTime;
+        int targetLockCancelTime;
+        char *targetLockSound;
 
-		bool customCamera;
-		float customCameraAngle;
-		float customCameraZoom;
+        bool remoteTrigger;
+        char *remoteTriggerSound;
 
-		bool selectableWithoutAmmo;
+        char *pointerHelper;
+        char *pointerVisualEffect;
+        char *pointerHitVisualEffect;
 
-		int aimEndDelay;
+        int cursor;
+        int reloadCursor;
 
-		int criticalHitDamageMax;
-		float criticalHitDamageMultiplier;
-		float criticalHitProbabilityMultiplier;
+        // hack to delay secondary weapon but not attached weapon
+        bool fireDelayHack;
 
-		char *reloadFinishedSound;
-		char *customWeaponBarrelHelper;
-  };
+        bool launchSpeed;
+        bool launchSpeedAnimation;
+        float launchSpeedMax;
+        float launchSpeedAdd;
 
-  //extern Weapon weapon;
+        bool customCamera;
+        float customCameraAngle;
+        float customCameraZoom;
+
+        bool selectableWithoutAmmo;
+
+        int aimEndDelay;
+
+        int criticalHitDamageMax;
+        float criticalHitDamageMultiplier;
+        float criticalHitProbabilityMultiplier;
+
+        char *reloadFinishedSound;
+        char *customWeaponBarrelHelper;
+    };
+
+    //extern Weapon weapon;
 
 }
 

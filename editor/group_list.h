@@ -9,44 +9,40 @@
 #include <vector>
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        class GroupList {
+            struct Data;
+            boost::scoped_ptr<Data> data;
 
-class GroupList
-{
-	struct Data;
-	boost::scoped_ptr<Data> data;
+        public:
+            GroupList();
+            ~GroupList();
 
-public:
-	GroupList();
-	~GroupList();
+            struct Instance {
+                std::string model;
+                COL         color;
+                VC3         rotation;
+                VC3         position;
+            };
 
-	struct Instance
-	{
-		std::string model;
-		COL color;
-		VC3 rotation;
-		VC3 position;
-	};
+            struct ObjectGroup {
+                std::string name;
+                std::vector<Instance> instances;
+                VC3         original;
+            };
 
-	struct ObjectGroup
-	{
-		std::string name;
-		std::vector<Instance> instances;
-		VC3 original;
-	};
+            int getGroupAmount() const;
+            int getSubgroupAmount(int group) const;
+            int getObjectGroupAmount(int group, int subgroup) const;
+            const std::string&getGroupName(int group) const;
+            const std::string&getSubgroupName(int group, int subgroup) const;
+            const ObjectGroup&getObjectGroup(int group, int subgroup, int object) const;
 
-	int getGroupAmount() const;
-	int getSubgroupAmount(int group) const;
-	int getObjectGroupAmount(int group, int subgroup) const;
-	const std::string &getGroupName(int group) const;
-	const std::string &getSubgroupName(int group, int subgroup) const;
-	const ObjectGroup &getObjectGroup(int group, int subgroup, int object) const;
+            void reload();
+            void addObjectGroup(const std::string &group, const std::string &subgroup, const ObjectGroup &objectGroup);
+        };
 
-	void reload();
-	void addObjectGroup(const std::string &group, const std::string &subgroup, const ObjectGroup &objectGroup);
-};
-
-} // editor
-} // frozenbyte
+    } // editor
+}     // frozenbyte
 
 #endif

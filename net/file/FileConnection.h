@@ -9,49 +9,47 @@
 
 namespace net
 {
-  namespace file
-  {
-		class FileConnectionImpl;
-
-    /**
-     * File net connection.
-     */
-    class FileConnection : public INetConnection
+    namespace file
     {
-    public:
-      FileConnection(const char *filename); 
+        class FileConnectionImpl;
 
-      virtual ~FileConnection();
- 
-      virtual void flush() 
-        throw (NetDriverException*);
+        /**
+         * File net connection.
+         */
+        class FileConnection : public INetConnection {
+        public:
+            FileConnection(const char *filename);
 
-      virtual int send(const void *buf, int maxlen) 
-        throw (NetDriverException*);
+            virtual ~FileConnection();
 
-      virtual int receive(void *buf, int maxlen) 
-        throw (NetDriverException*);
+            virtual void flush()
+            throw (NetDriverException *);
 
-      virtual void close() 
-        throw (NetDriverException*);
+            virtual int send(const void *buf, int maxlen)
+            throw (NetDriverException *);
 
-			// special id'ed package management...
-			// (packages can be changed later on, and read multiple times, etc.)
-			void enableRecordIdManagement(bool recordIdEnabled);
+            virtual int receive(void *buf, int maxlen)
+            throw (NetDriverException *);
 
-			// seek stream position with given id or set to stream end if not found.
-      void seekRecordId(int recordId, int subRecordId)
-        throw (NetDriverException*);
+            virtual void close()
+            throw (NetDriverException *);
 
-			// following send will use this record id.
-		  void setRecordId(int recordId, int subRecordId)
-	      throw (NetDriverException*);
+            // special id'ed package management...
+            // (packages can be changed later on, and read multiple times, etc.)
+            void enableRecordIdManagement(bool recordIdEnabled);
 
-    private:
-			FileConnectionImpl *impl;
-    };
-  }
+            // seek stream position with given id or set to stream end if not found.
+            void seekRecordId(int recordId, int subRecordId)
+            throw (NetDriverException *);
+
+            // following send will use this record id.
+            void setRecordId(int recordId, int subRecordId)
+            throw (NetDriverException *);
+
+        private:
+            FileConnectionImpl *impl;
+        };
+    }
 }
 
 #endif
-

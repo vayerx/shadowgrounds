@@ -1,17 +1,15 @@
-
-
 #ifndef SCRIPTING_MACROS_START_H
-#error scripting_macros_end header included without including start.
+#  error scripting_macros_end header included without including start.
 #endif
 
 #define GS_MAX_COMMANDS 99999999
 
 #ifdef GS_EXPAND_GAMESCRIPTING_LIST
 
-	{ GS_MAX_COMMANDS, "***", GS_DATATYPE_ARR_END } };	
+{ GS_MAX_COMMANDS, "***", GS_DATATYPE_ARR_END }
+};
 
 #endif
-
 
 #undef SCRIPTING_MACROS_START_H
 
@@ -28,5 +26,3 @@
 #undef COLOR_RGB
 #undef PATHNAME
 #undef FILENAME
-
-

@@ -17,204 +17,212 @@
 
 #ifdef WIN32
 
-#include <windows.h>
+#  include <windows.h>
 
 #endif
 
 #ifdef _MSC_VER
-#if defined(DEBUG) || defined(_DEBUG)
-	#pragma comment(lib, "storm_strmbasd.lib")
-#else
-	#pragma comment(lib, "storm_strmbase.lib")
-#endif
+#  if defined(DEBUG) || defined(_DEBUG)
+#    pragma comment(lib, "storm_strmbasd.lib")
+#  else
+#    pragma comment(lib, "storm_strmbase.lib")
+#  endif
 #endif
 
 namespace {
-
-	static const int INTERLACE = 2;
+    static const int INTERLACE = 2;
 
 } // unnamed
 
+struct Storm3D_VideoStreamer::Data {
+    Storm3D &storm;
+    IStorm3D_StreamBuilder *streamBuilder;
 
-struct Storm3D_VideoStreamer::Data
-{
-	Storm3D &storm;
-	IStorm3D_StreamBuilder *streamBuilder;
+    boost::shared_ptr<Storm3D_Texture>  ramTexture;
+    boost::shared_ptr<Storm3D_Texture>  texture1;
+    boost::shared_ptr<Storm3D_Texture>  texture2;
 
-	boost::shared_ptr<Storm3D_Texture> ramTexture;
-	boost::shared_ptr<Storm3D_Texture> texture1;
-	boost::shared_ptr<Storm3D_Texture> texture2;
+    boost::shared_ptr<Storm3D_Texture>  activeTexture;
+    boost::shared_ptr<Storm3D_Material> material;
 
-	boost::shared_ptr<Storm3D_Texture> activeTexture;
-	boost::shared_ptr<Storm3D_Material> material;
+    Uint32      *buffer;
 
-	Uint32 *buffer;
+    VC2          start;
+    VC2          end;
+    float        alpha;
+    bool         finished;
+    bool         looping;
 
-	VC2 start;
-	VC2 end;
-	float alpha;
-	bool finished;
-	bool looping;
+    bool         useDynamicTextures;
 
-	bool useDynamicTextures;
+    bool         downscaled;
 
-	bool downscaled;
+    int          lastFrame;     // last frame we showed
+    uint32_t     startTime;     // time video started
 
-	int lastFrame;  // last frame we showed
-	uint32_t startTime;  // time video started
+    unsigned int width, height; // actual video w&h
 
-	unsigned int width, height; // actual video w&h
+    bool         higherColorRange;
 
-	bool higherColorRange;
+    Data(Storm3D &storm_, bool downscale_, bool higherColorRange_)
+        :   storm(storm_),
+        streamBuilder(0),
+        buffer(0),
+        alpha(1.f),
+        finished(false),
+        looping(false),
+        useDynamicTextures(true),
+        downscaled(downscale_),
+        lastFrame(-1),
+        startTime(0),
+        width(0),
+        height(0),
+        higherColorRange(true)
+    {
+        // FIXME: do we need downscaled and higherColorRange ?
+    }
 
-	Data(Storm3D &storm_, bool downscale_, bool higherColorRange_)
-	:	storm(storm_),
-		streamBuilder(0),
-		buffer(0),
-		alpha(1.f),
-		finished(false),
-		looping(false),
-		useDynamicTextures(true),
-		downscaled(downscale_),
-		lastFrame(-1),
-		startTime(0),
-		width(0),
-		height(0),
-		higherColorRange(true)
-	{
-		// FIXME: do we need downscaled and higherColorRange ?
-	}
+    ~Data()
+    {
+        delete[] buffer;
+    }
 
-	~Data()
-	{
-    delete[] buffer;
-	}
+    boost::shared_ptr<TReader> test;
 
-	boost::shared_ptr<TReader> test;
+    void initialize(const std::string &fileName)
+    {
+        // Create filename
+        std::string file = fileName;
+        std::string::size_type pos = file.find("wmv");
+        if (pos != std::string::npos)
+            file.replace(pos, 3, "ogg");
+        // change to lowercase
+        // change \ to /
 
-	void initialize(const std::string &fileName)
-	{
-		// Create filename
-		std::string file = fileName;
-		std::string::size_type pos = file.find("wmv");
-		if(pos != std::string::npos)
-			file.replace(pos, 3, "ogg");
-		// change to lowercase
-		// change \ to /
+        size_t l = file.length();
+        for (size_t i = 0; i < l; i++) {
+            if ( isupper(file[i]) )
+                file[i] = tolower(file[i]);
+            else if (file[i] == '\\')
+                file[i] = '/';
+        }
 
-		size_t l = file.length();
-		for (size_t i = 0; i < l; i++) {
-			if (isupper(file[i])) {
-				file[i] = tolower(file[i]);
-			} else if (file[i] == '\\') {
-				file[i] = '/';
-			}
-		}
+        test = boost::shared_ptr<TReader>( new TReader() );
 
-		test = boost::shared_ptr<TReader>(new TReader());
+        if ( test->read_info(file.c_str(), streamBuilder) )
+            return;
 
-		if(test->read_info(file.c_str(), streamBuilder))
-			return;
+        if ( test->init() ) {
+            igiosWarning("init failed\n");
+            return;
+        }
 
-		if (test->init()) {
-			igiosWarning("init failed\n");
-			return;
-		}
+        width = test->frame_width;
+        height = test->frame_height;
 
-		width = test->frame_width;
-		height = test->frame_height;
+        startTime = Timer::getCurrentTime();
+    }
 
-		startTime = Timer::getCurrentTime();
-	}
+    bool initStormResources()
+    {
+        if (width == 0 || height == 0)
+            return false;
 
-	bool initStormResources()
-	{
-		if(width == 0 || height == 0)
-			return false;
+        if (useDynamicTextures) {
+            /*
+               if(downscaled)
+               {
+                width /= 2;
+                height /= 2;
+               }
+             */
 
-		if(useDynamicTextures)
-		{
-			/*
-			if(downscaled)
-			{
-				width /= 2;
-				height /= 2;
-			}
-			*/
+            IStorm3D_Texture::TEXTYPE textype = IStorm3D_Texture::TEXTYPE_DYNAMIC_LOCKABLE;
 
-			IStorm3D_Texture::TEXTYPE textype = IStorm3D_Texture::TEXTYPE_DYNAMIC_LOCKABLE;
+            texture1.reset( static_cast<Storm3D_Texture *>( storm.CreateNewTexture(width,
+                                                                                   height,
+                                                                                   textype) ),
+                            std::mem_fun(&Storm3D_Texture::Release) );
+            texture2.reset( static_cast<Storm3D_Texture *>( storm.CreateNewTexture(width,
+                                                                                   height,
+                                                                                   textype) ),
+                            std::mem_fun(&Storm3D_Texture::Release) );
 
-			texture1.reset(static_cast<Storm3D_Texture *> (storm.CreateNewTexture(width, height, textype)), std::mem_fun(&Storm3D_Texture::Release));
-			texture2.reset(static_cast<Storm3D_Texture *> (storm.CreateNewTexture(width, height, textype)), std::mem_fun(&Storm3D_Texture::Release));
+            activeTexture = texture1;
+            if (!texture1 || !texture2)
+                return false;
+        } else {
+            ramTexture.reset( new Storm3D_Texture(&storm, width, height,
+                                                  IStorm3D_Texture::TEXTYPE_RAM),
+                              std::mem_fun(&Storm3D_Texture::Release) );
+            texture1.reset( static_cast<Storm3D_Texture *>( storm.CreateNewTexture(width,
+                                                                                   height,
+                                                                                   IStorm3D_Texture::TEXTYPE_DYNAMIC) ),
+                            std::mem_fun(&Storm3D_Texture::Release) );
+            texture2.reset( static_cast<Storm3D_Texture *>( storm.CreateNewTexture(width,
+                                                                                   height,
+                                                                                   IStorm3D_Texture::TEXTYPE_DYNAMIC) ),
+                            std::mem_fun(&Storm3D_Texture::Release) );
 
-			activeTexture = texture1;
-			if(!texture1 || !texture2)
-				return false;
-		}
-		else
-		{
-			ramTexture.reset(new Storm3D_Texture(&storm, width, height, IStorm3D_Texture::TEXTYPE_RAM), std::mem_fun(&Storm3D_Texture::Release));
-			texture1.reset(static_cast<Storm3D_Texture *> (storm.CreateNewTexture(width, height, IStorm3D_Texture::TEXTYPE_DYNAMIC)), std::mem_fun(&Storm3D_Texture::Release));
-			texture2.reset(static_cast<Storm3D_Texture *> (storm.CreateNewTexture(width, height, IStorm3D_Texture::TEXTYPE_DYNAMIC)), std::mem_fun(&Storm3D_Texture::Release));
+            activeTexture = texture1;
+            if (!texture1 || !texture2 || !ramTexture)
+                return false;
+        }
 
-			activeTexture = texture1;
-			if(!texture1 || !texture2 || !ramTexture)
-				return false;
-		}
+        material.reset( new Storm3D_Material(&storm, "video material") );
+        if (!material)
+            return false;
 
-		material.reset(new Storm3D_Material(&storm, "video material"));
-		if(!material)
-			return false;
+        Storm3D_SurfaceInfo info = storm.GetScreenSize();
+        int windowSizeX = info.width;
+        int windowSizeY = info.height;
 
-		Storm3D_SurfaceInfo info = storm.GetScreenSize();
-		int windowSizeX = info.width;
-		int windowSizeY = info.height;
+        if (useDynamicTextures)
+            material->SetBaseTexture( activeTexture.get() );
+        else
+            material->SetBaseTexture( activeTexture.get() );
 
-		if(useDynamicTextures)
-		{
-			material->SetBaseTexture(activeTexture.get());
-		}
-		else
-		{
-			material->SetBaseTexture(activeTexture.get());
-		}
+        int x1 = 0;
+        int y1 = 0;
+        int x2 = windowSizeX;
+        int y2 = windowSizeY;
 
-		int x1 = 0;
-		int y1 = 0;
-		int x2 = windowSizeX;
-		int y2 = windowSizeY;
+        float textureRatio = float(width) / float(height);
+        y2 = int(windowSizeX / textureRatio);
+        y1 = (windowSizeY - y2) / 2;
+        y2 += y1;
 
-		float textureRatio = float(width) / float(height);
-		y2 = int(windowSizeX / textureRatio);
-		y1 = (windowSizeY - y2) / 2;
-		y2 += y1;
+        start = VC2( float(x1), float(y1) );
+        end = VC2( float(x2 - x1), float(y2 - y1) );
 
-		start = VC2(float(x1), float(y1));
-		end = VC2(float(x2-x1), float(y2-y1));
+        return true;
+    }
 
-		return true;
-	}
+    bool hasVideo() const
+    {
+        if (!texture1 || !texture2)
+            return false;
 
-	bool hasVideo() const
-	{
-		if(!texture1 || !texture2)
-			return false;
-
-		return true;
-	}
+        return true;
+    }
 };
 
-Storm3D_VideoStreamer::Storm3D_VideoStreamer(Storm3D &storm, const char *fileName, IStorm3D_StreamBuilder *streamBuilder, bool loop, bool downscale, bool higherColorRange)
+Storm3D_VideoStreamer::Storm3D_VideoStreamer(Storm3D                &storm,
+                                             const char             *fileName,
+                                             IStorm3D_StreamBuilder *streamBuilder,
+                                             bool                    loop,
+                                             bool                    downscale,
+                                             bool                    higherColorRange)
 {
-	boost::scoped_ptr<Data> tempData(new Data(storm, downscale, higherColorRange));
-	tempData->streamBuilder = streamBuilder;
-	tempData->initialize(fileName);
-	data.swap(tempData);
+    boost::scoped_ptr<Data> tempData( new Data(storm, downscale, higherColorRange) );
+    tempData->streamBuilder = streamBuilder;
+    tempData->initialize(fileName);
+    data.swap(tempData);
 
-	if(!data->initStormResources())
-		return;
+    if ( !data->initStormResources() )
+        return;
 
-	data->looping = loop;
+    data->looping = loop;
 }
 
 Storm3D_VideoStreamer::~Storm3D_VideoStreamer()
@@ -223,128 +231,120 @@ Storm3D_VideoStreamer::~Storm3D_VideoStreamer()
 
 bool Storm3D_VideoStreamer::hasVideo() const
 {
-	if(!data)
-		return false;
+    if (!data)
+        return false;
 
-	return data->hasVideo();
+    return data->hasVideo();
 }
 
 bool Storm3D_VideoStreamer::hasEnded() const
 {
-	if(!data || data->finished)
-		return true;
+    if (!data || data->finished)
+        return true;
 
-	return false;
+    return false;
 }
 
 int Storm3D_VideoStreamer::getTime() const
 {
-	if(!data)
-		return 0;
+    if (!data)
+        return 0;
 
-	double frame_duration = ((double)data->test->fps_numerator / data->test->fps_denominator) * 1000;
+    double frame_duration = ( (double)data->test->fps_numerator / data->test->fps_denominator ) * 1000;
 
-	return data->lastFrame * frame_duration;
+    return data->lastFrame * frame_duration;
 }
 
 bool Storm3D_VideoStreamer::isPlaying() const
 {
-	return !hasEnded();
+    return !hasEnded();
 }
-
 
 void Storm3D_VideoStreamer::stop()
 {
-	assert(data);
+    assert(data);
 
-	data->test->finish();
-	data->test.reset();
+    data->test->finish();
+    data->test.reset();
 }
-
 
 IStorm3D_Material *Storm3D_VideoStreamer::getMaterial()
 {
-	return data->material.get();
+    return data->material.get();
 }
 
 void Storm3D_VideoStreamer::setPosition(const VC2 &position, const VC2 &size)
 {
-	data->start = position;
-	data->end = size;
+    data->start = position;
+    data->end = size;
 }
 
 void Storm3D_VideoStreamer::setAlpha(float alpha)
 {
-	data->alpha = alpha;
+    data->alpha = alpha;
 }
 
 void Storm3D_VideoStreamer::update()
 {
-	if(!data.get() || data->finished || data->width == 0 || data->height == 0)
-		return;
+    if (!data.get() || data->finished || data->width == 0 || data->height == 0)
+        return;
 
-	double frame_duration = ((double)data->test->fps_numerator / data->test->fps_denominator) * 1000;
+    double frame_duration = ( (double)data->test->fps_numerator / data->test->fps_denominator ) * 1000;
 
-	uint32_t currentTime = Timer::getCurrentTime();
+    uint32_t currentTime = Timer::getCurrentTime();
 
-	// nextFrameTime is the calculated time stamp of the next frame to be shown
-	uint32_t nextFrameTime = data->startTime + ((data->lastFrame + 1) * frame_duration);
+    // nextFrameTime is the calculated time stamp of the next frame to be shown
+    uint32_t nextFrameTime = data->startTime + ( (data->lastFrame + 1) * frame_duration );
 
-	// check if it's time to do something
-	if(currentTime < nextFrameTime)
-		return;
+    // check if it's time to do something
+    if (currentTime < nextFrameTime)
+        return;
 
-	if(data->useDynamicTextures)
-	{
-		if(data->activeTexture == data->texture1)
-			data->activeTexture = data->texture2;
-		else
-			data->activeTexture = data->texture1;
+    if (data->useDynamicTextures) {
+        if (data->activeTexture == data->texture1)
+            data->activeTexture = data->texture2;
+        else
+            data->activeTexture = data->texture1;
 
-		data->material->SetBaseTexture(data->activeTexture.get());
+        data->material->SetBaseTexture( data->activeTexture.get() );
 
-		int height = data->height;
-		int width = data->width;
-		if(!data->test->nextframe())
-		{
-			if (!data->buffer) {
-				data->buffer = new Uint32[width * height];
-				memset(data->buffer, 0x00, width * height * 4);
-			}
-			Uint32 *buf = data->buffer;
+        int height = data->height;
+        int width = data->width;
+        if ( !data->test->nextframe() ) {
+            if (!data->buffer) {
+                data->buffer = new Uint32[width * height];
+                memset(data->buffer, 0x00, width * height * 4);
+            }
+            Uint32 *buf = data->buffer;
 
-			data->test->read_pixels((char*)buf, width, height);
-			data->activeTexture->Copy32BitSysMembufferToTexture(buf);
-			data->lastFrame++;
-		}
-		else if(data->looping)
-		{
-			//FIXME: restart video
-			data->test->restart();
-			data->startTime = currentTime;
-		}
-		else
-		{
-			delete[] data->buffer;
-			data->buffer = 0;
-			data->finished = true;
-			data->test->finish();
-		}
-	}
+            data->test->read_pixels( (char *)buf, width, height );
+            data->activeTexture->Copy32BitSysMembufferToTexture(buf);
+            data->lastFrame++;
+        } else if (data->looping) {
+            //FIXME: restart video
+            data->test->restart();
+            data->startTime = currentTime;
+        } else {
+            delete[] data->buffer;
+            data->buffer = 0;
+            data->finished = true;
+            data->test->finish();
+        }
+    }
 }
 
 void Storm3D_VideoStreamer::render(IStorm3D_Scene *scene)
 {
-	if(!data || !scene || data->finished)
-		return;
+    if (!data || !scene || data->finished)
+        return;
 
-	update();
-	float x, y;
-	getTextureCoords(x, y);
-	scene->Render2D_Picture(data->material.get(), data->start, data->end, data->alpha, 0, 0,0,x,y);
+    update();
+    float x, y;
+    getTextureCoords(x, y);
+    scene->Render2D_Picture(data->material.get(), data->start, data->end, data->alpha, 0, 0, 0, x, y);
 }
 
 void Storm3D_VideoStreamer::getTextureCoords(float &x, float &y)
 {
-	x = 1.0f; y = 1.0f;
+    x = 1.0f; y = 1.0f;
 }

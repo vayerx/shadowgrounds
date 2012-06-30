@@ -7,21 +7,20 @@
 
 namespace game
 {
-	class Game;
+    class Game;
 }
 
 // will launch the type sounds
-class OguiTypeEffectListener : public IOguiEffectListener
-{
+class OguiTypeEffectListener : public IOguiEffectListener {
 public:
-	OguiTypeEffectListener( game::Game* game, const std::string& effectFile = "" );
-	~OguiTypeEffectListener();
-	
-	void EffectEvent( OguiEffectEvent *eve );
-	
+    OguiTypeEffectListener(game::Game *game, const std::string &effectFile = "");
+    ~OguiTypeEffectListener();
+
+    void EffectEvent(OguiEffectEvent *eve);
+
 private:
-	std::string effectFile;
-	game::Game* game;
+    std::string effectFile;
+    game::Game *game;
 };
 
 #endif

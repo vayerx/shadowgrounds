@@ -4,20 +4,22 @@
 #include "actor_base.h"
 
 namespace frozenbyte {
-namespace physics {
+    namespace physics {
+        class CapsuleActor : public ActorBase {
+        public:
+            CapsuleActor(NxScene   &scene,
+                         float      height,
+                         float      radius,
+                         const VC3 &position,
+                         float      offset = 0.0f,
+                         int        axisNumber = 1);
+            ~CapsuleActor();
 
-class CapsuleActor: public ActorBase
-{
+            // Extended stuff
+            bool isValid() const;
+        };
 
-public:
-	CapsuleActor(NxScene &scene, float height, float radius, const VC3 &position, float offset = 0.0f, int axisNumber = 1);
-	~CapsuleActor();
-
-	// Extended stuff
-	bool isValid() const;
-};
-
-} // physics
-} // frozenbyte
+    } // physics
+}     // frozenbyte
 
 #endif

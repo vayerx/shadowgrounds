@@ -1,4 +1,3 @@
-
 #include "precompiled.h"
 
 #include "SaveData.h"
@@ -6,40 +5,34 @@
 
 namespace game
 {
-
-  SaveData::SaveData(int id, int size, uint8_t *data, int childAmount, 
-    GameObject **children)
-  {
-    this->id = id;
-    this->size = size;
-    if (data != NULL)
+    SaveData::SaveData(int id, int size, uint8_t *data, int childAmount,
+                       GameObject **children)
     {
-      this->data = new uint8_t[size];
-      memcpy(this->data, data, size);
-    } else {
-      this->data = NULL;
+        this->id = id;
+        this->size = size;
+        if (data != NULL) {
+            this->data = new uint8_t[size];
+            memcpy(this->data, data, size);
+        } else {
+            this->data = NULL;
+        }
+        if (childAmount > 0) {
+            if (children == NULL) abort();
+            this->children = new GameObject *[childAmount];
+            for (int i = 0; i < childAmount; i++) {
+                this->children[i] = children[i];
+            }
+        } else {
+            if (children != NULL) abort();
+        }
     }
-    if (childAmount > 0)
-    {
-      if (children == NULL) abort();
-      this->children = new GameObject *[childAmount];
-      for (int i = 0; i < childAmount; i++) 
-      {
-        this->children[i] = children[i];
-      }
-    } else {
-      if (children != NULL) abort();
-    }
-  }
 
-  SaveData::~SaveData()
-  {
-    if (data != NULL) delete [] data;
-    data = NULL;
-    if (children != NULL) delete [] children;
-    children = NULL;
-  }
+    SaveData::~SaveData()
+    {
+        if (data != NULL) delete[] data;
+        data = NULL;
+        if (children != NULL) delete[] children;
+        children = NULL;
+    }
 
 }
-
-

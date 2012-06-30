@@ -4,31 +4,29 @@
 #include "input_stream.h"
 
 namespace frozenbyte {
-namespace filesystem {
+    namespace filesystem {
+        struct EmptyBuffer : public IInputStreamBuffer {
+            unsigned char popByte()
+            {
+                return 0;
+            }
 
-	struct EmptyBuffer: public IInputStreamBuffer
-	{
-		unsigned char popByte()
-		{
-			return 0;
-		}
+            bool isEof() const
+            {
+                return true;
+            }
 
-		bool isEof() const
-		{
-			return true;
-		}
+            int getSize() const
+            {
+                return 0;
+            }
 
-		int getSize() const
-		{
-			return 0;
-		}
+            void popBytes(char *, int)
+            {
+            }
+        };
 
-		void popBytes(char *, int)
-		{
-		}
-	};
-
-} // filesystem
-} // frozenbyte
+    } // filesystem
+}     // frozenbyte
 
 #endif

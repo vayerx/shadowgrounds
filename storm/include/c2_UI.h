@@ -2,7 +2,6 @@
 
 #pragma once
 
-
 #include "c2_common.h"
 #include "c2_sptr.h"
 #include "c2_sptrlist.h"
@@ -14,5 +13,3 @@
 #include "c2_rect.h"
 #include "c2_plane.h"
 #include "c2_color.h"
-
-

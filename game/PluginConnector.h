@@ -1,27 +1,24 @@
-
 #ifndef PLUGINCONNECTOR_H
 #define PLUGINCONNECTOR_H
 
 namespace game
 {
-  class Game;
+    class Game;
 
-  class PluginConnector
-  {
-  public:
-    PluginConnector(Game *game, char *port);
+    class PluginConnector {
+    public:
+        PluginConnector(Game *game, char *port);
 
-    ~PluginConnector();
+        ~PluginConnector();
 
-    void run();
+        void run();
 
-    void sendCustomData(void *data, int length);
+        void sendCustomData(void *data, int length);
 
-  private:
-    Game *game;
-  };
+    private:
+        Game *game;
+    };
 
 }
 
 #endif
-

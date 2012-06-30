@@ -9,38 +9,36 @@ class Connection;
 
 namespace net
 {
-  namespace tcpip
-  {
-		class TCPIPConnectionImpl;
-
-    /**
-     * TCP/IP net connection.
-     */
-    class TCPIPConnection : public INetConnection
+    namespace tcpip
     {
-    public:
-      TCPIPConnection(Connection *c); 
+        class TCPIPConnectionImpl;
 
-      virtual ~TCPIPConnection();
- 
-      virtual void flush() 
-        throw (NetDriverException*);
+        /**
+         * TCP/IP net connection.
+         */
+        class TCPIPConnection : public INetConnection {
+        public:
+            TCPIPConnection(Connection *c);
 
-      virtual int send(const void *buf, int maxlen) 
-        throw (NetDriverException*);
+            virtual ~TCPIPConnection();
 
-      virtual int receive(void *buf, int maxlen) 
-        throw (NetDriverException*);
+            virtual void flush()
+            throw (NetDriverException *);
 
-      virtual void close() 
-        throw (NetDriverException*);
+            virtual int send(const void *buf, int maxlen)
+            throw (NetDriverException *);
 
-    private:
-      Connection *c;
-			TCPIPConnectionImpl *impl;
-    };
-  }
+            virtual int receive(void *buf, int maxlen)
+            throw (NetDriverException *);
+
+            virtual void close()
+            throw (NetDriverException *);
+
+        private:
+            Connection *c;
+            TCPIPConnectionImpl *impl;
+        };
+    }
 }
 
 #endif
-

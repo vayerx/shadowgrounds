@@ -4,32 +4,30 @@
 #define INCLUDED_EDITOR_COLOR_COMPONENT_H
 
 #ifndef INCLUDED_BOOST_SCOPED_PTR_HPP
-#define INCLUDED_BOOST_SCOPED_PTR_HPP
-#include <boost/scoped_ptr.hpp>
+#  define INCLUDED_BOOST_SCOPED_PTR_HPP
+#  include <boost/scoped_ptr.hpp>
 #endif
 #ifndef INCLUDED_WINDOWS_H
-#define INCLUDED_WINDOWS_H
-#include <windows.h>
+#  define INCLUDED_WINDOWS_H
+#  include <windows.h>
 #endif
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        struct ColorComponentData;
 
-struct ColorComponentData;
+        class ColorComponent {
+            boost::scoped_ptr<ColorComponentData> data;
 
-class ColorComponent
-{
-	boost::scoped_ptr<ColorComponentData> data;
-	
-public:
-	ColorComponent(HWND parentHandle, int xPosition, int yPosition, int xSize, int ySize);
-	~ColorComponent();
+        public:
+            ColorComponent(HWND parentHandle, int xPosition, int yPosition, int xSize, int ySize);
+            ~ColorComponent();
 
-	unsigned int getColor() const;
-	void setColor(unsigned int color);
-};
+            unsigned int getColor() const;
+            void setColor(unsigned int color);
+        };
 
-} // end of namespace editor
-} // end of namespace frozenbyte
+    } // end of namespace editor
+}     // end of namespace frozenbyte
 
 #endif

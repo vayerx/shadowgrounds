@@ -1,4 +1,3 @@
-
 #ifndef GAMESTATE_H
 #define GAMESTATE_H
 
@@ -6,15 +5,13 @@
 
 namespace game
 {
-	class GameStateVariable;
+    class GameStateVariable;
 
-	class GameState : public GameObject
-	{
-		public:
-	    virtual SaveData *getSaveData() = 0;	
+    class GameState : public GameObject {
+    public:
+        virtual SaveData *getSaveData() = 0;
 
-	};
+    };
 }
 
 #endif
-

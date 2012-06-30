@@ -3,11 +3,9 @@
 
 //#include "csp/CSPException.h"
 
-class EmptyIteratorException 
-{ 
+class EmptyIteratorException {
 public:
-	EmptyIteratorException() { };
+    EmptyIteratorException() { };
 }; //extends CSPException { };
 
 #endif
-

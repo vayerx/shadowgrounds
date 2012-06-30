@@ -3,31 +3,30 @@
 
 // Waypoint
 struct WPoint {
-	int x,y;
+    int x, y;
 };
 
 extern uint16_t *HeightMapDebug;
 
 class Router {
-
 private:
 
-	// Heightmap info
-	uint16_t *HeightMap;
-	uint16_t *MapCost;
-	int Width,Height;
+    // Heightmap info
+    uint16_t *HeightMap;
+    uint16_t *MapCost;
+    int Width, Height;
 
-	// Temporary variables
-	WPoint NodePos[4096];
-	WPoint NodePos2[4096];
+    // Temporary variables
+    WPoint NodePos[4096];
+    WPoint NodePos2[4096];
 
 public:
 
-	Router();
-	~Router();
+    Router();
+    ~Router();
 
-	int FindPath(int sx,int sy,int ex,int ey,int MaxHeight,
-		WPoint *PArray);
+    int FindPath(int sx, int sy, int ex, int ey, int MaxHeight,
+                 WPoint *PArray);
 
-	void SetHeightMap(uint16_t *Map,int Width,int Height);
+    void SetHeightMap(uint16_t *Map, int Width, int Height);
 };

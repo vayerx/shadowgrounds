@@ -1,4 +1,3 @@
-
 #include "precompiled.h"
 
 #include "DirectWeapon.h"
@@ -7,20 +6,19 @@
 
 namespace game
 {
+    DirectWeapon::DirectWeapon()
+    {
+        parentType = getPartTypeById( PARTTYPE_ID_STRING_TO_INT("Weap") );
+    }
 
-  DirectWeapon::DirectWeapon()
-  {
-    parentType = getPartTypeById(PARTTYPE_ID_STRING_TO_INT("Weap"));
-  }
+    DirectWeapon::DirectWeapon(int id)
+    {
+        setPartTypeId(id);
+    }
 
-  DirectWeapon::DirectWeapon(int id)
-  {
-    setPartTypeId(id);
-  }
-
-  DirectWeapon::~DirectWeapon()
-  {
-    // nop
-  }
+    DirectWeapon::~DirectWeapon()
+    {
+        // nop
+    }
 
 }

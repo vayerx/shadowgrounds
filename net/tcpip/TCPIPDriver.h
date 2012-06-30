@@ -9,50 +9,49 @@ class Connection;
 
 namespace net
 {
-  namespace tcpip
-  {
-    // proto
-    class TCPIPBind;
-    class TCPIPConnection;
-
-    /**
-     * A TCP/IP net driver.
-     */
-    class TCPIPDriver : public INetDriver
+    namespace tcpip
     {
-    public:
-      TCPIPDriver();
+        // proto
+        class TCPIPBind;
+        class TCPIPConnection;
 
-      virtual const char *getDriverName();
+        /**
+         * A TCP/IP net driver.
+         */
+        class TCPIPDriver : public INetDriver {
+        public:
+            TCPIPDriver();
 
-      virtual INetConnection *connectTo(const char *to)
-        throw (NetDriverException*);
-   
-      virtual INetBind *bind(const char *port)
-        throw (NetDriverException*);
-   
-      virtual void setNetModeFlags(int netModeFlags)
-        throw (NetDriverException*);
+            virtual const char *getDriverName();
 
-      virtual int getNetModeFlags();
-      
-      virtual int getSupportedModeFlags();
-   
-			void setArtificialLag(int minPing, int maxPing, int variationSpeed);
-			
-      virtual ~TCPIPDriver();
-  
-    private:
-      int modeFlags;
+            virtual INetConnection *connectTo(const char *to)
+            throw (NetDriverException *);
 
-			static int lagVariationSpeed;
-			static int lagMinPing;
-			static int lagMaxPing;
+            virtual INetBind *bind(const char *port)
+            throw (NetDriverException *);
 
-			//friend class TCPIPBind;
-      friend class TCPIPConnection;
-    };
-  }
+            virtual void setNetModeFlags(int netModeFlags)
+            throw (NetDriverException *);
+
+            virtual int getNetModeFlags();
+
+            virtual int getSupportedModeFlags();
+
+            void setArtificialLag(int minPing, int maxPing, int variationSpeed);
+
+            virtual ~TCPIPDriver();
+
+        private:
+            int modeFlags;
+
+            static int lagVariationSpeed;
+            static int lagMinPing;
+            static int lagMaxPing;
+
+            //friend class TCPIPBind;
+            friend class TCPIPConnection;
+        };
+    }
 }
 
 #endif

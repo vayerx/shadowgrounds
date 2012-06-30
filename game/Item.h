@@ -1,4 +1,3 @@
-
 #ifndef ITEM_H
 #define ITEM_H
 
@@ -7,130 +6,127 @@
 
 namespace ui
 {
-  class VisualObject;
-	class Spotlight;
+    class VisualObject;
+    class Spotlight;
 }
 
 namespace game
 {
-	class ProgressBar;
-	class AbstractPhysicsObject;
+    class ProgressBar;
+    class AbstractPhysicsObject;
 
-	class Item
-	{
-		public:
-			Item(int itemTypeId);
-			
-			~Item();
+    class Item {
+    public:
+        Item(int itemTypeId);
 
-			void setCustomScript(const char *customScript);
+        ~Item();
 
-			const char *getCustomScript() const;
+        void setCustomScript(const char *customScript);
 
-			void setCustomTipText(const char *customTipText);
+        const char *getCustomScript() const;
 
-			const char *getCustomTipText() const;
+        void setCustomTipText(const char *customTipText);
 
-			void setSpecialString(const char *specialString);
+        const char *getCustomTipText() const;
 
-			const char *getSpecialString() const;
+        void setSpecialString(const char *specialString);
 
-			void prepareForRender();
+        const char *getSpecialString() const;
 
-			void setPosition(const VC3 &position);
+        void prepareForRender();
 
-			void setRotation(const VC3 &rotation);
+        void setPosition(const VC3 &position);
 
-			const VC3 &getPosition();
+        void setRotation(const VC3 &rotation);
 
-			const VC3 &getRotation();
+        const VC3&getPosition();
 
-			void setVisualObject(ui::VisualObject *visualObject);
+        const VC3&getRotation();
 
-			ui::VisualObject *getVisualObject();
+        void setVisualObject(ui::VisualObject *visualObject);
 
-			void setHalo(ui::Spotlight *halo);
+        ui::VisualObject *getVisualObject();
 
-			void setWeaponType(bool weaponType);
+        void setHalo(ui::Spotlight *halo);
 
-			int getItemTypeId();
+        void setWeaponType(bool weaponType);
 
-			//ui::VisualObject *getVisualObject();
+        int getItemTypeId();
 
-			int getPickupDelay();
+        //ui::VisualObject *getVisualObject();
 
-			void setPickupDelay(int pickupDelay);
+        int getPickupDelay();
 
-			int getCount();
+        void setPickupDelay(int pickupDelay);
 
-			void addCount();
+        int getCount();
 
-			void decreaseCount();
+        void addCount();
 
-			void setCount(int count);
+        void decreaseCount();
 
-			void setBlinking(bool blinking);
+        void setCount(int count);
 
-			bool isBlinking();
+        void setBlinking(bool blinking);
 
-			void setEnabled(bool enabled);
+        bool isBlinking();
 
-			bool isEnabled() const;
+        void setEnabled(bool enabled);
 
-			void setReEnableTime(int reEnableTime);
+        bool isEnabled() const;
 
-			int getReEnableTime();
+        void setReEnableTime(int reEnableTime);
 
-			bool advanceReEnable();
+        int getReEnableTime();
 
-			ProgressBar *getProgressBar();
+        bool advanceReEnable();
 
-			void createProgressBar();
+        ProgressBar *getProgressBar();
 
-			void deleteProgressBar();
+        void createProgressBar();
 
-			// added by Pete for the use of TargetDisplay
-			// -1 is no highlight
-			int getHighlightStyle() const;
-			void setHighlightStyle( int style );
+        void deleteProgressBar();
 
-			bool hasHighlightText() const;
-			
-			std::string getHighlightText() const;
-			void setHighlightText( const std::string& styletext );
+        // added by Pete for the use of TargetDisplay
+        // -1 is no highlight
+        int getHighlightStyle() const;
+        void setHighlightStyle(int style);
 
-			// hax hax physh-x
-			void setGamePhysicsObject( AbstractPhysicsObject* obj ) { this->physicsObject = obj; }
-			AbstractPhysicsObject* getGamePhysicsObject() const { return this->physicsObject; }
+        bool hasHighlightText() const;
 
+        std::string getHighlightText() const;
+        void setHighlightText(const std::string &styletext);
 
-		private:
-			VC3 position;
-			ui::VisualObject *visualObject;
-			ui::Spotlight *halo;
-			VC3 rotation;
-			bool weaponType;
-			int itemTypeId;
-			int pickupDelay;
-			int count;
-			bool blinking;
-			bool enabled;
-			int reEnableTime;
-			char *customScript;
-			char *specialString;
-			char *customTipText;
-			ProgressBar *progress;
+        // hax hax physh-x
+        void setGamePhysicsObject(AbstractPhysicsObject *obj) { this->physicsObject = obj; }
+        AbstractPhysicsObject *getGamePhysicsObject() const { return this->physicsObject; }
 
-			// Added by Pete for the use of gui highlight
-			int			highlightStyle;
-			std::string	highlightText;
+    private:
+        VC3 position;
+        ui::VisualObject *visualObject;
+        ui::Spotlight *halo;
+        VC3 rotation;
+        bool weaponType;
+        int itemTypeId;
+        int pickupDelay;
+        int count;
+        bool blinking;
+        bool enabled;
+        int reEnableTime;
+        char *customScript;
+        char *specialString;
+        char *customTipText;
+        ProgressBar *progress;
 
-			AbstractPhysicsObject* physicsObject;
+        // Added by Pete for the use of gui highlight
+        int highlightStyle;
+        std::string highlightText;
 
-		public:
-			struct ItemSpawner *spawner;
-	};
+        AbstractPhysicsObject *physicsObject;
+
+    public:
+        struct ItemSpawner *spawner;
+    };
 }
 
 #endif
-

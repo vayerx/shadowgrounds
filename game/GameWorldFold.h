@@ -1,4 +1,3 @@
-
 #ifndef GAMEWORLDFOLD_H
 #define GAMEWORLDFOLD_H
 
@@ -8,38 +7,37 @@
 
 namespace game
 {
-	class GameWorldFold
-	{
-	public:
-		static GameWorldFold *getInstance();
+    class GameWorldFold {
+    public:
+        static GameWorldFold *getInstance();
 
-		void cleanInstance();
+        void cleanInstance();
 
-		GameWorldFold();
-		~GameWorldFold();
+        GameWorldFold();
+        ~GameWorldFold();
 
-		void reset();
+        void reset();
 
-		// returns positive fold id number 
-		int addFold(const VC3 &position, float angle);
+        // returns positive fold id number
+        int addFold(const VC3 &position, float angle);
 
-		// returns positive fold id number at given position, or 0 if no fold at given position
-		int getFoldNumberAtPosition(const VC3 &position);
-		
-		void moveFold(int foldNumber, const VC3 &position);
+        // returns positive fold id number at given position, or 0 if no fold at given position
+        int getFoldNumberAtPosition(const VC3 &position);
 
-		void setFoldAngle(int foldNumber, float angle);
+        void moveFold(int foldNumber, const VC3 &position);
 
-	private:
-		static GameWorldFold *instance;
+        void setFoldAngle(int foldNumber, float angle);
 
-		MAT negativeFolds[GAMEWORLDFOLD_MAX_FOLDS_PER_DIRECTION];
-		VC3 negativeFoldPositions[GAMEWORLDFOLD_MAX_FOLDS_PER_DIRECTION];
-		int negativeFoldsUsed;
-		MAT positiveFolds[GAMEWORLDFOLD_MAX_FOLDS_PER_DIRECTION];
-		VC3 positiveFoldPositions[GAMEWORLDFOLD_MAX_FOLDS_PER_DIRECTION];
-		int positiveFoldsUsed;
-	};
+    private:
+        static GameWorldFold *instance;
+
+        MAT negativeFolds[GAMEWORLDFOLD_MAX_FOLDS_PER_DIRECTION];
+        VC3 negativeFoldPositions[GAMEWORLDFOLD_MAX_FOLDS_PER_DIRECTION];
+        int negativeFoldsUsed;
+        MAT positiveFolds[GAMEWORLDFOLD_MAX_FOLDS_PER_DIRECTION];
+        VC3 positiveFoldPositions[GAMEWORLDFOLD_MAX_FOLDS_PER_DIRECTION];
+        int positiveFoldsUsed;
+    };
 }
 
 #endif

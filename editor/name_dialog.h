@@ -3,14 +3,13 @@
 
 struct NameDialogData;
 class NameDialog {
-	boost::scoped_ptr<NameDialogData> m;
+    boost::scoped_ptr<NameDialogData> m;
 public:
-	NameDialog();
-	~NameDialog();
-	bool doModal(HWND parent, int resourceID);
-	const std::string& getName();
-	void setName(const std::string& name);
+    NameDialog();
+    ~NameDialog();
+    bool doModal(HWND parent, int resourceID);
+    const std::string&getName();
+    void setName(const std::string &name);
 };
-
 
 #endif

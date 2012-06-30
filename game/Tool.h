@@ -1,4 +1,3 @@
-
 #ifndef TOOL_H
 #define TOOL_H
 
@@ -6,16 +5,14 @@
 
 namespace game
 {
+    class Tool : public PartType {
+    public:
+        Tool();
+        Tool(int id);
+        virtual ~Tool();
+    };
 
-  class Tool : public PartType
-  {
-  public:
-    Tool();
-    Tool(int id);
-    virtual ~Tool();
-  };
-
-  //extern Tool tool;
+    //extern Tool tool;
 
 }
 

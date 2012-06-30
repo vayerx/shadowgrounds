@@ -1,4 +1,3 @@
-
 #ifndef OPTIONSWINDOW_H
 #define OPTIONSWINDOW_H
 
@@ -7,7 +6,7 @@
 
 namespace game
 {
-  class Game;
+    class Game;
 }
 
 class Ogui;
@@ -17,34 +16,32 @@ class OguiTextLabel;
 
 namespace ui
 {
-  class OptionsWindow : public IOguiButtonListener
-	{
-		public:
-			OptionsWindow(game::Game *game, Ogui *ogui, int player);
+    class OptionsWindow : public IOguiButtonListener {
+    public:
+        OptionsWindow(game::Game *game, Ogui *ogui, int player);
 
-			~OptionsWindow();
-			
-	    virtual void CursorEvent(OguiButtonEvent *eve);
+        ~OptionsWindow();
 
-		private:
-			Ogui *ogui;
-			game::Game *game;
-			int player;
-			OguiWindow *win;
+        virtual void CursorEvent(OguiButtonEvent *eve);
 
-			OguiTextLabel *playerTextLabel[MAX_PLAYERS_PER_CLIENT];
-			OguiButton *playerEnabledButton[MAX_PLAYERS_PER_CLIENT];
-			OguiButton *playerControllerButton[MAX_PLAYERS_PER_CLIENT];
-			OguiTextLabel *autoadjustTextLabel;
-			OguiTextLabel *difficultyTextLabel;
-			OguiButton *difficultyButton;
-			OguiButton *autoadjustButton;
+    private:
+        Ogui *ogui;
+        game::Game *game;
+        int player;
+        OguiWindow *win;
 
-			void refresh();
+        OguiTextLabel *playerTextLabel[MAX_PLAYERS_PER_CLIENT];
+        OguiButton *playerEnabledButton[MAX_PLAYERS_PER_CLIENT];
+        OguiButton *playerControllerButton[MAX_PLAYERS_PER_CLIENT];
+        OguiTextLabel *autoadjustTextLabel;
+        OguiTextLabel *difficultyTextLabel;
+        OguiButton *difficultyButton;
+        OguiButton *autoadjustButton;
 
-	};
+        void refresh();
+
+    };
 
 }
 
 #endif
-

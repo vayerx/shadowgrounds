@@ -1,11 +1,10 @@
-
 #include "precompiled.h"
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
 #ifdef _MSC_VER
-#pragma warning(disable:4103)
-#pragma warning(disable:4786)
+#  pragma warning(disable:4103)
+#  pragma warning(disable:4786)
 #endif
 
 #include "zip_package.h"
@@ -16,7 +15,7 @@
 
 #include "detail/unzip.h"
 #ifdef _MSC_VER
-#pragma comment(lib, "zlib.lib")
+#  pragma comment(lib, "zlib.lib")
 #endif
 
 #include <map>
@@ -25,571 +24,540 @@
 #include "../util/Debug_MemoryManager.h"
 
 namespace frozenbyte {
-namespace filesystem {
+    namespace filesystem {
+        static const int BUFFER_SIZE = 100 * 1024;
 
+        // ---
 
-	static const int BUFFER_SIZE = 100 * 1024;
+        static std::string::size_type findTokenIndex(const std::string     &str,
+                                                     const std::string     &token,
+                                                     std::string::size_type start)
+        {
+            if (token.size() >= str.size() - start)
+                return str.npos;
 
-	// ---
+            for (std::string::size_type i = start; i <= str.size() - token.size(); ++i) {
+                bool found = true;
+                for (std::string::size_type j = 0; j < token.size(); ++j) {
+                    if (token[j] != str[i + j]) {
+                        found =  false;
+                        break;
+                    }
+                }
 
-	static std::string::size_type findTokenIndex(const std::string &str, const std::string &token, std::string::size_type start)
-	{
-		if(token.size() >= str.size() - start)
-			return str.npos;
+                if (found)
+                    return i;
+            }
 
-		for(std::string::size_type i = start; i <= str.size() - token.size(); ++i)
-		{
-			bool found = true;
-			for(std::string::size_type j = 0; j < token.size(); ++j)
-			{
-				if(token[j] != str[i + j])
-				{
-					found =  false;
-					break;
-				}
-			}
+            return str.npos;
+        }
 
-			if(found)
-				return i;
-		}
+        static bool containsToken(const std::string &string, const std::string &token, std::string::size_type start)
+        {
+            if ( start + token.size() >= string.size() )
+                return false;
 
-		return str.npos;
-	}
+            for (unsigned int i = 0; i < token.size(); ++i) {
+                if (token[i] != string[i + start])
+                    return false;
+            }
 
-	static bool containsToken(const std::string &string, const std::string &token, std::string::size_type start)
-	{
-		if(start + token.size() >= string.size())
-			return false;
+            return true;
+        }
 
-		for(unsigned int i = 0; i < token.size(); ++i)
-		{
-			if(token[i] != string[i + start])
-				return false;
-		}
+        static void findTokens(const std::string        &string,
+                               std::vector<std::string> &result,
+                               const std::string        &separator)
+        {
+            std::string::size_type start = string.find_first_of(separator);
+            if (start == string.npos) {
+                result.push_back(string);
+                return;
+            }
 
-		return true;
-	}
+            for (;; ) {
+                std::string::size_type end = string.find_first_of(separator, start + 1);
+                if (end == string.npos) {
+                    std::string token = string.substr(start + 1, string.size() - start - 1);
+                    result.push_back(token);
+                    break;
+                }
 
-	static void findTokens(const std::string &string, std::vector<std::string> &result, const std::string &separator)
-	{
-		std::string::size_type start = string.find_first_of(separator);
-		if(start == string.npos)
-		{
-			result.push_back(string);
-			return;
-		}
+                std::string token = string.substr(start, end - start);
+                result.push_back(token);
 
-		for(;;)
-		{
-			std::string::size_type end = string.find_first_of(separator, start + 1);
-			if(end == string.npos)
-			{
-				std::string token = string.substr(start + 1, string.size() - start - 1);
-				result.push_back(token);
-				break;
-			}
+                start = end;
+            }
+        }
 
-			std::string token = string.substr(start, end - start);
-			result.push_back(token);
+        /*
+           void addFile(const std::string &file, IFileList &result)
+           {
+            std::vector<std::string> dirs;
+            findTokens(file, dirs, "/");
 
-			start = end;
-		}
-	}
+            std::stack<FileList::Dir *> dirStack;
+            dirStack.push(&result.root);
 
-	/*
-	void addFile(const std::string &file, IFileList &result)
-	{
-		std::vector<std::string> dirs;
-		findTokens(file, dirs, "/");
+            for(unsigned int i = 0; i < dirs.size() - 1; ++i)
+            {
+                const std::string &dirName = dirs[i];
 
-		std::stack<FileList::Dir *> dirStack;
-		dirStack.push(&result.root);
+                FileList::Dir *current = dirStack.top();
+                int index = current->findDirIndex(dirName);
+                if(index == -1)
+                {
+                    FileList::Dir newDir;
+                    newDir.name = dirName;
+                    current->dirs.push_back(newDir);
+                    index = current->dirs.size() - 1;
+                }
 
-		for(unsigned int i = 0; i < dirs.size() - 1; ++i)
-		{
-			const std::string &dirName = dirs[i];
+                dirStack.push(&current->dirs[index]);
+            }
 
-			FileList::Dir *current = dirStack.top();
-			int index = current->findDirIndex(dirName);
-			if(index == -1)
-			{
-				FileList::Dir newDir;
-				newDir.name = dirName;
-				current->dirs.push_back(newDir);
-				index = current->dirs.size() - 1;
-			}
+            FileList::Dir *final = dirStack.top();
+            final->files.push_back(dirs[dirs.size() - 1]);
+           }
+         */
 
-			dirStack.push(&current->dirs[index]);
-		}
+        struct ZipFileData {
+            int size;
+            unz_file_pos filePosition;
 
-		FileList::Dir *final = dirStack.top();
-		final->files.push_back(dirs[dirs.size() - 1]);
-	}
-	*/
+            std::string  filename;
+            int          crc;
 
-	struct ZipFileData
-	{
-		int size;
-		unz_file_pos filePosition;
+            ZipFileData()
+                :   size(0)
+            {
+            }
+        };
 
-		std::string filename;
-		int crc;
+        typedef std::map<std::string, ZipFileData> ZipFileList;
 
-		ZipFileData()
-		:	size(0)
-		{
-		}
-	};
+        struct ZipData {
+            unzFile     fileId;
+            ZipFileList fileList;
 
-	typedef std::map<std::string, ZipFileData> ZipFileList;
+            ZipData(const std::string &archive)
+                :   fileId(0)
+            {
+                fileId = unzOpen( archive.c_str() );
+                if (fileId)
+                    findFiles();
+            };
 
-	struct ZipData
-	{
-		unzFile fileId;
-		ZipFileList fileList;
+            ~ZipData()
+            {
+                if (fileId)
+                    unzClose(fileId);
+            }
 
-		ZipData(const std::string &archive)
-		:	fileId(0)
-		{
-			fileId = unzOpen(archive.c_str());
-			if(fileId)
-				findFiles();
-		};
+            void findFiles()
+            {
+                unz_global_info globalInfo;
+                memset( &globalInfo, '\0', sizeof(unz_global_info) );
+                if (unzGetGlobalInfo(fileId, &globalInfo) != UNZ_OK)
+                    return;
 
-		~ZipData()
-		{
-			if(fileId)
-				unzClose(fileId);
-		}
+                char file[1024] = { 0 };
+                for (unsigned int i = 0; i < globalInfo.number_entry; ++i) {
+                    if (i != 0 && unzGoToNextFile(fileId) != UNZ_OK)
+                        break;
 
-		void findFiles()
-		{
-			unz_global_info globalInfo;
-			memset(&globalInfo, '\0', sizeof(unz_global_info));
-			if(unzGetGlobalInfo(fileId, &globalInfo) != UNZ_OK)
-				return;
+                    unz_file_info fileInfo;
+                    memset( &fileInfo, '\0', sizeof(fileInfo) );
+                    if (unzGetCurrentFileInfo(fileId, &fileInfo, file, sizeof(file) - 1, 0, 0, 0, 0) != UNZ_OK)
+                        return;
+                    if (fileInfo.uncompressed_size <= 0)
+                        continue;
 
-			char file[1024] = { 0 };
-			for(unsigned int i = 0; i < globalInfo.number_entry; ++i)
-			{
-				if(i != 0 && unzGoToNextFile(fileId) != UNZ_OK)
-					break;
+                    ZipFileData zipFile;
+                    zipFile.filename = file;
+                    zipFile.size = fileInfo.uncompressed_size;
+                    zipFile.crc = fileInfo.crc;
+                    unzGetFilePos(fileId, &zipFile.filePosition);
 
-				unz_file_info fileInfo;
-				memset(&fileInfo, '\0', sizeof(fileInfo));
-				if(unzGetCurrentFileInfo(fileId, &fileInfo, file, sizeof(file) - 1, 0, 0, 0, 0) != UNZ_OK)
-					return;
-				if(fileInfo.uncompressed_size <= 0)
-					continue;
+                    {
+                        // lowercase and change backslashes to forward slashes
+                        // not using function convertLower (from file_list.cpp)
+                        // because mutating a std::string is expensive
+                        unsigned char *c = reinterpret_cast<unsigned char *>(file);
+                        while (*c != '\0') {
+                            if ( isupper(*c) )
+                                *c = tolower(*c);
+                            else if (*c == '\\')
+                                *c = '/';
+                            ++c;
+                        }
+                    }
+                    std::string filename = file;
+                    fileList[filename] = zipFile;
+                }
+            }
 
-				ZipFileData zipFile;
-				zipFile.filename = file;
-				zipFile.size = fileInfo.uncompressed_size;
-				zipFile.crc = fileInfo.crc;
-				unzGetFilePos(fileId, &zipFile.filePosition);
+            void findFiles(std::string dir, std::string extension, IFileList &result)
+            {
+                convertLower(dir);
+                convertLower(extension);
 
-				{
-					// lowercase and change backslashes to forward slashes
-					// not using function convertLower (from file_list.cpp)
-					// because mutating a std::string is expensive
-					unsigned char *c = reinterpret_cast<unsigned char *>(file);
-					while (*c != '\0')
-					{
-						if (isupper(*c))
-						{
-							*c = tolower(*c);
-						} else if (*c == '\\') {
-							*c = '/';
-						}
-						++c;
-					}
-				}
-				std::string filename = file;
-				fileList[filename] = zipFile;
-			}
-		}
+                if ( extension.empty() )
+                    return;
 
-		void findFiles(std::string dir, std::string extension, IFileList &result)
-		{
-			convertLower(dir);
-			convertLower(extension);
+                std::vector<std::string> tokens;
+                findTokens(extension, tokens, "*");
+                if (tokens.empty() || tokens.size() > 1)
+                    return;
 
-			if(extension.empty())
-				return;
+                ZipFileList::iterator it = fileList.begin();
+                for (; it != fileList.end(); ++it) {
+                    const std::string &file = it->first;
+                    if ( !containsToken(file, dir, 0) )
+                        continue;
 
-			std::vector<std::string> tokens;
-			findTokens(extension, tokens, "*");
-			if(tokens.empty() || tokens.size() > 1)
-				return;
+                    //if(containsToken(file, "data/textures/human_weapons", 0))
+                    //    int a = 0;
 
-			ZipFileList::iterator it = fileList.begin();
-			for(; it != fileList.end(); ++it)
-			{
-				const std::string &file = it->first;				
-				if(!containsToken(file, dir, 0))
-					continue;
+                    std::string::size_type fileStart = file.find_last_of("/");
+                    std::string::size_type index = findTokenIndex(file, tokens[0], fileStart);
 
-				//if(containsToken(file, "data/textures/human_weapons", 0))
-					//	int a = 0;
+                    // FIXME!!
+                    // This only detects search tokens which begin with "*"
 
-				std::string::size_type fileStart = file.find_last_of("/");
-				std::string::size_type index = findTokenIndex(file, tokens[0], fileStart);
+                    if ( index == file.size() - tokens[0].size() )
+                        result.addFile(it->second.filename);
 
-				// FIXME!! 
-				// This only detects search tokens which begin with "*"
+                    /*
+                       // Crap. Just find each token index (if has) and move those forward hierarchically if needed
 
-				if(index == file.size() - tokens[0].size())
-				{
-					result.addFile(it->second.filename);
-				}
+                       if(!containsToken(file, dir, 0))
+                        continue;
+                       //if(startAny && extension.size() == 1)
+                       //    addFile(file, result);
 
-				/*
-				// Crap. Just find each token index (if has) and move those forward hierarchically if needed
+                       int startIndexFrom = 0;
+                       int startIndexTo = 1;
+                       if(startAny)
+                        startIndexTo = file.size();
 
-				if(!containsToken(file, dir, 0))
-					continue;
-				//if(startAny && extension.size() == 1)
-				//	addFile(file, result);
+                       for(int i = startIndexFrom; i != startIndexTo; ++i)
+                       {
+                        int start = i;
+                        if(!containsToken(file, tokens[0], start))
+                            continue;
 
-				int startIndexFrom = 0;
-				int startIndexTo = 1;
-				if(startAny)
-					startIndexTo = file.size();
+                        start += tokens[0].size();
+                        if(!endAny && start < int(file.size()))
+                            continue;
 
-				for(int i = startIndexFrom; i != startIndexTo; ++i)
-				{
-					int start = i;
-					if(!containsToken(file, tokens[0], start))
-						continue;
+                        //addFile(file, result);
+                       }
+                     */
+                }
+            }
 
-					start += tokens[0].size();
-					if(!endAny && start < int(file.size()))
-						continue;
+            bool findFile(std::string file, ZipFileList::iterator &it)
+            {
+                convertLower(file);
 
-					//addFile(file, result);
-				}
-				*/
-			}
-		}
+                it = fileList.find(file);
 
-		bool findFile(std::string file, ZipFileList::iterator &it)
-		{
-			convertLower(file);
+                /*
+                   ZipFileList::iterator iter;
+                   int t = file.find("pictures/startup.dds", 0);
+                   if( t != std::string::npos )
+                   {
+                    for( iter = fileList.begin(); iter != fileList.end(); iter++ )
+                    {
+                        igiosWarning("%s \n", iter->first);
+                    }
 
-			it = fileList.find(file);
-			
-			/*
-			ZipFileList::iterator iter;
-			int t = file.find("pictures/startup.dds", 0);
-			if( t != std::string::npos )
-			{
-				for( iter = fileList.begin(); iter != fileList.end(); iter++ )
-				{
-					igiosWarning("%s \n", iter->first);
-				}
+                    igiosWarning("========================================================\n");
+                   }
+                 */
 
-				igiosWarning("========================================================\n");
-			}
-			*/
+                if ( it == fileList.end() )
+                    return false;
 
-			if(it == fileList.end())
-				return false;
-
-			return true;
-		}
-	};
-
+                return true;
+            }
+        };
 
 #if READ_CHUNKS
-	class ZipInputBuffer: public IInputStreamBuffer
-	{
-		boost::shared_ptr<ZipData> zipData;
-		unsigned char buffer[BUFFER_SIZE];
-		int currentPosition;
-		int readBytes;
-		unsigned long offset;
+        class ZipInputBuffer : public IInputStreamBuffer {
+            boost::shared_ptr<ZipData> zipData;
+            unsigned char buffer[BUFFER_SIZE];
+            int currentPosition;
+            int readBytes;
+            unsigned long offset;
 
-		ZipFileData fileData;
+            ZipFileData fileData;
 
-		/*
-		void release() const
-		{
-			if(hasCurrentFile)
-				unzCloseCurrentFile(zipData->fileId);
-			//if(fileId)
-			//	unzClose(fileId);
+            /*
+               void release() const
+               {
+                if(hasCurrentFile)
+                    unzCloseCurrentFile(zipData->fileId);
+                //if(fileId)
+                //    unzClose(fileId);
 
-			hasCurrentFile = false;
-		}
+                hasCurrentFile = false;
+               }
 
-		bool fillBuffer() const
-		{
-			beginTime();
+               bool fillBuffer() const
+               {
+                beginTime();
 
-			if(currentPosition == -1 || currentPosition == BUFFER_SIZE)
-			{
-				int readSize = BUFFER_SIZE;
-				if(currentPosition + BUFFER_SIZE > fileData.size)
-					readSize = fileData.size - currentPosition;
+                if(currentPosition == -1 || currentPosition == BUFFER_SIZE)
+                {
+                    int readSize = BUFFER_SIZE;
+                    if(currentPosition + BUFFER_SIZE > fileData.size)
+                        readSize = fileData.size - currentPosition;
 
-				readBytes = unzReadCurrentFile(zipData->fileId, buffer, readSize);
-				if(readBytes <= 0)
-				{
-					release();
-					return false;
-				}
-	
-				currentPosition = 0;
-			}
+                    readBytes = unzReadCurrentFile(zipData->fileId, buffer, readSize);
+                    if(readBytes <= 0)
+                    {
+                        release();
+                        return false;
+                    }
 
-			endTime("fillBuffer");
-			return true;
-		}
-		*/
+                    currentPosition = 0;
+                }
 
-		void fillBuffer()
-		{
-			beginTime();
+                endTime("fillBuffer");
+                return true;
+               }
+             */
 
-			int readSize = BUFFER_SIZE;
-			if(readBytes + readSize >= fileData.size)
-				readSize = fileData.size - readBytes;
+            void fillBuffer()
+            {
+                beginTime();
 
-			currentPosition = 0;
+                int readSize = BUFFER_SIZE;
+                if (readBytes + readSize >= fileData.size)
+                    readSize = fileData.size - readBytes;
 
-			int id = unzGoToFilePos(zipData->fileId, &fileData.filePosition);
-			if(id != UNZ_OK)
-				return;
-			if(unzOpenCurrentFile(zipData->fileId) != UNZ_OK)
-				return;
-			
-			if(offset > 0 && if(unzSetOffset(zipData->fileId, readBytes) != UNZ_OK)
-				return;
+                currentPosition = 0;
 
-			unzReadCurrentFile(zipData->fileId, buffer, readSize);
-			//offset = unzGetOffset(zipData->fileId);
-			unzCloseCurrentFile(zipData->fileId);
+                int id = unzGoToFilePos(zipData->fileId, &fileData.filePosition);
+                if (id != UNZ_OK)
+                    return;
+                if (unzOpenCurrentFile(zipData->fileId) != UNZ_OK)
+                    return;
 
-			endTime("fillBuffer");
-		}
+                if (offset > 0 && if (unzSetOffset(zipData->fileId, readBytes) != UNZ_OK)
+                        return;
 
-	public:
-		ZipInputBuffer(boost::shared_ptr<ZipData> &zipData_, const ZipFileData &fileData_)
-		:	zipData(zipData_),
-			fileData(fileData_)
-		{
-			currentPosition = -1;
-			readBytes = 0;
-			offset = 0;
+                    unzReadCurrentFile(zipData->fileId, buffer, readSize);
+                    //offset = unzGetOffset(zipData->fileId);
+                    unzCloseCurrentFile(zipData->fileId);
 
-			/*
-			if(zipData->fileId)
-			{
-				beginTime();
-				int id = unzGoToFilePos(zipData->fileId, &fileData.filePosition);
-				if(id != UNZ_OK)
-				{
-					release();
-					return;
-				}
+                    endTime("fillBuffer");
+                    }
 
-				if(unzOpenCurrentFile(zipData->fileId) != UNZ_OK)
-				{
-					release();
-					return;
-				}
+                public:
+                    ZipInputBuffer(boost::shared_ptr<ZipData> &zipData_, const ZipFileData &fileData_)
+                        :   zipData(zipData_),
+                        fileData(fileData_) {
+                        currentPosition = -1;
+                        readBytes = 0;
+                        offset = 0;
 
-				hasCurrentFile = true;
-				endTime("Locate file in zip");
-			}
-			*/
-		}
+                        /*
+                           if(zipData->fileId)
+                           {
+                            beginTime();
+                            int id = unzGoToFilePos(zipData->fileId, &fileData.filePosition);
+                            if(id != UNZ_OK)
+                            {
+                                release();
+                                return;
+                            }
 
-		~ZipInputBuffer()
-		{
-		}
+                            if(unzOpenCurrentFile(zipData->fileId) != UNZ_OK)
+                            {
+                                release();
+                                return;
+                            }
 
-		unsigned char popByte()
-		{
-			if(!zipData->fileId || readBytes >= fileData.size)
-				return 0;
+                            hasCurrentFile = true;
+                            endTime("Locate file in zip");
+                           }
+                         */
+                    }
 
-			if(currentPosition == -1 || currentPosition >= BUFFER_SIZE)
-				fillBuffer();
+                    ~ZipInputBuffer()
+                    {
+                    }
 
-			++readBytes;
-			return buffer[currentPosition++];
-		}
+                    unsigned char popByte() {
+                        if (!zipData->fileId || readBytes >= fileData.size)
+                            return 0;
 
-		bool isEof() const
-		{
-			if(!zipData->fileId || readBytes >= fileData.size)
-				return true;
+                        if (currentPosition == -1 || currentPosition >= BUFFER_SIZE)
+                            fillBuffer();
 
-			return false;
-		}
+                        ++readBytes;
+                        return buffer[currentPosition++];
+                    }
 
-		int getSize() const
-		{
-			return fileData.size;
-		}
+                    bool isEof() const
+                    {
+                        if (!zipData->fileId || readBytes >= fileData.size)
+                            return true;
 
-		void popBytes(char *buffer, int bytes)
-		{
-			for(int i = 0; i < bytes; ++i)
-				buffer[i] = popByte();
-		}
-	};
+                        return false;
+                    }
 
-#else  // READ_CHUNKS
+                    int getSize() const
+                    {
+                        return fileData.size;
+                    }
 
-	class ZipInputBuffer: public IInputStreamBuffer
-	{
-		boost::shared_ptr<ZipData> zipData;
-		std::vector<unsigned char> buffer;
-		int position;
+                    void popBytes(char *buffer, int bytes) {
+                        for (int i = 0; i < bytes; ++i) {
+                            buffer[i] = popByte();
+                        }
+                    }
+                    };
 
-		ZipFileData fileData;
+#else   // READ_CHUNKS
 
-		void fillBuffer()
-		{
-			unsigned int readSize = fileData.size;
-			if (buffer.size() < readSize)
-				buffer.resize(readSize);
+        class ZipInputBuffer : public IInputStreamBuffer {
+            boost::shared_ptr<ZipData> zipData;
+            std::vector<unsigned char> buffer;
+            int position;
 
-			if(unzGoToFilePos(zipData->fileId, &fileData.filePosition) != UNZ_OK)
-				return;
-			if(unzOpenCurrentFile(zipData->fileId) != UNZ_OK)
-				return;
+            ZipFileData fileData;
 
-#ifndef NDEBUG
-			unsigned int bytes =
-#endif
-			unzReadCurrentFile(zipData->fileId, &buffer[0], readSize);
-#ifndef NDEBUG
-			// FIXME: this should not be assert but checked always
-			// assert is only for programmer bugs, not runtime errors!
-			assert(bytes == readSize);
-#endif
+            void fillBuffer()
+            {
+                unsigned int readSize = fileData.size;
+                if (buffer.size() < readSize)
+                    buffer.resize(readSize);
 
-			unzCloseCurrentFile(zipData->fileId);
-		}
+                if (unzGoToFilePos(zipData->fileId, &fileData.filePosition) != UNZ_OK)
+                    return;
+                if (unzOpenCurrentFile(zipData->fileId) != UNZ_OK)
+                    return;
 
-	public:
-		ZipInputBuffer(boost::shared_ptr<ZipData> &zipData_, const ZipFileData &fileData_)
-		:	zipData(zipData_),
-			fileData(fileData_)
-		{
-			position = 0;
-		}
+#  ifndef NDEBUG
+                unsigned int bytes =
+#  endif
+                unzReadCurrentFile(zipData->fileId, &buffer[0], readSize);
+#  ifndef NDEBUG
+                // FIXME: this should not be assert but checked always
+                // assert is only for programmer bugs, not runtime errors!
+                assert(bytes == readSize);
+#  endif
 
-		~ZipInputBuffer()
-		{
-		}
+                unzCloseCurrentFile(zipData->fileId);
+            }
 
-		unsigned char popByte()
-		{
-			if(position >= fileData.size)
-				return 0;
+        public:
+            ZipInputBuffer(boost::shared_ptr<ZipData> &zipData_, const ZipFileData &fileData_)
+                :   zipData(zipData_),
+                fileData(fileData_)
+            {
+                position = 0;
+            }
 
-			if(position == 0)
-			{
-				buffer.reserve(fileData.size);
-				fillBuffer();
-			}
+            ~ZipInputBuffer()
+            {
+            }
 
-			return buffer[position++];
-		}
+            unsigned char popByte()
+            {
+                if (position >= fileData.size)
+                    return 0;
 
-		bool isEof() const
-		{
-			if(position >= fileData.size)
-				return true;
+                if (position == 0) {
+                    buffer.reserve(fileData.size);
+                    fillBuffer();
+                }
 
-			return false;
-		}
+                return buffer[position++];
+            }
 
-		int getCRC() const
-		{
-			return fileData.crc;
-		}
+            bool isEof() const
+            {
+                if (position >= fileData.size)
+                    return true;
 
-		int getSize() const
-		{
-			return fileData.size;
-		}
+                return false;
+            }
 
-		void popBytes(char *buffer, int bytes)
-		{
-			for(int i = 0; i < bytes; ++i)
-				buffer[i] = popByte();
-		}
-	};
+            int getCRC() const
+            {
+                return fileData.crc;
+            }
 
-#endif  // READ_CHUNKS
+            int getSize() const
+            {
+                return fileData.size;
+            }
 
+            void popBytes(char *buffer, int bytes)
+            {
+                for (int i = 0; i < bytes; ++i) {
+                    buffer[i] = popByte();
+                }
+            }
+        };
 
-struct ZipPackageData
-{
-	std::string archiveName;
-	boost::shared_ptr<ZipData> zipData;
+#endif          // READ_CHUNKS
 
-	ZipPackageData()
-	{
-	}
+                    struct ZipPackageData {
+                        std::string archiveName;
+                        boost::shared_ptr<ZipData> zipData;
 
-	void load()
-	{
-		zipData.reset(new ZipData(archiveName));
-	}
-};
+                        ZipPackageData() {
+                        }
 
-ZipPackage::ZipPackage(const std::string &archiveName)
-{
-	boost::scoped_ptr<ZipPackageData> tempData(new ZipPackageData());
-	tempData->archiveName = archiveName;
-	tempData->load();
-	data.swap(tempData);
-}
+                        void load() {
+                            zipData.reset( new ZipData(archiveName) );
+                        }
+                    };
 
-ZipPackage::~ZipPackage()
-{
-}
+                    ZipPackage::ZipPackage(const std::string &archiveName)
+                    {
+                        boost::scoped_ptr<ZipPackageData> tempData( new ZipPackageData() );
+                        tempData->archiveName = archiveName;
+                        tempData->load();
+                        data.swap(tempData);
+                    }
 
-void ZipPackage::findFiles(const std::string &dir, const std::string &extension, IFileList &result)
-{
-	data->zipData->findFiles(dir, extension, result);
-}
+                    ZipPackage::~ZipPackage()
+                    {
+                    }
 
-InputStream ZipPackage::getFile(const std::string &fileName)
-{
-	InputStream inputStream;
-	
-	ZipFileList::iterator it;
-	if(data->zipData->findFile(fileName, it))
-	{
-		boost::shared_ptr<ZipInputBuffer> inputBuffer(new ZipInputBuffer(data->zipData, it->second));
-		inputStream.setBuffer(inputBuffer);
-	}
-	else
-	{
-		boost::shared_ptr<EmptyBuffer> inputBuffer(new EmptyBuffer());
-		inputStream.setBuffer(inputBuffer);
-	}
+                    void ZipPackage::findFiles(const std::string & dir, const std::string & extension, IFileList
+                                               & result) {
+                        data->zipData->findFiles(dir, extension, result);
+                    }
 
-	return inputStream;
-}
+                    InputStream ZipPackage::getFile(const std::string & fileName) {
+                        InputStream inputStream;
 
+                        ZipFileList::iterator it;
+                        if ( data->zipData->findFile(fileName, it) ) {
+                            boost::shared_ptr<ZipInputBuffer> inputBuffer( new ZipInputBuffer(data->zipData, it->second) );
+                            inputStream.setBuffer(inputBuffer);
+                        } else {
+                            boost::shared_ptr<EmptyBuffer> inputBuffer( new EmptyBuffer() );
+                            inputStream.setBuffer(inputBuffer);
+                        }
 
-unsigned int ZipPackage::getCrc(const std::string &fileName)
-{
-	ZipFileList::iterator it;
-	if(data->zipData->findFile(fileName, it))
-	{
-		return it->second.crc;
-	}
-	return 0;
-}
+                        return inputStream;
+                    }
 
-} // end of namespace filesystem
-} // end of namespace frozenbyte
+                    unsigned int ZipPackage::getCrc(const std::string & fileName) {
+                        ZipFileList::iterator it;
+                        if ( data->zipData->findFile(fileName, it) )
+                            return it->second.crc;
+                        return 0;
+                    }
+
+                    } // end of namespace filesystem
+                    } // end of namespace frozenbyte

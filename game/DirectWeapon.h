@@ -1,4 +1,3 @@
-
 #ifndef DIRECTWEAPON_H
 #define DIRECTWEAPON_H
 
@@ -6,16 +5,13 @@
 
 namespace game
 {
-
-  class DirectWeapon : public Weapon
-  {
-  public:
-    DirectWeapon();
-    DirectWeapon(int id);
-    virtual ~DirectWeapon();
-  };
+    class DirectWeapon : public Weapon {
+    public:
+        DirectWeapon();
+        DirectWeapon(int id);
+        virtual ~DirectWeapon();
+    };
 
 }
 
 #endif
-

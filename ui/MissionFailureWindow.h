@@ -2,26 +2,24 @@
 #define INC_MISSIONFAILUREWINDOW_H
 
 namespace game {
-	class Game;
+    class Game;
 }
 
 class Ogui;
 
 namespace ui {
+    class MissionFailureWindow {
+    public:
+        MissionFailureWindow(Ogui *ogui, game::Game *game);
+        ~MissionFailureWindow();
 
-class MissionFailureWindow
-{
-public:
-	MissionFailureWindow(Ogui *ogui, game::Game *game);
-	~MissionFailureWindow();
-	
-	bool closeMePlease() const; 
-	bool shouldRestart() const;
+        bool closeMePlease() const;
+        bool shouldRestart() const;
 
-private:
-	class MissionFailureWindowImpl;
-	MissionFailureWindowImpl *impl;
-};
+    private:
+        class MissionFailureWindowImpl;
+        MissionFailureWindowImpl *impl;
+    };
 
 }
 

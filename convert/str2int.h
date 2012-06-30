@@ -1,4 +1,3 @@
-
 #ifndef STR2INT_H
 #define STR2INT_H
 

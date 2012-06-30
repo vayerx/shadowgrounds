@@ -1,4 +1,3 @@
-
 #ifndef UPGRADEAVAILABLEWINDOW_H
 #define UPGRADEAVAILABLEWINDOW_H
 
@@ -7,49 +6,46 @@
 
 namespace game
 {
-  class Game;
+    class Game;
 }
 
 namespace ui
 {
+    /**
+     *
+     * Player upgrade available on-screen status window.
+     *
+     * @version 1.0, 28.12.2004
+     * @author Jukka Kokkonen <jukka@frozenbyte.com>
+     * @see CombatWindow
+     *
+     */
 
-  /**
-   *
-   * Player upgrade available on-screen status window.
-   *
-   * @version 1.0, 28.12.2004
-   * @author Jukka Kokkonen <jukka@frozenbyte.com>
-   * @see CombatWindow
-   *
-   */
+    class UpgradeAvailableWindow : public ICombatSubWindow, private IOguiEffectListener {
+    public:
 
-  class UpgradeAvailableWindow : public ICombatSubWindow, private IOguiEffectListener
-  {
-  public:
+        UpgradeAvailableWindow(Ogui *ogui, game::Game *game, int player);
+        ~UpgradeAvailableWindow();
 
-    UpgradeAvailableWindow(Ogui *ogui, game::Game *game, int player);
-    ~UpgradeAvailableWindow();
+        void hide(int fadeTime = 0);
+        void show(int fadeTime = 0);
+        void update();
+        void EffectEvent(OguiEffectEvent *e);
 
-		void hide(int fadeTime = 0);
-		void show(int fadeTime = 0);
-		void update();
-		void EffectEvent(OguiEffectEvent *e);
+    private:
+        Ogui *ogui;
+        game::Game *game;
+        int player;
 
-  private:
-    Ogui *ogui;
-    game::Game *game;
-    int player;
+        OguiWindow *win;
 
-    OguiWindow *win;
+        IOguiImage *upgradeAvailableImage;
+        OguiButton *upgradeAvailableButton;
 
-    IOguiImage *upgradeAvailableImage;
-		OguiButton *upgradeAvailableButton;
-
-		int lastUpdateValue;
-		bool lastUpdateWasAvailable;
-  };
+        int lastUpdateValue;
+        bool lastUpdateWasAvailable;
+    };
 
 }
-
 
 #endif

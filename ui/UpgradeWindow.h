@@ -1,4 +1,3 @@
-
 #ifndef UPGRADEWINDOW_H
 #define UPGRADEWINDOW_H
 
@@ -7,16 +6,14 @@
 
 #include <vector>
 
-
-#define UPGRADEWINDOW_MAX_WEAPONS 10
+#define UPGRADEWINDOW_MAX_WEAPONS             10
 
 #define UPGRADEWINDOW_MAX_UPGRADES_PER_WEAPON 3
 
-
 namespace game
 {
-	class Game;
-	class Unit;
+    class Game;
+    class Unit;
 }
 
 class LinkedList;
@@ -30,107 +27,102 @@ class IOguiFont;
 
 namespace ui
 {
-	class GUIEffectWindow;
+    class GUIEffectWindow;
 
-	class UpgradeWindow : public IOguiButtonListener, private IOguiEffectListener
-	{
-		public:
+    class UpgradeWindow : public IOguiButtonListener, private IOguiEffectListener {
+    public:
 
-			UpgradeWindow(Ogui *ogui, game::Game *game, game::Unit *unit);
-				
-			~UpgradeWindow();
+        UpgradeWindow(Ogui *ogui, game::Game *game, game::Unit *unit);
 
-			void update();
+        ~UpgradeWindow();
 
-			void effectUpdate(int msecTimeDelta);
+        void update();
 
-			void raise();
+        void effectUpdate(int msecTimeDelta);
 
-			void applyUpgrades();
-			void undoUpgrades();
+        void raise();
 
-			virtual void CursorEvent(OguiButtonEvent *eve);
-			void EffectEvent(OguiEffectEvent *e);
+        void applyUpgrades();
+        void undoUpgrades();
 
-			void fadeOut();
-			int getFadeInTime() const;
-			int getFadeOutTime() const;
-			int isVisible() const;
+        virtual void CursorEvent(OguiButtonEvent *eve);
+        void EffectEvent(OguiEffectEvent *e);
 
-		private:
+        void fadeOut();
+        int getFadeInTime() const;
+        int getFadeOutTime() const;
+        int isVisible() const;
 
-			//int selectionNumber;
-			game::Game *game;
-			game::Unit *unit;
-			Ogui *ogui;
+    private:
 
-			LinkedList *upgradesPending;
-			int upgradesPendingCost;
+        //int selectionNumber;
+        game::Game *game;
+        game::Unit *unit;
+        Ogui *ogui;
 
-			GUIEffectWindow *effectWindow;
+        LinkedList *upgradesPending;
+        int upgradesPendingCost;
 
-			OguiWindow *win;
-			//IOguiImage *selectionImage;
-			//OguiButton *selection;
+        GUIEffectWindow *effectWindow;
 
-			IOguiImage *weaponImages[UPGRADEWINDOW_MAX_WEAPONS];
-			IOguiImage *weaponInfoImages[UPGRADEWINDOW_MAX_WEAPONS];
-			OguiButton *weaponButtons[UPGRADEWINDOW_MAX_WEAPONS];
+        OguiWindow *win;
+        //IOguiImage *selectionImage;
+        //OguiButton *selection;
 
-			IOguiImage *weaponHighlightImage;
-			OguiButton *weaponHighlight;
+        IOguiImage *weaponImages[UPGRADEWINDOW_MAX_WEAPONS];
+        IOguiImage *weaponInfoImages[UPGRADEWINDOW_MAX_WEAPONS];
+        OguiButton *weaponButtons[UPGRADEWINDOW_MAX_WEAPONS];
 
-			IOguiImage *upgradeImages[UPGRADEWINDOW_MAX_WEAPONS][UPGRADEWINDOW_MAX_UPGRADES_PER_WEAPON];
-			//IOguiImage *upgradeDisabledImages[UPGRADEWINDOW_MAX_WEAPONS][UPGRADEWINDOW_MAX_UPGRADES_PER_WEAPON];
-			//IOguiImage *upgradeSelectedImages[UPGRADEWINDOW_MAX_WEAPONS][UPGRADEWINDOW_MAX_UPGRADES_PER_WEAPON];
-			IOguiImage *upgradeBGImage;
-			IOguiImage *upgradeBGDisabledImage;
-			IOguiImage *upgradeHighlightImage;
-			IOguiImage *upgradeSelectedImage;
-			//IOguiImage *upgradeBGSelectedImage;
-			OguiButton *slotBGs[UPGRADEWINDOW_MAX_WEAPONS];
-			OguiButton *upgradeSelections[UPGRADEWINDOW_MAX_WEAPONS][UPGRADEWINDOW_MAX_UPGRADES_PER_WEAPON];
-			OguiButton *upgradeHighlight;
-			OguiButton *upgradeButtons[UPGRADEWINDOW_MAX_WEAPONS][UPGRADEWINDOW_MAX_UPGRADES_PER_WEAPON];
+        IOguiImage *weaponHighlightImage;
+        OguiButton *weaponHighlight;
 
-			//OguiButton *apply;
-			//OguiButton *close;
+        IOguiImage *upgradeImages[UPGRADEWINDOW_MAX_WEAPONS][UPGRADEWINDOW_MAX_UPGRADES_PER_WEAPON];
+        //IOguiImage *upgradeDisabledImages[UPGRADEWINDOW_MAX_WEAPONS][UPGRADEWINDOW_MAX_UPGRADES_PER_WEAPON];
+        //IOguiImage *upgradeSelectedImages[UPGRADEWINDOW_MAX_WEAPONS][UPGRADEWINDOW_MAX_UPGRADES_PER_WEAPON];
+        IOguiImage *upgradeBGImage;
+        IOguiImage *upgradeBGDisabledImage;
+        IOguiImage *upgradeHighlightImage;
+        IOguiImage *upgradeSelectedImage;
+        //IOguiImage *upgradeBGSelectedImage;
+        OguiButton *slotBGs[UPGRADEWINDOW_MAX_WEAPONS];
+        OguiButton *upgradeSelections[UPGRADEWINDOW_MAX_WEAPONS][UPGRADEWINDOW_MAX_UPGRADES_PER_WEAPON];
+        OguiButton *upgradeHighlight;
+        OguiButton *upgradeButtons[UPGRADEWINDOW_MAX_WEAPONS][UPGRADEWINDOW_MAX_UPGRADES_PER_WEAPON];
 
-			//OguiButton *ok;
-			//OguiButton *cancel;
+        //OguiButton *apply;
+        //OguiButton *close;
 
-			OguiButton *closeButton;
-			OguiButton *undoButton;
+        //OguiButton *ok;
+        //OguiButton *cancel;
 
-			OguiButton *upgradePartsIcon;
-			OguiTextLabel *upgradePartsText;
+        OguiButton *closeButton;
+        OguiButton *undoButton;
 
-			OguiButton *titleButton;
+        OguiButton *upgradePartsIcon;
+        OguiTextLabel *upgradePartsText;
 
-			OguiButton *infoBackground;
-			OguiButton *infoIcon;
-			OguiFormattedText *infoText;
+        OguiButton *titleButton;
 
-			int highlightedWeaponSlot;
-			int highlightedUpgradeSlot;
-			intptr_t highlightedUpgradeId;
-			bool highlightOn;
+        OguiButton *infoBackground;
+        OguiButton *infoIcon;
+        OguiFormattedText *infoText;
 
-			int visible;
+        int highlightedWeaponSlot;
+        int highlightedUpgradeSlot;
+        intptr_t highlightedUpgradeId;
+        bool highlightOn;
 
-			std::vector< IOguiFont* > fonts;
-			// dev
-			//OguiButton *dev_downgrade_all;
-			//OguiButton *dev_restore_orig;
-			//OguiButton *dev_apply_all;
+        int visible;
 
-			void getWeaponPosition(int number, int *x, int *y);
+        std::vector< IOguiFont * > fonts;
+        // dev
+        //OguiButton *dev_downgrade_all;
+        //OguiButton *dev_restore_orig;
+        //OguiButton *dev_apply_all;
 
-	};
+        void getWeaponPosition(int number, int *x, int *y);
+
+    };
 }
 
-
 #endif
-
-
-

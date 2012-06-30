@@ -1,4 +1,3 @@
-
 #ifndef PART_H
 #define PART_H
 
@@ -6,101 +5,95 @@
 // This is the armor part class.
 //
 
-// An instance of this class represents an instance of an armor part in 
+// An instance of this class represents an instance of an armor part in
 // the game. PartType class represents the type (class) of an armor part.
 // Try not to mix the concepts! Understanding this difference is crucial.
 
 // PartType (/ extending classes) != Part (/ extending classes)
 // "Part instanceof PartType" in game world
 
-
 #include "GameObject.h"
 #include "PartType.h"
 
 #include "../ui/VisualObject.h"
 
-
-#define NO_PART_OWNER -19561
+#define NO_PART_OWNER     -19561
 
 #define MAX_PART_CHILDREN 40
 
-
 namespace game
 {
+    class Part : public GameObject {
+    public:
+        Part();
 
-  class Part : public GameObject
-  {
-  public:
-    Part();
+        ~Part();
 
-    ~Part();
+        // should return data needed to save the part
+        virtual SaveData *getSaveData() const;
 
-    // should return data needed to save the part
-    virtual SaveData *getSaveData() const;
+        virtual const char *getStatusInfo() const;
 
-		virtual const char *getStatusInfo() const;
-    
-    // returns type of this part (the "class" of this part)
-    virtual PartType *getType();
+        // returns type of this part (the "class" of this part)
+        virtual PartType *getType();
 
-    // sets the type of this part (general advice: don't use this.)
-    // only useful after creating a new instance.
-    virtual void setType(PartType *partType);
+        // sets the type of this part (general advice: don't use this.)
+        // only useful after creating a new instance.
+        virtual void setType(PartType *partType);
 
-    // returns the parent part (the one that this is attached to)
-    Part *getParent();
+        // returns the parent part (the one that this is attached to)
+        Part *getParent();
 
-    // TODO: there should be no need for this, calling setSubPart for the
-    // new parent must set the objects parent 
-    // void setParent(Part *part);
+        // TODO: there should be no need for this, calling setSubPart for the
+        // new parent must set the objects parent
+        // void setParent(Part *part);
 
-    // get the player number owning this part
-    int getOwner();
+        // get the player number owning this part
+        int getOwner();
 
-    void setOwner(int player);
+        void setOwner(int player);
 
-    // returns a child part in given slot number or NULL if does not exist
-    Part *getSubPart(int slotNumber);
+        // returns a child part in given slot number or NULL if does not exist
+        Part *getSubPart(int slotNumber);
 
-    void setSubPart(int slotNumber, Part *part);
+        void setSubPart(int slotNumber, Part *part);
 
-    bool isPurchasePending();
+        bool isPurchasePending();
 
-    void setPurchasePending(bool pending);
+        void setPurchasePending(bool pending);
 
-    int getDamage();
+        int getDamage();
 
-    void addDamage(int damage);
+        void addDamage(int damage);
 
-    int getRepairPrice();
+        int getRepairPrice();
 
-    void repair();
+        void repair();
 
-    // sets the visual object for this part
-    // NOTICE: the part does not delete it in destructor (maybe should?)
-    virtual void setVisualObject(ui::VisualObject *visualObject);
+        // sets the visual object for this part
+        // NOTICE: the part does not delete it in destructor (maybe should?)
+        virtual void setVisualObject(ui::VisualObject *visualObject);
 
-    virtual ui::VisualObject *getVisualObject();
+        virtual ui::VisualObject *getVisualObject();
 
-  protected:
-    Part *parent;
-    Part **children;
+    protected:
+        Part *parent;
+        Part **children;
 
-    PartType *partType;
+        PartType *partType;
 
-    ui::VisualObject *visualObject;
+        ui::VisualObject *visualObject;
 
-    int damage;
-    int heat;
+        int damage;
+        int heat;
 
-    int owner;
+        int owner;
 
-    // not yet paid for, deleted upon exit from armor construction
-    bool purchasePending; 
+        // not yet paid for, deleted upon exit from armor construction
+        bool purchasePending;
 
-  };
+    };
 
 }
 
 #endif
-

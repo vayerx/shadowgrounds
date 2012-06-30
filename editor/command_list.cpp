@@ -9,45 +9,43 @@
 #include <cassert>
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        struct CommandListData {
+            std::map<int, ICommand *> commands;
 
-struct CommandListData
-{
-	std::map<int, ICommand *> commands;
+            CommandListData()
+            {
+            }
 
-	CommandListData()
-	{
-	}
+            ~CommandListData()
+            {
+            }
+        };
 
-	~CommandListData()
-	{
-	}
-};
+        CommandList::CommandList()
+        {
+            boost::shared_ptr<CommandListData> tempData( new CommandListData() );
+            data.swap(tempData);
+        }
 
-CommandList::CommandList()
-{
-	boost::shared_ptr<CommandListData> tempData(new CommandListData());
-	data.swap(tempData);
-}
+        CommandList::~CommandList()
+        {
+        }
 
-CommandList::~CommandList()
-{
-}
+        void CommandList::addCommand(int id, ICommand *command)
+        {
+            assert(id);
+            assert(command);
 
-void CommandList::addCommand(int id, ICommand *command)
-{
-	assert(id);
-	assert(command);
+            data->commands[id] = command;
+        }
 
-	data->commands[id] = command;
-}
+        void CommandList::execute(int id)
+        {
+            std::map<int, ICommand *>::iterator it = data->commands.find(id);
+            if ( it != data->commands.end() )
+                (*it).second->execute(id);
+        }
 
-void CommandList::execute(int id)
-{
-	std::map<int, ICommand *>::iterator it = data->commands.find(id);
-	if(it != data->commands.end())
-		(*it).second->execute(id);
-}
-
-} // end of namespace editor
-} // end of namespace frozenbyte
+    } // end of namespace editor
+}     // end of namespace frozenbyte

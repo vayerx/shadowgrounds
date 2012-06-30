@@ -8,54 +8,49 @@
 #include <string>
 
 namespace util {
+    class ProceduralProperties {
+        struct Data;
+        boost::scoped_ptr<Data> data;
 
-class ProceduralProperties
-{
-	struct Data;
-	boost::scoped_ptr<Data> data;
+    public:
+        ProceduralProperties();
+        ~ProceduralProperties();
 
-public:
-	ProceduralProperties();
-	~ProceduralProperties();
+        const VC2I&getTextureSize() const;
 
-	const VC2I &getTextureSize() const;
+        struct Layer {
+            std::string texture;
+            VC2         scale;
+            VC2         speed;
 
-	struct Layer
-	{
-		std::string texture;
-		VC2 scale;
-		VC2 speed;
+            Layer();
+        };
 
-		Layer();
-	};
+        struct Source {
+            Layer texture;
+            Layer offset;
+            VC2   radius;
+            VC2   linearSpeed;
 
-	struct Source
-	{
-		Layer texture;
-		Layer offset;
-		VC2 radius;
-		VC2 linearSpeed;
+            Source();
+        };
 
-		Source();
-	};
+        struct Effect {
+            std::string name;
+            std::string fallback;
+            bool        enableDistortion;
 
-	struct Effect
-	{
-		std::string name;
-		std::string fallback;
-		bool enableDistortion;
+            Source      source1;
+            Source      source2;
+            Source      distortion1;
+            Source      distortion2;
 
-		Source source1;
-		Source source2;
-		Source distortion1;
-		Source distortion2;
+            Effect();
+        };
 
-		Effect();
-	};
-
-	int getEffectAmount() const;
-	const Effect &getEffect(int index) const;
-};
+        int getEffectAmount() const;
+        const Effect&getEffect(int index) const;
+    };
 
 } // util
 

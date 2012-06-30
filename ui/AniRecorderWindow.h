@@ -1,4 +1,3 @@
-
 #ifndef ANIRECORDERWINDOW_H
 #define ANIRECORDERWINDOW_H
 
@@ -18,150 +17,149 @@ class OguiSelectListStyle;
 
 namespace game
 {
-  class Game;
-	class AniRecorder;
-	class Unit;
+    class Game;
+    class AniRecorder;
+    class Unit;
 }
 
 namespace ui
 {
-	class MessageBoxWindow;
+    class MessageBoxWindow;
 
-  class AniRecorderWindow : private IOguiButtonListener,
-		private IOguiSelectListListener,
-		private IMessageBoxListener
-  {
-  public:
-    AniRecorderWindow(Ogui *ogui, game::Game *game);
-    ~AniRecorderWindow();
+    class AniRecorderWindow : private IOguiButtonListener,
+        private IOguiSelectListListener,
+        private IMessageBoxListener {
+    public:
+        AniRecorderWindow(Ogui *ogui, game::Game *game);
+        ~AniRecorderWindow();
 
-    virtual void CursorEvent(OguiButtonEvent *eve);
+        virtual void CursorEvent(OguiButtonEvent *eve);
 
-		virtual void SelectEvent(OguiSelectListEvent *eve);
+        virtual void SelectEvent(OguiSelectListEvent *eve);
 
-		void updateLists();
+        void updateLists();
 
-		void updateButtons();
+        void updateButtons();
 
-		void updateUnitSelections();
+        void updateUnitSelections();
 
-    void run();
+        void run();
 
-		void reload();
+        void reload();
 
-		void setMinimizedWindowMode(bool minimize);
+        void setMinimizedWindowMode(bool minimize);
 
-		void messageBoxClosed(MessageBoxWindow *msgbox, int id, int choice);
+        void messageBoxClosed(MessageBoxWindow *msgbox, int id, int choice);
 
-		void addAniScriptCommands(const char *scriptCommands);
+        void addAniScriptCommands(const char *scriptCommands);
 
-		void setStatusText(const char *status);
-		void sliderStatus();
-		std::string getSliderPosOrRangeText();
+        void setStatusText(const char *status);
+        void sliderStatus();
+        std::string getSliderPosOrRangeText();
 
-  private:
-		void clearLists();
+    private:
+        void clearLists();
 
-		void createMiniDependantButtons();
+        void createMiniDependantButtons();
 
-    Ogui *ogui;
-    OguiWindow *win;
-    game::Game *game;
+        Ogui *ogui;
+        OguiWindow *win;
+        game::Game *game;
 
-		IOguiFont *font;
-		IOguiFont *smallFont;
+        IOguiFont *font;
+        IOguiFont *smallFont;
 
-    OguiTextLabel *label1;
-    OguiButton *closebut;
-    OguiButton *minibut;
+        OguiTextLabel *label1;
+        OguiButton *closebut;
+        OguiButton *minibut;
 
-    OguiButton *cameraModeBut;
-    OguiButton *cameraDumpBut;
-    OguiButton *cameraTestBut;
-    OguiButton *cameraInterpBut;
-    OguiButton *cameraDelBut;
+        OguiButton *cameraModeBut;
+        OguiButton *cameraDumpBut;
+        OguiButton *cameraTestBut;
+        OguiButton *cameraInterpBut;
+        OguiButton *cameraDelBut;
 
-    OguiButton *addUnitBut;
-    OguiButton *removeUnitBut;
-    OguiButton *recBut;
-    OguiButton *playBut;
-    OguiButton *pauseBut;
-    OguiButton *rewindBut;
+        OguiButton *addUnitBut;
+        OguiButton *removeUnitBut;
+        OguiButton *recBut;
+        OguiButton *playBut;
+        OguiButton *pauseBut;
+        OguiButton *rewindBut;
 
-    OguiButton *positionBut;
-    OguiButton *positionEndBut;
-    OguiButton *sliderBut;
+        OguiButton *positionBut;
+        OguiButton *positionEndBut;
+        OguiButton *sliderBut;
 
-    OguiButton *recordPathBut;
-    OguiButton *reloadBut;
+        OguiButton *recordPathBut;
+        OguiButton *reloadBut;
 
-    OguiButton *addAnimBut;
-    OguiButton *addFewTicksBut;
-    OguiButton *addManyTicksBut;
-    OguiButton *addCommandsBut;
-    OguiButton *smoothPositionBut;
-    OguiButton *smoothRotationBut;
-    OguiButton *smoothAimBut;
-    OguiButton *undoBut;
-    OguiButton *redoBut;
-    OguiButton *deletePositionBut;
-    OguiButton *dropOnGroundBut;
+        OguiButton *addAnimBut;
+        OguiButton *addFewTicksBut;
+        OguiButton *addManyTicksBut;
+        OguiButton *addCommandsBut;
+        OguiButton *smoothPositionBut;
+        OguiButton *smoothRotationBut;
+        OguiButton *smoothAimBut;
+        OguiButton *undoBut;
+        OguiButton *redoBut;
+        OguiButton *deletePositionBut;
+        OguiButton *dropOnGroundBut;
 
-    IOguiImage *unselImage;
-    IOguiImage *selImage;
-    IOguiImage *selDownImage;
+        IOguiImage *unselImage;
+        IOguiImage *selImage;
+        IOguiImage *selDownImage;
 
-    IOguiImage *scrollUpImage;
-    IOguiImage *scrollUpPressedImage;
-    IOguiImage *scrollUpDisabledImage;
-    IOguiImage *scrollDownImage;
-    IOguiImage *scrollDownPressedImage;
-    IOguiImage *scrollDownDisabledImage;
-    OguiButtonStyle *scrollUpStyle;
-    OguiButtonStyle *scrollDownStyle;
+        IOguiImage *scrollUpImage;
+        IOguiImage *scrollUpPressedImage;
+        IOguiImage *scrollUpDisabledImage;
+        IOguiImage *scrollDownImage;
+        IOguiImage *scrollDownPressedImage;
+        IOguiImage *scrollDownDisabledImage;
+        OguiButtonStyle *scrollUpStyle;
+        OguiButtonStyle *scrollDownStyle;
 
-    OguiButtonStyle *unselStyle;
-    OguiButtonStyle *selStyle;
-    OguiButtonStyle *numUnselStyle;
+        OguiButtonStyle *unselStyle;
+        OguiButtonStyle *selStyle;
+        OguiButtonStyle *numUnselStyle;
 
-    OguiSelectListStyle *listStyle;
+        OguiSelectListStyle *listStyle;
 
-    OguiButtonStyle *smallUnselStyle;
-    OguiButtonStyle *smallSelStyle;
-    OguiSelectListStyle *smallListStyle;
+        OguiButtonStyle *smallUnselStyle;
+        OguiButtonStyle *smallSelStyle;
+        OguiSelectListStyle *smallListStyle;
 
-    OguiButtonStyle *tinyUnselStyle;
-    OguiButtonStyle *tinySelStyle;
-    OguiSelectListStyle *tinyListStyle;
+        OguiButtonStyle *tinyUnselStyle;
+        OguiButtonStyle *tinySelStyle;
+        OguiSelectListStyle *tinyListStyle;
 
-    OguiTextLabel *timeLabel;
-    OguiTextLabel *statusLabel;
+        OguiTextLabel *timeLabel;
+        OguiTextLabel *statusLabel;
 
-    OguiSelectList *cameraSelectList;
-    OguiSelectList *unitSelectList;
-    OguiSelectList *animationSelectList;
-    OguiSelectList *tickSelectList;
+        OguiSelectList *cameraSelectList;
+        OguiSelectList *unitSelectList;
+        OguiSelectList *animationSelectList;
+        OguiSelectList *tickSelectList;
 
-		game::AniRecorder *aniRecorder;
+        game::AniRecorder *aniRecorder;
 
-		game::Unit *selectedUnit;
-		int selectedCamera;
+        game::Unit *selectedUnit;
+        int selectedCamera;
 
-		bool sliderDown;
-		bool endSliderDown;
+        bool sliderDown;
+        bool endSliderDown;
 
-		bool assumingPlayingOrRecording;
+        bool assumingPlayingOrRecording;
 
-		bool minimized;
-		int sliderHeight;
+        bool minimized;
+        int sliderHeight;
 
-		int recCounter;
+        int recCounter;
 
-		char *currentSelectedAnimation;
-		int currentSelectedTicks;
+        char *currentSelectedAnimation;
+        int currentSelectedTicks;
 
-		MessageBoxWindow *cameraDelBox;
-  };
+        MessageBoxWindow *cameraDelBox;
+    };
 
 }
 

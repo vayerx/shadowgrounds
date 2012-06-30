@@ -8,29 +8,26 @@
 
 namespace game
 {
-	class Game;
+    class Game;
 }
 
-namespace ui 
+namespace ui
 {
+    class LogManager {
+    public:
+        LogManager();
+        ~LogManager();
 
-class LogManager 
-{
-public:
-	LogManager();
-	~LogManager();
+        void addNewLogEntry(const std::string &variable_name);
+        void update(game::Game *game);
 
-	void addNewLogEntry( const std::string& variable_name );
-	void update( game::Game* game );
+        std::list< LogEntry > getCollectedLogs() const;
 
-	std::list< LogEntry > getCollectedLogs() const;
+    private:
+        void loadNewLogEntries();
 
-private:
-	void loadNewLogEntries();
-
-	std::map< std::string, LogEntry > logEntries;
-};
-
+        std::map< std::string, LogEntry > logEntries;
+    };
 
 } // end of namespace ui
 

@@ -8,44 +8,43 @@
 
 namespace net
 {
-  namespace file
-  {
-    // proto
-    class FileBind;
-    class FileConnection;
-
-    /**
-     * A file net driver.
-     */
-    class FileDriver : public INetDriver
+    namespace file
     {
-    public:
-      FileDriver();
+        // proto
+        class FileBind;
+        class FileConnection;
 
-      virtual const char *getDriverName();
+        /**
+         * A file net driver.
+         */
+        class FileDriver : public INetDriver {
+        public:
+            FileDriver();
 
-      virtual INetConnection *connectTo(const char *to)
-        throw (NetDriverException*);
-   
-      virtual INetBind *bind(const char *port)
-        throw (NetDriverException*);
-   
-      virtual void setNetModeFlags(int netModeFlags)
-        throw (NetDriverException*);
+            virtual const char *getDriverName();
 
-      virtual int getNetModeFlags();
-      
-      virtual int getSupportedModeFlags();
-   
-      virtual ~FileDriver();
-  
-    private:
-      int modeFlags;
+            virtual INetConnection *connectTo(const char *to)
+            throw (NetDriverException *);
 
-      friend class FileBind;
-      friend class FileConnection;
-    };
-  }
+            virtual INetBind *bind(const char *port)
+            throw (NetDriverException *);
+
+            virtual void setNetModeFlags(int netModeFlags)
+            throw (NetDriverException *);
+
+            virtual int getNetModeFlags();
+
+            virtual int getSupportedModeFlags();
+
+            virtual ~FileDriver();
+
+        private:
+            int modeFlags;
+
+            friend class FileBind;
+            friend class FileConnection;
+        };
+    }
 }
 
 #endif

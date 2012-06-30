@@ -7,12 +7,10 @@ class IStorm3D;
 class IStorm3D_Terrain;
 
 namespace util {
-
-class ProceduralProperties;
-void applyStorm(IStorm3D &storm, const ProceduralProperties &properties);
-void applyRenderer(IStorm3D &storm, const ProceduralProperties &properties);
+    class ProceduralProperties;
+    void applyStorm(IStorm3D &storm, const ProceduralProperties &properties);
+    void applyRenderer(IStorm3D &storm, const ProceduralProperties &properties);
 
 } // util
 
 #endif
-

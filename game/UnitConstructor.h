@@ -1,19 +1,14 @@
-
 #ifndef UNITCONSTRUCTOR_H
 #define UNITCONSTRUCTOR_H
 
 namespace game
 {
-  class UnitConstructor
-  {
-  public:
+    class UnitConstructor {
+    public:
 
-  private:
+    private:
 
-  };
+    };
 }
 
 #endif
-
-
-

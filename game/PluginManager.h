@@ -1,25 +1,21 @@
-
-
 #ifndef PLUGINMANAGER_H
 #define PLUGINMANAGER_H
 
 namespace game
 {
-  class Game;
-  class PluginConnector;
+    class Game;
+    class PluginConnector;
 
-  class PluginManager
-  {
-  public:
-    PluginManager(Game *game);
+    class PluginManager {
+    public:
+        PluginManager(Game *game);
 
-    ~PluginManager();
+        ~PluginManager();
 
-  private:
-    LinkedList *pluginConnectors;
-  };
+    private:
+        LinkedList *pluginConnectors;
+    };
 
 }
 
 #endif
-

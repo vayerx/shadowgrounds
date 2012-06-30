@@ -1,4 +1,3 @@
-
 #ifndef CAMERAAUTOTILTER_H
 #define CAMERAAUTOTILTER_H
 
@@ -6,31 +5,27 @@
 
 namespace game
 {
-	class GameMap;
+    class GameMap;
 }
 
 namespace ui
 {
-	class CameraAutotilter
-	{
-		public:
-			CameraAutotilter(game::GameMap *gameMap);
+    class CameraAutotilter {
+    public:
+        CameraAutotilter(game::GameMap *gameMap);
 
-			~CameraAutotilter();
+        ~CameraAutotilter();
 
-			VC3 getTilt(const VC3 &position, float alphaAngle);
+        VC3 getTilt(const VC3 &position, float alphaAngle);
 
-		private:
-			game::GameMap *gameMap;
-			VC3 lastRotation;
-			VC3 lastPosition;
-			int lastTime;
+    private:
+        game::GameMap *gameMap;
+        VC3 lastRotation;
+        VC3 lastPosition;
+        int lastTime;
 
-	};
+    };
 
 }
 
 #endif
-
-
-

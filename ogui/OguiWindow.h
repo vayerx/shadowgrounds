@@ -1,4 +1,3 @@
-
 #ifndef OGUIWINDOW_H
 #define OGUIWINDOW_H
 
@@ -23,130 +22,134 @@
 #define OGUI_WIN_REACT_MASK_CURSOR_6 32
 #define OGUI_WIN_REACT_MASK_CURSOR_7 64
 #define OGUI_WIN_REACT_MASK_CURSOR_8 128
-#define OGUI_WIN_REACT_MASK_ALL 255
-
+#define OGUI_WIN_REACT_MASK_ALL      255
 
 // these must be the same as the effect event type values
-#define OGUI_WINDOW_EFFECT_FADEOUT 1
-#define OGUI_WINDOW_EFFECT_FADEIN 2
-#define OGUI_WINDOW_EFFECT_MOVEOUT 4
-#define OGUI_WINDOW_EFFECT_MOVEIN 8
-#define OGUI_WINDOW_EFFECT_TEXTTYPE 16
-#define OGUI_WINDOW_EFFECT_TEXTLINE 32
-
-
+#define OGUI_WINDOW_EFFECT_FADEOUT   1
+#define OGUI_WINDOW_EFFECT_FADEIN    2
+#define OGUI_WINDOW_EFFECT_MOVEOUT   4
+#define OGUI_WINDOW_EFFECT_MOVEIN    8
+#define OGUI_WINDOW_EFFECT_TEXTTYPE  16
+#define OGUI_WINDOW_EFFECT_TEXTLINE  32
 
 class Ogui;
 class LinkedList;
 
-
-class OguiWindow
-{
+class OguiWindow {
 public:
 
-	// NOTE: these values must equal the ones defined in orvgui.h
-	enum MOVE_BOUND
-	{
-		MOVE_BOUND_ALL_IN_SCREEN = 0, // windows must be fully inside screen
-		MOVE_BOUND_PART_IN_SCREEN = 1, // some part of window must be on screen
-		MOVE_BOUND_NO_PART_IN_SCREEN = 2 // no part of the window must be on screen :)
-	};
+    // NOTE: these values must equal the ones defined in orvgui.h
+    enum MOVE_BOUND {
+        MOVE_BOUND_ALL_IN_SCREEN = 0,    // windows must be fully inside screen
+        MOVE_BOUND_PART_IN_SCREEN = 1,   // some part of window must be on screen
+        MOVE_BOUND_NO_PART_IN_SCREEN = 2 // no part of the window must be on screen :)
+    };
 
-	OguiWindow(Ogui *ogui, int x, int y, int sizex, int sizey, IOguiImage *img, int id);
-	~OguiWindow();
+    OguiWindow(Ogui *ogui, int x, int y, int sizex, int sizey, IOguiImage *img, int id);
+    ~OguiWindow();
 
-	void Raise();
-	void Lower();
-	void Show();
-	void Hide();
-	bool IsVisible() const;
-	void SetPopup();
-	void SetPopupNoClose();
-	void SetPopupNoCloseOnButton();
-	void SetOnlyActive();
-	void RestoreAllActive();
-	void MoveTo(int x, int y);
-	void Resize(int x, int y);
+    void Raise();
+    void Lower();
+    void Show();
+    void Hide();
+    bool IsVisible() const;
+    void SetPopup();
+    void SetPopupNoClose();
+    void SetPopupNoCloseOnButton();
+    void SetOnlyActive();
+    void RestoreAllActive();
+    void MoveTo(int x, int y);
+    void Resize(int x, int y);
 
-	int GetPositionX();
-	int GetPositionY();
-	int GetSizeX();
-	int GetSizeY();
+    int GetPositionX();
+    int GetPositionY();
+    int GetSizeX();
+    int GetSizeY();
 
-	void SetReactMask(int reactCursors);
+    void SetReactMask(int reactCursors);
 
-	void SetMovable();
-	void SetUnmovable();
+    void SetMovable();
+    void SetUnmovable();
 
-	int GetId();
+    int GetId();
 
-	void StartEffect(int windowEffect, int effectDuration);
-	void EndAllEffects();
+    void StartEffect(int windowEffect, int effectDuration);
+    void EndAllEffects();
 
-	void SetEffectListener(IOguiEffectListener *listener);
+    void SetEffectListener(IOguiEffectListener *listener);
 
-	// HACK: SPECIAL EFFECTS HACK - should be re-implemented in some better way...
-	void setBackgroundScroll(float scrollX, float scrollY);
-	void setBackgroundRepeatFactor(float x, float y);
-	void setBackgroundRepeatAuto(void);
+    // HACK: SPECIAL EFFECTS HACK - should be re-implemented in some better way...
+    void setBackgroundScroll(float scrollX, float scrollY);
+    void setBackgroundRepeatFactor(float x, float y);
+    void setBackgroundRepeatAuto(void);
 
-	void setBackgroundImage( IOguiImage* img );
+    void setBackgroundImage(IOguiImage *img);
 
-	// 0 for no transparency, 100 for full transparency
-	void SetTransparency(int transparencyPercentage);
+    // 0 for no transparency, 100 for full transparency
+    void SetTransparency(int transparencyPercentage);
 
-	void SetMoveBoundaryType(MOVE_BOUND btype);
+    void SetMoveBoundaryType(MOVE_BOUND btype);
 
-	// this should only be called by the ogui button...
-	// not private, cos don't want to play with friend operators.
-	void buttonDeleted(OguiButton *b);
+    // this should only be called by the ogui button...
+    // not private, cos don't want to play with friend operators.
+    void buttonDeleted(OguiButton *b);
 
-	IOguiImage *getBackgroundImage() const;
+    IOguiImage *getBackgroundImage() const;
 
 private:
-	
-	OguiButton *CreateNewButton(int x, int y, int sizex, int sizey, 
-		IOguiImage *img, IOguiImage *imgdown, IOguiImage *imghigh, IOguiImage *imgdisabled, bool withText, 
-		const char *text, int id, const void *argument, IOguiFont *font, bool clipToWindow = true );
 
-	Ogui *ogui;
-	IOguiImage *image;
-	bool release_bg_image;
-	bool is_only_active;
-	mutable bool is_visible;
-	int id;
+    OguiButton *CreateNewButton(int         x,
+                                int         y,
+                                int         sizex,
+                                int         sizey,
+                                IOguiImage *img,
+                                IOguiImage *imgdown,
+                                IOguiImage *imghigh,
+                                IOguiImage *imgdisabled,
+                                bool        withText,
+                                const char *text,
+                                int         id,
+                                const void *argument,
+                                IOguiFont  *font,
+                                bool        clipToWindow = true);
 
-	int effectFadeTimeLeft;
-	int effectFadeTimeTotal;
-	int effectMoveTimeLeft;
-	int effectMoveTimeTotal;
-	int effectTextTypeTimeLeft;
-	int effectTextTypeTimeTotal;
-	int effectTextLineTimeLeft;
-	int effectTextLineTimeTotal;
+    Ogui *ogui;
+    IOguiImage *image;
+    bool release_bg_image;
+    bool is_only_active;
+    mutable bool is_visible;
+    int id;
 
-	bool fadingIn;
-	bool fadingOut;
-	bool movingIn;
-	bool movingOut;
-	
-	int windowPositionX;
-	int windowPositionY;
+    int effectFadeTimeLeft;
+    int effectFadeTimeTotal;
+    int effectMoveTimeLeft;
+    int effectMoveTimeTotal;
+    int effectTextTypeTimeLeft;
+    int effectTextTypeTimeTotal;
+    int effectTextLineTimeLeft;
+    int effectTextLineTimeTotal;
 
-	IOguiEffectListener *effectListener;
+    bool fadingIn;
+    bool fadingOut;
+    bool movingIn;
+    bool movingOut;
 
-	LinkedList *buttonList;
+    int windowPositionX;
+    int windowPositionY;
 
-	// some internal hacks 
-	// (the real orvgui window implementation is hidden behind this pointer)
-	void *win;
+    IOguiEffectListener *effectListener;
 
-	friend class Ogui;
-	friend class OguiAligner;
+    LinkedList *buttonList;
 
-	// internal method, reset stuff (next storm generation)
-	void ResetData();
+    // some internal hacks
+    // (the real orvgui window implementation is hidden behind this pointer)
+    void *win;
+
+    friend class Ogui;
+    friend class OguiAligner;
+
+    // internal method, reset stuff (next storm generation)
+    void ResetData();
 };
 
 #endif
-

@@ -7,57 +7,54 @@
 #include "NxStream.h"
 
 namespace frozenbyte {
-namespace physics {
+    namespace physics {
+        class InputPhysicsStream : public NxStream {
+            mutable filesystem::InputStream stream;
 
-class InputPhysicsStream : public NxStream
-{
-	mutable filesystem::InputStream stream;
+        public:
+            InputPhysicsStream(const char *filename);
+            ~InputPhysicsStream();
 
-public:
-	InputPhysicsStream(const char *filename);
-	~InputPhysicsStream();
+            NxU8 readByte() const;
+            NxU16 readWord() const;
+            NxU32 readDword() const;
+            float readFloat() const;
+            double readDouble() const;
+            void readBuffer(void *buffer, NxU32 size) const;
 
-	NxU8 readByte() const;
-	NxU16 readWord() const;
-	NxU32 readDword() const;
-	float readFloat() const;
-	double readDouble() const;
-	void readBuffer(void *buffer, NxU32 size) const;
+            NxStream&storeByte(NxU8 b);
+            NxStream&storeWord(NxU16 w);
+            NxStream&storeDword(NxU32 d);
+            NxStream&storeFloat(NxReal f);
+            NxStream&storeDouble(NxF64 f);
+            NxStream&storeBuffer(const void *buffer, NxU32 size);
 
-	NxStream &storeByte(NxU8 b);
-	NxStream &storeWord(NxU16 w);
-	NxStream &storeDword(NxU32 d);
-	NxStream &storeFloat(NxReal f);
-	NxStream &storeDouble(NxF64 f);
-	NxStream &storeBuffer(const void *buffer, NxU32 size);
+            int getSize();
+        };
 
-	int getSize();
-};
+        class OutputPhysicsStream : public NxStream {
+            mutable filesystem::OutputStream stream;
 
-class OutputPhysicsStream : public NxStream
-{
-	mutable filesystem::OutputStream stream;
+        public:
+            OutputPhysicsStream(const char *filename);
+            ~OutputPhysicsStream();
 
-public:
-	OutputPhysicsStream(const char *filename);
-	~OutputPhysicsStream();
+            NxU8 readByte() const;
+            NxU16 readWord() const;
+            NxU32 readDword() const;
+            float readFloat() const;
+            double readDouble() const;
+            void readBuffer(void *buffer, NxU32 size) const;
 
-	NxU8 readByte() const;
-	NxU16 readWord() const;
-	NxU32 readDword() const;
-	float readFloat() const;
-	double readDouble() const;
-	void readBuffer(void *buffer, NxU32 size) const;
+            NxStream&storeByte(NxU8 b);
+            NxStream&storeWord(NxU16 w);
+            NxStream&storeDword(NxU32 d);
+            NxStream&storeFloat(NxReal f);
+            NxStream&storeDouble(NxF64 f);
+            NxStream&storeBuffer(const void *buffer, NxU32 size);
+        };
 
-	NxStream &storeByte(NxU8 b);
-	NxStream &storeWord(NxU16 w);
-	NxStream &storeDword(NxU32 d);
-	NxStream &storeFloat(NxReal f);
-	NxStream &storeDouble(NxF64 f);
-	NxStream &storeBuffer(const void *buffer, NxU32 size);
-};
-
-} // physics
-} // frozenbyte
+    } // physics
+}     // frozenbyte
 
 #endif

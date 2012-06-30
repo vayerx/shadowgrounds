@@ -6,20 +6,22 @@
 class NxBoxShape;
 
 namespace frozenbyte {
-namespace physics {
+    namespace physics {
+        class BoxActor : public ActorBase {
+        public:
+            BoxActor(NxScene   &scene,
+                     const VC3 &sizes,
+                     const VC3 &position,
+                     const VC3 &localPosition,
+                     bool       ccd,
+                     float      ccdMaxThickness);
+            ~BoxActor();
 
-class BoxActor: public ActorBase
-{
+            // Extended stuff
+            bool isValid() const;
+        };
 
-public:
-	BoxActor(NxScene &scene, const VC3 &sizes, const VC3 &position, const VC3 &localPosition, bool ccd, float ccdMaxThickness);
-	~BoxActor();
-
-	// Extended stuff
-	bool isValid() const;
-};
-
-} // physics
-} // frozenbyte
+    } // physics
+}     // frozenbyte
 
 #endif

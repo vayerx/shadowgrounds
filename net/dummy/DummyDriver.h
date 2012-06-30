@@ -8,51 +8,50 @@
 
 namespace net
 {
-  namespace dummy
-  {
-    // proto
-    class DummyBind;
-    class DummyConnection;
-
-    /**
-     * A dummy net driver.
-     */
-    class DummyDriver : public INetDriver
+    namespace dummy
     {
-    public:
-      DummyDriver();
+        // proto
+        class DummyBind;
+        class DummyConnection;
 
-      virtual const char *getDriverName();
+        /**
+         * A dummy net driver.
+         */
+        class DummyDriver : public INetDriver {
+        public:
+            DummyDriver();
 
-      virtual INetConnection *connectTo(const char *to)
-        throw (NetDriverException*);
-   
-      virtual INetBind *bind(const char *port)
-        throw (NetDriverException*);
-   
-      virtual void setNetModeFlags(int netModeFlags)
-        throw (NetDriverException*);
+            virtual const char *getDriverName();
 
-      virtual int getNetModeFlags();
-      
-      virtual int getSupportedModeFlags();
-   
-      virtual ~DummyDriver();
-  
-	    static void setArtificialLag(int minPing, int maxPing, int variationSpeed);
+            virtual INetConnection *connectTo(const char *to)
+            throw (NetDriverException *);
 
-    private:
-      static LinkedList *portBindList;
-      int modeFlags;
+            virtual INetBind *bind(const char *port)
+            throw (NetDriverException *);
 
-			static int lagVariationSpeed;
-			static int lagMinPing;
-			static int lagMaxPing;
+            virtual void setNetModeFlags(int netModeFlags)
+            throw (NetDriverException *);
 
-      friend class DummyBind;
-      friend class DummyConnection;
-    };
-  }
+            virtual int getNetModeFlags();
+
+            virtual int getSupportedModeFlags();
+
+            virtual ~DummyDriver();
+
+            static void setArtificialLag(int minPing, int maxPing, int variationSpeed);
+
+        private:
+            static LinkedList *portBindList;
+            int modeFlags;
+
+            static int lagVariationSpeed;
+            static int lagMinPing;
+            static int lagMaxPing;
+
+            friend class DummyBind;
+            friend class DummyConnection;
+        };
+    }
 }
 
 #endif

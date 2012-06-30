@@ -7,28 +7,24 @@
 class Ogui;
 namespace game
 {
-  class Game;
+    class Game;
 }
 
-
 namespace ui {
+    class WeaponWindowCoop : public WeaponWindow {
+    public:
+        WeaponWindowCoop(Ogui *ogui, game::Game *game, int numOfPlayers);
+        ~WeaponWindowCoop();
 
-class WeaponWindowCoop : public WeaponWindow
-{
-public:
-	WeaponWindowCoop( Ogui* ogui, game::Game* game, int numOfPlayers );
-	~WeaponWindowCoop();
+        void hide(int fadeTime = 0);
+        void show(int fadeTime = 0);
+        void update();
+        void EffectEvent(OguiEffectEvent *e);
 
-	void hide(int fadeTime = 0);
-	void show(int fadeTime = 0);
-	void update();
-	void EffectEvent(OguiEffectEvent *e);
-
-private:
-	std::vector< WeaponWindow* > windows;
-};
+    private:
+        std::vector< WeaponWindow * > windows;
+    };
 
 } // end of namespace ui
-
 
 #endif

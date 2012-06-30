@@ -2,66 +2,66 @@
 #define IGIOS3D_H
 
 #ifdef WIN32
-#include <windows.h>
+#  include <windows.h>
 #endif
 #include <GL/glew.h>
 
-struct VertexBuffer{
-	VertexBuffer()
-		:	buffer(NULL),
-			refs(1)
-	{
-	}
+struct VertexBuffer {
+    VertexBuffer()
+        :   buffer(NULL),
+        refs(1)
+    {
+    }
 
-	~VertexBuffer()
-	{
-		if(buffer)
-			delete[] buffer;
-	}
+    ~VertexBuffer()
+    {
+        if (buffer)
+            delete[] buffer;
+    }
 
-	void AddRef()
-	{
-		refs++;
-	}
+    void AddRef()
+    {
+        refs++;
+    }
 
-	void Release()
-	{
-		refs--;
-		if(buffer && refs <= 0)
-			delete[] buffer;
-	}
+    void Release()
+    {
+        refs--;
+        if (buffer && refs <= 0)
+            delete[] buffer;
+    }
 
-	GLfloat *buffer;
-	int refs;
+    GLfloat *buffer;
+    int      refs;
 };
 
-struct IndexBuffer{
-	IndexBuffer()
-		:	buffer(NULL),
-			refs(1)
-	{
-	}
+struct IndexBuffer {
+    IndexBuffer()
+        :   buffer(NULL),
+        refs(1)
+    {
+    }
 
-	~IndexBuffer()
-	{
-		if(buffer)
-			delete[] buffer;
-	}
+    ~IndexBuffer()
+    {
+        if (buffer)
+            delete[] buffer;
+    }
 
-	void AddRef()
-	{
-		refs++;
-	}
+    void AddRef()
+    {
+        refs++;
+    }
 
-	void Release()
-	{
-		refs--;
-		if(buffer && refs <= 0)
-			delete[] buffer;
-	}
+    void Release()
+    {
+        refs--;
+        if (buffer && refs <= 0)
+            delete[] buffer;
+    }
 
-	GLuint *buffer;
-	int refs;
+    GLuint *buffer;
+    int     refs;
 };
 
 #endif // IGIOS3D_H

@@ -1,4 +1,3 @@
-
 #ifndef INDIRECTWEAPON_H
 #define INDIRECTWEAPON_H
 
@@ -6,16 +5,13 @@
 
 namespace game
 {
-
-  class IndirectWeapon : public Weapon
-  {
-  public:
-    IndirectWeapon();
-    IndirectWeapon(int id);
-    virtual ~IndirectWeapon();
-  };
+    class IndirectWeapon : public Weapon {
+    public:
+        IndirectWeapon();
+        IndirectWeapon(int id);
+        virtual ~IndirectWeapon();
+    };
 
 }
 
 #endif
-

@@ -7,28 +7,25 @@
 class Ogui;
 namespace game
 {
-  class Game;
+    class Game;
 }
 
-
 namespace ui {
+    class HealthWindowCoop : public HealthWindow {
+    public:
+        HealthWindowCoop(Ogui *ogui, game::Game *game, int numOfPlayers);
+        ~HealthWindowCoop();
 
-class HealthWindowCoop : public HealthWindow
-{
-public:
-	HealthWindowCoop( Ogui* ogui, game::Game* game, int numOfPlayers );
-	~HealthWindowCoop();
+        void hide(int fadeTime = 0);
+        void show(int fadeTime = 0);
+        void update();
+        void updateCurve();
+        void EffectEvent(OguiEffectEvent *e);
 
-	void hide(int fadeTime = 0);
-	void show(int fadeTime = 0);
-	void update();
-	void updateCurve();
-	void EffectEvent(OguiEffectEvent *e);
-
-	// void setHealthTextMultiplier( int player_num, float m );
-private:
-	std::vector< HealthWindow* > windows;
-};
+        // void setHealthTextMultiplier( int player_num, float m );
+    private:
+        std::vector< HealthWindow * > windows;
+    };
 
 } // end of namespace ui
 

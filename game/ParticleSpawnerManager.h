@@ -1,4 +1,3 @@
-
 #ifndef PARTICLESPAWNERMANAGER_H
 #define PARTICLESPAWNERMANAGER_H
 
@@ -8,42 +7,39 @@ class LinkedList;
 
 namespace game
 {
-  class Game;
+    class Game;
 
-  class ParticleSpawner;
+    class ParticleSpawner;
 
-  class ParticleSpawnerManager
-  {
+    class ParticleSpawnerManager {
     public:
-      ParticleSpawnerManager(Game *game);
+        ParticleSpawnerManager(Game *game);
 
-      ~ParticleSpawnerManager();
+        ~ParticleSpawnerManager();
 
-      ParticleSpawner *createParticleSpawner();
+        ParticleSpawner *createParticleSpawner();
 
-      void deleteParticleSpawner(ParticleSpawner *spawner);
+        void deleteParticleSpawner(ParticleSpawner *spawner);
 
-      ParticleSpawner *getParticleSpawnerByName(const char *name);
+        ParticleSpawner *getParticleSpawnerByName(const char *name);
 
-      void deleteAllParticleSpawners();
-      void disableAllParticleSpawners();
+        void deleteAllParticleSpawners();
+        void disableAllParticleSpawners();
 
-			int getParticleSpawnerAmount();
+        int getParticleSpawnerAmount();
 
-      void run();
+        void run();
 
-			void setPlayerPosition(const VC3 &playerPosition);
+        void setPlayerPosition(const VC3 &playerPosition);
 
     private:
-      Game *game;
+        Game *game;
 
-      LinkedList *spawnerList;
+        LinkedList *spawnerList;
 
-			VC3 playerPosition;
+        VC3 playerPosition;
 
-  };
+    };
 }
 
 #endif
-
-

@@ -4,50 +4,48 @@
 #define INCLUDED_LOD_H
 
 #ifdef _MSC_VER
-#pragma warning(disable: 4514) // removed unreferenced inline function (stl)
+#  pragma warning(disable: 4514) // removed unreferenced inline function (stl)
 #endif
 
 #ifndef INCLUDED_DATATYPEDEF_H
-#define INCLUDED_DATATYPEDEF_H
-#include <DataTypeDef.h>
+#  define INCLUDED_DATATYPEDEF_H
+#  include <DataTypeDef.h>
 #endif
 
 #ifndef INCLUDED_BOOST_SCOPED_PTR_HPP
-#define INCLUDED_BOOST_SCOPED_PTR_HPP
-#include <boost/scoped_ptr.hpp>
+#  define INCLUDED_BOOST_SCOPED_PTR_HPP
+#  include <boost/scoped_ptr.hpp>
 #endif
 #ifndef INCLUDED_VECTOR
-#define INCLUDED_VECTOR
-#include <vector>
+#  define INCLUDED_VECTOR
+#  include <vector>
 #endif
 #ifndef INCLUDED_EXPORT_FACE_H
-#include "Export_Face.h"
+#  include "Export_Face.h"
 #endif
 #ifndef INCLUDED_EXPORT_VERTEX_H
-#include "Export_Vertex.h"
+#  include "Export_Vertex.h"
 #endif
 
 namespace frozenbyte {
-namespace exporter {
+    namespace exporter {
+        struct LodData;
 
-struct LodData;
+        class Lod {
+            boost::scoped_ptr<LodData> data;
 
-class Lod
-{
-	boost::scoped_ptr<LodData> data;
+        public:
+            Lod(const std::vector<Vertex> &vertices, const std::vector<Face> &faces, bool optimizeVcache);
+            ~Lod();
 
-public:
-	Lod(const std::vector<Vertex> &vertices, const std::vector<Face> &faces, bool optimizeVcache);
-	~Lod();
+            void generateLods(int lodDetail);
 
-	void generateLods(int lodDetail);
+            int getFaceBufferCount() const; // 1 if no lods
+            const std::vector<Face>&getFaceBuffer(int index) const;
+            const std::vector<Vertex>&getVertices() const;
+        };
 
-	int getFaceBufferCount() const; // 1 if no lods
-	const std::vector<Face> &getFaceBuffer(int index) const;
-	const std::vector<Vertex> &getVertices() const;
-};
-
-} // end of namespace export
+    } // end of namespace export
 } // end of namespace frozenbyte
 
 #endif

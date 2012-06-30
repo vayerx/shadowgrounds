@@ -1,4 +1,3 @@
-
 /**
  * All user interface classes for that the game classes may use.
  * These classes work as the game's user interface.
@@ -15,5 +14,5 @@
 
 namespace ui
 {
-  // dummy
+    // dummy
 }

@@ -15,84 +15,84 @@
 
 namespace game
 {
-	typedef std::map<std::string, boost::shared_ptr<frozenbyte::physics::ConvexMesh> > ConvexMeshHash;
+    typedef std::map<std::string, boost::shared_ptr<frozenbyte::physics::ConvexMesh> > ConvexMeshHash;
 
-	class ConvexPhysicsObjectImpl
-	{
-	private:
-		ConvexPhysicsObjectImpl(const char *filename)
-		{
-			this->filename = filename;
-		}
+    class ConvexPhysicsObjectImpl {
+    private:
+        ConvexPhysicsObjectImpl(const char *filename)
+        {
+            this->filename = filename;
+        }
 
-		~ConvexPhysicsObjectImpl()
-		{
-			// nop?
-		}
+        ~ConvexPhysicsObjectImpl()
+        {
+            // nop?
+        }
 
-		boost::shared_ptr<frozenbyte::physics::ConvexMesh> getMesh(GamePhysics *gamePhysics)
-		{
-			ConvexMeshHash::iterator iter = meshHash.find(this->filename);
-			if (iter != meshHash.end())
-			{
-				return (*iter).second;
-			}
+        boost::shared_ptr<frozenbyte::physics::ConvexMesh> getMesh(GamePhysics *gamePhysics)
+        {
+            ConvexMeshHash::iterator iter = meshHash.find(this->filename);
+            if ( iter != meshHash.end() )
+                return (*iter).second;
 
-			boost::shared_ptr<frozenbyte::physics::ConvexMesh> m = gamePhysics->getPhysicsLib()->createConvexMesh(this->filename.c_str());
-			meshHash.insert(std::pair<std::string, boost::shared_ptr<frozenbyte::physics::ConvexMesh> >(filename, m));
-			return m;
-		}
+            boost::shared_ptr<frozenbyte::physics::ConvexMesh> m = gamePhysics->getPhysicsLib()->createConvexMesh(
+                 this->filename.c_str() );
+            meshHash.insert( std::pair<std::string, boost::shared_ptr<frozenbyte::physics::ConvexMesh> >(filename, m) );
+            return m;
+        }
 
-		std::string filename;
+        std::string filename;
 
-		static ConvexMeshHash meshHash;
+        static ConvexMeshHash meshHash;
 
-		friend class ConvexPhysicsObject;
-	};
+        friend class ConvexPhysicsObject;
+    };
 
-	ConvexMeshHash ConvexPhysicsObjectImpl::meshHash = ConvexMeshHash();
+    ConvexMeshHash ConvexPhysicsObjectImpl::meshHash = ConvexMeshHash();
 
+    ConvexPhysicsObject::ConvexPhysicsObject(GamePhysics *gamePhysics,
+                                             const char  *filename,
+                                             float        mass,
+                                             int          collisionGroup,
+                                             const VC3   &position)
+        : AbstractPhysicsObject(gamePhysics)
+    {
+        this->mass = mass;
+        this->position = position;
+        this->impl = new ConvexPhysicsObjectImpl(filename);
+        this->collisionGroup = collisionGroup;
+    }
 
-	ConvexPhysicsObject::ConvexPhysicsObject(GamePhysics *gamePhysics, const char *filename, float mass, int collisionGroup, const VC3 &position) 
-		: AbstractPhysicsObject(gamePhysics)
-	{ 
-		this->mass = mass;
-		this->position = position;
-		this->impl = new ConvexPhysicsObjectImpl(filename);
-		this->collisionGroup = collisionGroup;
-	}
+    ConvexPhysicsObject::~ConvexPhysicsObject()
+    {
+        delete impl;
+    }
 
-	ConvexPhysicsObject::~ConvexPhysicsObject() 
-	{
-		delete impl;
-	}
+    boost::shared_ptr<frozenbyte::physics::ActorBase> ConvexPhysicsObject::createImplementationObject()
+    {
+        boost::shared_ptr<frozenbyte::physics::ConvexMesh> convexMeshSPtr = impl->getMesh(gamePhysics);
+        boost::shared_ptr<frozenbyte::physics::ActorBase> actor = gamePhysics->getPhysicsLib()->createConvexActor(
+            convexMeshSPtr,
+            position);
+        if (actor) {
+            actor->setMass(mass);
+            actor->setCollisionGroup(collisionGroup);
+            actor->setIntData(soundMaterial);
+        }
 
-	boost::shared_ptr<frozenbyte::physics::ActorBase> ConvexPhysicsObject::createImplementationObject()
-	{
-		boost::shared_ptr<frozenbyte::physics::ConvexMesh> convexMeshSPtr = impl->getMesh(gamePhysics);
-		boost::shared_ptr<frozenbyte::physics::ActorBase> actor = gamePhysics->getPhysicsLib()->createConvexActor(convexMeshSPtr, position);
-		if(actor)
-		{
-			actor->setMass(mass);
-			actor->setCollisionGroup(collisionGroup);
-			actor->setIntData(soundMaterial);
-		}
+        return actor;
+    }
 
-		return actor;
-	}
+    void ConvexPhysicsObject::syncImplementationObject(boost::shared_ptr<frozenbyte::physics::ActorBase> &obj)
+    {
+        AbstractPhysicsObject::syncImplementationObject(obj);
+    }
 
-	void ConvexPhysicsObject::syncImplementationObject(boost::shared_ptr<frozenbyte::physics::ActorBase> &obj)
-	{
-		AbstractPhysicsObject::syncImplementationObject(obj);
-	}
-
-	void ConvexPhysicsObject::clearImplementationResources()
-	{
-		ConvexPhysicsObjectImpl::meshHash.clear();
-	}
+    void ConvexPhysicsObject::clearImplementationResources()
+    {
+        ConvexPhysicsObjectImpl::meshHash.clear();
+    }
 
 }
 
 #endif
-
-

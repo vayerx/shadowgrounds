@@ -1,4 +1,3 @@
-
 #include "precompiled.h"
 
 #include "ClawUnitType.h"
@@ -8,38 +7,34 @@
 
 #include "../util/Debug_MemoryManager.h"
 
-
 namespace game
 {
+    ClawUnitType::ClawUnitType()
+    {
+        // nop
+    }
 
-  ClawUnitType::ClawUnitType()
-  {
-    // nop
-  }
+    bool ClawUnitType::setData(const char *key, char *value)
+    {
+        return setRootData(key, value);
+    }
 
-  bool ClawUnitType::setData(const char *key, char *value)
-  {
-    return setRootData(key, value);
-  }
+    bool ClawUnitType::setSub(char *key)
+    {
+        return setRootSub(key);
+    }
 
-  bool ClawUnitType::setSub(char *key)
-  {
-    return setRootSub(key);
-  }
+    UnitActor *ClawUnitType::getActor()
+    {
+        return unitActorArray[UNIT_ACTOR_CLAW];
+    }
 
-  UnitActor *ClawUnitType::getActor()
-  {
-    return unitActorArray[UNIT_ACTOR_CLAW];
-  }
-
-  Unit *ClawUnitType::getNewUnitInstance(int player)
-  {
-    Unit *u = new ClawUnit(player);
-    u->setUnitTypeId(unitTypeId);
-    u->setUnitType(this);
-    return u;
-  }
+    Unit *ClawUnitType::getNewUnitInstance(int player)
+    {
+        Unit *u = new ClawUnit(player);
+        u->setUnitTypeId(unitTypeId);
+        u->setUnitType(this);
+        return u;
+    }
 
 }
-
-

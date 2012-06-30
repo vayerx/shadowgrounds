@@ -1,4 +1,3 @@
-
 #ifndef JPAK_H
 #define JPAK_H
 
@@ -23,5 +22,3 @@ extern void jpak_set_8bit_params(unsigned char mark1, unsigned char mark2, unsig
 extern void jpak_set_16bit_params(unsigned short mark1, unsigned short mark2, unsigned short mark3);
 
 #endif
-
-

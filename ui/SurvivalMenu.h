@@ -14,106 +14,109 @@ class OguiButton;
 
 namespace game
 {
-	class Game;
+    class Game;
 }
 
 namespace ui
 {
+    class SurvivalMenu : public MenuBaseImpl, public IOguiCheckBoxListener {
+    public:
 
-class SurvivalMenu : public MenuBaseImpl, public IOguiCheckBoxListener
-{
-public:
+        enum COMMANDS {
+            COMMANDS_LOAD = 101,
+            COMMANDS_CLOSEME,
+            COMMANDS_ARROWDOWN,
+            COMMANDS_ARROWUP
+        };
 
-	enum COMMANDS {
-		COMMANDS_LOAD = 101,
-		COMMANDS_CLOSEME,
-		COMMANDS_ARROWDOWN,
-		COMMANDS_ARROWUP
-	};
+        SurvivalMenu(MenuCollection *menu, MenuCollection::Fonts *fonts, Ogui *o_gui, game::Game *game);
+        ~SurvivalMenu();
 
-	SurvivalMenu( MenuCollection* menu, MenuCollection::Fonts* fonts, Ogui* o_gui, game::Game* game );
-	~SurvivalMenu();
+        //.........................................................................
 
-	//.........................................................................
+        int getType() const;
 
-	int getType() const;
+        void closeMenu();
+        void openMenu(int m);
+        void applyChanges();
 
-	void closeMenu();
-	void openMenu( int m );
-	void applyChanges();
+        //.........................................................................
 
-	//.........................................................................
+        void CursorEvent(OguiButtonEvent *eve);
+        void checkBoxEvent(OguiCheckBoxEvent *eve);
+        void selectButton(int command);
 
-	void CursorEvent( OguiButtonEvent* eve );
-	void checkBoxEvent( OguiCheckBoxEvent* eve );
-	void selectButton( int command );
+        //.........................................................................
 
-	//.........................................................................
+        void menuClose();
+        void menuLoad();
 
-	void menuClose();
-	void menuLoad();
+        static bool startAsCoop;
 
-	static bool startAsCoop;
+        struct MissionInfo {
+            std::string      dir;
+            std::string      characters;
+            std::string      description;
+            std::vector<int> scoreNumbers;
+            std::string      scores;
+            std::string      thumbnail_norm, thumbnail_high, thumbnail_down,
+                             thumbnail_selected_norm, thumbnail_selected_high;
+            bool show_upgradewindow;
+            bool locked;
+        };
 
+        static void reloadLastMission(game::Game *game);
+        static void loadMission(MissionInfo &mi, game::Game *game);
 
-	struct MissionInfo
-	{
-		std::string dir;
-		std::string characters;
-		std::string description;
-		std::vector<int> scoreNumbers;
-		std::string scores;
-		std::string thumbnail_norm, thumbnail_high, thumbnail_down,
-								thumbnail_selected_norm, thumbnail_selected_high;
-		bool show_upgradewindow;
-		bool locked;
-	};
+        static bool loadMissionInfo(const std::string &directory, MissionInfo &mi);
 
-	static void reloadLastMission(game::Game *game);
-	static void loadMission(MissionInfo &mi, game::Game *game);
+        static void unlockMission(const std::string &mission);
+        static bool readLockedMissions(std::vector<std::string> &missions);
 
-	static bool loadMissionInfo(const std::string &directory, MissionInfo &mi);
+    private:
+        void addImageSelectionButton(const std::string &image_norm,
+                                     const std::string &image_high,
+                                     const std::string &image_down,
+                                     const std::string &image_disabled,
+                                     bool               disabled,
+                                     int                command,
+                                     IOguiFont         *font,
+                                     void              *param = NULL);
+        void createMissionButtons();
+        void createTexts();
 
-	static void unlockMission(const std::string &mission);
-	static bool readLockedMissions(std::vector<std::string> &missions);
+        void scrollMissionsUp();
+        void scrollMissionsDown();
+        void updateArrows();
+        OguiButton *scrollUpArrow;
+        OguiButton *scrollDownArrow;
+        OguiCheckBox *showCustomMissions;
 
-private:
-	void addImageSelectionButton( const std::string& image_norm, const std::string& image_high, const std::string& image_down, const std::string& image_disabled, bool disabled, int command, IOguiFont* font, void* param = NULL );
-	void createMissionButtons();
-	void createTexts();
+        int doubleClickHack;
+        int doubleClickTimeHack;
 
-	void scrollMissionsUp();
-	void scrollMissionsDown();
-	void updateArrows();
-	OguiButton*			scrollUpArrow;
-	OguiButton*			scrollDownArrow;
-	OguiCheckBox*			showCustomMissions;
+        int buttonXStart;
+        int buttonXLimit;
+        int scrollCount;
+        int scrollPosition;
+        int buttonYMinLimit;                 // = 64;
+        int buttonYMaxLimit;                 //  = 450;
 
-	int						doubleClickHack;
-	int						doubleClickTimeHack;
+        MenuCollection *menuCollection;
+        MenuCollection::Fonts *fonts;
 
-	int						buttonXStart;
-	int						buttonXLimit;
-	int						scrollCount;
-	int						scrollPosition;
-	int						buttonYMinLimit; // = 64;
-	int						buttonYMaxLimit; //  = 450;
+        IOguiFont *locked_font;
 
-	MenuCollection*			menuCollection;
-	MenuCollection::Fonts*	fonts;
+        OguiFormattedText *infoText;
+        OguiFormattedText *scoreText;
 
-	IOguiFont *locked_font;
+        std::vector<OguiButton *> starButtons;
 
-	OguiFormattedText*	infoText;
-	OguiFormattedText*	scoreText;
+        std::vector<MissionInfo> missionInfos;
 
-	std::vector<OguiButton *> starButtons;
+        static MissionInfo lastLoadedMission;
 
-	std::vector<MissionInfo> missionInfos;
-
-	static MissionInfo lastLoadedMission;
-
-};
+    };
 
 }
 

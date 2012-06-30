@@ -7,30 +7,27 @@
 #include <datatypedef.h>
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        class HeightModifier {
+            struct Data;
+            boost::scoped_ptr<Data> data;
 
-class HeightModifier
-{
-	struct Data;
-	boost::scoped_ptr<Data> data;
+        public:
+            HeightModifier(unsigned short *buffer, const VC2I &resolution, const VC3 &size);
+            ~HeightModifier();
 
-public:
-	HeightModifier(unsigned short *buffer, const VC2I &resolution, const VC3 &size);
-	~HeightModifier();
+            enum Shape {
+                Circle,
+                Rectangle
+            };
 
-	enum Shape
-	{
-		Circle,
-		Rectangle
-	};
+            // Strength in -1..1 range
+            void changeHeight(const VC3 &position, float radius, float strength, Shape shape);
+            void flatten(const VC3 &position, float radius, float strength, float height, Shape shape);
+            void smoothen(const VC3 &position, float radius, float strength, Shape shape);
+        };
 
-	// Strength in -1..1 range
-	void changeHeight(const VC3 &position, float radius, float strength, Shape shape);
-	void flatten(const VC3 &position, float radius, float strength, float height, Shape shape);
-	void smoothen(const VC3 &position, float radius, float strength, Shape shape);
-};
-
-} // editor
-} // frozenbyte
+    } // editor
+}     // frozenbyte
 
 #endif

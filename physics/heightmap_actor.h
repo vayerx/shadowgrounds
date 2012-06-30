@@ -8,22 +8,25 @@ class NxPhysicsSDK;
 class NxScene;
 
 namespace frozenbyte {
-namespace physics {
+    namespace physics {
+        class HeightmapActor : public ActorBase {
+            NxPhysicsSDK &sdk;
+            NxHeightField *heightField;
 
-class HeightmapActor: public ActorBase
-{
-	NxPhysicsSDK &sdk;
-	NxHeightField *heightField;
+        public:
+            HeightmapActor(NxPhysicsSDK         &sdk,
+                           NxScene              &scene,
+                           const unsigned short *buffer,
+                           int                   samplesX,
+                           int                   samplesY,
+                           const VC3            &scale);
+            ~HeightmapActor();
 
-public:
-	HeightmapActor(NxPhysicsSDK &sdk, NxScene &scene, const unsigned short *buffer, int samplesX, int samplesY, const VC3 &scale);
-	~HeightmapActor();
+            // Extended stuff
+            bool isValid() const;
+        };
 
-	// Extended stuff
-	bool isValid() const;
-};
-
-} // physics
-} // frozenbyte
+    } // physics
+}     // frozenbyte
 
 #endif

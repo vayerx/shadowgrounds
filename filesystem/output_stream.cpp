@@ -1,10 +1,9 @@
-
 #include "precompiled.h"
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
 #ifdef __INTEL_COMPILER
-#pragma warning(disable: 444) // Destructor for base class not virtual
+#  pragma warning(disable: 444) // Destructor for base class not virtual
 #endif
 
 #include "output_stream.h"
@@ -19,7 +18,7 @@ typedef unsigned short uint16_t;
 
 #else
 // and gcc >= 4.4 requires stdint
-#include <stdint.h>
+#  include <stdint.h>
 
 #endif
 
@@ -29,124 +28,125 @@ BOOST_STATIC_ASSERT(CHAR_BIT == 8);
 #include "../util/Debug_MemoryManager.h"
 
 namespace frozenbyte {
-namespace filesystem {
-namespace {
-	template<class Type>
-	void sendToStream(IOutputStreamBuffer &buffer, Type value)
-	{
-		ConvertFrom<Type> converter(value);
-		for(int i = 0; i < converter.getSize(); ++i)
-			buffer.putByte(converter.getByte(i));
-	}
-} // end of unnamed namespace
+    namespace filesystem {
+        namespace {
+            template <class Type> void sendToStream(IOutputStreamBuffer &buffer, Type value)
+            {
+                ConvertFrom<Type> converter(value);
+                for (int i = 0; i < converter.getSize(); ++i) {
+                    buffer.putByte( converter.getByte(i) );
+                }
+            }
+        } // end of unnamed namespace
 
-OutputStream::OutputStream()
-:	textStrings(false)
-{
-}
+        OutputStream::OutputStream()
+            :   textStrings(false)
+        {
+        }
 
-OutputStream::~OutputStream()
-{
-}
+        OutputStream::~OutputStream()
+        {
+        }
 
-void OutputStream::setBuffer(boost::shared_ptr<IOutputStreamBuffer> streamBuffer_)
-{
-	assert(streamBuffer_);
-	streamBuffer = streamBuffer_;
-}
+        void OutputStream::setBuffer(boost::shared_ptr<IOutputStreamBuffer> streamBuffer_)
+        {
+            assert(streamBuffer_);
+            streamBuffer = streamBuffer_;
+        }
 
-void OutputStream::useTextStrings()
-{
-	textStrings = true;
-}
+        void OutputStream::useTextStrings()
+        {
+            textStrings = true;
+        }
 
-OutputStream &OutputStream::write(const std::string &value)
-{
-	assert(streamBuffer);
-	uint16_t stringSize = value.size();
+        OutputStream &OutputStream::write(const std::string &value)
+        {
+            assert(streamBuffer);
+            uint16_t stringSize = value.size();
 
-	if(!textStrings)
-		write(stringSize);
-	
-	for(int i = 0; i < stringSize; ++i)
-		streamBuffer->putByte(value[i]);
+            if (!textStrings)
+                write(stringSize);
 
-	return *this;
-}
+            for (int i = 0; i < stringSize; ++i) {
+                streamBuffer->putByte(value[i]);
+            }
 
-OutputStream &OutputStream::write(bool value)
-{
-	assert(streamBuffer);
+            return *this;
+        }
 
-	unsigned char b = (value) ? 1 : 0;
-	streamBuffer->putByte(b);
+        OutputStream &OutputStream::write(bool value)
+        {
+            assert(streamBuffer);
 
-	return *this;
-}
+            unsigned char b = (value) ? 1 : 0;
+            streamBuffer->putByte(b);
 
-OutputStream &OutputStream::write(unsigned char value)
-{
-	assert(streamBuffer);
+            return *this;
+        }
 
-	streamBuffer->putByte(value);
-	return *this;
-}
+        OutputStream &OutputStream::write(unsigned char value)
+        {
+            assert(streamBuffer);
 
-OutputStream &OutputStream::write(signed char value)
-{
-	assert(streamBuffer);
+            streamBuffer->putByte(value);
+            return *this;
+        }
 
-	streamBuffer->putByte(value);
-	return *this;
-}
+        OutputStream &OutputStream::write(signed char value)
+        {
+            assert(streamBuffer);
 
-OutputStream &OutputStream::write(unsigned short value)
-{
-	assert(streamBuffer);
+            streamBuffer->putByte(value);
+            return *this;
+        }
 
-	sendToStream(*streamBuffer, value);
-	return *this;
-}
+        OutputStream &OutputStream::write(unsigned short value)
+        {
+            assert(streamBuffer);
 
-OutputStream &OutputStream::write(signed short value)
-{
-	assert(streamBuffer);
+            sendToStream(*streamBuffer, value);
+            return *this;
+        }
 
-	sendToStream(*streamBuffer, value);
-	return *this;
-}
+        OutputStream &OutputStream::write(signed short value)
+        {
+            assert(streamBuffer);
 
-OutputStream &OutputStream::write(unsigned int value)
-{
-	assert(streamBuffer);
+            sendToStream(*streamBuffer, value);
+            return *this;
+        }
 
-	sendToStream(*streamBuffer, value);
-	return *this;
-}
+        OutputStream &OutputStream::write(unsigned int value)
+        {
+            assert(streamBuffer);
 
-OutputStream &OutputStream::write(signed int value)
-{
-	assert(streamBuffer);
+            sendToStream(*streamBuffer, value);
+            return *this;
+        }
 
-	sendToStream(*streamBuffer, value);
-	return *this;
-}
+        OutputStream &OutputStream::write(signed int value)
+        {
+            assert(streamBuffer);
 
-OutputStream &OutputStream::write(float value)
-{
-	assert(streamBuffer);
+            sendToStream(*streamBuffer, value);
+            return *this;
+        }
 
-	sendToStream(*streamBuffer, value);
-	return *this;
-}
+        OutputStream &OutputStream::write(float value)
+        {
+            assert(streamBuffer);
 
-OutputStream &OutputStream::write(double value)
-{
-	assert(streamBuffer);
+            sendToStream(*streamBuffer, value);
+            return *this;
+        }
 
-	sendToStream(*streamBuffer, value);
-	return *this;
-}
+        OutputStream &OutputStream::write(double value)
+        {
+            assert(streamBuffer);
 
-} // end of namespace filesystem
-} // end of namespace frozenbyte
+            sendToStream(*streamBuffer, value);
+            return *this;
+        }
+
+    } // end of namespace filesystem
+}     // end of namespace frozenbyte

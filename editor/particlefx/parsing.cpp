@@ -13,119 +13,107 @@
 using namespace frozenbyte;
 using namespace editor;
 
-bool parseIn(ParserGroup& g, const std::string& name, std::string& str) {
+bool parseIn(ParserGroup &g, const std::string &name, std::string &str) {
+    std::string def = "undefined";
+    std::string value = g.getValue(name, def);
+    if ( value.empty() )
+        return false;
 
-	std::string def = "undefined";
-	std::string value = g.getValue(name, def);
-	if(value.empty())
-		return false;
-
-	str = value;
-	return true;
+    str = value;
+    return true;
 
 }
 
-bool parseIn(ParserGroup& g, const std::string& name, int& value) {
+bool parseIn(ParserGroup &g, const std::string &name, int &value) {
+    std::string def;
+    const std::string &str = g.getValue(name, def);
+    if ( str.empty() )
+        return false;
 
-	std::string def;
-	const std::string& str = g.getValue(name, def);
-	if(str.empty())
-		return false;
-
-	value = convertFromString<int>(str, 0);
-	return true;
+    value = convertFromString<int>(str, 0);
+    return true;
 }
 
-bool parseIn(ParserGroup& g, const std::string& name, float& value) {
+bool parseIn(ParserGroup &g, const std::string &name, float &value) {
+    std::string def;
+    const std::string &str = g.getValue(name, def);
+    if ( str.empty() )
+        return false;
 
-	std::string def;
-	const std::string& str = g.getValue(name, def);
-	if(str.empty())
-		return false;
-
-	value = convertFromString<float>(str, 0);
-	return true;
+    value = convertFromString<float>(str, 0);
+    return true;
 }
 
-bool parseIn(ParserGroup& g, const std::string& name, Vector& value) {
+bool parseIn(ParserGroup &g, const std::string &name, Vector &value) {
+    std::string def;
+    const std::string &str = g.getValue(name, def);
+    if ( str.empty() )
+        return false;
 
-	std::string def;
-	const std::string& str = g.getValue(name, def);
-	if(str.empty())
-		return false;
-	
-	std::string x = "0";
-	std::string y = "0";
-	std::string z = "0";
-	
-	// default to zero
+    std::string x = "0";
+    std::string y = "0";
+    std::string z = "0";
 
-	value.x = 0.0f;
-	value.y = 0.0f;
-	value.z = 0.0f;
+    // default to zero
 
-	x = str;
-	std::string::size_type pos = x.find_first_of(","); 
-	if(pos != std::string::npos) {
-		x.erase(pos, str.size() - pos);
-	}
-	else {
-		return false;
-	}
-	value.x = convertFromString<float>(x, 0);
-	y = str;
-	y.erase(0, x.size()+1);
-	pos = y.find_first_of(",", pos);
-	if(pos != std::string::npos) {
-		y.erase(pos, str.size() - pos);
-	} else {
-		return false;
-	}
-	value.y = convertFromString<float>(y, 0);
-	if(pos < str.size()) {
-		z = str;
-		z.erase(0, x.size()+1+y.size()+1);
-		value.z = convertFromString<float>(z, 0);	
-	}
+    value.x = 0.0f;
+    value.y = 0.0f;
+    value.z = 0.0f;
 
-	return true;
+    x = str;
+    std::string::size_type pos = x.find_first_of(",");
+    if (pos != std::string::npos)
+        x.erase(pos, str.size() - pos);
+    else
+        return false;
+    value.x = convertFromString<float>(x, 0);
+    y = str;
+    y.erase(0, x.size() + 1);
+    pos = y.find_first_of(",", pos);
+    if (pos != std::string::npos)
+        y.erase(pos, str.size() - pos);
+    else
+        return false;
+    value.y = convertFromString<float>(y, 0);
+    if ( pos < str.size() ) {
+        z = str;
+        z.erase(0, x.size() + 1 + y.size() + 1);
+        value.z = convertFromString<float>(z, 0);
+    }
+
+    return true;
 }
 
-bool parseOut(ParserGroup& g, const std::string& name, const std::string& str) {
+bool parseOut(ParserGroup &g, const std::string &name, const std::string &str) {
+    g.setValue(name, str);
 
-	g.setValue(name, str);
-
-	return true;
+    return true;
 }
 
-bool parseOut(ParserGroup& g, const std::string& name, int value) {
+bool parseOut(ParserGroup &g, const std::string &name, int value) {
+    std::string str = convertToString<int>(value);
 
-	
-	std::string str = convertToString<int>(value);
+    g.setValue(name, str);
 
-	g.setValue(name, str);
-
-	return true;
+    return true;
 }
 
-bool parseOut(ParserGroup& g, const std::string& name, float value) {
+bool parseOut(ParserGroup &g, const std::string &name, float value) {
+    std::string str = convertToString<float>(value);
 
-	std::string str = convertToString<float>(value);
+    g.setValue(name, str);
 
-	g.setValue(name, str);
-
-	return true;
+    return true;
 }
 
-bool parseOut(ParserGroup& g, const std::string& name, const Vector& value) {
+bool parseOut(ParserGroup &g, const std::string &name, const Vector &value) {
+    std::string x = convertToString<float>(value.x);
+    std::string y = convertToString<float>(value.y);
+    std::string z = convertToString<float>(value.z);
 
-	std::string x = convertToString<float>(value.x);
-	std::string y = convertToString<float>(value.y);
-	std::string z = convertToString<float>(value.z);
-	
-	std::string str = x + "," + y + "," + z;
+    std::string str = x + "," + y + "," + z;
 
-	g.setValue(name, str);
+    g.setValue(name, str);
 
-	return true;
+    return true;
 }

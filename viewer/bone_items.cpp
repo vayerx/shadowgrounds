@@ -20,222 +20,213 @@
 #include <istorm3d_bone.h>
 
 namespace frozenbyte {
-namespace viewer {	
+    namespace viewer {
+        struct BoneItemsData {
+            // [helper] - items
+            std::map<std::string, std::vector<std::string> > items;
+            std::vector<std::string> helpers;
 
-struct BoneItemsData
-{
-	// [helper] - items
-	std::map<std::string, std::vector<std::string> > items;
-	std::vector<std::string> helpers;
+            static BOOL CALLBACK     DialogHandler(HWND windowHandle, UINT message,  WPARAM wParam, LPARAM lParam)
+            {
+                BoneItemsData *data = reinterpret_cast<BoneItemsData *>( GetWindowLong(windowHandle, GWL_USERDATA) );
+                static int listIndex = -1;
 
-	static BOOL CALLBACK DialogHandler(HWND windowHandle, UINT message,  WPARAM wParam, LPARAM lParam)
-	{
-		BoneItemsData *data = reinterpret_cast<BoneItemsData *> (GetWindowLong(windowHandle, GWL_USERDATA));
-		static int listIndex = -1;
+                if (message == WM_INITDIALOG) {
+                    SetWindowLong(windowHandle, GWL_USERDATA, lParam);
+                    BoneItemsData *data = reinterpret_cast<BoneItemsData *>(lParam);
 
-		if(message == WM_INITDIALOG)
-		{
-			SetWindowLong(windowHandle, GWL_USERDATA, lParam);
-			BoneItemsData *data = reinterpret_cast<BoneItemsData *> (lParam);
+                    listIndex = -1;
+                    for (unsigned int i = 0; i < data->helpers.size(); ++i) {
+                        SendDlgItemMessage( windowHandle, IDC_HELPERS, LB_ADDSTRING, 0,
+                                            reinterpret_cast<LPARAM>( data->helpers[i].c_str() ) );
+                    }
+                } else if (message == WM_COMMAND) {
+                    int command = LOWORD(wParam);
+                    if (command == WM_DESTROY)
+                        EndDialog(windowHandle, 0);
 
-			listIndex = -1;
-			for(unsigned int i = 0; i < data->helpers.size(); ++i)
-				SendDlgItemMessage(windowHandle, IDC_HELPERS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM> (data->helpers[i].c_str()));
-		}
-		else if(message == WM_COMMAND)
-		{
-			int command = LOWORD(wParam);
-			if(command == WM_DESTROY)
-				EndDialog(windowHandle, 0);
+                    if (command == IDC_HELPERS) {
+                        int index = SendDlgItemMessage(windowHandle, IDC_HELPERS, LB_GETCURSEL, 0, 0);
+                        if (listIndex == index)
+                            return 0;
 
-			if(command == IDC_HELPERS)
-			{
-				int index = SendDlgItemMessage(windowHandle, IDC_HELPERS, LB_GETCURSEL, 0, 0);
-				if(listIndex == index)
-					return 0;
+                        SendDlgItemMessage(windowHandle, IDC_ITEMS, LB_RESETCONTENT, 0, 0);
+                        if (index == -1) {
+                            EnableWindow(GetDlgItem(windowHandle, IDC_ITEM_INSERT), FALSE);
+                            EnableWindow(GetDlgItem(windowHandle, IDC_ITEM_REMOVE), FALSE);
+                            return 0;
+                        }
 
-				SendDlgItemMessage(windowHandle, IDC_ITEMS, LB_RESETCONTENT, 0, 0);
-				if(index == -1)
-				{
-					EnableWindow(GetDlgItem(windowHandle, IDC_ITEM_INSERT), FALSE);
-					EnableWindow(GetDlgItem(windowHandle, IDC_ITEM_REMOVE), FALSE);
-					return 0;
-				}
+                        if (index != -1) {
+                            std::string &helper = data->helpers[index];
+                            std::vector<std::string> files = data->items[helper];
 
-				if(index != -1)
-				{
-					std::string &helper = data->helpers[index];
-					std::vector<std::string> files = data->items[helper];
+                            for (unsigned int i = 0; i < files.size(); ++i) {
+                                std::string string = editor::getFileName(files[i]);
+                                SendDlgItemMessage( windowHandle, IDC_ITEMS, LB_ADDSTRING, 0,
+                                                    reinterpret_cast<LPARAM>( string.c_str() ) );
+                            }
+                        }
 
-					for(unsigned int i = 0; i < files.size(); ++i)
-					{
-						std::string string = editor::getFileName(files[i]);
-						SendDlgItemMessage(windowHandle, IDC_ITEMS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM> (string.c_str()));
-					}
-				}
+                        EnableWindow(GetDlgItem(windowHandle, IDC_ITEM_INSERT), TRUE);
+                        EnableWindow(GetDlgItem(windowHandle, IDC_ITEM_REMOVE), TRUE);
+                        listIndex = index;
+                    }
 
-				EnableWindow(GetDlgItem(windowHandle, IDC_ITEM_INSERT), TRUE);
-				EnableWindow(GetDlgItem(windowHandle, IDC_ITEM_REMOVE), TRUE);
-				listIndex = index;
-			}
+                    if (command == IDC_ITEM_INSERT) {
+                        std::string fileName = editor::getOpenFileName("s3d", "Data\\Models");
+                        if ( !fileName.empty() ) {
+                            std::string &helper = data->helpers[listIndex];
+                            data->items[helper].push_back(fileName);
 
-			if(command == IDC_ITEM_INSERT)
-			{
-				std::string fileName = editor::getOpenFileName("s3d", "Data\\Models");
-				if(!fileName.empty())
-				{
-					std::string &helper = data->helpers[listIndex];
-					data->items[helper].push_back(fileName);
+                            std::string string = editor::getFileName(fileName);
+                            SendDlgItemMessage( windowHandle, IDC_ITEMS, LB_ADDSTRING, 0,
+                                                reinterpret_cast<LPARAM>( string.c_str() ) );
+                        }
+                    }
 
-					std::string string = editor::getFileName(fileName);
-					SendDlgItemMessage(windowHandle, IDC_ITEMS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM> (string.c_str()));
-				}
-			}
+                    if (command == IDC_ITEM_REMOVE) {
+                        int index = SendDlgItemMessage(windowHandle, IDC_ITEMS, LB_GETCURSEL, 0, 0);
+                        if (index == -1)
+                            return 0;
 
-			if(command == IDC_ITEM_REMOVE)
-			{
-				int index = SendDlgItemMessage(windowHandle, IDC_ITEMS, LB_GETCURSEL, 0, 0);
-				if(index == -1)
-					return 0;
+                        std::string &helper = data->helpers[listIndex];
+                        data->items[helper].erase(data->items[helper].begin() + index);
+                        SendDlgItemMessage(windowHandle, IDC_ITEMS, LB_DELETESTRING, index, 0);
+                    }
+                }
 
-				std::string &helper = data->helpers[listIndex];
-				data->items[helper].erase(data->items[helper].begin() + index);
-				SendDlgItemMessage(windowHandle, IDC_ITEMS, LB_DELETESTRING, index, 0);
-			}
-		}
+                return 0;
+            }
 
-		return 0;
-	}
+            void getHelpers(IStorm3D_Model *model)
+            {
+                assert(model);
+                helpers.clear();
 
-	void getHelpers(IStorm3D_Model *model)
-	{
-		assert(model);
-		helpers.clear();
+                boost::scoped_ptr<Iterator<IStorm3D_Helper *> > helperIterator( model->ITHelper->Begin() );
+                for ( ; !helperIterator->IsEnd(); helperIterator->Next() ) {
+                    IStorm3D_Helper *helper = helperIterator->GetCurrent();
+                    if ( (!helper) || (helper->GetHelperType() != IStorm3D_Helper::HTYPE_CAMERA) )
+                        continue;
 
-		boost::scoped_ptr<Iterator<IStorm3D_Helper *> > helperIterator(model->ITHelper->Begin());
-		for(; !helperIterator->IsEnd(); helperIterator->Next())
-		{
-			IStorm3D_Helper *helper = helperIterator->GetCurrent();
-			if((!helper) || (helper->GetHelperType() != IStorm3D_Helper::HTYPE_CAMERA))
-				continue;
+                    if ( !helper->GetParentBone() )
+                        continue;
 
-			if(!helper->GetParentBone())
-				continue;
+                    helpers.push_back( helper->GetName() );
+                }
+            }
 
-			helpers.push_back(helper->GetName());
-		}
-	}
+            void removeOld(IStorm3D_Model *model)
+            {
+                std::vector<IStorm3D_Model_Object *> removeList;
 
-	void removeOld(IStorm3D_Model *model)
-	{
-		std::vector<IStorm3D_Model_Object *> removeList;
-		
-		boost::scoped_ptr<Iterator<IStorm3D_Model_Object *> > objectIterator(model->ITObject->Begin());
-		for(; !objectIterator->IsEnd(); objectIterator->Next())
-		{
-			IStorm3D_Model_Object *object = objectIterator->GetCurrent();
-			if((object) && (object->GetParentBone()))
-				removeList.push_back(object);
-		}
+                boost::scoped_ptr<Iterator<IStorm3D_Model_Object *> > objectIterator( model->ITObject->Begin() );
+                for ( ; !objectIterator->IsEnd(); objectIterator->Next() ) {
+                    IStorm3D_Model_Object *object = objectIterator->GetCurrent();
+                    if ( (object) && ( object->GetParentBone() ) )
+                        removeList.push_back(object);
+                }
 
-		for(unsigned int i = 0; i < removeList.size(); ++i)
-			model->Object_Delete(removeList[i]);
-	}
+                for (unsigned int i = 0; i < removeList.size(); ++i) {
+                    model->Object_Delete(removeList[i]);
+                }
+            }
 
-	void apply(boost::shared_ptr<IStorm3D_Model> model, editor::Storm &storm)
-	{
-		assert(model);
+            void apply(boost::shared_ptr<IStorm3D_Model> model, editor::Storm &storm)
+            {
+                assert(model);
 
-		std::map<std::string, std::vector<std::string> >::iterator it = items.begin();
-		for(; it != items.end(); ++it)
-		{
-			std::vector<std::string> &items = (*it).second;
-			for(unsigned int i = 0; i < items.size(); ++i)
-			{
-				boost::shared_ptr<IStorm3D_Model> helperModel(storm.storm->CreateNewModel());
-				helperModel->LoadS3D(items[i].c_str());
+                std::map<std::string, std::vector<std::string> >::iterator it = items.begin();
+                for (; it != items.end(); ++it) {
+                    std::vector<std::string> &items = (*it).second;
+                    for (unsigned int i = 0; i < items.size(); ++i) {
+                        boost::shared_ptr<IStorm3D_Model> helperModel( storm.storm->CreateNewModel() );
+                        helperModel->LoadS3D( items[i].c_str() );
 
-				editor::addCloneModel(helperModel, model, it->first);
-			}
-		}
-	}
-};
+                        editor::addCloneModel(helperModel, model, it->first);
+                    }
+                }
+            }
+        };
 
-BoneItems::BoneItems()
-{
-	boost::scoped_ptr<BoneItemsData> tempData(new BoneItemsData());
-	data.swap(tempData);
-}
+        BoneItems::BoneItems()
+        {
+            boost::scoped_ptr<BoneItemsData> tempData( new BoneItemsData() );
+            data.swap(tempData);
+        }
 
-BoneItems::~BoneItems()
-{
-}
+        BoneItems::~BoneItems()
+        {
+        }
 
-void BoneItems::showDialog(IStorm3D_Model *model)
-{
-	if(!model)
-		return;
+        void BoneItems::showDialog(IStorm3D_Model *model)
+        {
+            if (!model)
+                return;
 
-	data->getHelpers(model);
-	DialogBoxParam(GetModuleHandle(0), MAKEINTRESOURCE(IDD_ITEMS), 0, BoneItemsData::DialogHandler, reinterpret_cast<LPARAM> (data.get()));
-}
+            data->getHelpers(model);
+            DialogBoxParam( GetModuleHandle(0), MAKEINTRESOURCE(
+                                IDD_ITEMS), 0, BoneItemsData::DialogHandler, reinterpret_cast<LPARAM>( data.get() ) );
+        }
 
-void BoneItems::applyToModel(boost::shared_ptr<IStorm3D_Model> model, editor::Storm &storm)
-{
-	if(!model)
-		return;
+        void BoneItems::applyToModel(boost::shared_ptr<IStorm3D_Model> model, editor::Storm &storm)
+        {
+            if (!model)
+                return;
 
-	data->removeOld(model.get());
-	data->getHelpers(model.get());
-	data->apply(model, storm);
-}
+            data->removeOld( model.get() );
+            data->getHelpers( model.get() );
+            data->apply(model, storm);
+        }
 
-void BoneItems::load(const editor::Parser &parser)
-{
-	data->items.clear();
-	data->helpers.clear();
+        void BoneItems::load(const editor::Parser &parser)
+        {
+            data->items.clear();
+            data->helpers.clear();
 
-	const editor::ParserGroup &group = parser.getGlobals().getSubGroup("Helpers");
-	int helpers = boost::lexical_cast<int> (group.getValue("Amount", "0"));
+            const editor::ParserGroup &group = parser.getGlobals().getSubGroup("Helpers");
+            int helpers = boost::lexical_cast<int>( group.getValue("Amount", "0") );
 
-	for(int i = 0; i < helpers; ++i)
-	{
-		const editor::ParserGroup &g = group.getSubGroup(std::string("Helper") + boost::lexical_cast<std::string> (i));
-		
-		const std::string &helper = g.getValue("Name");
-		if(helper.empty())
-			continue;
+            for (int i = 0; i < helpers; ++i) {
+                const editor::ParserGroup &g =
+                    group.getSubGroup( std::string("Helper") + boost::lexical_cast<std::string>(i) );
 
-		for(int j = 0; j < g.getLineCount(); ++j)
-			data->items[helper].push_back(g.getLine(j));
-	}
-}
+                const std::string &helper = g.getValue("Name");
+                if ( helper.empty() )
+                    continue;
 
-void BoneItems::save(editor::Parser &parser)
-{
-	std::map<std::string, std::vector<std::string> >::iterator it = data->items.begin();
-	int index = 0;
+                for (int j = 0; j < g.getLineCount(); ++j) {
+                    data->items[helper].push_back( g.getLine(j) );
+                }
+            }
+        }
 
-	for(; it != data->items.end(); ++it)
-	{
-		const std::string &helper = (*it).first;
-		if(std::find(data->helpers.begin(), data->helpers.end(), helper) == data->helpers.end())
-			continue;
+        void BoneItems::save(editor::Parser &parser)
+        {
+            std::map<std::string, std::vector<std::string> >::iterator it = data->items.begin();
+            int index = 0;
 
-		std::vector<std::string> &items = (*it).second;
-		if(items.empty())
-			continue;
+            for (; it != data->items.end(); ++it) {
+                const std::string &helper = (*it).first;
+                if ( std::find(data->helpers.begin(), data->helpers.end(), helper) == data->helpers.end() )
+                    continue;
 
-		std::string groupName = std::string("Helper") + boost::lexical_cast<std::string> (index++);
-		editor::ParserGroup &group = parser.getGlobals().getSubGroup("Helpers").getSubGroup(groupName);
-		group.setValue("Name", helper);
+                std::vector<std::string> &items = (*it).second;
+                if ( items.empty() )
+                    continue;
 
-		for(unsigned int i = 0; i < items.size(); ++i)
-			group.addLine(items[i]);
-	}
+                std::string groupName = std::string("Helper") + boost::lexical_cast<std::string>(index++);
+                editor::ParserGroup &group = parser.getGlobals().getSubGroup("Helpers").getSubGroup(groupName);
+                group.setValue("Name", helper);
 
-	parser.getGlobals().getSubGroup("Helpers").setValue("Amount", boost::lexical_cast<std::string> (index));
-}
+                for (unsigned int i = 0; i < items.size(); ++i) {
+                    group.addLine(items[i]);
+                }
+            }
 
-} // end of namespace viewer
-} // end of namespace frozenbyte
+            parser.getGlobals().getSubGroup("Helpers").setValue( "Amount", boost::lexical_cast<std::string>(index) );
+        }
+
+    } // end of namespace viewer
+}     // end of namespace frozenbyte

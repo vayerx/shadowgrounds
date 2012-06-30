@@ -4,25 +4,23 @@
 #include "../util/buildingmap.h"
 
 namespace frozenbyte {
-namespace editor {
+    namespace editor {
+        struct MappedObjectData {
+            boost::scoped_ptr<BuildingMap> building;
+        };
 
-struct MappedObjectData
-{
-	boost::scoped_ptr<BuildingMap> building;
-};
+        MappedObject::MappedObject(const std::string &fileName, IStorm3D_Model &model)
+        {
+            boost::scoped_ptr<MappedObjectData> tempData( new MappedObjectData() );
+            boost::scoped_ptr<BuildingMap> tempBuilding( new BuildingMap(fileName.c_str(), &model) );
 
-MappedObject::MappedObject(const std::string &fileName, IStorm3D_Model &model)
-{
-	boost::scoped_ptr<MappedObjectData> tempData(new MappedObjectData());
-	boost::scoped_ptr<BuildingMap> tempBuilding(new BuildingMap(fileName.c_str(), &model));
+            data.swap(tempData);
+            data->building.swap(tempBuilding);
+        }
 
-	data.swap(tempData);
-	data->building.swap(tempBuilding);
-}
+        MappedObject::~MappedObject()
+        {
+        }
 
-MappedObject::~MappedObject()
-{
-}
-
-} // end of namespace editor
-} // end of namespace frozenbyte
+    } // end of namespace editor
+}     // end of namespace frozenbyte

@@ -4,30 +4,28 @@
 #define INCLUDED_FILESYSTEM_IFILE_PACKAGE
 
 #ifndef INCLUDED_FILESYSTEM_INPUT_STREAM_H
-#include "input_stream.h"
+#  include "input_stream.h"
 #endif
 
 namespace frozenbyte {
-namespace filesystem {
+    namespace filesystem {
+        class IFileList;
 
-class IFileList;
+        class IFilePackage {
+        public:
+            virtual ~IFilePackage() { }
 
-class IFilePackage
-{
-public:
-	virtual ~IFilePackage() {}
+            virtual void findFiles(const std::string &dir, const std::string &extension, IFileList &result) = 0;
+            virtual InputStream getFile(const std::string &fileName) = 0;
 
-	virtual void findFiles(const std::string &dir, const std::string &extension, IFileList &result) = 0;
-	virtual InputStream getFile(const std::string &fileName) = 0;
+            // FIXME: should this be abstract?
+            virtual unsigned int getCrc(const std::string & /* fileName*/)
+            {
+                return 0;
+            }
+        };
 
-	// FIXME: should this be abstract?
-	virtual unsigned int getCrc(const std::string & /* fileName*/)
-	{
-		return 0;
-	}
-};
-
-} // end of namespace filesystem
-} // end of namespace frozenbyte
+    } // end of namespace filesystem
+}     // end of namespace frozenbyte
 
 #endif

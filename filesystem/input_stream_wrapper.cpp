@@ -1,8 +1,7 @@
-
 #include "precompiled.h"
 
 #ifdef _MSC_VER
-#pragma warning(disable:4103)
+#  pragma warning(disable:4103)
 #endif
 
 #include "input_stream_wrapper.h"
@@ -10,108 +9,100 @@
 #include "../system/Logger.h"
 #include <vector>
 
-
 namespace frozenbyte {
-namespace filesystem {
-namespace {
+    namespace filesystem {
+        namespace {
+            int openFileAmount = 0;
 
-	int openFileAmount = 0;
+            struct Tracker {
+                Tracker()
+                {
+                }
 
-	struct Tracker
-	{
-		Tracker()
-		{
-		}
+                ~Tracker()
+                {
+                    assert(openFileAmount == 0);
+                }
+            };
 
-		~Tracker()
-		{
-			assert(openFileAmount == 0);
-		}
-	};
+            Tracker tracker;
 
-	Tracker tracker;
+        } // unnamed
 
-} // unnamed
+        struct FB_FILE {
+            InputStream stream;
 
-struct FB_FILE
-{
-	InputStream stream;
+            FB_FILE(InputStream &stream_)
+                :   stream(stream_)
+            {
+                ++openFileAmount;
+            }
 
-	FB_FILE(InputStream &stream_)
-	:	stream(stream_)
-	{
-		++openFileAmount;	
-	}
+            ~FB_FILE()
+            {
+                --openFileAmount;
+            }
+        };
 
-	~FB_FILE()
-	{
-		--openFileAmount;
-	}
-};
+        FB_FILE *fb_fopen(const char *filename, const char *)
+        {
+            if (!filename)
+                return 0;
 
+            FilePackageManager &manager = FilePackageManager::getInstance();
 
-FB_FILE *fb_fopen(const char *filename, const char *)
-{
-	if(!filename)
-		return 0;
+            manager.setInputStreamErrorReporting(false);
 
-	FilePackageManager &manager = FilePackageManager::getInstance();
+            InputStream stream = manager.getFile(filename);
 
-	manager.setInputStreamErrorReporting(false);
+            manager.setInputStreamErrorReporting(true);
 
-	InputStream stream = manager.getFile(filename);
+            if ( stream.isEof() )
+                return 0;
 
-	manager.setInputStreamErrorReporting(true);
+            return new FB_FILE(stream);
+        }
 
-	if(stream.isEof())
-		return 0;
+        size_t fb_fread(void *buffer, size_t size, size_t count, FB_FILE *stream)
+        {
+            // always zero out the buffer
+            memset(buffer, 0, size * count);
 
-	return new FB_FILE(stream);
-}
+            if (!stream) {
+                Logger::getInstance()->warning("fb_fread - Attempt to read when no stream available.");
+                return 0;
+            }
 
-size_t fb_fread(void *buffer, size_t size, size_t count, FB_FILE *stream)
-{
-	// always zero out the buffer
-	memset(buffer, 0, size * count);
+            if ( stream->stream.isEof() )
+                Logger::getInstance()->warning("fb_fread - Attempt to read past end of file.");
 
-	if(!stream)
-	{
-		Logger::getInstance()->warning("fb_fread - Attempt to read when no stream available.");
-		return 0;
-	}
+            unsigned char *charBuffer = reinterpret_cast<unsigned char *>(buffer);
+            stream->stream.read(charBuffer, size * count);
 
-	if(stream->stream.isEof())
-	{
-		Logger::getInstance()->warning("fb_fread - Attempt to read past end of file.");
-	}
+            return count;
+        }
 
-	unsigned char *charBuffer = reinterpret_cast<unsigned char *> (buffer);
-	stream->stream.read(charBuffer, size * count);
+        size_t fb_fsize(FB_FILE *stream)
+        {
+            if (!stream)
+                return 0;
 
-	return count;
-}
+            return stream->stream.getSize();
+        }
 
-size_t fb_fsize(FB_FILE *stream)
-{
-	if(!stream)
-		return 0;
+        int fb_feof(FB_FILE *stream)
+        {
+            if ( !stream || stream->stream.isEof() )
+                return 1;
 
-	return stream->stream.getSize();
-}
+            return 0;
+        }
 
-int fb_feof(FB_FILE *stream)
-{
-	if(!stream || stream->stream.isEof())
-		return 1;
+        int fb_fclose(FB_FILE *stream)
+        {
+            delete stream;
+            return 0;
+        }
 
-	return 0;
-}
-
-int fb_fclose(FB_FILE *stream)
-{
-	delete stream;
-	return 0;
-}
-
-} // filesystem
-} // frozenbyte
+    } // filesystem
+}     // frozenbyte

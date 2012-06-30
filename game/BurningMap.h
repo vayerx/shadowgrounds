@@ -3,24 +3,23 @@
 
 namespace game
 {
-	class Game;
+    class Game;
 }
 
-class BurningMap
-{
+class BurningMap {
 public:
-	BurningMap(int pathfind_sizeX, int pathfind_sizeY);
-	~BurningMap();
+    BurningMap(int pathfind_sizeX, int pathfind_sizeY);
+    ~BurningMap();
 
-	void update(game::Game *game);
-	int getCost(int pathfind_i, int pathfind_j);
+    void update(game::Game *game);
+    int getCost(int pathfind_i, int pathfind_j);
 
-	static const int pathfindSizeDiv = 8;
+    static const int pathfindSizeDiv = 8;
 
 private:
-	unsigned char *map;
-	int sizeX;
-	int sizeY;
+    unsigned char *map;
+    int sizeX;
+    int sizeY;
 };
 
 #endif

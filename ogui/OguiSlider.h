@@ -14,103 +14,122 @@ class IOguiImage;
 #include <string>
 
 // Horizontal slider
-class OguiSlider : public IOguiButtonListener
-{
+class OguiSlider : public IOguiButtonListener {
 public:
-	OguiSlider( OguiWindow* win, Ogui* ogui, int x, int y, int w, int h, 
-		const std::string& background_norm, const std::string& background_down, const std::string& background_high,
-		const std::string& foreground_norm, const std::string& foreground_down, const std::string& foreground_high, int id = 0, float value = 1.0f );
+    OguiSlider(OguiWindow        *win,
+               Ogui              *ogui,
+               int                x,
+               int                y,
+               int                w,
+               int                h,
+               const std::string &background_norm,
+               const std::string &background_down,
+               const std::string &background_high,
+               const std::string &foreground_norm,
+               const std::string &foreground_down,
+               const std::string &foreground_high,
+               int                id = 0,
+               float              value = 1.0f);
 
-	/*OguiWindow *win, int x, int y, int sizex, int sizey, 
-    const char *imageFilename, const char *imageDownFilename, const char *imageHighlightFilename,
-    int id = 0, void *argument = NULL*/
-	
-	virtual ~OguiSlider( );
+    /*OguiWindow *win, int x, int y, int sizex, int sizey,
+       const char *imageFilename, const char *imageDownFilename, const char *imageHighlightFilename,
+       int id = 0, void *argument = NULL*/
 
-	// sets a position for the bar. Not relative to the position of the background.
-	void setBarPosition( int x, int y, int w, int h );
+    virtual ~OguiSlider();
 
-	// moves the slider (background and foreground) to give location
-	void Move( int x, int y );
+    // sets a position for the bar. Not relative to the position of the background.
+    void setBarPosition(int x, int y, int w, int h);
 
-	// sets transparency value to both of the buttons
-	void setTransparency( int transparency );
+    // moves the slider (background and foreground) to give location
+    void Move(int x, int y);
 
-	// Returns the value between 0 and 1
-	float getValue() const;
+    // sets transparency value to both of the buttons
+    void setTransparency(int transparency);
 
-	// The given value between 0 and 1
-	void  setValue( float value );
+    // Returns the value between 0 and 1
+    float getValue() const;
 
-	// adds the disabled images
-	void setDisabledImages( const std::string& background_disabled, const std::string& foreground_disabled );
+    // The given value between 0 and 1
+    void  setValue(float value);
 
-	void setBackgroundImages( IOguiImage *norm, IOguiImage *down, IOguiImage *high);
-	void setForegroundImages( IOguiImage *norm, IOguiImage *down, IOguiImage *high);
+    // adds the disabled images
+    void setDisabledImages(const std::string &background_disabled, const std::string &foreground_disabled);
 
-	// disables the slider
-	virtual void setDisabled( bool disabled = true );
+    void setBackgroundImages(IOguiImage *norm, IOguiImage *down, IOguiImage *high);
+    void setForegroundImages(IOguiImage *norm, IOguiImage *down, IOguiImage *high);
 
-	//
-	void setListener( IOguiSliderListener* listen );
+    // disables the slider
+    virtual void setDisabled(bool disabled = true);
 
-	int  getId() const;
+    //
+    void setListener(IOguiSliderListener *listen);
 
-	void setSliderDirection( bool horizontal );
+    int  getId() const;
 
-	void CursorEvent( OguiButtonEvent *eve );
+    void setSliderDirection(bool horizontal);
 
-	int getWidth() const;
-	int getHeight() const;
-	void resize(int w, int h);
+    void CursorEvent(OguiButtonEvent *eve);
+
+    int getWidth() const;
+    int getHeight() const;
+    void resize(int w, int h);
 
 protected:
 
-	const int		backgroundId;
-	const int		foregroundId;
+    const int backgroundId;
+    const int foregroundId;
 
-	Ogui*			ogui;
-	OguiWindow*		win;
+    Ogui *ogui;
+    OguiWindow *win;
 
-	OguiButton*		background;
-	OguiButton*		foreground;
-	int				x;
-	int				y;
-	int				w;
-	int				h;
-	int				id;
-	float			value;
+    OguiButton *background;
+    OguiButton *foreground;
+    int x;
+    int y;
+    int w;
+    int h;
+    int id;
+    float value;
 
-	int				offset_x;
-	int				offset_y;
+    int offset_x;
+    int offset_y;
 
-	bool horizontal;
+    bool horizontal;
 
-	IOguiSliderListener* listener;
+    IOguiSliderListener *listener;
 
-	IOguiImage*		disabledBackground;
-	IOguiImage*		disabledForeground;
+    IOguiImage *disabledBackground;
+    IOguiImage *disabledForeground;
 
-
-	static	OguiSlider*		updateThis;
-	static  OguiSlider*	    updateThisIfHold;
+    static OguiSlider *updateThis;
+    static OguiSlider *updateThisIfHold;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // Good old dirty inheritance hack
-// A slider that can't be manipulated with mouse 
-class OguiGfxSlider : public OguiSlider
-{
+// A slider that can't be manipulated with mouse
+class OguiGfxSlider : public OguiSlider {
 public:
-	OguiGfxSlider(  OguiWindow* win, Ogui* ogui, int x, int y, int w, int h, 
-		const std::string& background_norm, const std::string& background_down, const std::string& background_high,
-		const std::string& foreground_norm, const std::string& foreground_down, const std::string& foreground_high, int id = 0, float value = 1.0f  );
-	virtual ~OguiGfxSlider();
-	
-	virtual void setDisabled( bool disabled = true );
+    OguiGfxSlider(OguiWindow        *win,
+                  Ogui              *ogui,
+                  int                x,
+                  int                y,
+                  int                w,
+                  int                h,
+                  const std::string &background_norm,
+                  const std::string &background_down,
+                  const std::string &background_high,
+                  const std::string &foreground_norm,
+                  const std::string &foreground_down,
+                  const std::string &foreground_high,
+                  int                id = 0,
+                  float              value = 1.0f);
+    virtual ~OguiGfxSlider();
+
+    virtual void setDisabled(bool disabled = true);
 
 private:
-	void Initialize();
+    void Initialize();
 };
 
 ///////////////////////////////////////////////////////////////////////////////

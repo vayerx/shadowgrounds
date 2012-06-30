@@ -4,29 +4,27 @@
 #define PARTICLE_APPLICATION_H
 
 #ifndef INCLUDED_BOOST_SCOPED_PTR_HPP
-#define INCLUDED_BOOST_SCOPED_PTR_HPP
-#include <boost/scoped_ptr.hpp>
+#  define INCLUDED_BOOST_SCOPED_PTR_HPP
+#  include <boost/scoped_ptr.hpp>
 #endif
 
 #include <string>
 
 namespace frozenbyte {
-namespace particle {
+    namespace particle {
+        struct ApplicationData;
 
-struct ApplicationData;
+        class Application {
+            boost::scoped_ptr<ApplicationData> data;
 
-class Application
-{
-	boost::scoped_ptr<ApplicationData> data;
+        public:
+            Application();
+            ~Application();
 
-public:
-	Application();
-	~Application();
+            void run(std::string startupFilename);
+        };
 
-	void run(std::string startupFilename);
-};
-
-} // end of namespace viewer
-} // end of namespace frozenbyte
+    } // end of namespace viewer
+}     // end of namespace frozenbyte
 
 #endif

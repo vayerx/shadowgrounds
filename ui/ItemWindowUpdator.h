@@ -6,51 +6,47 @@
 
 #include "ICombatSubWindow.h"
 
-namespace game 
+namespace game
 {
-	class Game;
+    class Game;
 }
 
 namespace ui {
-
 ///////////////////////////////////////////////////////////////////////////////
 
-class ItemWindow;
+    class ItemWindow;
 
-class ItemWindowUpdator : public ICombatSubWindow
-{
-public:
-	ItemWindowUpdator( game::Game* game, ItemWindow* itemWindow );
-	~ItemWindowUpdator();
+    class ItemWindowUpdator : public ICombatSubWindow {
+    public:
+        ItemWindowUpdator(game::Game *game, ItemWindow *itemWindow);
+        ~ItemWindowUpdator();
 
-	virtual void hide( int time = 0 );
-	virtual void show( int time = 0 );
-	virtual void update();
-	
+        virtual void hide(int time = 0);
+        virtual void show(int time = 0);
+        virtual void update();
 
-private:
+    private:
 
-	void doUpdate( ItemWindow* itemwindow );
-	
-	struct ItemVisual
-	{
-		std::string watch_variable;
-		std::string image;
-		std::string location;
-		int			shown;
-	};
-	//.........................................................................
+        void doUpdate(ItemWindow *itemwindow);
 
-	game::Game* game;
-	
-	int updateInFrames;
-	int currentFrame;
-	
-	ItemWindow* itemWindow;
-	//.........................................................................
+        struct ItemVisual {
+            std::string watch_variable;
+            std::string image;
+            std::string location;
+            int         shown;
+        };
+        //.........................................................................
 
-	std::list< ItemVisual > items;
-};
+        game::Game *game;
+
+        int updateInFrames;
+        int currentFrame;
+
+        ItemWindow *itemWindow;
+        //.........................................................................
+
+        std::list< ItemVisual > items;
+    };
 
 ///////////////////////////////////////////////////////////////////////////////
 

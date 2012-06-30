@@ -1,4 +1,3 @@
-
 #ifndef PROJECTILE_H
 #define PROJECTILE_H
 
@@ -16,242 +15,239 @@
 
 namespace ui
 {
-	//class VisualObject;
-	class VisualEffect;
+    //class VisualObject;
+    class VisualEffect;
 }
 
 namespace game
 {
-	class Unit;
+    class Unit;
 
-	/**
-	 *
-	 * A moving (usually airborne) game projectile.
-	 * Usually a bullet of some kind.
-	 *
-	 * @version 1.0, 23.6.2002
-	 * @author Jukka Kokkonen <jukka@frozenbyte.com>
-	 * @see UnitActor
-	 * @see UnitList
-	 * @see Part
-	 *
-	 */
+    /**
+     *
+     * A moving (usually airborne) game projectile.
+     * Usually a bullet of some kind.
+     *
+     * @version 1.0, 23.6.2002
+     * @author Jukka Kokkonen <jukka@frozenbyte.com>
+     * @see UnitActor
+     * @see UnitList
+     * @see Part
+     *
+     */
 
-	class Projectile : public GameObject, public ui::IPointableObject, public tracking::ITrackerObject
-	{
-	public:
+    class Projectile : public GameObject, public ui::IPointableObject, public tracking::ITrackerObject {
+    public:
 
-		/** 
-		 * Creates a new game projectile object.
-		 * If projectile has a bullet type, the behaviour and fly path will be
-		 * based on the bullet type. If it does not have a bullet type, 
-		 * the projectiles behaviour will depend on methods called.
-		 * @param shooter  Unit*, the unit that this projectile originated from.
-		 * NULL if it has not oginated from a unit.
-		 * @param bulletType	Bullet*, the bullet type that this projectile is.
-		 * NULL if it is not a bullet, but rather some other type of projectile.
-		 */
-		Projectile(Unit *shooter, Bullet *bulletType);
+        /**
+         * Creates a new game projectile object.
+         * If projectile has a bullet type, the behaviour and fly path will be
+         * based on the bullet type. If it does not have a bullet type,
+         * the projectiles behaviour will depend on methods called.
+         * @param shooter  Unit*, the unit that this projectile originated from.
+         * NULL if it has not oginated from a unit.
+         * @param bulletType    Bullet*, the bullet type that this projectile is.
+         * NULL if it is not a bullet, but rather some other type of projectile.
+         */
+        Projectile(Unit *shooter, Bullet *bulletType);
 
-		virtual ~Projectile();
+        virtual ~Projectile();
 
-		/** 
-		 * TODO!
-		 * To implement GameObject "interface" class.
-		 * @return SaveData, data to be saved. TODO, currently NULL.
-		 */
-		virtual SaveData *getSaveData() const;
+        /**
+         * TODO!
+         * To implement GameObject "interface" class.
+         * @return SaveData, data to be saved. TODO, currently NULL.
+         */
+        virtual SaveData *getSaveData() const;
 
-		virtual const char *getStatusInfo() const;
+        virtual const char *getStatusInfo() const;
 
-		/**
-		 * Trackable by visual effects. Implements the 
-		 * IPointableObject interface.
-		 */
-		virtual const VC3 &getPointerPosition() const;
-		virtual const VC3 getPointerMiddleOffset() const;
+        /**
+         * Trackable by visual effects. Implements the
+         * IPointableObject interface.
+         */
+        virtual const VC3&getPointerPosition() const;
+        virtual const VC3 getPointerMiddleOffset() const;
 
-		/**
-		 * Sets a direct path for the projectile.
-		 * Makes the projectile move from origin to destination with given velocity.
-		 * The lifetime and direction of the projectile are calculated based on 
-		 * given values.
-		 * @param origin	VC3&, the world starting position for the projectile.
-		 * @param destination  VC3&, the world ending position for the projectile.
-		 * @param velocity	float, the velocity of the projectile 
-		 * (in meters per game ticks, which are 10ms at the moment).
-		 */
-		void setDirectPath(const VC3 &origin, const VC3 &destination, float velocity);
+        /**
+         * Sets a direct path for the projectile.
+         * Makes the projectile move from origin to destination with given velocity.
+         * The lifetime and direction of the projectile are calculated based on
+         * given values.
+         * @param origin    VC3&, the world starting position for the projectile.
+         * @param destination  VC3&, the world ending position for the projectile.
+         * @param velocity    float, the velocity of the projectile
+         * (in meters per game ticks, which are 10ms at the moment).
+         */
+        void setDirectPath(const VC3 &origin, const VC3 &destination, float velocity);
 
-		void setPathByDirection(const VC3 &origin, const VC3 &direction, float velocity, int lifeTime);
+        void setPathByDirection(const VC3 &origin, const VC3 &direction, float velocity, int lifeTime);
 
-		// sets some spread to the projectile 
-		// (does not go exactly to destination)
-		void makeSpread(VC3 &spreadVector);
+        // sets some spread to the projectile
+        // (does not go exactly to destination)
+        void makeSpread(VC3 &spreadVector);
 
-		void setPosition(const VC3 &position);
-		void setDestination(const VC3 &destination);
-		void setVelocity(const VC3 &velocity);
-		void setDirection(const VC3 &direction);
-		void setHitNormal(const VC3 &hitNormal);
-		//void setScale(VC3 &scale);
-		void setRotation(float xAngle, float yAngle, float zAngle);
-		void setLifeTime(int lifeTime);
-		void setAfterLifeTime(int afterLifeTime);
-		void setParabolicPathHeight(float height);
+        void setPosition(const VC3 &position);
+        void setDestination(const VC3 &destination);
+        void setVelocity(const VC3 &velocity);
+        void setDirection(const VC3 &direction);
+        void setHitNormal(const VC3 &hitNormal);
+        //void setScale(VC3 &scale);
+        void setRotation(float xAngle, float yAngle, float zAngle);
+        void setLifeTime(int lifeTime);
+        void setAfterLifeTime(int afterLifeTime);
+        void setParabolicPathHeight(float height);
 
-		void setHitTarget(Unit *unit, Part *part); // first param can't be const
-		Unit *getHitUnit() const; // can't return const
-		Part *getHitPart() const;
+        void setHitTarget(Unit *unit, Part *part); // first param can't be const
+        Unit *getHitUnit() const;                  // can't return const
+        Part *getHitPart() const;
 
-		void setOrigin(const VC3 &origin);
+        void setOrigin(const VC3 &origin);
 
-		const VC3 &getPosition() const;
-		const VC3 &getDestination() const;
-		const VC3 &getOrigin() const;
-		const VC3 &getVelocity() const;
-		const VC3 &getDirection() const;
-		const VC3 &getHitNormal() const;
-		VC3 getRotation() const;
-		//VC3 getScale() const;
-		int getLifeTime() const;
-		int getAfterLifeTime() const;
-		int getOriginalLifeTime() const;
-		float getParabolicPathHeight() const;
+        const VC3&getPosition() const;
+        const VC3&getDestination() const;
+        const VC3&getOrigin() const;
+        const VC3&getVelocity() const;
+        const VC3&getDirection() const;
+        const VC3&getHitNormal() const;
+        VC3 getRotation() const;
+        //VC3 getScale() const;
+        int getLifeTime() const;
+        int getAfterLifeTime() const;
+        int getOriginalLifeTime() const;
+        float getParabolicPathHeight() const;
 
-		int getChainCustomValue() const;
-		void setChainCustomValue(int chainCustomValue);
+        int getChainCustomValue() const;
+        void setChainCustomValue(int chainCustomValue);
 
-		int getCurrentSplitPosition() const;
-		void setCurrentSplitPosition(int splitPosition);
+        int getCurrentSplitPosition() const;
+        void setCurrentSplitPosition(int splitPosition);
 
-		void setInflictDamage(bool inflict);
-		bool doesInflictDamage() const;
+        void setInflictDamage(bool inflict);
+        bool doesInflictDamage() const;
 
-		void setShooter(Unit *shooter);
-		Unit *getShooter() const;
-		Bullet *getBulletType() const;
+        void setShooter(Unit *shooter);
+        Unit *getShooter() const;
+        Bullet *getBulletType() const;
 
-		//ui::VisualObject *getVisualObject() const;
-		//void setVisualObject(ui::VisualObject *visualObject);
-		ui::VisualEffect *getVisualEffect() const;
-		void setVisualEffect(ui::VisualEffect *visualEffect);
+        //ui::VisualObject *getVisualObject() const;
+        //void setVisualObject(ui::VisualObject *visualObject);
+        ui::VisualEffect *getVisualEffect() const;
+        void setVisualEffect(ui::VisualEffect *visualEffect);
 
-		int getVisualType();
+        int getVisualType();
 
-		void setChain(int chain);
+        void setChain(int chain);
 
-		int getChain() const;
+        int getChain() const;
 
-		Projectile *getCopy() const;
+        Projectile *getCopy() const;
 
-		int getHandle() const;
+        int getHandle() const;
 
-		void setParentUnit(Unit *parentUnit);
-		void setParentProjectile(Projectile *parentProjectile);
+        void setParentUnit(Unit *parentUnit);
+        void setParentProjectile(Projectile *parentProjectile);
 
-		Projectile *getParentProjectile() const;
-		Unit *getParentUnit() const;
+        Projectile *getParentProjectile() const;
+        Unit *getParentUnit() const;
 
-		Unit *getOriginUnit() const;
-		void setOriginUnit(Unit *originUnit);
+        Unit *getOriginUnit() const;
+        void setOriginUnit(Unit *originUnit);
 
-		bool doesHitSound() const;
-		void setHitSound(bool hitSound);
+        bool doesHitSound() const;
+        void setHitSound(bool hitSound);
 
-		void setFollowOrigin(bool followOrigin);
-		bool doesFollowOrigin();
+        void setFollowOrigin(bool followOrigin);
+        bool doesFollowOrigin();
 
+        // implementation for the tracking interface...
+        virtual tracking::ITrackerObjectType *getType();
+        virtual void tick();
+        virtual void setTrackablePosition(const VC3 &globalPosition);
+        virtual void setTrackableVelocity(const VC3 &velocity);
+        virtual void setTrackableRotation(const QUAT &rotation);
+        virtual void lostTracked();
+        virtual void trackerDeleted();
+        virtual void attachedToTrackable(tracking::ITrackableObject *trackable);
+        virtual void setTrackerPosition(const VC3 &position);
+        virtual VC3 getTrackerPosition() const;
+        virtual void iterateTrackables(tracking::ITrackableObjectIterator *iter);
+        virtual void trackerSignal(int trackerSignalNumber);
 
-		// implementation for the tracking interface...
-		virtual tracking::ITrackerObjectType *getType();
-		virtual void tick();
-		virtual void setTrackablePosition(const VC3 &globalPosition);
-		virtual void setTrackableVelocity(const VC3 &velocity);
-		virtual void setTrackableRotation(const QUAT &rotation);
-		virtual void lostTracked();
-		virtual void trackerDeleted();
-		virtual void attachedToTrackable(tracking::ITrackableObject *trackable);
-		virtual void setTrackerPosition(const VC3 &position);
-		virtual VC3 getTrackerPosition() const;
-		virtual void iterateTrackables(tracking::ITrackableObjectIterator *iter);
-		virtual void trackerSignal(int trackerSignalNumber);
+        void setProjectileIsPointedBy(IProjectileTrackerFactory *pointer);
 
-		void setProjectileIsPointedBy(IProjectileTrackerFactory *pointer);
+        const VC3&getOriginOffset() { return originOffset; }
+        void setOriginOffset(const VC3 &offset) { originOffset = offset; }
 
-		const VC3 &getOriginOffset() { return originOffset; }
-		void setOriginOffset(const VC3 &offset) { originOffset = offset; }
+        Unit *getForceGoreExplosionUnit() { return forceGoreExplosionUnit; }
+        void setForceGoreExplosionUnit(Unit *unit) { forceGoreExplosionUnit = unit; }
 
-		Unit *getForceGoreExplosionUnit() { return forceGoreExplosionUnit; }
-		void setForceGoreExplosionUnit(Unit *unit) { forceGoreExplosionUnit = unit; }
+    private:
+        Bullet *bulletType;
+        Unit *shooter;
 
+        int projectileHandle;
 
-	private:
-		Bullet *bulletType;
-		Unit *shooter;
+        VC3 position;
 
-		int projectileHandle;
+        VC3 velocity;
 
-		VC3 position;
+        VC3 direction;
 
-		VC3 velocity;
+        //VC3 scale;
 
-		VC3 direction;
+        // angles
+        float xAngle;
+        float yAngle;
+        float zAngle;
 
-		//VC3 scale;
+        VC3 destination;
+        VC3 origin;
+        VC3 hitNormal;
 
-		// angles
-		float xAngle;
-		float yAngle;
-		float zAngle;
+        int lifeTime;
 
-		VC3 destination;
-		VC3 origin;
-		VC3 hitNormal;
+        int visualType;
+        int afterLifeTime;
+        int originalLifeTime;
 
-		int lifeTime;
+        float parabolicPathHeight;
 
-		int visualType;
-		int afterLifeTime;
-		int originalLifeTime;
+        int chain;
 
-		float parabolicPathHeight;
+        bool inflictDamage;
 
-		int chain;
+        int chainCustomValue;
 
-		bool inflictDamage;
+        int currentSplitPosition;
 
-		int chainCustomValue;
+        Unit *hitUnit;  // can't be const
+        Part *hitPart;
 
-		int currentSplitPosition;
+        //ui::VisualObject *visualObject;
+        ui::VisualEffect *visualEffect;
 
-		Unit *hitUnit;  // can't be const
-		Part *hitPart;
+        Projectile *child;
+        Projectile *parentProjectile;
+        Unit *parentUnit;
 
-		//ui::VisualObject *visualObject;
-		ui::VisualEffect *visualEffect;
+        Unit *originUnit;
 
-		Projectile *child;
-		Projectile *parentProjectile;
-		Unit *parentUnit;
+        bool doHitSound;
 
-		Unit *originUnit;
+        bool followOrigin;
 
-		bool doHitSound;
+        VC3 originOffset;
 
-		bool followOrigin;
+        IProjectileTrackerFactory *projectileIsPointedBy;
 
-		VC3 originOffset;
+        Unit *forceGoreExplosionUnit;
 
-		IProjectileTrackerFactory *projectileIsPointedBy;
-
-		Unit *forceGoreExplosionUnit;
-
-	public:
-		int criticalHitDamageMax;
-		float criticalHitDamageMultiplier;
-		float criticalHitProbabilityMultiplier;
-	};
+    public:
+        int criticalHitDamageMax;
+        float criticalHitDamageMultiplier;
+        float criticalHitProbabilityMultiplier;
+    };
 
 }
 

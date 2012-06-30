@@ -1,4 +1,3 @@
-
 #ifndef OGUITEXTLABEL_H
 #define OGUITEXTLABEL_H
 
@@ -10,34 +9,31 @@
 
 #include "OguiButton.h"
 
-
-class OguiTextLabel
-{
+class OguiTextLabel {
 public:
-  OguiTextLabel(OguiButton *but);
-  ~OguiTextLabel();
+    OguiTextLabel(OguiButton *but);
+    ~OguiTextLabel();
 
-  void Move(int x, int y);
-	void Resize(int x, int y);
+    void Move(int x, int y);
+    void Resize(int x, int y);
 
-  // TODO: should use own alignment enum, not button's...
-  void SetTextHAlign(OguiButton::TEXT_H_ALIGN hAlign);
-  void SetTextVAlign(OguiButton::TEXT_V_ALIGN vAlign);
+    // TODO: should use own alignment enum, not button's...
+    void SetTextHAlign(OguiButton::TEXT_H_ALIGN hAlign);
+    void SetTextVAlign(OguiButton::TEXT_V_ALIGN vAlign);
 
-  void SetFont(IOguiFont *font);
+    void SetFont(IOguiFont *font);
 
-  void SetText(const char *text);
+    void SetText(const char *text);
 
-  void SetLinebreaks(bool lineBreaks);
+    void SetLinebreaks(bool lineBreaks);
 
-  void SetTransparency( int transp_pros );
+    void SetTransparency(int transp_pros);
 
-	OguiButton *GetButton();
+    OguiButton *GetButton();
 
 private:
 
-  OguiButton *implButton;
+    OguiButton *implButton;
 };
 
 #endif
-

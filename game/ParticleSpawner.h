@@ -1,4 +1,3 @@
-
 #ifndef PARTICLESPAWNER_H
 #define PARTICLESPAWNER_H
 
@@ -12,67 +11,67 @@
 
 namespace game
 {
-  class Projectile;
-  class Weapon;
-  class Bullet;
-  class Game;
+    class Projectile;
+    class Weapon;
+    class Bullet;
+    class Game;
 
-  class ParticleSpawnerManager;
+    class ParticleSpawnerManager;
 
-  // Actually, this is a projectile (bullet) spawner...
+    // Actually, this is a projectile (bullet) spawner...
 
-  class ParticleSpawner
-  {
+    class ParticleSpawner {
     public:
-      ParticleSpawner(Game *game);
+        ParticleSpawner(Game *game);
 
-      ~ParticleSpawner();
+        ~ParticleSpawner();
 
-      void setName(const char *name);
+        void setName(const char *name);
 
-      void setPosition(const VC3 &position);
-      
-      void setDirection(const VC3 &direction);
+        void setPosition(const VC3 &position);
 
-      void setSpawnerWeapon(const Weapon *weapon);
+        void setDirection(const VC3 &direction);
 
-      void disable();
-     
-      void enable();
+        void setSpawnerWeapon(const Weapon *weapon);
 
-      void run();
+        void disable();
 
-			const char *getName() const;
+        void enable();
 
-			static Projectile *spawnProjectileWithWeapon(Game *game, const Weapon *weapon,
-				const VC3 &position, const VC3 &direction, float distanceToListener = 0.0f);
+        void run();
+
+        const char *getName() const;
+
+        static Projectile *spawnProjectileWithWeapon(Game         *game,
+                                                     const Weapon *weapon,
+                                                     const VC3    &position,
+                                                     const VC3    &direction,
+                                                     float         distanceToListener = 0.0f);
 
     private:
-      Game *game;
+        Game *game;
 
-      char *name;
+        char *name;
 
-      VC3 position;
-      VC3 direction;
+        VC3 position;
+        VC3 direction;
 
-      const Weapon *weapon;
+        const Weapon *weapon;
 
-      bool enabled;
+        bool enabled;
 
-			int waitTime;
+        int waitTime;
 
-			// this should be set by manager, to indicate that the particle
-			// spawner is outside screen (thus, disabled)
-			bool outsideScreen;
-			// this should be set by manager to tell the distance _squared_ to listener position
-			float distanceToListenerSq;
+        // this should be set by manager, to indicate that the particle
+        // spawner is outside screen (thus, disabled)
+        bool outsideScreen;
+        // this should be set by manager to tell the distance _squared_ to listener position
+        float distanceToListenerSq;
 
-			int projectileHandle;
-   
-      friend class ParticleSpawnerManager;
-  };
+        int projectileHandle;
+
+        friend class ParticleSpawnerManager;
+    };
 }
 
 #endif
-
-
