@@ -8,12 +8,15 @@
 //
 
 // These are pretty much just containers, functionality is in OguiWindow.
-#include <string>
 
 #include "IOguiButtonListener.h"
 #include "IOguiImage.h"
 #include "IOguiFont.h"
 #include "OguiButtonStyle.h"
+
+#include <string>
+#include <memory>
+#include <boost/noncopyable.hpp>
 
 // these must be the same as the button event type values
 #define OGUI_EMASK_CLICK      1
@@ -42,7 +45,7 @@ class Ogui;
 
 struct orvgui_but;
 
-class OguiButton {
+class OguiButton : private boost::noncopyable {
 public:
     enum TEXT_H_ALIGN {
         TEXT_H_ALIGN_LEFT = 1,
@@ -216,8 +219,8 @@ private:
 
     // added because of the fucking artists and their crappy feature requests
     bool selected;
-    IOguiImage *imageSelected;
-    IOguiImage *imageSelectedHigh;
+    std::auto_ptr<IOguiImage>   imageSelected;
+    std::auto_ptr<IOguiImage>   imageSelectedHigh;
 
     // internal method, sets images to orvgui
     void ApplyImages();

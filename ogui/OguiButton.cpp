@@ -35,9 +35,7 @@ OguiButton::OguiButton(Ogui *a_ogui, orvgui_but *button, int a_id, const void *a
     imageDisabledAutodel(false),
     imageHighlightedAutodel(false),
     rotation(0),
-    selected(false),
-    imageSelected(NULL),
-    imageSelectedHigh(NULL)
+    selected(false)
 {
     if (pImpl == NULL) {
         igios_backtrace();
@@ -64,12 +62,6 @@ OguiButton::~OguiButton()
 
     if (imageHighlightedAutodel && imageHighlighted != NULL)
         delete imageHighlighted;
-
-    delete imageSelected;
-    imageSelected = NULL;
-
-    delete imageSelectedHigh;
-    imageSelectedHigh = NULL;
 
     ogui->RemovedButton(this);
 }
@@ -463,8 +455,12 @@ void OguiButton::SetHotKey(int hotkey, int hotkeyModifier1, int hotkeyModifier2)
 void OguiButton::SetSelected(bool s)
 {
     if (selected != s) {
-        std::swap(image, imageSelected);
-        std::swap(imageHighlighted, imageSelectedHigh);
+        IOguiImage *imgSel = imageSelected.release();
+        IOguiImage *imgHigh = imageSelectedHigh.release();
+        std::swap(image, imgSel);
+        std::swap(imageHighlighted, imgHigh);
+        imageSelected.reset(imgSel);
+        imageSelectedHigh.reset(imgHigh);
         ApplyImages();
 
         selected = s;
@@ -478,20 +474,14 @@ bool OguiButton::IsSelected()
 
 void OguiButton::DeleteSelectedImages()
 {
-    if (imageSelected != NULL)
-        delete imageSelected;
-
-    imageSelected = NULL;
-
-    if (imageSelectedHigh != NULL)
-        delete imageSelectedHigh;
-
-    imageSelectedHigh = NULL;
+    imageSelected.reset();
+    imageSelectedHigh.reset();
 }
+
 void OguiButton::SetSelectedImages(IOguiImage *selected_norm, IOguiImage *selected_high)
 {
-    imageSelected = selected_norm;
-    imageSelectedHigh = selected_high;
+    imageSelected.reset(selected_norm);
+    imageSelectedHigh.reset(selected_high);
 }
 
 IOguiFont *OguiButton::GetTheFontCurrentlyInUse()
