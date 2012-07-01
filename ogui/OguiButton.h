@@ -40,6 +40,8 @@
 class OguiWindow;
 class Ogui;
 
+struct orvgui_but;
+
 class OguiButton {
 public:
     enum TEXT_H_ALIGN {
@@ -55,8 +57,13 @@ public:
     };
 
     // never construct directly, use ogui to make instances of these
-    OguiButton(Ogui *ogui, int id, const void *argument);
+    OguiButton(Ogui *ogui, orvgui_but *button, int id, const void *argument);
     ~OguiButton();
+
+    OguiWindow *GetOwner() { return owner; }
+    void        SetOwner(OguiWindow *a_parent) { owner = a_parent; }
+
+    struct orvgui_win * GetParent();
 
     // manually set images and fonts
     void SetImage(IOguiImage *image);
@@ -86,6 +93,9 @@ public:
     int GetX();
     int GetY();
 
+    void SetSize(int w, int h);
+    void SetPos(int x, int y);
+
     void SetClipToWindow(bool clip);   // by Pete
 
     // move button
@@ -97,9 +107,11 @@ public:
 
     // sets the listener object for this button
     void SetListener(IOguiButtonListener *listener);
+    IOguiButtonListener *GetListener() { return listener; }
 
     // sets events that will be sent to listener (defaults to click event only)
     void SetEventMask(int allowedEvents);
+    int GetEventMask() const { return eventMask; }
 
     // sets cursor buttons to which this button visually reacts to
     // that is, to which buttons presses the button down image is shown
@@ -161,21 +173,28 @@ public:
     // manually adjust the pressing state of the button
     void PressButton(bool press);
 
-    inline std::string *getText() { return &text; };
-
     struct Vertex {
         int      x, y;
         uint32_t color;
     };
     void SetCustomShape(Vertex *vertices, int numVertices);
 
+    inline const std::string &  GetText() const { return text; }
+
+    // internal method, reset stuff (next storm generation)
+    void ResetData();
+
 private:
+    // some internal hacks
+    // (the real button implementation is hidden behind this pointer)
+    orvgui_but *pImpl;
+
     Ogui *ogui;
     int id;
     int eventMask;
     const void *argument;
     IOguiButtonListener *listener;
-    OguiWindow *parent;
+    OguiWindow *owner;
 
     IOguiImage *image;
     IOguiImage *imageDown;
@@ -192,10 +211,6 @@ private:
     bool imageHighlightedAutodel;
     float rotation;
 
-    // some internal hacks
-    // (the real button implementation is hidden behind this pointer)
-    struct orvgui_but *but;
-
     // added by Pete for the text type effect
     std::string text;
 
@@ -204,17 +219,9 @@ private:
     IOguiImage *imageSelected;
     IOguiImage *imageSelectedHigh;
 
-    friend class Ogui;
-    friend class OguiWindow;
-    friend class OguiAligner;
-    friend void ogui_button_event_handler(OguiButtonEvent::EVENT_TYPE et);
-
     // internal method, sets images to orvgui
     void ApplyImages();
     void ApplyFonts();
-
-    // internal method, reset stuff (next storm generation)
-    void ResetData();
 
     // internal method, for figuring out which font is currently in use
     IOguiFont *GetTheFontCurrentlyInUse();

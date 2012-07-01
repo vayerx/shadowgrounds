@@ -6,51 +6,52 @@
 #include "OguiWindow.h"
 #include "Ogui.h"
 
-#include "../util/fb_assert.h"
+#include <util/fb_assert.h>
+#include <igios.h>
 
 // bad dependency
 #include "OguiStormDriver.h"
 #include "../util/UnicodeConverter.h"
 #include "../util/Debug_MemoryManager.h"
 
-OguiButton::OguiButton(Ogui *ogui, int id, const void *argument) :
+OguiButton::OguiButton(Ogui *a_ogui, orvgui_but *button, int a_id, const void *a_argument) :
+    pImpl(button),
+    ogui(a_ogui),
+    id(a_id),
+    eventMask(OGUI_EMASK_CLICK),
+    argument(a_argument),
+    listener(NULL),
+    owner(NULL),
+    image(NULL),
+    imageDown(NULL),
+    imageDisabled(NULL),
+    imageHighlighted(NULL),
+    font(NULL),
+    fontDown(NULL),
+    fontDisabled(NULL),
+    fontHighlighted(NULL),
+    imageAutodel(false),
+    imageDownAutodel(false),
+    imageDisabledAutodel(false),
+    imageHighlightedAutodel(false),
+    rotation(0),
     selected(false),
     imageSelected(NULL),
     imageSelectedHigh(NULL)
 {
-    this->ogui = ogui;
-    this->id = id;
-    this->argument = argument;
-    this->listener = NULL;
-    this->but = NULL;
-    this->parent = NULL;
-    this->eventMask = OGUI_EMASK_CLICK;
-
-    this->image = NULL;
-    this->imageDown = NULL;
-    this->imageDisabled = NULL;
-    this->imageHighlighted = NULL;
-    this->imageAutodel = false;
-    this->imageDownAutodel = false;
-    this->imageDisabledAutodel = false;
-    this->imageHighlightedAutodel = false;
-    this->rotation = 0;
-    this->font = NULL;
-    this->fontDisabled = NULL;
-    this->fontDown = NULL;
-    this->fontHighlighted = NULL;
+    if (pImpl == NULL) {
+        igios_backtrace();
+        abort();  // we've got a bug
+    }
 }
 
 OguiButton::~OguiButton()
 {
-    if (but == NULL)
-        abort(); // we've got a bug
-
     // to make sure, that the imageAutodel and images are correct
     SetSelected(false);
 
-    parent->buttonDeleted(this);
-    og_delete_button(but);
+    owner->buttonDeleted(this);
+    og_delete_button(pImpl);
 
     if (imageAutodel && image != NULL)
         delete image;
@@ -157,26 +158,22 @@ void OguiButton::SetHighlightedFont(IOguiFont *font)
 
 void OguiButton::Resize(int sizeX, int sizeY)
 {
-    assert(but != NULL);
-    og_resize_button(but, (short)sizeX, (short)sizeY);
+    og_resize_button(pImpl, (short)sizeX, (short)sizeY);
 }
 
 void OguiButton::SetClipToWindow(bool clip)
 {
-    assert(but != NULL);
-    but->clip_to_window = clip;
+    pImpl->clip_to_window = clip;
 }
 
 void OguiButton::Move(int x, int y)
 {
-    assert(but != NULL);
-    og_move_button(but, (short)x, (short)y);
+    og_move_button(pImpl, (short)x, (short)y);
 }
 
 void OguiButton::MoveBy(int x, int y)
 {
-    assert(but != NULL);
-    og_move_button_by(but, (short)x, (short) y);
+    og_move_button_by(pImpl, (short)x, (short) y);
 }
 
 void OguiButton::SetStyle(OguiButtonStyle *style)
@@ -208,48 +205,43 @@ void OguiButton::SetEventMask(int allowedEvents)
 
 void OguiButton::SetReactMask(int reactButtons)
 {
-    assert(but != NULL);
-    og_set_react_button(but, (unsigned int)reactButtons);
+    og_set_react_button(pImpl, (unsigned int)reactButtons);
 }
 
 void OguiButton::SetDisabled(bool disabled)
 {
-    if (but == NULL) abort();  // we've got a bug
     if (disabled)
-        og_disable_button(but);
+        og_disable_button(pImpl);
     else
-        og_enable_button(but);
+        og_enable_button(pImpl);
 }
 
 bool OguiButton::isDisabled()
 {
-    assert(but != NULL);
-    return but->enabled == 0;
+    return pImpl->enabled == 0;
 }
 
 void OguiButton::SetLineBreaks(bool linebreaks)
 {
     // TODO: check if this is a text button, else abort
     if (linebreaks)
-        og_set_linebreaks_button(but);
+        og_set_linebreaks_button(pImpl);
     else
-        og_set_nolinebreaks_button(but);
+        og_set_nolinebreaks_button(pImpl);
 }
 
 bool OguiButton::IsLineBreaks()
 {
-    assert(but != NULL);
-    return (but->linebreaks != 0);
+    return (pImpl->linebreaks != 0);
 }
 
 bool OguiButton::SetText(const char *text)
 {
     // HACK: optimization, if text is the same as it was before,
     // do nothing...
-    assert(but != NULL);
-    if (but->text != NULL
+    if (pImpl->text != NULL
         && text != NULL
-        && strcmp(but->text, text) == 0)
+        && strcmp(pImpl->text, text) == 0)
         return false;
 
     if ( ( text != NULL && !std::string(text).empty() ) &&
@@ -277,8 +269,7 @@ bool OguiButton::SetText(const char *text)
 
     // note, const char * -> char * cast.
     // however, the og_set_text_button should not change that.
-    assert(but != NULL);
-    og_set_text_button(but, text, pixwidth, pixheight,
+    og_set_text_button(pImpl, text, pixwidth, pixheight,
                        fontwidth, fontheight);
 
     return true;
@@ -286,42 +277,38 @@ bool OguiButton::SetText(const char *text)
 
 void OguiButton::SetAngle(float angle)
 {
-    assert(but != NULL);
-    og_rotate_button(but, angle);
+    og_rotate_button(pImpl, angle);
 }
 
 // 0 for no transparency, 100 for full transparency
 void OguiButton::SetTransparency(int transparencyPercentage)
 {
-    assert(but != NULL);
-    og_set_transparency_button(but, transparencyPercentage);
+    og_set_transparency_button(pImpl, transparencyPercentage);
 }
 
 void OguiButton::SetTextHAlign(OguiButton::TEXT_H_ALIGN hAlign)
 {
-    assert(but != NULL);
     if (hAlign == OguiButton::TEXT_H_ALIGN_LEFT)
-        og_set_h_align_button(but, OG_H_ALIGN_LEFT);
+        og_set_h_align_button(pImpl, OG_H_ALIGN_LEFT);
     else if (hAlign == OguiButton::TEXT_H_ALIGN_CENTER)
-        og_set_h_align_button(but, OG_H_ALIGN_CENTER);
+        og_set_h_align_button(pImpl, OG_H_ALIGN_CENTER);
     else
-        og_set_h_align_button(but, OG_H_ALIGN_RIGHT);
+        og_set_h_align_button(pImpl, OG_H_ALIGN_RIGHT);
 }
 
 void OguiButton::SetTextVAlign(OguiButton::TEXT_V_ALIGN vAlign)
 {
-    assert(but != NULL);
     if (vAlign == OguiButton::TEXT_V_ALIGN_TOP)
-        og_set_v_align_button(but, OG_V_ALIGN_TOP);
+        og_set_v_align_button(pImpl, OG_V_ALIGN_TOP);
     else if (vAlign == OguiButton::TEXT_V_ALIGN_MIDDLE)
-        og_set_v_align_button(but, OG_V_ALIGN_MIDDLE);
+        og_set_v_align_button(pImpl, OG_V_ALIGN_MIDDLE);
     else
-        og_set_v_align_button(but, OG_V_ALIGN_BOTTOM);
+        og_set_v_align_button(pImpl, OG_V_ALIGN_BOTTOM);
 }
 
 void OguiButton::Focus(int withCursor)
 {
-    og_warp_cursor_to(withCursor, but);
+    og_warp_cursor_to(withCursor, pImpl);
 }
 
 int OguiButton::GetId()
@@ -349,8 +336,7 @@ void OguiButton::ApplyImages()
     if (imageDown != NULL) matdown = ( (OguiStormImage *)imageDown )->mat;
     if (imageDisabled != NULL) matdisabled = ( (OguiStormImage *)imageDisabled )->mat;
     if (imageHighlighted != NULL) mathighlighted = ( (OguiStormImage *)imageHighlighted )->mat;
-    assert(but != NULL);
-    og_set_pic_button(but, mat, matdown, matdisabled, mathighlighted);
+    og_set_pic_button(pImpl, mat, matdown, matdisabled, mathighlighted);
 }
 
 void OguiButton::ApplyFonts()
@@ -381,8 +367,7 @@ void OguiButton::ApplyFonts()
         fnt_highlighted_color = ( (OguiStormFont *)fontHighlighted )->color;
     }
 
-    assert(but != NULL);
-    og_set_fonts_button(but,
+    og_set_fonts_button(pImpl,
                         fnt,
                         fnt_color,
                         fnt_down,
@@ -396,10 +381,9 @@ void OguiButton::ApplyFonts()
     // a hack to do that
     // need to copy the original text first, as the method call will
     // delete the original text
-    assert(but != NULL);
-    if (but->text != NULL) {
-        char *buf = new char[strlen(but->text) + 1];
-        strcpy(buf, but->text);
+    if (pImpl->text != NULL) {
+        char *buf = new char[strlen(pImpl->text) + 1];
+        strcpy(buf, pImpl->text);
         SetText(NULL);
         SetText(buf);
         delete[] buf;
@@ -421,68 +405,59 @@ IOguiFont *OguiButton::GetFont()
 
 int OguiButton::GetSizeX()
 {
-    assert(but != NULL);
-    return but->sizex;
+    return pImpl->sizex;
 }
 
 int OguiButton::GetSizeY()
 {
-    assert(but != NULL);
-    return but->sizey;
+    return pImpl->sizey;
 }
 
 int OguiButton::GetX()
 {
-    assert(but != NULL);
-    return but->put_x;
+    return pImpl->put_x;
 }
 
 int OguiButton::GetY()
 {
-    assert(but != NULL);
-    return but->put_y;
+    return pImpl->put_y;
 }
 
 void OguiButton::SetClip(float leftX, float topY, float rightX, float bottomY)
 {
-    assert(but != NULL);
-    but->clipleftx = leftX;
-    but->cliptopy = topY;
-    but->cliprightx = rightX;
-    but->clipbottomy = bottomY;
+    pImpl->clipleftx = leftX;
+    pImpl->cliptopy = topY;
+    pImpl->cliprightx = rightX;
+    pImpl->clipbottomy = bottomY;
 }
 
 void OguiButton::GetClip(float &leftX, float &topY, float &rightX, float &bottomY)
 {
-    assert(but != NULL);
-    leftX = but->clipleftx;
-    topY = but->cliptopy;
-    rightX = but->cliprightx;
-    bottomY = but->clipbottomy;
+    leftX = pImpl->clipleftx;
+    topY = pImpl->cliptopy;
+    rightX = pImpl->cliprightx;
+    bottomY = pImpl->clipbottomy;
 }
 
 void OguiButton::SetScroll(float scrollX, float scrollY)
 {
-    assert(but != NULL);
-    but->scroll_x = scrollX;
-    but->scroll_y = scrollY;
-    but->wrap = true;
+    pImpl->scroll_x = scrollX;
+    pImpl->scroll_y = scrollY;
+    pImpl->wrap = true;
 }
 
 void OguiButton::SetRepeat(float repeatX, float repeatY)
 {
-    assert(but != NULL);
-    but->repeat_x = repeatX;
-    but->repeat_y = repeatY;
-    but->wrap = true;
+    pImpl->repeat_x = repeatX;
+    pImpl->repeat_y = repeatY;
+    pImpl->wrap = true;
 }
 
 void OguiButton::SetHotKey(int hotkey, int hotkeyModifier1, int hotkeyModifier2)
 {
-    assert(but != NULL);
-    but->hotKeys[0] = hotkey;
-    but->hotKeys[1] = hotkeyModifier1;
-    but->hotKeys[2] = hotkeyModifier2;
+    pImpl->hotKeys[0] = hotkey;
+    pImpl->hotKeys[1] = hotkeyModifier1;
+    pImpl->hotKeys[2] = hotkeyModifier2;
 }
 
 void OguiButton::SetSelected(bool s)
@@ -521,7 +496,7 @@ void OguiButton::SetSelectedImages(IOguiImage *selected_norm, IOguiImage *select
 
 IOguiFont *OguiButton::GetTheFontCurrentlyInUse()
 {
-    orvgui_but *orv_button = but;
+    orvgui_but *orv_button = pImpl;
     IOguiFont *result = font;
 
     if (orv_button->enabled == 0) {
@@ -543,14 +518,14 @@ IOguiFont *OguiButton::GetTheFontCurrentlyInUse()
 
 void OguiButton::PressButton(bool press)
 {
-    orvgui_but *orv_button = but;
+    orvgui_but *orv_button = pImpl;
     if (!press) og_unpress_button(orv_button);
     else og_press_button(orv_button);
 }
 
 void OguiButton::SetCustomShape(Vertex *vertices, int numVertices)
 {
-    orvgui_but *orv_button = but;
+    orvgui_but *orv_button = pImpl;
 
     if (numVertices == 0 || vertices == NULL) {
         delete[] orv_button->vertices;
@@ -569,6 +544,19 @@ void OguiButton::SetCustomShape(Vertex *vertices, int numVertices)
 
 void OguiButton::SetWrap(bool wrap)
 {
-    assert(but != NULL);
-    but->wrap = wrap;
+    pImpl->wrap = wrap;
+}
+
+void OguiButton::SetSize(int w, int h) {
+    pImpl->sizex = w;
+    pImpl->sizey = h;
+}
+
+void OguiButton::SetPos(int x, int y) {
+    pImpl->put_x = x;
+    pImpl->put_y = y;
+}
+
+orvgui_win* OguiButton::GetParent() {
+    return pImpl->parent;
 }

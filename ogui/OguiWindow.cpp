@@ -32,17 +32,17 @@ void ogui_button_event_handler(OguiButtonEvent::EVENT_TYPE et)
         et = OguiButtonEvent::EVENT_TYPE_CLICK;
     }*/
 
-    if (et & b->eventMask && b->listener != NULL) {
+    if (et & b->GetEventMask() && b->GetListener() != NULL) {
         OguiButtonEvent *eve = new OguiButtonEvent(et, og_cursor_num,
                                                    og_cursor_scrx, og_cursor_scry, og_cursor_x, og_cursor_y,
                                                    og_cursor_but, og_cursor_obut,
-                                                   b, b->parent, b->argument);
+                                                   b, b->GetOwner(), b->GetArgument());
 
-        (b->listener)->CursorEvent(eve);
+        b->GetListener()->CursorEvent(eve);
         delete eve;
     } else {
-        if (b->listener == NULL)
-            ( Logger::getInstance() )->debug("ogui_button_event_handler - Button has no listener.");
+        if (b->GetListener() == NULL)
+            Logger::getInstance()->debug("ogui_button_event_handler - Button has no listener.");
     }
 }
 
@@ -307,28 +307,20 @@ OguiButton *OguiWindow::CreateNewButton(int         x,
         but = og_create_button( (orvgui_win *)win, OG_BUT_PIC, x, y, sizex, sizey, clipToWindow );
     }
 
-    IStorm3D_Material *mat = NULL;
-    IStorm3D_Material *matdown = NULL;
-    IStorm3D_Material *mathigh = NULL;
-    IStorm3D_Material *matdisabled = NULL;
-    if (img != NULL) mat = ( (OguiStormImage *)img )->mat;
-    if (imgdown != NULL) matdown = ( (OguiStormImage *)imgdown )->mat;
-    if (imghigh != NULL) mathigh = ( (OguiStormImage *)imghigh )->mat;
-    if (imgdisabled != NULL) matdisabled = ( (OguiStormImage *)imgdisabled )->mat;
+    IStorm3D_Material *mat = (img != NULL) ? reinterpret_cast<OguiStormImage *>(img)->mat : NULL;
+    IStorm3D_Material *matdown = (imgdown != NULL) ? reinterpret_cast<OguiStormImage *>(imgdown)->mat : NULL;
+    IStorm3D_Material *mathigh = (imghigh != NULL) ? reinterpret_cast<OguiStormImage *>(imghigh)->mat : NULL;
+    IStorm3D_Material *matdisabled = (imgdisabled != NULL) ? reinterpret_cast<OguiStormImage *>(imgdisabled)->mat : NULL;
     og_set_pic_button(but, mat, matdown, matdisabled, mathigh);
 
-    OguiButton *ob = new OguiButton(ogui, id, argument);
-    ob->but = but;
-    ob->parent = this;
-    ob->image = img;
-    ob->imageDown = imgdown;
-    ob->imageDisabled = NULL;
-    ob->imageHighlighted = imghigh;
-    ob->imageAutodel = false;
-    ob->imageDownAutodel = false;
-    ob->imageDisabledAutodel = false;
-    ob->imageHighlightedAutodel = false;
-    ob->font = font;
+    OguiButton *ob = new OguiButton(ogui, but, id, argument);
+    ob->SetOwner(this);
+    ob->SetImage(img);
+    ob->SetDownImage(imgdown);
+    ob->SetDisabledImage(NULL);
+    ob->SetHighlightedImage(imghigh);
+    ob->SetImageAutoDelete(false, false, false, false);
+    ob->SetFont(font);
 
     og_set_click_button(but, ogui_button_click_handler, ob);
     og_set_press_button(but, ogui_button_press_handler, ob);

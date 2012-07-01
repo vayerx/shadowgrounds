@@ -59,27 +59,21 @@ void OguiAligner::align(OguiButton *button, int flags, Ogui *ogui)
     if (!button)
         return;
 
-    int x, y, w, h;
-    orvgui_but *obut = (orvgui_but *)button->but;
-    x = obut->put_x;
-    y = obut->put_y;
-    w = obut->sizex;
-    h = obut->sizey;
-    if (obut->parent) {
-        x += obut->parent->put_x;
-        y += obut->parent->put_y;
+    int x = button->GetX(), y = button->GetY(), w = button->GetSizeX(), h = button->GetSizeY();
+    const orvgui_win *parent = button->GetParent();
+    if (parent) {
+        x += parent->put_x;
+        y += parent->put_y;
     }
 
     align(x, y, w, h, flags, ogui);
 
-    if (obut->parent) {
-        x -= obut->parent->put_x;
-        y -= obut->parent->put_y;
+    if (parent) {
+        x -= parent->put_x;
+        y -= parent->put_y;
     }
-    obut->sizex = w;
-    obut->sizey = h;
-    obut->put_x = x;
-    obut->put_y = y;
+    button->SetSize(w, h);
+    button->SetPos(x, y);
 }
 
 void OguiAligner::align(OguiTextLabel *label, int flags, Ogui *ogui)

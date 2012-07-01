@@ -89,7 +89,7 @@ namespace ui {
 
             nametext = oguiLoader.LoadButton("nametext", win, 0);
             nametext->SetDisabled(true);
-            originalNameText = *nametext->getText();
+            originalNameText = nametext->GetText();
             nametext->SetText("");
 
             closebut = NULL;

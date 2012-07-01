@@ -405,11 +405,7 @@ throw (OguiException *)
 
     OguiButton *tmp = win->CreateNewButton(x, y, sizex, sizey, img, img2, img3, img4,
                                            false, NULL, id, argument, NULL, clipToWindow);
-    tmp->imageAutodel = true;
-    tmp->imageDownAutodel = true;
-    tmp->imageHighlightedAutodel = true;
-    tmp->imageDisabledAutodel = true;
-
+    tmp->SetImageAutoDelete(true, true, true, true);
     buttons.push_back(tmp);
 
     return tmp;
@@ -465,9 +461,7 @@ throw (OguiException *)
 
     OguiButton *tmp = win->CreateNewButton(x, y, sizex, sizey, img, img2, img3, NULL,
                                            true, text, id, argument, defaultFont, clipToWindow);
-    tmp->imageAutodel = true;
-    tmp->imageDownAutodel = true;
-    tmp->imageHighlightedAutodel = true;
+    tmp->SetImageAutoDelete(true, true, false, true);
 
     buttons.push_back(tmp);
 
@@ -702,8 +696,8 @@ void Ogui::UpdateEffects(int timeDelta)
             SafeLinkedListIterator i(win->buttonList);
             while ( i.iterateAvailable() ) {
                 OguiButton *button = (OguiButton *)i.iterateNext();
-
-                if ( button->SetText( button->text.substr( 0, (unsigned int)( value * button->text.size() ) ).c_str() ) )
+                const std::string &text = button->GetText();
+                if ( button->SetText( text.substr(0, static_cast<size_t>(value) * text.size()).c_str() ) )
                     sendEvent = true;
 
             }
@@ -745,7 +739,7 @@ void Ogui::UpdateEffects(int timeDelta)
                 SafeLinkedListIterator i(win->buttonList);
                 while ( i.iterateAvailable() ) {
                     OguiButton *button = (OguiButton *)i.iterateNext();
-                    buttons.insert( std::pair< int, OguiButton * >( ( (orvgui_but *)(button->but) )->put_y, button ) );
+                    buttons.insert( std::pair< int, OguiButton * >(button->GetY(), button) );
                     number_of_buttons++;
                 }
             }
@@ -756,10 +750,7 @@ void Ogui::UpdateEffects(int timeDelta)
                 std::map< int, OguiButton * >::iterator i;
 
                 for (j = 0, i = buttons.begin(); i != buttons.end(); ++j, ++i) {
-                    if (j < number_of_buttons)
-                        i->second->SetText( i->second->text.c_str() );
-                    else
-                        i->second->SetText(NULL);
+                    i->second->SetText( (j < number_of_buttons) ? i->second->GetText().c_str() : NULL );
                 }
             }
 
