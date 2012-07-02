@@ -90,13 +90,13 @@ OguiWindow::OguiWindow(Ogui *ogui, int x, int y, int sizex, int sizey, IOguiImag
         mat = ( (OguiStormImage *)img )->mat;
 
     this->win = og_create_window(OG_WIN_SIMPLE, x, y, sizex, sizey, mat);
-    //og_hide_window((orvgui_win *)win);
-    og_set_movable_window( (orvgui_win *)win, OG_WIN_MOVABLE );
+    //og_hide_window(win);
+    og_set_movable_window( win, OG_WIN_MOVABLE );
 
     // NOTE: cannot use x,y directly, as screen boundaries may affect
     // actual position
-    this->windowPositionX = ( (orvgui_win *)win )->put_x;
-    this->windowPositionY = ( (orvgui_win *)win )->put_y;
+    this->windowPositionX = win->put_x;
+    this->windowPositionY = win->put_y;
 
     this->effectListener = NULL;
 
@@ -129,7 +129,7 @@ OguiWindow::~OguiWindow()
         og_set_only_active(NULL);
         is_only_active = false;
     }
-    og_delete_window( (orvgui_win *)win );
+    og_delete_window(win);
     if (release_bg_image)
         delete image;
     image = NULL;
@@ -144,54 +144,50 @@ void OguiWindow::buttonDeleted(OguiButton *b)
 
 void OguiWindow::Raise()
 {
-    og_raise_window( (orvgui_win *)win );
+    og_raise_window(win);
 }
 
 void OguiWindow::Lower()
 {
-    og_lower_window( (orvgui_win *)win );
+    og_lower_window(win);
 }
 
 void OguiWindow::Show()
 {
     is_visible = true;
-    og_show_window( (orvgui_win *)win );
+    og_show_window(win);
 }
 
 void OguiWindow::Hide()
 {
     is_visible = false;
-    og_hide_window( (orvgui_win *)win );
+    og_hide_window(win);
 }
 
-bool OguiWindow::IsVisible() const
-{
+bool OguiWindow::IsVisible() const {
     // orvgui popups may change visibility status without telling us...
-    if ( ( (orvgui_win *)win )->visible != 0 )
-        is_visible = true;
-    else
-        is_visible = false;
+    is_visible = ( win->visible != 0 );
     return is_visible;
 }
 
 void OguiWindow::SetPopup()
 {
-    og_set_popup_window( (orvgui_win *)win, OG_WIN_POPUP );
+    og_set_popup_window( win, OG_WIN_POPUP );
 }
 
 void OguiWindow::SetPopupNoClose()
 {
-    og_set_popup_window( (orvgui_win *)win, OG_WIN_POPUPNOCLOSE );
+    og_set_popup_window( win, OG_WIN_POPUPNOCLOSE );
 }
 
 void OguiWindow::SetPopupNoCloseOnButton()
 {
-    og_set_popup_window( (orvgui_win *)win, OG_WIN_POPUPNOCLOSEONBUTTON );
+    og_set_popup_window( win, OG_WIN_POPUPNOCLOSEONBUTTON );
 }
 
 void OguiWindow::SetOnlyActive()
 {
-    og_set_only_active( (orvgui_win *)win );
+    og_set_only_active(win);
     is_only_active = true;
 }
 

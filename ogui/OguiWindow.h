@@ -1,5 +1,4 @@
-#ifndef OGUIWINDOW_H
-#define OGUIWINDOW_H
+#pragma once
 
 //
 // C++ wrapper class for another wrapper class for orvgui windows ;)
@@ -33,6 +32,7 @@
 #define OGUI_WINDOW_EFFECT_TEXTLINE  32
 
 class Ogui;
+struct orvgui_win;
 class LinkedList;
 
 class OguiWindow {
@@ -143,7 +143,7 @@ private:
 
     // some internal hacks
     // (the real orvgui window implementation is hidden behind this pointer)
-    void *win;
+    orvgui_win *win;
 
     friend class Ogui;
     friend class OguiAligner;
@@ -151,5 +151,3 @@ private:
     // internal method, reset stuff (next storm generation)
     void ResetData();
 };
-
-#endif
