@@ -54,7 +54,7 @@ namespace frozenbyte {
                 if ( !postfix.empty() )
                     loadFileName += postfix;
 
-                shared_ptr<IStorm3D_Model> model( storm.storm->CreateNewModel() );
+                boost::shared_ptr<IStorm3D_Model> model( storm.storm->CreateNewModel() );
                 model->LoadS3D( loadFileName.c_str() );
 
                 models.push_back(model);

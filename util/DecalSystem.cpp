@@ -32,7 +32,7 @@ namespace frozenbyte {
 #endif
 
     typedef vector<Effect>                    EffectList;
-    typedef vector<shared_ptr<DecalSpawner> > SpawnerList;
+    typedef vector<boost::shared_ptr<DecalSpawner> > SpawnerList;
 
     struct Effect {
         string name;
@@ -113,7 +113,7 @@ namespace frozenbyte {
         IStorm3D_Material *material = storm.CreateNewMaterial( effect.name.c_str() );
         material->SetBaseTexture(texture);
 
-        shared_ptr<DecalSpawner> spawner( new DecalSpawner(manager, *material) );
+        boost::shared_ptr<DecalSpawner> spawner( new DecalSpawner(manager, *material) );
         spawner->setType(effect.type);
         spawner->setSpawnProperties(effect.waitTime, effect.fadeTime, effect.fadeType);
         spawner->setSizeFactor(sizeFactor);

@@ -597,7 +597,7 @@ namespace ui {
         }
     };
 
-    typedef map<string, shared_ptr<Layer> > Layers;
+    typedef map<string, boost::shared_ptr<Layer> > Layers;
 
     struct Map::Data {
         Game  &game;
@@ -619,7 +619,7 @@ namespace ui {
         void insertLayer(const string &id)
         {
             if ( layers.find(id) == layers.end() ) {
-                shared_ptr<Layer> l( new Layer() );
+                boost::shared_ptr<Layer> l( new Layer() );
                 layers[id] = l;
             }
         }

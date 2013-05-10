@@ -208,7 +208,7 @@ struct StormDecal {
 
 struct DecalMaterial {
     COL   diffuseColor;
-    shared_ptr<Storm3D_Texture> baseTexture;
+    boost::shared_ptr<Storm3D_Texture> baseTexture;
 
     StormDecalList decals;
     int   materialIndex;
@@ -380,7 +380,7 @@ struct Storm3D_TerrainDecalSystem::Data {
     COL                       outFactor;
     COL                       inFactor;
 
-    shared_ptr<DecalMaterial> shadowMaterial;
+    boost::shared_ptr<DecalMaterial> shadowMaterial;
 
     float                     fogEnd;
     float                     fogRange;

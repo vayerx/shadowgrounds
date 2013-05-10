@@ -34,17 +34,17 @@ namespace util {
     };
 
     struct Character {
-        shared_ptr<IStorm3D_Model>    model;
+        boost::shared_ptr<IStorm3D_Model>    model;
 
-        shared_ptr<IStorm3D_Texture>  picture;
-        shared_ptr<IStorm3D_Material> pictureMaterial;
+        boost::shared_ptr<IStorm3D_Texture>  picture;
+        boost::shared_ptr<IStorm3D_Material> pictureMaterial;
     };
 
     struct ActiveCharacter {
         IStorm3D_Texture *renderTarget;
-        shared_ptr<IStorm3D_Model>    model;
-        shared_ptr<IStorm3D_Material> pictureMaterial;
-        shared_ptr<IStorm3D_Scene>    scene;
+        boost::shared_ptr<IStorm3D_Model>    model;
+        boost::shared_ptr<IStorm3D_Material> pictureMaterial;
+        boost::shared_ptr<IStorm3D_Scene>    scene;
 
         int         lightIndex;
         VC3         lightPosition;

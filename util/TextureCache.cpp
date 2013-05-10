@@ -38,10 +38,10 @@ namespace frozenbyte {
     }
 
     struct TemporaryTexture {
-        shared_ptr<IStorm3D_Texture> texture;
+        boost::shared_ptr<IStorm3D_Texture> texture;
         int timeLeft;
 
-        explicit TemporaryTexture(shared_ptr<IStorm3D_Texture> &texture_)
+        explicit TemporaryTexture(boost::shared_ptr<IStorm3D_Texture> &texture_)
             :   texture(texture_),
             timeLeft(TEMPORARY_TIME)
         {
@@ -88,8 +88,8 @@ namespace frozenbyte {
     struct TextureCache::Data {
         IStorm3D &storm;
 
-        map<string, shared_ptr<IStorm3D_Texture> > textures;
-        map<string, shared_ptr<IStorm3D_Texture> > temporaryTextures;
+        map<string, boost::shared_ptr<IStorm3D_Texture> > textures;
+        map<string, boost::shared_ptr<IStorm3D_Texture> > temporaryTextures;
 
         // texture data loaded to memory
         map<string, TextureData > textureDatas;
@@ -137,7 +137,7 @@ namespace frozenbyte {
                 return;
             }
 
-            shared_ptr<IStorm3D_Texture> texture( t, TextureDeleter() );
+            boost::shared_ptr<IStorm3D_Texture> texture( t, TextureDeleter() );
 
             if (temporaryCache) {
                 TemporaryTexture t(texture);
@@ -155,7 +155,7 @@ namespace frozenbyte {
         {
             makeLower(fileName);
 
-            map<string, shared_ptr<IStorm3D_Texture> >::iterator it = textures.find(fileName);
+            map<string, boost::shared_ptr<IStorm3D_Texture> >::iterator it = textures.find(fileName);
             if ( it != textures.end() )
                 return it->second.get();
 

@@ -33,7 +33,7 @@ using namespace boost;
 struct SharedModel;
 struct Instance;
 typedef vector<SharedModel>           ModelList;
-typedef vector<shared_ptr<Instance> > ModelInstanceList;
+typedef vector<boost::shared_ptr<Instance> > ModelInstanceList;
 
 struct ModelAnimationDeleter {
     void operator ()(IStorm3D_BoneAnimation *a)
@@ -44,8 +44,8 @@ struct ModelAnimationDeleter {
 };
 
 struct SharedModel {
-    shared_ptr<IStorm3D_Model> model;
-    shared_ptr<IStorm3D_Model> fadeModel;
+    boost::shared_ptr<IStorm3D_Model> model;
+    boost::shared_ptr<IStorm3D_Model> fadeModel;
     ModelInstanceList instances;
 
     std::string       bones;
@@ -55,8 +55,8 @@ struct SharedModel {
     float radius;
     float radius2d;
 
-    SharedModel(shared_ptr<IStorm3D_Model> model_,
-                shared_ptr<IStorm3D_Model> fadeModel_,
+    SharedModel(boost::shared_ptr<IStorm3D_Model> model_,
+                boost::shared_ptr<IStorm3D_Model> fadeModel_,
                 const std::string         &bones_,
                 const std::string         &idleAnimation_)
         :   model(model_),
@@ -93,8 +93,8 @@ struct SharedModel {
 };
 
 struct Instance {
-    shared_ptr<IStorm3D_Model> model;
-    shared_ptr<IStorm3D_Model> fadeModel;
+    boost::shared_ptr<IStorm3D_Model> model;
+    boost::shared_ptr<IStorm3D_Model> fadeModel;
 
     int modelId;
     int instanceId;
@@ -112,7 +112,7 @@ struct Instance {
     bool         lightmapped;
     bool         inBuilding;
 
-    Instance(shared_ptr<IStorm3D_Model> model_, shared_ptr<IStorm3D_Model> fadeModel_, const COL &ambient_)
+    Instance(boost::shared_ptr<IStorm3D_Model> model_, boost::shared_ptr<IStorm3D_Model> fadeModel_, const COL &ambient_)
         :   model(model_),
         fadeModel(fadeModel_),
         modelId(-1),
@@ -324,9 +324,9 @@ int Storm3D_TerrainGroup::addInstance(int modelId, const VC3 &position, const QU
     assert( modelId >= 0 && modelId < int( data->models.size() ) );
     SharedModel &original = data->models[modelId];
 
-    shared_ptr<IStorm3D_Model> m( original.model->GetClone(true, false, true) );
+    boost::shared_ptr<IStorm3D_Model> m( original.model->GetClone(true, false, true) );
 
-    shared_ptr<IStorm3D_Model> mf;
+    boost::shared_ptr<IStorm3D_Model> mf;
     if (original.fadeModel)
         mf.reset( original.fadeModel->GetClone(true, false, true) );
 
@@ -372,7 +372,7 @@ int Storm3D_TerrainGroup::addInstance(int modelId, const VC3 &position, const QU
     data->terrainModels.addModel(*m);
 
     int index = original.instances.size();
-    shared_ptr<Instance> instance( new Instance(m, mf, color) );
+    boost::shared_ptr<Instance> instance( new Instance(m, mf, color) );
     original.instances.push_back(instance);
 
     // ToDo:

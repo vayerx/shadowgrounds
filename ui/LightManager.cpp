@@ -359,9 +359,9 @@ namespace ui {
         float currentColorMul;
         float colorMul;
 
-        shared_ptr<IStorm3D_Texture> texture;
-        shared_ptr<IStorm3D_Texture> coneTexture;
-        shared_ptr<IStorm3D_Model>   lightModel;
+        boost::shared_ptr<IStorm3D_Texture> texture;
+        boost::shared_ptr<IStorm3D_Texture> coneTexture;
+        boost::shared_ptr<IStorm3D_Model>   lightModel;
 
         SpotImp()
             :   yAngle(0),
@@ -781,8 +781,8 @@ namespace ui {
 
         PointList         buildingLights;
 
-        shared_ptr<IStorm3D_Spotlight>     lightingSpot[LIGHTING_SPOT_AMOUNT];
-        shared_ptr<IStorm3D_FakeSpotlight> fakeSpot[LIGHTING_FAKE_SPOT_MAX_AMOUNT];
+        boost::shared_ptr<IStorm3D_Spotlight>     lightingSpot[LIGHTING_SPOT_AMOUNT];
+        boost::shared_ptr<IStorm3D_FakeSpotlight> fakeSpot[LIGHTING_FAKE_SPOT_MAX_AMOUNT];
 
         int activeFakes[LIGHTING_FAKE_SPOT_MAX_AMOUNT];
         int shadowLevel;

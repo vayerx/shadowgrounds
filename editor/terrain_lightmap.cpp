@@ -516,7 +516,7 @@ namespace frozenbyte {
                                 }
                             }
 
-                        shared_ptr<IStorm3D_Texture> t = createTexture(xSize, ySize, storm);
+                        boost::shared_ptr<IStorm3D_Texture> t = createTexture(xSize, ySize, storm);
                         t->Copy32BitSysMembufferToTexture(&buffer[0]);
 
                         storm.terrain->setLightMap(block, *t);

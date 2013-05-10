@@ -236,17 +236,17 @@ struct RenderTargets {
         //    filterTexture.Release();
     }
 
-    shared_ptr<RenderTarget> getTarget()
+    boost::shared_ptr<RenderTarget> getTarget()
     {
         for (unsigned int i = 0; i < BUFFER_LIMIT; ++i) {
             if ( !used[i] && targets[i]->hasInitialized() ) {
                 used[i] = true;
-                return shared_ptr<RenderTarget>( targets[i], BufferDeleter(*this) );
+                return boost::shared_ptr<RenderTarget>( targets[i], BufferDeleter(*this) );
             }
         }
 
         assert(!"Whoops");
-        return shared_ptr<RenderTarget>();
+        return boost::shared_ptr<RenderTarget>();
     }
 
     void freeTarget(const RenderTarget *target)
@@ -301,7 +301,7 @@ struct ProjectionPlane {
 struct Storm3D_FakeSpotlight::Data {
     Storm3D &storm;
 
-    shared_ptr<RenderTarget> renderTarget;
+    boost::shared_ptr<RenderTarget> renderTarget;
     Storm3D_SpotlightShared  properties;
     Storm3D_Camera           camera;
     ProjectionPlane          plane;

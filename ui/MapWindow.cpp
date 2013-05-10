@@ -80,10 +80,10 @@ namespace ui {
     typedef std::vector<MapEntity>                  EntityList;
     typedef std::map<std::string, ObjectivePoint>   ObjectivePoints;
     typedef std::vector<Objective>                  ObjectiveList;
-    typedef std::vector<shared_ptr<OguiTextLabel> > LabelList;
-    typedef std::vector<shared_ptr<OguiButton> >    ButtonList;
+    typedef std::vector<boost::shared_ptr<OguiTextLabel> > LabelList;
+    typedef std::vector<boost::shared_ptr<OguiButton> >    ButtonList;
 
-    typedef std::vector<shared_ptr<OguiCheckBox> >  CheckboxList;
+    typedef std::vector<boost::shared_ptr<OguiCheckBox> >  CheckboxList;
 
     struct MapWindow::Data : private IOguiButtonListener, private IOguiEffectListener {
         game::Game     &game;
@@ -96,7 +96,7 @@ namespace ui {
         float           playerRotation;
         int             currentObjective;
 
-        shared_ptr<Map> map;
+        boost::shared_ptr<Map> map;
 
         bool            visible;
         scoped_ptr<GUIEffectWindow> effectWindow;
@@ -168,7 +168,7 @@ namespace ui {
         std::vector<Uint32> mapBuffer;
         std::vector<Uint32> mapBufferOutput;
 
-        Data(game::Game &game_, Ogui &ogui_, shared_ptr<Map> &map_)
+        Data(game::Game &game_, Ogui &ogui_, boost::shared_ptr<Map> &map_)
             :   game(game_),
             ogui(ogui_),
             playerRotation(0),
@@ -1207,7 +1207,7 @@ namespace ui {
                                                                          fname, 0) );
                         }
 
-                        shared_ptr<OguiCheckBox> checkbox( new OguiCheckBox(window.get(), &ogui, getLocaleGuiInt(
+                        boost::shared_ptr<OguiCheckBox> checkbox( new OguiCheckBox(window.get(), &ogui, getLocaleGuiInt(
                                                                                 "gui_map_checkbox_position_x",
                                                                                 0), yPos, getLocaleGuiInt(
                                                                                 "gui_map_checkbox_size_x",
@@ -1507,7 +1507,7 @@ namespace ui {
             }
         };
 
-        MapWindow::MapWindow(game::Game &game, Ogui &ogui, shared_ptr<Map> &map)
+        MapWindow::MapWindow(game::Game &game, Ogui &ogui, boost::shared_ptr<Map> &map)
         {
             scoped_ptr<Data> tempData( new Data(game, ogui, map) );
             tempData->init();

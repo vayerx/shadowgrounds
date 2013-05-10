@@ -18,7 +18,7 @@
 namespace sfx {
     using namespace boost;
     using namespace std;
-    typedef map<string, shared_ptr<IStorm3D_BoneAnimation> > AnimationMap;
+    typedef map<string, boost::shared_ptr<IStorm3D_BoneAnimation> > AnimationMap;
 
     struct Releaser {
         void operator () (IStorm3D_BoneAnimation *b)
@@ -123,7 +123,7 @@ namespace sfx {
 
     struct Amplitude {
         unsigned char limit;
-        shared_ptr<IStorm3D_BoneAnimation> animation;
+        boost::shared_ptr<IStorm3D_BoneAnimation> animation;
 
         Amplitude()
             :   limit(0)
@@ -197,7 +197,7 @@ namespace sfx {
     };
 
     typedef map<IStorm3D_Model *, ModelInfo> ModelInfos;
-    typedef vector<shared_ptr<PlayData> >    PlayDatas;
+    typedef vector<boost::shared_ptr<PlayData> >    PlayDatas;
     typedef vector<Amplitude>                Amplitudes;
 
     struct LipsyncManager::Data {

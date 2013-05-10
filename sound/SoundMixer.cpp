@@ -95,7 +95,7 @@ namespace sfx {
     };
 
     struct Music {
-        shared_ptr<SoundStream> stream;
+        boost::shared_ptr<SoundStream> stream;
     };
 
     struct FadeMusic {
@@ -183,7 +183,7 @@ namespace sfx {
         VC3        cameraPosition;
         VC3        listenerPosition;
 
-        vector<shared_ptr<SoundStream> > streamedSounds;
+        vector<boost::shared_ptr<SoundStream> > streamedSounds;
         StreamList streamList;
 
         std::vector<SoundEvent> soundEvents;
@@ -424,7 +424,7 @@ namespace sfx {
             }
         }
 
-        void playStreamedSound(shared_ptr<SoundStream> &stream)
+        void playStreamedSound(boost::shared_ptr<SoundStream> &stream)
         {
             streamedSounds.push_back(stream);
         }
@@ -605,7 +605,7 @@ namespace sfx {
             }
 
             {
-                vector<shared_ptr<SoundStream> >::iterator it = streamedSounds.begin();
+                vector<boost::shared_ptr<SoundStream> >::iterator it = streamedSounds.begin();
                 for (; it != streamedSounds.end(); ) {
                     if ( (*it)->hasEnded() )
                         it = streamedSounds.erase(it);

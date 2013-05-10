@@ -116,10 +116,10 @@ namespace frozenbyte {
 
             /*
                scoped_ptr<IStorm3D_Scene> s(storm->CreateNewScene());
-               set<weak_ptr<IStorm3D_Model> >::iterator it = floorModels.begin();
+               set<boost::weak_ptr<IStorm3D_Model> >::iterator it = floorModels.begin();
                for(; it != floorModels.end(); ++it)
                {
-                shared_ptr<IStorm3D_Model> m = it->lock();
+                boost::shared_ptr<IStorm3D_Model> m = it->lock();
                 if(!m)
                     continue;
 
@@ -137,10 +137,10 @@ namespace frozenbyte {
             return terrain->getHeight(position);
 
             /*
-               set<weak_ptr<IStorm3D_Model> >::iterator it = floorModels.begin();
+               set<boost::weak_ptr<IStorm3D_Model> >::iterator it = floorModels.begin();
                for(; it != floorModels.end(); ++it)
                {
-                shared_ptr<IStorm3D_Model> m = it->lock();
+                boost::shared_ptr<IStorm3D_Model> m = it->lock();
                 if(!m)
                     continue;
 
@@ -174,10 +174,10 @@ namespace frozenbyte {
         {
             /*
                scoped_ptr<IStorm3D_Scene> s(storm->CreateNewScene());
-               set<weak_ptr<IStorm3D_Model> >::iterator it = floorModels.begin();
+               set<boost::weak_ptr<IStorm3D_Model> >::iterator it = floorModels.begin();
                for(; it != floorModels.end(); ++it)
                {
-                shared_ptr<IStorm3D_Model> m = it->lock();
+                boost::shared_ptr<IStorm3D_Model> m = it->lock();
                 if(!m)
                     continue;
 
@@ -195,10 +195,10 @@ namespace frozenbyte {
             return false;
 
             /*
-               set<weak_ptr<IStorm3D_Model> >::iterator it = floorModels.begin();
+               set<boost::weak_ptr<IStorm3D_Model> >::iterator it = floorModels.begin();
                for(; it != floorModels.end(); ++it)
                {
-                shared_ptr<IStorm3D_Model> m = it->lock();
+                boost::shared_ptr<IStorm3D_Model> m = it->lock();
                 if(!m)
                     continue;
 

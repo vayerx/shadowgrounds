@@ -48,7 +48,7 @@ namespace sfx {
         };
 
         string filename;
-        shared_ptr<SoundStream> stream;
+        boost::shared_ptr<SoundStream> stream;
 
         Mode   mode;
         int    time;
@@ -268,7 +268,7 @@ namespace sfx {
         }
     };
 
-    typedef vector<shared_ptr<Stream> > AmbientStreamList;
+    typedef vector<boost::shared_ptr<Stream> > AmbientStreamList;
 
     // .......
 
@@ -514,7 +514,7 @@ namespace sfx {
                     if ( existing != ambients.end() ) {
                         (*existing)->fadeIn(fadeTime, maxVolume);
                     } else {
-                        shared_ptr<Stream> ptr( new Stream(mixer->getStream(
+                        boost::shared_ptr<Stream> ptr( new Stream(mixer->getStream(
                                                                area.ambient.file.c_str(),
                                                                SoundMixer::SOUNDSTREAMTYPE_AMBIENT), fadeTime,
                                                            maxVolume, file) );
@@ -615,7 +615,7 @@ namespace sfx {
                     float panning = area.getRandomPanning();
 
                     if ( !file.empty() ) {
-                        shared_ptr<Stream> ptr( new Stream(mixer->getStream(
+                        boost::shared_ptr<Stream> ptr( new Stream(mixer->getStream(
                                                                file.c_str(),
                                                                SoundMixer::SOUNDSTREAMTYPE_AMBIENT), volume, panning) );
                         if (ptr) {

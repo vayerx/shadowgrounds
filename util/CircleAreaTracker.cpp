@@ -24,7 +24,7 @@ namespace util {
         }
     };
 
-    typedef vector<shared_ptr<Trackable> > TrackableList;
+    typedef vector<boost::shared_ptr<Trackable> > TrackableList;
 
     struct Trigger {
         ClippedCircle     circle;
@@ -59,7 +59,7 @@ namespace util {
         }
     };
 
-    typedef vector<shared_ptr<Trigger> > TriggerList;
+    typedef vector<boost::shared_ptr<Trigger> > TriggerList;
     typedef Quadtree<Trigger>            QTree;
 
     static const int UPDATE_INTERVAL = 200;
@@ -71,7 +71,7 @@ namespace util {
         explicit ITrackableComparator(ITrackable *given_)
             :   given(given_) { }
 
-        bool operator () (const shared_ptr<Trackable> &ptr) const
+        bool operator () (const boost::shared_ptr<Trackable> &ptr) const
         {
             return given == ptr->ptr;
         }
@@ -83,7 +83,7 @@ namespace util {
         explicit TrackableComparator(Trackable *given_)
             :   given(given_) { }
 
-        bool operator () (const shared_ptr<Trackable> &ptr) const
+        bool operator () (const boost::shared_ptr<Trackable> &ptr) const
         {
             return given == ptr.get();
         }
@@ -111,7 +111,7 @@ namespace util {
 
         int insert(const ClippedCircle &circle, ITriggerListener *listener, void *triggerData)
         {
-            shared_ptr<Trigger> trigger;
+            boost::shared_ptr<Trigger> trigger;
             int index = -1;
 
             for (unsigned int i = 0; i < triggers.size(); ++i) {
@@ -169,7 +169,7 @@ namespace util {
                 trackables[index].reset( new Trackable() );
             }
 
-            shared_ptr<Trackable> &trackable = trackables[index];
+            boost::shared_ptr<Trackable> &trackable = trackables[index];
             FB_ASSERT(trackable);
 
             trackable->ptr = ptr;
