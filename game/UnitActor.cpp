@@ -7709,7 +7709,7 @@ getWeaponAnimationType() ) )
 
             if (lightAmount > 0.25f && visData != NULL) {
                 // WARNING: unsafe cast (based on unitDataId though)
-                assert(visData->getVisualObjectDataId() == (void *)&unitDataId);
+                assert(visData->getVisualObjectDataId() == (const void *)&unitDataId);
                 unit->setPointedByUnit( (Unit *)visData );
             }
         }

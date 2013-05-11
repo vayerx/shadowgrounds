@@ -48,27 +48,18 @@
 #ifdef PARTTYPE_ID_STRING_EXTENDED
 #  define PARTTYPE_ID_STRING_TO_INT(x) \
     ( \
-        ( (x)[3] == '\0' || (x)[4] == '\0' )   \
-        ? ( \
-            *( (int *)(x) ) \
-            ) : ( \
-            game::partTypeIdStringToIntConv(x) \
-            ) \
+        ( (x)[3] == '\0' || (x)[4] == '\0' ) \
+        ? *reinterpret_cast<const int *>(x) \
+        : game::partTypeIdStringToIntConv(x) \
     )
 #else
 #  define PARTTYPE_ID_STRING_TO_INT(x) \
     ( \
-        ( (x)[3] == '\0' || (x)[4] == '\0' )   \
-        ? ( \
-            *( (int *)(x) ) \
-            ) : ( \
-            ( (x)[5] == '\0' || (x)[6] == '\0' )   \
-            ? ( \
-                ( *( (int *)(x) ) ^ (*( (int *)&(x)[2] ) >> 16) ) \
-                ) : ( \
-                ( *( (int *)(x) ) ^ *( (int *)&(x)[4] ) ) \
-                ) \
-            ) \
+        ( (x)[3] == '\0' || (x)[4] == '\0' ) \
+        ? *reinterpret_cast<const int *>(x) \
+        : ( (x)[5] == '\0' || (x)[6] == '\0' ) \
+          ? *reinterpret_cast<const int *>(x) ^ (*( reinterpret_cast<const int *>(&x[2]) ) >> 16) \
+          : *reinterpret_cast<const int *>(x) ^ *( reinterpret_cast<const int *>(&x[4]) ) \
     )
 #endif
 

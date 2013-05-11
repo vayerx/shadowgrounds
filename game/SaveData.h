@@ -9,7 +9,7 @@ namespace game
 
     class SaveData {
     public:
-        SaveData(int id, int size, uint8_t *data, int childAmount = 0,
+        SaveData(int id, int size, const uint8_t *data, int childAmount = 0,
                  GameObject **children = NULL);
         ~SaveData();
 

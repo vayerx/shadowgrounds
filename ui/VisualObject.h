@@ -54,7 +54,7 @@ namespace ui
     class IVisualObjectData {
     public:
         virtual ~IVisualObjectData() { }
-        virtual void *getVisualObjectDataId() const = 0;
+        virtual const void *getVisualObjectDataId() const = 0;
     };
 
     class VisualObject : public IStorm3D_Model_Data {
@@ -70,7 +70,7 @@ namespace ui
         // call this after every game tick (if interpolation is used)
         void advanceHistory();
 
-        virtual void *GetID();
+        virtual const void *GetID();
 
         void setSideways(bool sideways);
 

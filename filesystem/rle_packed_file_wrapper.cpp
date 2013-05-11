@@ -13,7 +13,7 @@
 using namespace frozenbyte::filesystem;
 #endif
 
-static const int RLE_PACKED_CHUNK_MAGIC = *( (int *) "RLE1" );
+static const int32_t RLE_PACKED_CHUNK_MAGIC = 0x31454C52; // "RLE1"
 
 struct RLE_PACKED_FILE {
 #ifdef USE_FB_INPUT_STREAM_WRAPPER

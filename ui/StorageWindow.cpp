@@ -519,7 +519,7 @@ namespace ui
              */
         }
         if (eve->triggerButton->GetId() == STORAGEW_PARTTYPE) {
-            partType = getPartTypeById( PARTTYPE_ID_STRING_TO_INT( (char *)eve->extraArgument ) );
+            partType = getPartTypeById( PARTTYPE_ID_STRING_TO_INT(static_cast<const char *>(eve->extraArgument)) );
             doRefresh = true;
         }
 

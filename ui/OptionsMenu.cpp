@@ -1828,7 +1828,7 @@ namespace ui
 
         i = selectButtons.find(COMMANDS_JOYSTICK_MOVE_XAXIS);
         if ( i != selectButtons.end() ) {
-            SelectionButtonDescs *desc = (SelectionButtonDescs *)i->second->GetArgument();
+            SelectionButtonDescs *desc = const_cast<SelectionButtonDescs *>(static_cast<const SelectionButtonDescs *>(i->second->GetArgument()));
             delete desc;
             selectionButtonDescs.erase( std::find(selectionButtonDescs.begin(), selectionButtonDescs.end(), desc) );
 
@@ -1838,7 +1838,7 @@ namespace ui
 
         i = selectButtons.find(COMMANDS_JOYSTICK_MOVE_YAXIS);
         if ( i != selectButtons.end() ) {
-            SelectionButtonDescs *desc = (SelectionButtonDescs *)i->second->GetArgument();
+            SelectionButtonDescs *desc = const_cast<SelectionButtonDescs *>(static_cast<const SelectionButtonDescs *>(i->second->GetArgument()));
             delete desc;
             selectionButtonDescs.erase( std::find(selectionButtonDescs.begin(), selectionButtonDescs.end(), desc) );
 
@@ -1848,7 +1848,7 @@ namespace ui
 
         i = selectButtons.find(COMMANDS_JOYSTICK_DIR_XAXIS);
         if ( i != selectButtons.end() ) {
-            SelectionButtonDescs *desc = (SelectionButtonDescs *)i->second->GetArgument();
+            SelectionButtonDescs *desc = const_cast<SelectionButtonDescs *>(static_cast<const SelectionButtonDescs *>(i->second->GetArgument()));
             delete desc;
             selectionButtonDescs.erase( std::find(selectionButtonDescs.begin(), selectionButtonDescs.end(), desc) );
 
@@ -1858,7 +1858,7 @@ namespace ui
 
         i = selectButtons.find(COMMANDS_JOYSTICK_DIR_YAXIS);
         if ( i != selectButtons.end() ) {
-            SelectionButtonDescs *desc = (SelectionButtonDescs *)i->second->GetArgument();
+            SelectionButtonDescs *desc = const_cast<SelectionButtonDescs *>(static_cast<const SelectionButtonDescs *>(i->second->GetArgument()));
             delete desc;
             selectionButtonDescs.erase( std::find(selectionButtonDescs.begin(), selectionButtonDescs.end(), desc) );
 

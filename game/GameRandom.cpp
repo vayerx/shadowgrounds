@@ -75,7 +75,7 @@ namespace game
 
     SaveData *GameRandom::getSaveData() const
     {
-        SaveData *data = new SaveData(GAMERANDOM_ID, sizeof(int), (uint8_t *)&counter);
+        SaveData *data = new SaveData(GAMERANDOM_ID, sizeof(int), reinterpret_cast<const uint8_t *>(&counter));
         return data;
     }
 

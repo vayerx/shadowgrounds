@@ -247,7 +247,7 @@ namespace ui {
                 SelectionButtonDescs *descs = NULL;
 
                 if (it->second->GetArgument() != NULL)
-                    descs = (SelectionButtonDescs *)it->second->GetArgument();
+                    descs = const_cast<SelectionButtonDescs *>(static_cast<const SelectionButtonDescs *>(it->second->GetArgument()));
 
                 if (fontSelectDown)
                     it->second->SetFont(fontSelectDown);
@@ -277,7 +277,7 @@ namespace ui {
                 SelectionButtonDescs *descs = NULL;
 
                 if (it->second->GetArgument() != NULL)
-                    descs = (SelectionButtonDescs *)it->second->GetArgument();
+                    descs = const_cast<SelectionButtonDescs *>(static_cast<const SelectionButtonDescs *>(it->second->GetArgument()));
 
                 if (fontSelectNorm)
                     it->second->SetFont(fontSelectNorm);

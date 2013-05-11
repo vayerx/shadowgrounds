@@ -185,7 +185,7 @@ namespace game
 
         virtual const char *getStatusInfo() const;
 
-        virtual void *getVisualObjectDataId() const;
+        virtual const void *getVisualObjectDataId() const;
 
         /**
          * This method is here to implement IPointerObject interface.

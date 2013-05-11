@@ -1,6 +1,7 @@
 #include "precompiled.h"
 
 #include <stdlib.h>  // for abort
+#include <stdint.h>
 #include "../container/LinkedList.h"
 #include "PartType.h"
 #include "Part.h"
@@ -717,55 +718,59 @@ namespace game
     };
 
 #ifdef PARTTYPE_ID_STRING_EXTENDED
-    int partTypeIdStringToIntConv(const char *idstr)
+    int partTypeIdStringToIntConv(const char *a_idstr)
     {
-        int ret = *( (int *)idstr );
+        assert(strlen(a_idstr) >= 3);
 
-        if (idstr[4] == '\0' || idstr[3] == '\0')
+        int32_t idstr0;
+        memcpy(&idstr0, a_idstr, sizeof(idstr0));
+        int ret = idstr0;
+
+        if (a_idstr[4] == '\0' || a_idstr[3] == '\0')
             return ret;
 
-#  ifndef NDEBUG
-        if (idstr[0] == '\0'
-            || idstr[1] == '\0'
-            || idstr[2] == '\0')
+        if (a_idstr[5] == '\0'
+         || a_idstr[6] == '\0')
         {
-            assert(!"partTypeIdIntToStringConv - invalid part type id string (length < 3).");
-            return 0;
-        }
-#  endif
-
-        if (idstr[5] == '\0'
-            || idstr[6] == '\0')
-        {
-            ret ^= ( ( *( (int *)&idstr[2] ) ) >> 16 );
+            int32_t idstr2;
+            memcpy(&idstr2, a_idstr+2, sizeof(idstr2));
+            ret ^=  idstr2 >> 16;
             return ret;
         }
 
-        if (idstr[7] == '\0'
-            || idstr[8] == '\0')
+        int32_t idstr4;
+        memcpy(&idstr4, a_idstr+4, sizeof(idstr4));
+
+        if (a_idstr[7] == '\0'
+         || a_idstr[8] == '\0')
         {
-            ret ^= ( *( (int *)&idstr[4] ) );
+            ret ^=  idstr4;
             return ret;
         }
 
-        if (idstr[9] == '\0'
-            || idstr[10] == '\0')
+        if (a_idstr[9] == '\0'
+         || a_idstr[10] == '\0')
         {
-            ret ^= ( *( (int *)&idstr[4] ) );
-            ret ^= ( ( *( (int *)&idstr[6] ) ) >> 16 );
+            int32_t idstr6;
+            memcpy(&idstr6, a_idstr+6, sizeof(idstr6));
+            ret ^=  idstr4;
+            ret ^=  idstr6 >> 16;
             return ret;
         }
 
-        assert(idstr[11] == '\0' || idstr[12] == '\0');
+        assert(a_idstr[11] == '\0' || a_idstr[12] == '\0');
+        int32_t idstr8;
+        memcpy(&idstr8, a_idstr+8, sizeof(idstr8));
 
-        ret ^= ( *( (int *)&idstr[4] ) );
-        ret ^= ( *( (int *)&idstr[8] ) );
+        ret ^= idstr4;
+        ret ^= idstr8;
 
         return ret;
     }
 
     char partTypeConvBuf[12 + 1];
 
+#ifdef PROJECT_SURVIVOR
     char *partTypeIdIntToStringConv(int id)
     {
         assert(!"partTypeIdIntToStringConv - deprecated, do not use!");
@@ -775,6 +780,7 @@ namespace game
         partTypeConvBuf[8] = '\0';
         return partTypeConvBuf;
     }
+#endif
 #else
     char partTypeConvBuf[8 + 1];
 

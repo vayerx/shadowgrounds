@@ -66,9 +66,9 @@ namespace game
         return unit_get_status_info_buf.c_str();
     }
 
-    void *Unit::getVisualObjectDataId() const
+    const void *Unit::getVisualObjectDataId() const
     {
-        return (void *)&unitDataId;
+        return &unitDataId;
     }
 
     //    Unit::Unit(int owner)

@@ -28,6 +28,8 @@
 #include "../../filesystem/input_stream_wrapper.h"
 #include "../../util/Debug_MemoryManager.h"
 
+#include <stdexcept>
+
 using namespace frozenbyte;
 
 namespace {
@@ -631,16 +633,19 @@ static const char *loadDDS_(bool        compressed,
     \param fileData load destination
  */
 bool Storm3D_Texture::loadDDS(const char *filename, const char *fileData) {
+    if (intptr_t(fileData) & 0x3)
+        throw std::runtime_error("Storm3D_Texture::loadDDS: unaligned file data");
+
     if (memcmp(fileData, "DDS ", 4) != 0)
         // igiosErrorMessage("invalid DDS file %s", filename);
         return false;
 
-    Uint32 surfaceDestLen = SDL_SwapLE32( *(Uint32 *) (fileData + 0x04) );
+    Uint32 surfaceDestLen = SDL_SwapLE32( *(const Uint32 *) (fileData + 0x04) );
     if (surfaceDestLen != 124)
         // igiosErrorMessage("invalid DDS file %s: size mismatch (%d)", filename, surfaceDestLen);
         return false;
 
-    Uint32 caps  = SDL_SwapLE32( *(Uint32 *) (fileData + 0x08) );
+    Uint32 caps  = SDL_SwapLE32( *(const Uint32 *) (fileData + 0x08) );
     // must have DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT
     if ( (caps & 0x1007) == 0 ) {
         igiosWarning("%s: strange caps: %08x\n", filename, caps);
@@ -648,14 +653,14 @@ bool Storm3D_Texture::loadDDS(const char *filename, const char *fileData) {
     }
     caps &= (0x1007 ^ -1); // mask them out
 
-    this->height = SDL_SwapLE32( *(Uint32 *) (fileData + 0x0c) );
-    this->width  = SDL_SwapLE32( *(Uint32 *) (fileData + 0x10) );
-    Uint32 pixelFormat = SDL_SwapLE32( *(Uint32 *) (fileData + 0x50) );
-    Uint32 dwcaps2 = SDL_SwapLE32( *(Uint32 *) (fileData + 0x70) );
+    this->height = SDL_SwapLE32( *(const Uint32 *) (fileData + 0x0c) );
+    this->width  = SDL_SwapLE32( *(const Uint32 *) (fileData + 0x10) );
+    Uint32 pixelFormat = SDL_SwapLE32( *(const Uint32 *) (fileData + 0x50) );
+    Uint32 dwcaps2 = SDL_SwapLE32( *(const Uint32 *) (fileData + 0x70) );
 
     int mipmaps;
     if (caps & 0x20000) {
-        mipmaps = SDL_SwapLE32( *(Uint32 *) (fileData + 0x1c) );
+        mipmaps = SDL_SwapLE32( *(const Uint32 *) (fileData + 0x1c) );
         caps &= (0x20000 ^ -1);
     } else {
         mipmaps = 1;
@@ -677,7 +682,7 @@ bool Storm3D_Texture::loadDDS(const char *filename, const char *fileData) {
     int mult = 0;
     switch (pixelFormat) {
     case 0x4:            // DDPF_FOURCC
-        fourcc = SDL_SwapLE32( *(Uint32 *) (fileData + 0x54) );
+        fourcc = SDL_SwapLE32( *(const Uint32 *) (fileData + 0x54) );
         compressed = true;
 
         mult = 16;
@@ -727,10 +732,10 @@ bool Storm3D_Texture::loadDDS(const char *filename, const char *fileData) {
        int linearsize;
        if (caps & 0x80000) { // DDSD_LINEARSIZE
         caps &= (0x80000 ^ -1);
-        linearsize = SDL_SwapLE32(*(Uint32 *) (fileData + 0x14));
+        linearsize = SDL_SwapLE32(*(const Uint32 *) (fileData + 0x14));
         pitch = w * mult;
        } else {
-        pitch = SDL_SwapLE32(*(Uint32 *) (fileData + 0x14));
+        pitch = SDL_SwapLE32(*(const Uint32 *) (fileData + 0x14));
         linearsize = w * h * mult;
        }
      */

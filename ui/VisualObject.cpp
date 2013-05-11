@@ -120,9 +120,9 @@ namespace ui
         assert(visual_object_allocations >= 0);
     }
 
-    void *VisualObject::GetID()
+    const void *VisualObject::GetID()
     {
-        return (void *)&visualObjectID;
+        return &visualObjectID;
     }
 
     // NOTICE: affects ray trace also! (as the model is removed from the scene)

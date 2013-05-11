@@ -93,7 +93,7 @@ namespace game
                                                                                                    1.5f);
                 if (visData != NULL && lightAmount > 0.0f) {
                     *lastValue = 1;
-                    assert(visData->getVisualObjectDataId() == (void *)&unitDataId);
+                    assert(visData->getVisualObjectDataId() == &unitDataId);
                     // WARNING: unsafe cast, based on assert check above.
                     gsd->unit = (Unit *)visData;
                 } else {

@@ -358,7 +358,7 @@ namespace ui
             if (eve->triggerButton->GetId() >= ACW_PART_START
                 && eve->triggerButton->GetId() <= ACW_PART_END)
             {
-                Part *p = (Part *)eve->extraArgument;
+                Part *p = const_cast<Part *>(static_cast<const Part *>(eve->extraArgument)); /// @todo -const_cast
                 if (p == NULL)
                     setInfoPartType(NULL);
                 else
@@ -380,7 +380,7 @@ namespace ui
                 if (eve->triggerButton->GetId() >= ACW_PART_START
                     && eve->triggerButton->GetId() <= ACW_PART_END)
                 {
-                    p = (Part *)eve->extraArgument;
+                    p =  const_cast<Part *>(static_cast<const Part *>(eve->extraArgument)); /// @todo -const_cast
                     pp = p->getParent();
                     if (pp != NULL) {
                         pt = NULL;
@@ -399,7 +399,7 @@ namespace ui
                 {
                     slotNum = eve->triggerButton->GetId() - ACW_SLOT_START;
                     // this was the slots parent part
-                    pp = (Part *)eve->extraArgument;
+                    pp = const_cast<Part *>(static_cast<const Part *>(eve->extraArgument)); /// @todo -const_cast
                     // this is valid part type to this slot...
                     //pt = (PartType *)eve->extraArgument;
                     if (pp != NULL)
@@ -487,7 +487,7 @@ namespace ui
 
             }
         if (eve->triggerButton->GetId() == ACW_UNIT) {
-            setUnit( (Unit *)eve->extraArgument );
+            setUnit( const_cast<Unit *>(static_cast<const Unit *>(eve->extraArgument)) ); /// @todo -const_cast
             // TODO: if split screen, solve player cursor number first
             ogui->SetCursorImageState(0, DH_CURSOR_ARROW);
             cursorMode = ACW_CURSOR_MODE_NORMAL;
