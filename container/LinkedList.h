@@ -21,7 +21,6 @@
 #include "EmptyIteratorException.h"
 
 #define throws(x) throw (x)
-#define null NULL
 
 // proto...
 class LinkedList;
@@ -111,7 +110,7 @@ public:
     ~LinkedListIterator();
     inline bool iterateAvailable()
     {
-        if (walk_node == null)
+        if (walk_node == NULL)
             return false;
         else
             return true;
@@ -128,7 +127,7 @@ public:
 
 #endif
 
-        if (walk_node == null)
+        if (walk_node == NULL)
             throw ( new EmptyIteratorException() );
 
         ret = walk_node->item;

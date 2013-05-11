@@ -77,7 +77,7 @@ namespace game
             skipNonOwned();
             if ( atUnit >= (int)foundUnits.size() ) {
                 fb_assert(!"NearbyOwnedUnitIterator::iterateNext - No more units to iterate.");
-                return false;
+                return NULL;
             }
 
             atUnit++;
@@ -129,7 +129,7 @@ namespace game
         {
             if ( atUnit >= (int)foundUnits.size() ) {
                 fb_assert(!"NearbyAllUnitIterator::iterateNext - No more units to iterate.");
-                return false;
+                return NULL;
             }
 
             atUnit++;

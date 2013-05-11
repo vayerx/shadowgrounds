@@ -1611,7 +1611,7 @@ namespace ui
             delete units;
             if (!selectionOk)
                 // oops... (user selected a unit that is not in anirecorder)?
-                this->selectedUnit = false;
+                this->selectedUnit = NULL;
                 //} else {
                 //this->unitSelectList->setSelected(selectionNumber, true);
         }

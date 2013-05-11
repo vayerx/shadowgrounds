@@ -86,7 +86,7 @@ namespace game
 
     void GameRandom::uninit()
     {
-        if (gamerandom_instance_count > 0) {
+        if (gamerandom_instance_count != NULL) {
             //abort();
         }
         delete[] gamerandom_static_data;

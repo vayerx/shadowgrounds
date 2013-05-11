@@ -44,7 +44,7 @@ namespace game
     SaveData *Unit::getSaveData() const
     {
         // TODO
-        return null;
+        return NULL;
     }
 
     const char *Unit::getStatusInfo() const

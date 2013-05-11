@@ -16,7 +16,6 @@
 #include <stdlib.h>
 #include "StackEmptyException.h"
 
-#define null NULL
 #define throws(x) throw (x)
 
 /* ---------------------------------- */

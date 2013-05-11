@@ -142,8 +142,8 @@ ListNode *allocateLinkedListNode(void *ptr)
     }
 
     linkedListNodePool[nextLinkedListPoolNode].item = ptr;
-    linkedListNodePool[nextLinkedListPoolNode].next = null;
-    linkedListNodePool[nextLinkedListPoolNode].prev = null;
+    linkedListNodePool[nextLinkedListPoolNode].next = NULL;
+    linkedListNodePool[nextLinkedListPoolNode].prev = NULL;
 
     int added = nextLinkedListPoolNode;
     nextLinkedListPoolNode = (nextLinkedListPoolNode + 1) % linkedListNodePoolAlloced;
@@ -185,15 +185,15 @@ ListNode::ListNode()
 ListNode::ListNode(void *ptr)
 {
     item = ptr;
-    next = null;
-    prev = null;
+    next = NULL;
+    prev = NULL;
 }
 
 LinkedList::LinkedList(void)
 {
-    first = null;
-    last = null;
-    walk_node = null;
+    first = NULL;
+    last = NULL;
+    walk_node = NULL;
     remove_count = 0;
 
 #ifdef LINKEDLIST_USE_NODE_POOL
@@ -221,7 +221,7 @@ void LinkedList::append(void *ptr)
         first = node;
         last = node;
     } else {
-        node->next = null;
+        node->next = NULL;
         node->prev = last;
         last->next = node;
         last = node;
@@ -241,7 +241,7 @@ void LinkedList::prepend(void *ptr)
         last = node;
     } else {
         node->next = first;
-        node->prev = null;
+        node->prev = NULL;
         first->prev = node;
         first = node;
     }
@@ -251,12 +251,12 @@ void LinkedList::remove(void *ptr)
 {
     ListNode *tmp = first;
 
-    while (tmp != null) {
+    while (tmp != NULL) {
         if (tmp->item == ptr) {
             if (first == tmp) first = tmp->next;
             if (last == tmp) last = tmp->prev;
-            if (tmp->prev != null) (tmp->prev)->next = tmp->next;
-            if (tmp->next != null) (tmp->next)->prev = tmp->prev;
+            if (tmp->prev != NULL) (tmp->prev)->next = tmp->next;
+            if (tmp->next != NULL) (tmp->next)->prev = tmp->prev;
 #ifdef LINKEDLIST_USE_NODE_POOL
             freeLinkedListNode(tmp);
 #else
@@ -273,7 +273,7 @@ void *LinkedList::popFirst() throws(EmptyLinkedListException *) {
     ListNode *tmp = first;
     void *ptr;
 
-    if (tmp == null)
+    if (tmp == NULL)
         throw ( new EmptyLinkedListException() );
 
     //if (last->prev == first) last->prev = NULL;
@@ -295,7 +295,7 @@ void *LinkedList::popLast() throws(EmptyLinkedListException *) {
     ListNode *tmp = last;
     void *ptr;
 
-    if (tmp == null)
+    if (tmp == NULL)
         throw ( new EmptyLinkedListException() );
 
     //if (first->next == last) first->next = NULL;
@@ -317,7 +317,7 @@ void *LinkedList::peekFirst() throws(EmptyLinkedListException *) {
     ListNode *tmp = first;
     void *ptr;
 
-    if (tmp == null)
+    if (tmp == NULL)
         throw ( new EmptyLinkedListException() );
 
     ptr = tmp->item;
@@ -328,7 +328,7 @@ void *LinkedList::peekLast() throws(EmptyLinkedListException *) {
     ListNode *tmp = last;
     void *ptr;
 
-    if (tmp == null)
+    if (tmp == NULL)
         throw ( new EmptyLinkedListException() );
 
     ptr = tmp->item;
@@ -337,7 +337,7 @@ void *LinkedList::peekLast() throws(EmptyLinkedListException *) {
 
 bool LinkedList::isEmpty()
 {
-    if (first == null)
+    if (first == NULL)
         return true;
     else
         return false;
@@ -358,20 +358,20 @@ void LinkedList::removeNode(const ListNode *node)
 #ifdef _DEBUG
     ListNode *tmp = first;
 
-    while (tmp != null) {
+    while (tmp != NULL) {
         if (tmp == node)
             break;
         tmp = tmp->next;
     }
-    if (tmp == null)
+    if (tmp == NULL)
         abort();
 
 #endif
 
     if (node == first) first = first->next;
     if (node == last) last = last->prev;
-    if (node->prev != null) (node->prev)->next = node->next;
-    if (node->next != null) (node->next)->prev = node->prev;
+    if (node->prev != NULL) (node->prev)->next = node->next;
+    if (node->next != NULL) (node->next)->prev = node->prev;
 #ifdef LINKEDLIST_USE_NODE_POOL
     freeLinkedListNode(node);
 #else
@@ -384,7 +384,7 @@ void LinkedList::removeNode(const ListNode *node)
 void *LinkedList::iterateNext() throws(EmptyIteratorException *) {
     void *ret;
 
-    if (walk_node == null)
+    if (walk_node == NULL)
         throw ( new EmptyIteratorException() );
 
     ret = walk_node->item;
@@ -395,7 +395,7 @@ void *LinkedList::iterateNext() throws(EmptyIteratorException *) {
 
 bool LinkedList::iterateAvailable()
 {
-    if (walk_node == null)
+    if (walk_node == NULL)
         return false;
     else
         return true;
@@ -433,7 +433,7 @@ LinkedListIterator::~LinkedListIterator()
    }
    #endif
 
-   if (walk_node == null)
+   if (walk_node == NULL)
    {
     throw(new EmptyIteratorException());
    }
@@ -449,7 +449,7 @@ LinkedListIterator::~LinkedListIterator()
    // inlined
    bool LinkedListIterator::iterateAvailable()
    {
-   if (walk_node == null)
+   if (walk_node == NULL)
     return false;
    else
     return true;
@@ -476,7 +476,7 @@ SafeLinkedListIterator::~SafeLinkedListIterator()
 void *SafeLinkedListIterator::iterateNext() throws(EmptyIteratorException *) {
     void *ret;
 
-    if (walk_node == null)
+    if (walk_node == NULL)
         throw ( new EmptyIteratorException() );
 
     ret = walk_node->item;
@@ -487,7 +487,7 @@ void *SafeLinkedListIterator::iterateNext() throws(EmptyIteratorException *) {
 
 bool SafeLinkedListIterator::iterateAvailable()
 {
-    if (walk_node == null)
+    if (walk_node == NULL)
         return false;
     else
         return true;
