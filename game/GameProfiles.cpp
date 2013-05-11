@@ -11,6 +11,7 @@
 #else
 #  include <sys/stat.h>
 #  include <errno.h>
+#  include <unistd.h>
 #  define _mkdir(x) mkdir(x, S_IRWXU | S_IRWXG)
 #  define Sleep usleep
 
@@ -50,20 +51,11 @@ static inline const char *errmsg()
 }
 
 static inline bool DeleteFile(const char *filename) {
-    if (unlink(filename) == 0)
-        return true;
-    else
-        // printf("WARNING: Deleting file %s failed (%s)\n",filename,errmsg());
-        return false;
+    return unlink(filename) == 0;
 }
 
 static inline bool RemoveDirectory(const char *filename) {
-    if (rmdir(filename) == 0)
-        return true;
-    else
-        // printf("WARNING: Removing directory %s failed (%s)\n",filename,errmsg());
-        return false;
-
+    return rmdir(filename) == 0;
 }
 #endif
 
