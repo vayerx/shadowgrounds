@@ -20,7 +20,6 @@
 #ifdef FINAL_RELEASE_BUILD
 
 #  define igios_unimplemented()
-#  define igiosWarning(fmt, args ...)
 
 #else
 
@@ -34,7 +33,6 @@
                                                                                                __LINE__); firsttime_ = \
                                                                                                false; } \
 }
-#    define igiosWarning(fmt, args ...) fprintf(stderr, fmt, ## args)
 
 #  else // __GNUC__
 
@@ -44,11 +42,16 @@
                                                                                                __LINE__); firsttime_ = \
                                                                                                false; } \
 }
-void igiosWarning(const char *fmt, ...);
 
 #  endif // __GNUC__
 
 #endif   //FINAL_RELEASE_BUILD
+
+#  ifdef _MSC_VER
+void igiosWarning(const char *fmt, ...);
+#  else // _MSC_VER
+#    define igiosWarning(fmt, args ...) fprintf(stderr, fmt, ## args)
+#  endif // _MSC_VER
 
 #ifdef __GLIBC__
 void igios_backtrace(void) __attribute__( (no_instrument_function) );
