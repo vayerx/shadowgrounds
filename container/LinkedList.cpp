@@ -269,7 +269,7 @@ void LinkedList::remove(void *ptr)
     }
 }
 
-void *LinkedList::popFirst() throws(EmptyLinkedListException *) {
+void *LinkedList::popFirst() {
     ListNode *tmp = first;
     void *ptr;
 
@@ -291,7 +291,7 @@ void *LinkedList::popFirst() throws(EmptyLinkedListException *) {
     return ptr;
 }
 
-void *LinkedList::popLast() throws(EmptyLinkedListException *) {
+void *LinkedList::popLast() {
     ListNode *tmp = last;
     void *ptr;
 
@@ -313,7 +313,7 @@ void *LinkedList::popLast() throws(EmptyLinkedListException *) {
     return ptr;
 }
 
-void *LinkedList::peekFirst() throws(EmptyLinkedListException *) {
+void *LinkedList::peekFirst() {
     ListNode *tmp = first;
     void *ptr;
 
@@ -324,7 +324,7 @@ void *LinkedList::peekFirst() throws(EmptyLinkedListException *) {
     return ptr;
 }
 
-void *LinkedList::peekLast() throws(EmptyLinkedListException *) {
+void *LinkedList::peekLast() {
     ListNode *tmp = last;
     void *ptr;
 
@@ -381,7 +381,7 @@ void LinkedList::removeNode(const ListNode *node)
     remove_count++;
 }
 
-void *LinkedList::iterateNext() throws(EmptyIteratorException *) {
+void *LinkedList::iterateNext() {
     void *ret;
 
     if (walk_node == NULL)
@@ -420,7 +420,7 @@ LinkedListIterator::~LinkedListIterator()
 
 /*
    // inlined
-   void *LinkedListIterator::iterateNext() throws (EmptyIteratorException *)
+   void *LinkedListIterator::iterateNext()
    {
    void *ret;
 
@@ -473,7 +473,7 @@ SafeLinkedListIterator::~SafeLinkedListIterator()
     walk_node = NULL;
 }
 
-void *SafeLinkedListIterator::iterateNext() throws(EmptyIteratorException *) {
+void *SafeLinkedListIterator::iterateNext() {
     void *ret;
 
     if (walk_node == NULL)

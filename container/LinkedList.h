@@ -20,8 +20,6 @@
 #include "EmptyLinkedListException.h"
 #include "EmptyIteratorException.h"
 
-#define throws(x) throw (x)
-
 // proto...
 class LinkedList;
 class LinkedListIterator;
@@ -79,10 +77,10 @@ public:
     void prepend(void *ptr);
     void append(void *ptr);
     void remove(void *ptr);
-    void *popFirst() throws(EmptyLinkedListException *);
-    void *popLast() throws(EmptyLinkedListException *);
-    void *peekFirst() throws(EmptyLinkedListException *);
-    void *peekLast() throws(EmptyLinkedListException *);
+    void *popFirst();
+    void *popLast();
+    void *peekFirst();
+    void *peekLast();
     bool isEmpty();
 
     // these are for real hacking... usually not recommended
@@ -92,7 +90,7 @@ public:
 
     // iteration
     // deprecated: use the seperate iterators instead
-    void *iterateNext() throws(EmptyIteratorException *);
+    void *iterateNext();
     bool iterateAvailable();
     void resetIterate();
 };
@@ -149,7 +147,7 @@ public:
     SafeLinkedListIterator(const LinkedList *linkedList);
     ~SafeLinkedListIterator();
     bool iterateAvailable();
-    void *iterateNext() throws(EmptyIteratorException *);
+    void *iterateNext();
 };
 
 #endif

@@ -16,8 +16,6 @@
 #include <stdlib.h>
 #include "StackEmptyException.h"
 
-#define throws(x) throw (x)
-
 /* ---------------------------------- */
 // StackObject class
 
@@ -44,8 +42,8 @@ public:
     Stack();
     bool isEmpty();
     void push(void *data);
-    void *pop() throws(StackEmptyException *);
-    void *peek() throws(StackEmptyException *);
+    void *pop();
+    void *peek();
 };
 
 #endif

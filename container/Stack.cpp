@@ -16,7 +16,7 @@ bool Stack::isEmpty()
         return false;
 }
 
-void Stack::push(void *data)  // throws(StackException *)
+void Stack::push(void *data)
 {
     StackObject *tmp;
     tmp = new StackObject(first_obj, data);
@@ -28,7 +28,7 @@ void Stack::push(void *data)  // throws(StackException *)
     first_obj = tmp;
 }
 
-void *Stack::pop() throws(StackEmptyException *) {
+void *Stack::pop() {
     if (first_obj == NULL)
         throw ( new StackEmptyException() );
     void *tmp = first_obj->data;
@@ -38,7 +38,7 @@ void *Stack::pop() throws(StackEmptyException *) {
     return tmp;
 }
 
-void *Stack::peek() throws(StackEmptyException *) {
+void *Stack::peek(){
     if (first_obj == NULL)
         throw ( new StackEmptyException() );
     return first_obj->data;
