@@ -794,13 +794,15 @@ std::string get_path(const std::string &file)
 static void sighandler(int sig, siginfo_t *info, void *secret) {
     ucontext_t *uc = (ucontext_t *) secret;
 
-    if (sig == SIGSEGV)
-#  ifdef __x86_64__
+    if (sig == SIGSEGV) {
+#  if defined(__x86_64__)
         printf("Got signal %d at %p from %p\n", sig, info->si_addr, (void *) uc->uc_mcontext.gregs[REG_RIP]);
-#  else
+#  elif defined(__i386__)
         printf("Got signal %d at %p from %p\n", sig, info->si_addr, (void *) uc->uc_mcontext.gregs[REG_EIP]);
+#  else
+        printf("Got signal %d at %p\n", sig, info->si_addr);
 #  endif
-    else
+    } else
         printf("Got signal %d\n", sig);
 
     igios_backtrace();
