@@ -791,9 +791,9 @@ int main(int argc, char *argv[])
             Logger::getInstance()->error("Failed to initialize renderer");
             Logger::getInstance()->error( error.c_str() );
 
-#ifdef LINUX
+#ifdef __linux__
             sysFatalError("Renderer initialization failure.\nSee the log for details.");
-#endif      // LINUX
+#endif // __linux__
         // Linux version sometimes blows up here if initialization failed
             delete s3d;
             s3d = 0;
