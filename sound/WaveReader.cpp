@@ -2,7 +2,7 @@
 
 // Copyright 2002-2004 Frozenbyte Ltd.
 
-#include "SDL_sound.h"
+#include <SDL/SDL_sound.h>
 #include "WaveReader.h"
 #include "AmplitudeArray.h"
 #include "../system/Logger.h"
@@ -61,7 +61,7 @@ namespace sfx {
                 filesystem::fb_fread(fileData.get(), 1, size, fileCont);
                 filesystem::fb_fclose(fileCont);
 
-                SDL_RWops *rw = SDL_RWFromMem(fileData.get(), size);
+                SDL_RWops *rw = SDL_RWFromConstMem(fileData.get(), size);
                 ioHandle = Sound_NewSample(rw, NULL, NULL, size);
             }
 
@@ -79,7 +79,7 @@ namespace sfx {
                 return;
 
             //FIXME: check correct format etc.
-            igios_unimplemented();
+            //igios_unimplemented();
 
             audio_len = Sound_DecodeAll(ioHandle);
 
@@ -288,7 +288,7 @@ namespace sfx {
     }
 
 // returns true if wave file succesfully loaded
-    WaveReader::operator bool() const
+    bool WaveReader::isValid() const
     {
         assert(this != NULL);
 
