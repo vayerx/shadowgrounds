@@ -16,7 +16,7 @@
 #include <Storm3D_UI.h>
 #include <keyb3.h>
 #include <SDL.h>
-#include "SDL_sound.h"
+#include <SDL_sound.h>
 #include "igios.h"
 
 #include "version.h"
@@ -381,49 +381,6 @@ std::string get_path(const std::string &file)
     return "";
 }
 
-#ifdef __GLIBC__
-
-#  ifndef __USE_GNU
-#    define __USE_GNU
-#  endif
-
-#  include <execinfo.h>
-#  include <ucontext.h>
-
-static void sighandler(int sig, siginfo_t *info, void *secret) {
-    ucontext_t *uc = (ucontext_t *) secret;
-
-    if (sig == SIGSEGV) {
-#  if defined(__x86_64__)
-        printf("Got signal %d at %p from %p\n", sig, info->si_addr, (void *) uc->uc_mcontext.gregs[REG_RIP]);
-#  elif defined(__i386__)
-        printf("Got signal %d at %p from %p\n", sig, info->si_addr, (void *) uc->uc_mcontext.gregs[REG_EIP]);
-#  else
-        printf("Got signal %d at %p\n", sig, info->si_addr);
-#  endif
-    } else
-        printf("Got signal %d\n", sig);
-
-    igios_backtrace();
-
-    exit(0);
-}
-#endif
-
-// need this so we can call exit in the case of segfault
-static void setsighandler(void) {
-#ifdef __GLIBC__
-    struct sigaction sa;
-
-    sa.sa_sigaction = sighandler;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART | SA_SIGINFO;
-
-    sigaction(SIGSEGV, &sa, NULL);
-    sigaction(SIGUSR1, &sa, NULL);
-#endif
-}
-
 #if defined WIN32 && defined COMBINE
 int main(int argc, char *argv[]) __attribute( (externally_visible) );
 #endif
@@ -438,8 +395,6 @@ int main(int argc, char *argv[])
 #endif
 
         Logger::createInstanceForLogfile( path.c_str() );
-
-        setsighandler();
 
         opt::variables_map vm;
         parse_commandline(argc, argv, vm);
