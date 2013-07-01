@@ -7,28 +7,6 @@
 
 #include "igios.h"
 
-#if 0
-void igios_sighandler(int sig, siginfo_t *info, void *secret) {
-    void *frames[BACKTRACELEN];
-    int num = 0;
-    ucontext_t *uc = (ucontext_t *) secret;
-
-    if (sig == SIGSEGV)
-        printf("Got signal %d at %p from %p\n", sig, info->si_addr, (void *) uc->uc_mcontext.gregs[REG_EIP]);
-    else
-        printf("Got signal %d\n", sig);
-
-    num = backtrace(frames, 16);
-
-    frames[1] = (void *) uc->uc_mcontext.gregs[REG_EIP];
-
-    backtrace_symbols_fd(frames, num, STDERR_FILENO);
-
-    exit(0);
-}
-
-#endif  // 0
-
 void igiosErrorMessage(const char *msg, ...) {
     va_list args;
     char buf[1024];
@@ -44,25 +22,6 @@ void igiosErrorMessage(const char *msg, ...) {
 
 #ifdef __GLIBC__
     igios_backtrace();
-#endif
-
-}
-
-void igios_setsighandler(void) {
-    // disable this, it's more trouble than it's worth
-    // just use core dumps
-    return;
-#if 0
-#  ifdef __GLIBC__
-    struct sigaction sa;
-
-    sa.sa_sigaction = igios_sighandler;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART | SA_SIGINFO;
-
-    sigaction(SIGSEGV, &sa, NULL);
-    sigaction(SIGUSR1, &sa, NULL);
-#  endif
 #endif
 
 }
