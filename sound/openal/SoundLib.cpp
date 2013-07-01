@@ -24,7 +24,9 @@
 #  include <AL/alc.h>
 #endif
 
-#include <vorbis/vorbisfile.h>
+#include <SDL/SDL_sound.h>
+#include <SDL/SDL_audio.h>
+#include <SDL/SDL_rwops.h>
 
 #include "../filesystem/file_package_manager.h"
 #include "../storm/include/c2_common.h"
@@ -39,6 +41,33 @@
 using namespace frozenbyte;
 
 #define alErrors() alErrors_(__FILE__, __LINE__)
+
+//TODO once sdl2 can be used remove this
+#ifndef SDL_AUDIO_BITSIZE
+#define SDL_AUDIO_BITSIZE(x) ((x) & 0xff)
+#endif
+
+static ALenum sdlSoundToOpenAlFormat(const Sound_Sample* sdlSample) {
+    const uint32_t bitSize = SDL_AUDIO_BITSIZE(sdlSample->actual.format);
+    if (sdlSample->actual.channels == 1) {
+        if (bitSize == 8) {
+            return AL_FORMAT_MONO8;
+        }
+        else if (bitSize == 16) {
+            return AL_FORMAT_MONO16;
+        }
+        return AL_INVALID_VALUE;
+    }
+    else {
+        if (bitSize == 8) {
+            return AL_FORMAT_MONO8;
+        }
+        else if (bitSize == 16) {
+            return AL_FORMAT_MONO16;
+        }
+        return AL_INVALID_VALUE;
+    }
+}
 
 static VC3 openALPosition(const VC3 pos)
 {
@@ -77,29 +106,11 @@ static bool alErrors_(const char *file, int line)
     return false;
 }
 
-static std::string errorString(int code)
-{
-    switch (code) {
-    case OV_EREAD:
-        return std::string("Read from media.");
-    case OV_ENOTVORBIS:
-        return std::string("Not Vorbis data.");
-    case OV_EVERSION:
-        return std::string("Vorbis version mismatch.");
-    case OV_EBADHEADER:
-        return std::string("Invalid Vorbis header.");
-    case OV_EFAULT:
-        return std::string("Internal logic fault (bug or heap/stack corruption.");
-    default:
-        return std::string("Unknown Ogg error.");
-    }
-}
-
 // how many openal buffers per stream
 static unsigned int streamBuffers = 16;
 
 // size of one buffer
-static unsigned int bufferSize = 8192;
+static const unsigned int bufferSize = 8192;
 
 namespace sfx
 {
@@ -352,69 +363,6 @@ namespace sfx
         }
     };
 
-// read s * n bytes to ptr
-    static size_t soundData_read(void *ptr, size_t s, size_t n, void *data_)
-    {
-        if (s * n == 0) // if s or n is 0
-            return 0;
-
-        OggSoundData *data = (OggSoundData *) data_;
-
-        // how many bytes max can be read
-        size_t maxReadBytes = data->dataSize - data->currentPos;
-
-        // how many bytes we're going to read
-        size_t readBytes = std::min(n * s, maxReadBytes);
-
-        memcpy(ptr, data->data + data->currentPos, readBytes);
-        data->currentPos += readBytes;
-
-        return (readBytes / s); // fread is a stupid interface
-    }
-
-    static int soundData_seek(void *data_, ogg_int64_t offset, int whence)
-    {
-        OggSoundData *data = (OggSoundData *) data_;
-
-        switch (whence) {
-        case SEEK_SET:
-            if (offset > data->dataSize)
-                return -1;
-
-            data->currentPos = offset;
-            break;
-
-        case SEEK_CUR:
-            if (data->currentPos + offset > data->dataSize)
-                return -1;
-
-            data->currentPos = data->currentPos + offset;
-            break;
-
-        case SEEK_END:
-            if (offset > data->dataSize)
-                return -1;
-
-            data->currentPos = data->dataSize - offset;
-            break;
-        }
-
-        return 0;
-    }
-
-    static long soundData_tell(void *data_)
-    {
-        OggSoundData *data = (OggSoundData *) data_;
-        return data->currentPos;
-    }
-
-    static const ov_callbacks soundCallbacks = {
-        soundData_read,
-        soundData_seek,
-        NULL, // close
-        soundData_tell
-    };
-
     Sound::Data::Data(const char *file, int flags)
         : filename(file),
         length(0),
@@ -422,103 +370,29 @@ namespace sfx
         fileNotFound(false),
         sample(AL_NONE)
     {
-        // ogg or wav?
-        bool isOgg = (filename.find(".ogg") != std::string::npos);
-
         std::vector<char> buffer;
         ALenum format = AL_FORMAT_STEREO16;
 
-        if (isOgg) {
-            filesystem::InputStream fileStream = filesystem::FilePackageManager::getInstance().getFile(filename);
-            if ( fileStream.isEof() )
-                return;
+        WaveReader reader(filename);
 
-            int dataSize = fileStream.getSize();
-            boost::scoped_array<char> audioData(new char[dataSize]);
-            audioData.reset(new char[dataSize]);
-            fileStream.read( audioData.get(), fileStream.getSize() );
+        if (reader.isValid()) {
+            reader.decodeAll(buffer);
 
-            OggVorbis_File oggStream;
-            memset( &oggStream, 0, sizeof(OggVorbis_File) );
+            freq = reader.getFreq();
+            unsigned int numChannels = reader.getChannels();
+            unsigned int bits = reader.getBits();
+            length = 1000 * buffer.size() / (freq * numChannels * bits / 8);
 
-            OggSoundData oggData(audioData.get(), dataSize);
-
-            int result = ov_open_callbacks(&oggData, &oggStream, NULL, 0, soundCallbacks);
-
-            if (result < 0) {
-                LOG_ERROR( strPrintf( "Could not open Ogg file: %s %s\n", filename.c_str(), errorString(
-                                          result).c_str() ).c_str() );
-                return;
-            }
-
-            vorbis_info *vorbisInfo = ov_info(&oggStream, -1);
-            if (vorbisInfo == NULL) {
-                LOG_ERROR("ov_info failed");
-                ov_clear(&oggStream);
-                return;
-            }
-
-            if (vorbisInfo->channels == 1)
-                format = AL_FORMAT_MONO16;
-            else
-                format = AL_FORMAT_STEREO16;
-
-            unsigned int bufPos = 0;
-            unsigned int bufRemain = 16384;                                                 // how much free space in buffer
-            int section = 0;
-
-            buffer.resize(bufRemain);
-            while (true) {
-                int ret = ov_read(&oggStream, &buffer[bufPos], bufRemain, 0, 2, 1, &section);
-                if (ret <= 0) {
-                    length = 1000 * bufPos / (vorbisInfo->channels * vorbisInfo->rate * 2); // 16-bit samples = 2 bytes
-
-                    // EOF
-                    // remove trailing crap
-                    buffer.resize(bufPos);
-                    break;
-                }
-                if (ret > 0) {
-                    bufPos += ret;
-                    bufRemain -= ret;
-
-                    if (bufRemain == 0) {
-                        // ran out of space in buffer, enlarge
-                        buffer.resize(2 * bufPos);
-
-                        bufRemain = bufPos;
-                    }
-                }
-
-                // just skip errors... FIXME
-
-            }
-
-            freq = vorbisInfo->rate;
-            ov_clear(&oggStream);
-        } else {
-            // is not ogg
-            WaveReader reader(filename);
-
-            if (reader) {
-                reader.decodeAll(buffer);
-
-                freq = reader.getFreq();
-                unsigned int numChannels = reader.getChannels();
-                unsigned int bits = reader.getBits();
-                length = 1000 * buffer.size() / (freq * numChannels * bits / 8);
-
-                if (numChannels == 1) {
-                    if (bits == 16)
-                        format = AL_FORMAT_MONO16;
-                    else
-                        format = AL_FORMAT_MONO8;
-                } else {
-                    if (bits == 16)
-                        format = AL_FORMAT_STEREO16;
-                    else
-                        format = AL_FORMAT_STEREO8;
-                }
+            if (numChannels == 1) {
+                if (bits == 16)
+                    format = AL_FORMAT_MONO16;
+                else
+                    format = AL_FORMAT_MONO8;
+            } else {
+                if (bits == 16)
+                    format = AL_FORMAT_STEREO16;
+                else
+                    format = AL_FORMAT_STEREO8;
             }
         }
 
@@ -568,12 +442,10 @@ namespace sfx
         bool           finished;              // ogg stream has finished
                                               // does not mean that all of it has been played yet
 
-        OggVorbis_File oggStream;
-        vorbis_info   *vorbisInfo;
-
-        boost::shared_array<char> streamData; // contains raw ogg data
-        long           currentPos;
-        ogg_int64_t    dataSize;
+        Sound_Sample*  sdlSample;
+        boost::scoped_array<char> streamData; // contains raw ogg data
+        uint64_t       currentPos;
+        uint64_t       dataSize;
 
         bool           valid;
 
@@ -592,7 +464,6 @@ namespace sfx
             playing(false),
             loop(false),
             finished(false),
-            vorbisInfo(NULL),
             currentPos(0),
             dataSize(0),
             valid(false),
@@ -600,8 +471,6 @@ namespace sfx
             format(AL_NONE),
             soundLib(NULL)
         {
-            memset( &oggStream, '\0', sizeof(OggVorbis_File) );
-
             buffers.reset(new SoundBuffer[streamBuffers]);
 
             filesystem::InputStream fileStream = filesystem::FilePackageManager::getInstance().getFile(filename_);
@@ -610,27 +479,20 @@ namespace sfx
 
             dataSize = fileStream.getSize();
             streamData.reset(new char[dataSize]);
-            fileStream.read( streamData.get(), fileStream.getSize() );
-
+            fileStream.read( streamData.get(), dataSize );
+            sdlSample = Sound_NewSample(SDL_RWFromConstMem(streamData.get(), dataSize), "ogg", 0, bufferSize);
             // we got the data, open the file
 
-            int result;
-            if ( ( result =
-                       ov_open_callbacks(this, &oggStream, NULL, 0,
-                                         SoundStream::Data::streamProcesserCallbacks) ) < 0 ) {
-                LOG_ERROR( strPrintf( "Could not open Ogg stream: %s %s", filename.c_str(), errorString(
-                                          result).c_str() ).c_str() );
+            if (!sdlSample) {
+                LOG_ERROR( strPrintf( "Could not open Ogg stream: %s %s", filename.c_str(), Sound_GetError()).c_str() );
+                return;
+            }
+            format = sdlSoundToOpenAlFormat(sdlSample);
+            if (format == AL_INVALID_VALUE) {
+                LOG_ERROR(strPrintf("Invalid sound format: %s", filename.c_str()).c_str());
                 return;
             }
             valid = true;
-
-            vorbisInfo = ov_info(&oggStream, -1);
-
-            if (vorbisInfo->channels == 1)
-                format = AL_FORMAT_MONO16;
-            else
-                format = AL_FORMAT_STEREO16;
-
             // queue the initial data
             std::vector<SoundBuffer> buffersToQueue;
             for (unsigned int i = 0; i < streamBuffers; i++) {
@@ -655,71 +517,6 @@ namespace sfx
 
         bool stream(SoundBuffer buffer);
 
-        static const ov_callbacks streamProcesserCallbacks;
-
-        // read s * n bytes to ptr
-        static size_t soundStream_read(void *ptr, size_t s, size_t n, void *streamData)
-        {
-            if (s * n == 0)  // if s or n is 0
-                return 0;
-
-            Data *data = (Data *) streamData;
-
-            // how many bytes max can be read
-            size_t maxReadBytes = data->dataSize - data->currentPos;
-
-            // how many bytes we're going to read
-            size_t readBytes = std::min(n * s, maxReadBytes);
-
-            memcpy(ptr, data->streamData.get() + data->currentPos, readBytes);
-            data->currentPos += readBytes;
-
-            return (readBytes / s);  // fread is a stupid interface
-        }
-
-        static int soundStream_seek(void *streamData, ogg_int64_t offset, int whence)
-        {
-            Data *data = (Data *) streamData;
-
-            switch (whence) {
-            case SEEK_SET:
-                if (offset > data->dataSize)
-                    return -1;
-
-                data->currentPos = offset;
-                break;
-
-            case SEEK_CUR:
-                if (data->currentPos + offset > data->dataSize)
-                    return -1;
-
-                data->currentPos = data->currentPos + offset;
-                break;
-
-            case SEEK_END:
-                if (offset > data->dataSize)
-                    return -1;
-
-                data->currentPos = data->dataSize - offset;
-                break;
-            }
-
-            return 0;
-        }
-
-        static long soundStream_tell(void *streamData)
-        {
-            return ( (Data *) streamData )->currentPos;
-        }
-
-    };
-
-    // ptr is type SoundStream::Data
-    const ov_callbacks SoundStream::Data::streamProcesserCallbacks = {
-        &soundStream_read,
-        &soundStream_seek,
-        NULL,   // no explicit close function
-        &soundStream_tell
     };
 
     static const int BUFFER_SAMPLES = 2000;
@@ -1109,16 +906,17 @@ namespace sfx
         boost::scoped_array<char> pcm(new char[bufferSize]);
         unsigned int size = 0;
         int section;
-        int result;
+        uint32_t result;
 
         while (size < bufferSize) {
-            result = ov_read(&oggStream, pcm.get() + size, bufferSize - size, 0, 2, 1, &section);
+            result = Sound_Decode(sdlSample);
 
             if (result > 0) {
+                memcpy(pcm.get(), sdlSample->buffer, result);
                 size += result;
             } else {
-                if (result < 0) {
-                    LOG_ERROR( strPrintf( "SoundStream::Data::stream error: %s\n", errorString(result).c_str() ).c_str() );
+                if (sdlSample->flags == SOUND_SAMPLEFLAG_ERROR) {
+                    LOG_ERROR( strPrintf( "SoundStream::Data::stream error in %s: %s\n", filename.c_str(), Sound_GetError() ).c_str() );
                     return false;
                 } else {
                     break;
@@ -1127,15 +925,18 @@ namespace sfx
         }
 
         if (size == 0) {
+            //must be eof not error
+            assert(sdlSample->flags & SOUND_SAMPLEFLAG_EOF);
             // stream ended
             if (loop) {
                 // it appears that this is never used
                 // someone else takes care of this after stream has ended
 
                 // seek to beginning
-                int result = ov_raw_seek(&oggStream, 0);
-                if (result != 0)
-                    LOG_ERROR( strPrintf("SoundStream: ov_raw_seek failed: %d", result).c_str() );
+                int result = Sound_Rewind(sdlSample);
+                if (result != 0) {
+                    LOG_ERROR( strPrintf("SoundStream: Sound_Rewind failed: %s\n", Sound_GetError()).c_str() );
+                }
 
                 // go back to trying to stream it
                 return stream(buffer);
@@ -1146,7 +947,7 @@ namespace sfx
         }
 
         // LOG_DEBUG(strPrintf("alBufferData size = %d, rate = %ld, pcm = %d",size,vorbisInfo->rate,reinterpret_cast<unsigned int>(pcm.get())));
-        buffer.bufferData(format, pcm.get(), size, vorbisInfo->rate);
+        buffer.bufferData(format, pcm.get(), size, sdlSample->actual.rate);
 
         return true;
     }
@@ -1230,16 +1031,9 @@ namespace sfx
             }
         }
 
-        {
-            if (valid) {
-                ov_clear(&oggStream);
-                memset( &oggStream, 0, sizeof(OggVorbis_File) );
-
-                valid = false;
-            }
-
+        if (sdlSample) {
+            Sound_FreeSample(sdlSample);
         }
-
     }
 
     void SoundStream::setBaseVolume(float value)
@@ -1302,8 +1096,9 @@ namespace sfx
 
         data->playing = false;
         data->source.stop();
-        ov_raw_seek(&data->oggStream, 0);
-
+        if (Sound_Rewind(data->sdlSample) != 0) {
+            LOG_ERROR(strPrintf("Failed to rewind: %s\n", Sound_GetError()).c_str());
+        }
         // dequeue buffers
         while ( data->source.hasProcessedBuffers() ) {
             data->source.getProcessedBuffer();
