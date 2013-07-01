@@ -49,7 +49,7 @@ VideoBackgroundLoader::~VideoBackgroundLoader()
     if (mContext->drawbuffer) delete[] mContext->drawbuffer;
     mContext->frames.clear();
     if (mContext->videoopen) avcodec_close(mContext->videocodecctx);
-    if (mContext->fileopen) av_close_input_file(mContext->formatctx);
+    if (mContext->fileopen) avformat_close_input(&mContext->formatctx);
 
     if (toRGB_convert_ctx != NULL) {
         sws_freeContext(toRGB_convert_ctx);
@@ -67,7 +67,7 @@ bool VideoBackgroundLoader::init(const char *filename, IStorm3D_StreamBuilder *b
         return false;
     } else { mContext->fileopen = true; }
 
-    if (av_find_stream_info(mContext->formatctx) < 0) {
+    if (avformat_find_stream_info(mContext->formatctx, 0) < 0) {
         LOG_WARNING("Failed to find stream information.");
         return false;
     }
@@ -94,7 +94,7 @@ bool VideoBackgroundLoader::init(const char *filename, IStorm3D_StreamBuilder *b
     if (mContext->videocodec->capabilities & CODEC_CAP_TRUNCATED)
         mContext->videocodecctx->flags |= CODEC_FLAG_TRUNCATED;
 
-    if (avcodec_open(mContext->videocodecctx, mContext->videocodec) < 0) {
+    if (avcodec_open2(mContext->videocodecctx, mContext->videocodec, 0) < 0) {
         LOG_WARNING("Unable to open video codec.");
         return false;
     } else { mContext->videoopen = true; }
@@ -131,7 +131,7 @@ bool VideoBackgroundLoader::init(const char *filename, IStorm3D_StreamBuilder *b
         if (!mContext->audiocodec) {
             LOG_WARNING("Unable to find suitable audio codec.");
         } else {
-            if (avcodec_open(mContext->audiocodecctx, mContext->audiocodec) < 0) {
+            if (avcodec_open2(mContext->audiocodecctx, mContext->audiocodec, 0) < 0) {
                 LOG_WARNING("Unable to open audio codec.");
             } else {
                 mContext->audioopen = true;
