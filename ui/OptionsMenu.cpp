@@ -2179,7 +2179,7 @@ namespace ui
     void OptionsMenu::updateControllerTypeText(void)
     {
 // Temp hack for FB to disable pad
-#if !(defined __APPLE__ || defined LINUX)
+#if !(defined __APPLE__ || defined __linux__)
         GameController::CONTROLLER_TYPE type = (GameController::CONTROLLER_TYPE)currentController;
 
         // mouse controller
