@@ -4,10 +4,6 @@
 #  define NOMINMAX
 #endif
 
-#if defined(LINUX)
-#  define Sleep usleep
-#endif
-
 #include <vector>
 
 #include <boost/bind.hpp>
