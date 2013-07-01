@@ -153,40 +153,6 @@ int renderfunc(IStorm3D_Scene *scene)
     return scene->RenderScene();
 }
 
-namespace {
-    class StormLogger : public IStorm3D_Logger {
-        Logger &logger;
-
-    public:
-        StormLogger(Logger &logger_)
-            : logger(logger_)
-
-        {
-        }
-
-        void debug(const char *msg)
-        {
-            logger.debug(msg);
-        }
-
-        void info(const char *msg)
-        {
-            logger.info(msg);
-        }
-
-        void warning(const char *msg)
-        {
-            logger.warning(msg);
-        }
-
-        void error(const char *msg)
-        {
-            logger.error(msg);
-        }
-    };
-
-} // unnamed
-
 /* --------------------------------------------------------- */
 
 static void print_version()
@@ -1077,11 +1043,10 @@ int main(int argc, char *argv[]) {
         //    game::SimpleOptions::setBool(DH_OPT_B_AUTO_SCRIPT_PREPROCESS, false);
         //}
 
-        StormLogger logger( *Logger::getInstance() );
         Logger::getInstance()->setLogLevel( vm["errorlevel"].as<int>() );
 
         IStorm3D *s3d = IStorm3D::Create_Storm3D_Interface(true,
-                                                           &filesystem::FilePackageManager::getInstance(), &logger);
+                                                           &filesystem::FilePackageManager::getInstance(), Logger::getInstance());
 
 //disposable_s3d = s3d;
 
