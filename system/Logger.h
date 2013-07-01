@@ -7,6 +7,9 @@
 #include <vector>
 #include <string>
 
+#include <IStorm3D_Logger.h>
+
+
 #define LOGGER_LEVEL_NONE            0
 #define LOGGER_LEVEL_ERROR           1
 #define LOGGER_LEVEL_WARNING         2
@@ -42,7 +45,7 @@ public:
     virtual void logMessage(const char *msg, int level) = 0;
 };
 
-class Logger {
+class Logger : public IStorm3D_Logger {
 public:
     static Logger *getInstance();
 
