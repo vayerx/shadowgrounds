@@ -54,7 +54,8 @@ void igiosWarning(const char *fmt, ...);
 #  endif // _MSC_VER
 
 #ifdef __GLIBC__
-void igios_backtrace(void) __attribute__( (no_instrument_function) );
+void igios_backtrace(FILE* output) __attribute__( (no_instrument_function) );
+void igios_backtrace() __attribute__( (no_instrument_function) );
 #else
 static inline void igios_backtrace(void) { };
 #endif
