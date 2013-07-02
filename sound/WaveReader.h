@@ -32,7 +32,7 @@ namespace sfx {
         unsigned int getBits() const;
 
         // returns true if wave file succesfully loaded
-        operator bool() const;
+        bool isValid() const;
     };
 
 } // sfx
