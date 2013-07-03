@@ -68,10 +68,16 @@ public:
     int getListenerLogLevel();
 
     // different methods for different level of log messages
-    void debug(const char *msg);
-    void info(const char *msg);
-    void warning(const char *msg);
-    void error(const char *msg);
+    virtual void debug(const char *msg);
+    virtual void info(const char *msg);
+    virtual void warning(const char *msg);
+    virtual void error(const char *msg);
+
+    //Like printf (format argument index is 2 due to implicit this)
+    virtual void debug2(const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
+    virtual void info2(const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
+    virtual void warning2(const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
+    virtual void error2(const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
 
     // sets a listener object
     // (if you want to forward the logged messages to some other object too)
