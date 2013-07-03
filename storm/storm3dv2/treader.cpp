@@ -1,20 +1,23 @@
+
+//must include stdint.h first with __STDC_CONSTANT_MACROS defined
+//otherwise we are lacking the UINT64_C() macro
+#define __STDC_CONSTANT_MACROS
+#include <stdint.h>
+
 #include "treader.h"
 
 #include "../../system/Logger.h"
 #include "../../system/Miscellaneous.h"
 
-#ifdef USE_LIBAVCODEC
-
-#  include <boost/bind.hpp>
-#  include <istorm3d_streambuffer.h>
-#  include "igios.h"
+#include <boost/bind.hpp>
+#include <istorm3d_streambuffer.h>
+#include "igios.h"
 
 extern "C" {
-#  include <libavutil/log.h>
-
-#  if LIBAVCODEC_VERSION_MAJOR == 52
-#    include "libswscale/swscale.h"
-#  endif
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libavutil/log.h>
+#include <libswscale/swscale.h>
 }
 
 static const unsigned int MAX_BUFFERED_FRAMES = 50;
@@ -23,11 +26,9 @@ VideoBackgroundLoader::VideoBackgroundLoader()
     : mContext(0),
     mState(VideoBackgroundLoader::STOPPED),
     quitRequested(false),
-    backgroundReaderWaiting(false)
-#  if LIBAVCODEC_VERSION_MAJOR >= 52
-    , toRGB_convert_ctx(NULL),
+    backgroundReaderWaiting(false),
+    toRGB_convert_ctx(NULL),
     sws_flags(SWS_BICUBIC)
-#  endif // LIBAVCODEC_VERSION_MAJOR>=52
 {
     static bool avinit = false;
     if (!avinit) {
@@ -50,12 +51,10 @@ VideoBackgroundLoader::~VideoBackgroundLoader()
     if (mContext->videoopen) avcodec_close(mContext->videocodecctx);
     if (mContext->fileopen) av_close_input_file(mContext->formatctx);
 
-#  if LIBAVCODEC_VERSION_MAJOR >= 52
     if (toRGB_convert_ctx != NULL) {
         sws_freeContext(toRGB_convert_ctx);
         toRGB_convert_ctx = NULL;
     }
-#  endif // LIBAVCODEC_VERSION_MAJOR>=52
 
     delete mContext;
     mContext = NULL;
@@ -63,7 +62,7 @@ VideoBackgroundLoader::~VideoBackgroundLoader()
 
 bool VideoBackgroundLoader::init(const char *filename, IStorm3D_StreamBuilder *builder)
 {
-    if (av_open_input_file(&mContext->formatctx, filename, 0, 0, 0) != 0) {
+    if (avformat_open_input(&mContext->formatctx, filename, 0, 0) != 0) {
         LOG_WARNING( strPrintf("Failed to load video '%s'.", filename).c_str() );
         return false;
     } else { mContext->fileopen = true; }
@@ -75,9 +74,9 @@ bool VideoBackgroundLoader::init(const char *filename, IStorm3D_StreamBuilder *b
 
     mContext->videoindex = mContext->audioindex = -1;
     for (unsigned int i = 0; i < mContext->formatctx->nb_streams; ++i) {
-        if (mContext->formatctx->streams[i]->codec->codec_type == CODEC_TYPE_VIDEO && mContext->videoindex ==
+        if (mContext->formatctx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO && mContext->videoindex ==
             -1) mContext->videoindex = i;
-        else if (mContext->formatctx->streams[i]->codec->codec_type == CODEC_TYPE_AUDIO && mContext->audioindex ==
+        else if (mContext->formatctx->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO && mContext->audioindex ==
                  -1) mContext->audioindex = i;
     }
 
@@ -295,14 +294,12 @@ void VideoBackgroundLoader::startLoadingThread()
         if (av_read_frame(mContext->formatctx, &packet) >= 0) {
             if (packet.stream_index == mContext->videoindex) {
                 int framedone = 0;
-                avcodec_decode_video(mContext->videocodecctx, mContext->readframe, &framedone, packet.data, packet.size);
+                avcodec_decode_video2(mContext->videocodecctx, mContext->readframe, &framedone, &packet);
                 if (framedone) {
                     size_t bsize = (mContext->videowidth * mContext->videoheight * 3 + 4);
                     boost::shared_array<unsigned char> buffer(new unsigned char[bsize]);
                     if (buffer) {
-#  if LIBAVCODEC_VERSION_MAJOR >= 52
-                        toRGB_convert_ctx =
-                            sws_getCachedContext(toRGB_convert_ctx,
+                        toRGB_convert_ctx = sws_getCachedContext(toRGB_convert_ctx,
                                                  mContext->videowidth, mContext->videoheight,
                                                  mContext->videocodecctx->pix_fmt,
                                                  mContext->videowidth, mContext->videoheight,
@@ -315,11 +312,6 @@ void VideoBackgroundLoader::startLoadingThread()
                                   0, mContext->videoheight,
                                   mContext->drawframe->data,
                                   mContext->drawframe->linesize);
-#  else
-                        img_convert( (AVPicture *)mContext->drawframe, PIX_FMT_RGB24,
-                                     (AVPicture *)mContext->readframe, mContext->videocodecctx->pix_fmt,
-                                     mContext->videowidth, mContext->videoheight );
-#  endif
                         unsigned int sh = mContext->videoheight, sw = mContext->videowidth;
                         memcpy(buffer.get(), mContext->drawframe->data[0], sw * sh * 3);
 
@@ -341,7 +333,7 @@ void VideoBackgroundLoader::startLoadingThread()
                 }
             } else if (packet.stream_index == mContext->audioindex && mContext->audiobuffer) {
                 int size = mContext->audiobuffersize;
-                avcodec_decode_audio2(mContext->audiocodecctx, mContext->audiobuffer, &size, packet.data, packet.size);
+                avcodec_decode_audio3(mContext->audiocodecctx, mContext->audiobuffer, &size, &packet);
                 if (size) {
                     unsigned long long duration =
                         (unsigned long long)( (double(mContext->audiocodecctx->time_base.num)
@@ -410,46 +402,3 @@ void TReader::restart()
 {
     mLoader->restart();
 }
-
-#else
-
-TReader::TReader()
-{
-    fps_numerator = 1;
-    fps_denominator = 1;
-    frame_width = 1;
-    frame_height = 1;
-}
-
-TReader::~TReader() { }
-
-int TReader::init()
-{
-    return 1;
-}
-
-int TReader::read_info(const char * /*filename*/, IStorm3D_StreamBuilder * /*builder*/)
-{
-    return 1;
-}
-
-int TReader::nextframe()
-{
-    return 1;
-}
-
-int TReader::read_pixels(char * /*buffer*/, unsigned int /*w*/, unsigned int /*h*/)
-{
-    return 1;
-}
-
-int TReader::finish()
-{
-    return 1;
-}
-
-void TReader::restart()
-{
-}
-
-#endif

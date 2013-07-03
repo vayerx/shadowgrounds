@@ -6,17 +6,15 @@
 class IStorm3D_Stream;
 class IStorm3D_StreamBuilder;
 
-#ifdef USE_LIBAVCODEC
+#include <boost/thread.hpp>
+#include <boost/shared_array.hpp>
+#include <boost/shared_ptr.hpp>
 
-extern "C" {
-#  include <libavcodec/avcodec.h>
-#  include <libavformat/avformat.h>
-
-}
-
-#  include <boost/thread.hpp>
-#  include <boost/shared_array.hpp>
-#  include <boost/shared_ptr.hpp>
+struct AVFormatContext;
+struct AVCodecContext;
+struct AVCodec;
+struct AVFrame;
+struct SwsContext;
 
 struct avctx : public boost::noncopyable {
     bool               fileopen, videoopen, audioopen;
@@ -65,10 +63,8 @@ class VideoBackgroundLoader : public boost::noncopyable {
     boost::condition_variable framesFullCVar;
     bool backgroundReaderWaiting;
 
-#  if LIBAVCODEC_VERSION_MAJOR == 52
-    struct SwsContext *toRGB_convert_ctx;
+    SwsContext *toRGB_convert_ctx;
     int sws_flags;
-#  endif
 
 public:
     VideoBackgroundLoader();
@@ -84,13 +80,9 @@ private:
     void startLoadingThread();
 };
 
-#endif
-
 class TReader : public boost::noncopyable {
 private:
-#ifdef USE_LIBAVCODEC
     VideoBackgroundLoader * mLoader;
-#endif
 public:
     unsigned int fps_numerator, fps_denominator, frame_width, frame_height;
 
