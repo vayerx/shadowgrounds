@@ -630,17 +630,6 @@ namespace frozenbyte {
             createVertexShader("nv_shadow_terrain_vertex_shader_flat");
         }
 
-        void VertexShader::createAtiConeShader()
-        {
-            elements.clear();
-            elements.push_back( Element(0, 0, D3DDECLTYPE_FLOAT3, D3DDECLUSAGE_POSITION) );
-            elements.push_back( Element(0, 3 * 4, D3DDECLTYPE_FLOAT3, D3DDECLUSAGE_NORMAL) );
-            elements.push_back( Element(0, 6 * 4, D3DDECLTYPE_D3DCOLOR, D3DDECLUSAGE_COLOR) );
-            elements.push_back( Element(0, 7 * 4, D3DDECLTYPE_FLOAT2, D3DDECLUSAGE_TEXCOORD, 0) );
-
-            createVertexShader("cone_vertex_shader_ati");
-        }
-
         void VertexShader::createNvConeShader()
         {
             elements.clear();
