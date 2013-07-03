@@ -9,7 +9,8 @@ namespace frozenbyte {
     namespace filesystem {
         struct FB_FILE;
 
-        FB_FILE *fb_fopen(const char *filename, const char *);
+        /** Open @p filename, if @p options contains the character 'o' no warning will be printed if file is not found */
+        FB_FILE *fb_fopen(const char *filename, const char * options);
         size_t fb_fread(void *buffer, size_t size, size_t count, FB_FILE *stream);
         size_t fb_fsize(FB_FILE *stream);
         int fb_fclose(FB_FILE *stream);
