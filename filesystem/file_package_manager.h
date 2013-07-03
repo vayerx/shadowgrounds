@@ -27,11 +27,16 @@ namespace frozenbyte {
             FilePackageManager();
             ~FilePackageManager();
 
+
+            enum Mode {
+                REQUIRED = 0, OPTIONAL = 1
+            };
             void addPackage(boost::shared_ptr<IFilePackage> filePackage, int priority);
             boost::shared_ptr<IFileList> findFiles(const std::string &dir,
                                                    const std::string &extension,
                                                    bool               caseSensitive = false);
-            InputStream getFile(const std::string &fileName);
+            /** Open a file as an InputStream. If @p mode is not OPTIONAL an error will be logged. */
+            InputStream getFile(const std::string &fileName, Mode mode = REQUIRED);
             unsigned int getCrc(const std::string &fileName);
 
             void setInputStreamErrorReporting(bool logNonExisting);
