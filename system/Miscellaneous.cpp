@@ -172,14 +172,16 @@ void igios_backtrace(FILE* out) {
             // __cxa_demangle():
 
             int status;
-            char* ret = abi::__cxa_demangle(begin_name,
-                                            funcname, &funcnamesize, &status);
+            char* ret = abi::__cxa_demangle(begin_name, funcname, &funcnamesize, &status);
             if (status == 0) {
                 funcname = ret; // use possibly realloc()-ed string
                 fprintf(out, "  %s : %s+%s\n",
                         symbollist[i], funcname, begin_offset);
             }
             else {
+                if (strcmp(begin_name, "__libc_start_main") == 0) {
+                    break;
+                }
                 // demangling failed. Output function name as a C function with
                 // no arguments.
                 fprintf(out, "  %s : %s()+%s\n",
