@@ -135,7 +135,7 @@ bool VideoBackgroundLoader::init(const char *filename, IStorm3D_StreamBuilder *b
                 LOG_WARNING("Unable to open audio codec.");
             } else {
                 mContext->audioopen = true;
-                mContext->audiobuffersize = (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2;
+                mContext->audiobuffersize = (192000 * 3) / 2;
                 mContext->audiobuffer = new int16_t[mContext->audiobuffersize];
                 if (!mContext->audiobuffer) {
                     LOG_WARNING("Unable to allocate audio buffer.");
