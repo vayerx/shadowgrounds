@@ -53,10 +53,11 @@ void igiosWarning(const char *fmt, ...);
 #    define igiosWarning(fmt, args ...) fprintf(stderr, fmt, ## args)
 #  endif // _MSC_VER
 
-#ifdef __GLIBC__
+#if defined(__GLIBC__) || defined(__LLVM__)
 void igios_backtrace(FILE* output) __attribute__( (no_instrument_function) );
-void igios_backtrace() __attribute__( (no_instrument_function) );
+//void igios_backtrace() __attribute__( (no_instrument_function) );
 #else
+static inline void igios_backtrace(FILE* output) { };
 static inline void igios_backtrace(void) { };
 #endif
 
