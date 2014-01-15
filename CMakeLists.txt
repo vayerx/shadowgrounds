@@ -1,5 +1,3 @@
-# TODO split CMakeLists.txt
-
 CMAKE_MINIMUM_REQUIRED( VERSION 2.8 )
 PROJECT( shadowgrounds )
 SET( CPACK_PACKAGE_VERSION_MAJOR    1 )
@@ -22,6 +20,7 @@ SET( Boost_USE_STATIC_RUNTIME   OFF )
 FIND_PACKAGE( Boost 1.46 REQUIRED
     program_options
     thread
+    system
 )
 FIND_PACKAGE( SDL REQUIRED )
 FIND_PACKAGE( SDL_sound REQUIRED )
@@ -50,6 +49,7 @@ SET( GLOBAL_LIBRARIES
     ${Boost_LIBRARIES}
     ${GTK2_LIBRARIES}
     ${SDL_LIBRARY}
+    ${SDLMAIN_LIBRARY}
     ${SDL_SOUND_LIBRARY}
     ${SDLIMAGE_LIBRARY}
     ${SDLTTF_LIBRARY}
@@ -333,60 +333,96 @@ IF( CMAKE_COMPILER_IS_GNUCXX )
             -floop-strip-mine
         )
     ENDIF ( ENABLE_GRAPHITE )
+ENDIF( CMAKE_COMPILER_IS_GNUCXX )
 
-    CompileList( SG_WARNINGS
-        -Wall
-        -Wextra
-        # -pedantic
-        -Wcast-align
-        -Wcast-qual
-        # -Wconversion
-        -Woverloaded-virtual
-        # -Wnon-virtual-dtor
-        -Wcomment
-        -Wstrict-null-sentinel
-        -Winit-self
-        # -Werror
+IF ( UNIX )
 
-        -Wno-unused-result
-        -Wno-unused-parameter -Wno-unused-variable  # TODO
-    )
+    ADD_DEFINITIONS( -D_FILE_OFFSET_BITS=64 ) # Open files larger than 2 GB
 
-    CompileList( SG_RELEASE_OPT
-        -fcx-limited-range
-        #-ffast-math
-        -ffinite-math-only
-        -fno-math-errno
-        -fno-signaling-nans
-        -fomit-frame-pointer
-        -ftree-loop-distribution
-        -ftree-loop-linear
-        # -funsafe-loop-optimizations
-        -mfpmath=sse
-        -mmmx
-        -msse
-        -msse2
-        -mssse3
-        #-msse4.1
-        ${GRAPHITE_OPTS}
-    )
+    IF( CMAKE_COMPILER_IS_GNUCXX )
+        CompileList( SG_WARNINGS
+            -Wall
+            -Wextra
+            # -pedantic
+            -Wcast-align
+            -Wcast-qual
+            # -Wconversion
+            -Woverloaded-virtual
+            # -Wnon-virtual-dtor
+            -Wcomment
+            -Wstrict-null-sentinel
+            -Winit-self
+            # -Werror
+
+            -Wno-unused-result
+            -Wno-unused-parameter -Wno-unused-variable  # TODO
+        )
+
+        CompileList( SG_RELEASE_OPT
+            -fcx-limited-range
+            #-ffast-math
+            -ffinite-math-only
+            -fno-math-errno
+            -fno-signaling-nans
+            -fomit-frame-pointer
+            -ftree-loop-distribution
+            -ftree-loop-linear
+            # -funsafe-loop-optimizations
+            -mfpmath=sse
+            -mmmx
+            -msse
+            -msse2
+            -mssse3
+            #-msse4.1
+            ${GRAPHITE_OPTS}
+        )
+    ELSE( CMAKE_COMPILER_IS_GNUCXX ) # Clang
+        CompileList( SG_WARNINGS
+            -Wall
+            -Wextra
+            # -pedantic
+            -Wcast-align
+            -Wcast-qual
+            # -Wconversion
+            -Woverloaded-virtual
+            # -Wnon-virtual-dtor
+            -Wcomment
+            -Winit-self
+            # -Werror
+
+            -Wno-unused-result
+            -Wno-unused-parameter -Wno-unused-variable  # TODO
+            -Wno-c++11-extensions
+        )
+
+        CompileList( SG_RELEASE_OPT
+            #-ffast-math
+            -ffinite-math-only
+            -fomit-frame-pointer
+            # -funsafe-loop-optimizations
+            -mmmx
+            -msse
+            -msse2
+            -mssse3
+            #-msse4.1
+        )
+    ENDIF( CMAKE_COMPILER_IS_GNUCXX )
+
     # waiting for COMPILE_OPTIONS_<CONFIG>
     SET( CMAKE_CXX_FLAGS_DEBUG      "-O0 -g" )                  # ( waiting for COMPILE_OPTIONS_<CONFIG> )
     SET( CMAKE_CXX_FLAGS_RELEASE    "-O2 ${SG_RELEASE_OPT}" )
 
     SET( CMAKE_CXX_FLAGS            "-fno-strict-aliasing" )
-ELSE( CMAKE_COMPILER_IS_GNUCXX )
-    MESSAGE( WARNING "Using default options for non-GCC compiler" )
-ENDIF( CMAKE_COMPILER_IS_GNUCXX )
+ENDIF( UNIX )
 
 # some files must be compiled unoptimized (gcc bug?)
-IF( CMAKE_COMPILER_IS_GNUCXX )
-SET_SOURCE_FILES_PROPERTIES(
-    storm/storm3dv2/Storm3D_Mesh_CollisionTable.cpp
-    util/LipsyncManager.cpp
-    PROPERTIES  COMPILE_FLAGS   "-O0"
-)
-ENDIF( CMAKE_COMPILER_IS_GNUCXX )
+IF( UNIX )
+    SET_SOURCE_FILES_PROPERTIES(
+        storm/storm3dv2/Storm3D_Mesh_CollisionTable.cpp
+        util/LipsyncManager.cpp
+        PROPERTIES  COMPILE_FLAGS   "-O0"
+    )
+ENDIF( UNIX )
 
 
 # Set default build options
@@ -400,6 +436,9 @@ MACRO( SetShadowgroundsProperties name defines )
     )
 ENDMACRO( SetShadowgroundsProperties )
 
+IF( APPLE )
+    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework Quartz -framework AudioUnit -framework Carbon -framework Cocoa")
+ENDIF( APPLE )
 
 # ------------------------------------------------
 #  Applications
