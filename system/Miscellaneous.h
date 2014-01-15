@@ -27,7 +27,7 @@ std::string strPrintf(const char *fmt, ...) __attribute__( ( format(printf, 1, 2
 #  define FMT_INTPTR  "%I64d"
 #  define FMT_UINTPTR "%I64u"
 
-#elif defined(__x86_64)
+#elif defined(__x86_64) || defined(__x86_64__)
 
 #  define FMT_SIZE    "%lu"
 #  define FMT_U64     "%lu"
@@ -50,6 +50,7 @@ std::string strPrintf(const char *fmt, ...) __attribute__( ( format(printf, 1, 2
 #  define FMT_X64     "%llx"
 #  define FMT_INTPTR  "%d"
 #  define FMT_UINTPTR "%u"
+
 
 #endif  // machine-specific printfs
 

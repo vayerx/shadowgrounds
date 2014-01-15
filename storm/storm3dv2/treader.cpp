@@ -1,20 +1,23 @@
+
+//must include stdint.h first with __STDC_CONSTANT_MACROS defined
+//otherwise we are lacking the UINT64_C() macro
+#define __STDC_CONSTANT_MACROS
+#include <stdint.h>
+
 #include "treader.h"
 
 #include "../../system/Logger.h"
 #include "../../system/Miscellaneous.h"
 
-#ifdef USE_LIBAVCODEC
-
-#  include <boost/bind.hpp>
-#  include <istorm3d_streambuffer.h>
-#  include "igios.h"
+#include <boost/bind.hpp>
+#include <istorm3d_streambuffer.h>
+#include "igios.h"
 
 extern "C" {
-#  include <libavutil/log.h>
-
-#  if LIBAVCODEC_VERSION_MAJOR == 52
-#    include "libswscale/swscale.h"
-#  endif
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libavutil/log.h>
+#include <libswscale/swscale.h>
 }
 
 static const unsigned int MAX_BUFFERED_FRAMES = 50;
@@ -23,11 +26,9 @@ VideoBackgroundLoader::VideoBackgroundLoader()
     : mContext(0),
     mState(VideoBackgroundLoader::STOPPED),
     quitRequested(false),
-    backgroundReaderWaiting(false)
-#  if LIBAVCODEC_VERSION_MAJOR >= 52
-    , toRGB_convert_ctx(NULL),
+    backgroundReaderWaiting(false),
+    toRGB_convert_ctx(NULL),
     sws_flags(SWS_BICUBIC)
-#  endif // LIBAVCODEC_VERSION_MAJOR>=52
 {
     static bool avinit = false;
     if (!avinit) {
@@ -48,14 +49,12 @@ VideoBackgroundLoader::~VideoBackgroundLoader()
     if (mContext->drawbuffer) delete[] mContext->drawbuffer;
     mContext->frames.clear();
     if (mContext->videoopen) avcodec_close(mContext->videocodecctx);
-    if (mContext->fileopen) av_close_input_file(mContext->formatctx);
+    if (mContext->fileopen) avformat_close_input(&mContext->formatctx);
 
-#  if LIBAVCODEC_VERSION_MAJOR >= 52
     if (toRGB_convert_ctx != NULL) {
         sws_freeContext(toRGB_convert_ctx);
         toRGB_convert_ctx = NULL;
     }
-#  endif // LIBAVCODEC_VERSION_MAJOR>=52
 
     delete mContext;
     mContext = NULL;
@@ -63,21 +62,21 @@ VideoBackgroundLoader::~VideoBackgroundLoader()
 
 bool VideoBackgroundLoader::init(const char *filename, IStorm3D_StreamBuilder *builder)
 {
-    if (av_open_input_file(&mContext->formatctx, filename, 0, 0, 0) != 0) {
+    if (avformat_open_input(&mContext->formatctx, filename, 0, 0) != 0) {
         LOG_WARNING( strPrintf("Failed to load video '%s'.", filename).c_str() );
         return false;
     } else { mContext->fileopen = true; }
 
-    if (av_find_stream_info(mContext->formatctx) < 0) {
+    if (avformat_find_stream_info(mContext->formatctx, 0) < 0) {
         LOG_WARNING("Failed to find stream information.");
         return false;
     }
 
     mContext->videoindex = mContext->audioindex = -1;
     for (unsigned int i = 0; i < mContext->formatctx->nb_streams; ++i) {
-        if (mContext->formatctx->streams[i]->codec->codec_type == CODEC_TYPE_VIDEO && mContext->videoindex ==
+        if (mContext->formatctx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO && mContext->videoindex ==
             -1) mContext->videoindex = i;
-        else if (mContext->formatctx->streams[i]->codec->codec_type == CODEC_TYPE_AUDIO && mContext->audioindex ==
+        else if (mContext->formatctx->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO && mContext->audioindex ==
                  -1) mContext->audioindex = i;
     }
 
@@ -95,7 +94,7 @@ bool VideoBackgroundLoader::init(const char *filename, IStorm3D_StreamBuilder *b
     if (mContext->videocodec->capabilities & CODEC_CAP_TRUNCATED)
         mContext->videocodecctx->flags |= CODEC_FLAG_TRUNCATED;
 
-    if (avcodec_open(mContext->videocodecctx, mContext->videocodec) < 0) {
+    if (avcodec_open2(mContext->videocodecctx, mContext->videocodec, 0) < 0) {
         LOG_WARNING("Unable to open video codec.");
         return false;
     } else { mContext->videoopen = true; }
@@ -132,11 +131,11 @@ bool VideoBackgroundLoader::init(const char *filename, IStorm3D_StreamBuilder *b
         if (!mContext->audiocodec) {
             LOG_WARNING("Unable to find suitable audio codec.");
         } else {
-            if (avcodec_open(mContext->audiocodecctx, mContext->audiocodec) < 0) {
+            if (avcodec_open2(mContext->audiocodecctx, mContext->audiocodec, 0) < 0) {
                 LOG_WARNING("Unable to open audio codec.");
             } else {
                 mContext->audioopen = true;
-                mContext->audiobuffersize = (AVCODEC_MAX_AUDIO_FRAME_SIZE * 3) / 2;
+                mContext->audiobuffersize = (192000 * 3) / 2;
                 mContext->audiobuffer = new int16_t[mContext->audiobuffersize];
                 if (!mContext->audiobuffer) {
                     LOG_WARNING("Unable to allocate audio buffer.");
@@ -295,14 +294,12 @@ void VideoBackgroundLoader::startLoadingThread()
         if (av_read_frame(mContext->formatctx, &packet) >= 0) {
             if (packet.stream_index == mContext->videoindex) {
                 int framedone = 0;
-                avcodec_decode_video(mContext->videocodecctx, mContext->readframe, &framedone, packet.data, packet.size);
+                avcodec_decode_video2(mContext->videocodecctx, mContext->readframe, &framedone, &packet);
                 if (framedone) {
                     size_t bsize = (mContext->videowidth * mContext->videoheight * 3 + 4);
                     boost::shared_array<unsigned char> buffer(new unsigned char[bsize]);
                     if (buffer) {
-#  if LIBAVCODEC_VERSION_MAJOR >= 52
-                        toRGB_convert_ctx =
-                            sws_getCachedContext(toRGB_convert_ctx,
+                        toRGB_convert_ctx = sws_getCachedContext(toRGB_convert_ctx,
                                                  mContext->videowidth, mContext->videoheight,
                                                  mContext->videocodecctx->pix_fmt,
                                                  mContext->videowidth, mContext->videoheight,
@@ -315,11 +312,6 @@ void VideoBackgroundLoader::startLoadingThread()
                                   0, mContext->videoheight,
                                   mContext->drawframe->data,
                                   mContext->drawframe->linesize);
-#  else
-                        img_convert( (AVPicture *)mContext->drawframe, PIX_FMT_RGB24,
-                                     (AVPicture *)mContext->readframe, mContext->videocodecctx->pix_fmt,
-                                     mContext->videowidth, mContext->videoheight );
-#  endif
                         unsigned int sh = mContext->videoheight, sw = mContext->videowidth;
                         memcpy(buffer.get(), mContext->drawframe->data[0], sw * sh * 3);
 
@@ -341,7 +333,7 @@ void VideoBackgroundLoader::startLoadingThread()
                 }
             } else if (packet.stream_index == mContext->audioindex && mContext->audiobuffer) {
                 int size = mContext->audiobuffersize;
-                avcodec_decode_audio2(mContext->audiocodecctx, mContext->audiobuffer, &size, packet.data, packet.size);
+                avcodec_decode_audio3(mContext->audiocodecctx, mContext->audiobuffer, &size, &packet);
                 if (size) {
                     unsigned long long duration =
                         (unsigned long long)( (double(mContext->audiocodecctx->time_base.num)
@@ -410,46 +402,3 @@ void TReader::restart()
 {
     mLoader->restart();
 }
-
-#else
-
-TReader::TReader()
-{
-    fps_numerator = 1;
-    fps_denominator = 1;
-    frame_width = 1;
-    frame_height = 1;
-}
-
-TReader::~TReader() { }
-
-int TReader::init()
-{
-    return 1;
-}
-
-int TReader::read_info(const char * /*filename*/, IStorm3D_StreamBuilder * /*builder*/)
-{
-    return 1;
-}
-
-int TReader::nextframe()
-{
-    return 1;
-}
-
-int TReader::read_pixels(char * /*buffer*/, unsigned int /*w*/, unsigned int /*h*/)
-{
-    return 1;
-}
-
-int TReader::finish()
-{
-    return 1;
-}
-
-void TReader::restart()
-{
-}
-
-#endif

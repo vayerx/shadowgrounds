@@ -12,6 +12,7 @@
 #include <string.h>
 #include <time.h>
 #include <assert.h>
+#include <cstdarg>
 #include <SDL.h>
 
 #include "../util/Debug_MemoryManager.h"
@@ -248,4 +249,44 @@ void Logger::error(const char *msg)
 
         SDL_UnlockMutex(logger_critical_section);
     }
+}
+
+void Logger::debug2(const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    char* message;
+    vasprintf(&message, fmt, args);
+    va_end(args);
+    fprintf(stdout, "D: %s", message);
+    debug(message);
+}
+
+void Logger::info2(const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    char* message;
+    vasprintf(&message, fmt, args);
+    va_end(args);
+    fprintf(stdout, "I: %s", message);
+    info(message);
+}
+
+void Logger::warning2(const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    char* message;
+    vasprintf(&message, fmt, args);
+    va_end(args);
+    fprintf(stderr, "W: %s", message);
+    info(message);
+}
+
+void Logger::error2(const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    char* message;
+    vasprintf(&message, fmt, args);
+    va_end(args);
+    fprintf(stderr, "E: %s", message);
+    error(message);
 }

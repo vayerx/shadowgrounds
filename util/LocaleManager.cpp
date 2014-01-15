@@ -216,7 +216,7 @@ namespace util {
         LocaleResource &resource = *l.resources[resourceId].get();
         EditorParser parser;
 
-        filesystem::InputStream stream = filesystem::FilePackageManager::getInstance().getFile(filename);
+        filesystem::InputStream stream = filesystem::FilePackageManager::getInstance().getFile(filename, filesystem::FilePackageManager::OPTIONAL);
         if ( !stream.isEof() ) {
             stream >> parser;
         } else {

@@ -44,18 +44,18 @@ namespace frozenbyte {
             }
         };
 
-        FB_FILE *fb_fopen(const char *filename, const char *)
+        FB_FILE *fb_fopen(const char *filename, const char * options)
         {
             if (!filename)
                 return 0;
 
             FilePackageManager &manager = FilePackageManager::getInstance();
 
-            manager.setInputStreamErrorReporting(false);
-
-            InputStream stream = manager.getFile(filename);
-
-            manager.setInputStreamErrorReporting(true);
+            FilePackageManager::Mode mode = FilePackageManager::REQUIRED;
+            if (strchr(options, 'o')) {
+                mode = FilePackageManager::OPTIONAL;
+            }
+            InputStream stream = manager.getFile(filename, mode);
 
             if ( stream.isEof() )
                 return 0;

@@ -52,7 +52,6 @@ struct Storm3D_TerrainLightManager::Data {
     FakeSpotList  &fakeSpots;
     FakeLightList &fakeLights;
 
-    frozenbyte::storm::VertexShader coneAtiVertexShader;
     frozenbyte::storm::VertexShader coneNvVertexShader;
 
     Data(Storm3D                      &storm_,
@@ -66,10 +65,8 @@ struct Storm3D_TerrainLightManager::Data {
         fakeSpots(fakeSpots_),
         fakeLights(fakeLights_),
 
-        coneAtiVertexShader(),
         coneNvVertexShader()
     {
-        coneAtiVertexShader.createAtiConeShader();
         coneNvVertexShader.createNvConeShader();
     }
 

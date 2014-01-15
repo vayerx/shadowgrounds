@@ -17,6 +17,7 @@
 
 // HACK: bad dependency (for error reporting...)
 #include "input_file_stream.h"
+#include "igios.h"
 
 namespace frozenbyte {
     namespace filesystem {
@@ -54,13 +55,33 @@ namespace frozenbyte {
         struct FilePackageManagerData {
             PackageMap packages;
             bool       logNonExisting;
+            FILE* missingFilesLog;
+            FILE* missingFilesBacktraces;
 
             FilePackageManagerData()
-                : logNonExisting(true)
+                : logNonExisting(true), missingFilesLog(0)
             {
+                const char* filename = tmpnam(0);
+                printf("Opening missing files log: %s\n", filename);
+                missingFilesLog = fopen(filename, "wb");
+                if (!missingFilesLog) {
+                    fprintf(stderr, "Failed to open missing files log!\n");
+                    missingFilesLog = stderr;
+                }
+                filename = tmpnam(0);
+                printf("Opening missing files backtraces: %s\n", filename);
+                missingFilesBacktraces = fopen(filename, "wb");
+                if (!missingFilesBacktraces) {
+                    fprintf(stderr, "Failed to open missing files log!\n");
+                    missingFilesBacktraces = stderr;
+                }
             }
 
-            InputStream getFile(std::string fileName)
+            ~FilePackageManagerData() {
+                fclose(missingFilesLog);
+            }
+
+            InputStream getFile(std::string fileName, FilePackageManager::Mode mode)
             {
                 for (unsigned int i = 0; i < fileName.size(); ++i) {
                     if (fileName[i] == '\\')
@@ -85,12 +106,11 @@ namespace frozenbyte {
                         return result;
                 }
 
-                if (logNonExisting) {
-                    // NOTE: this may be a major problem.. cannot use logger directly inside storm
-                    // (as the instance would be different from the game's instance - unless used through a pointer given by the game)
-                    //::Logger::getInstance()->error("FilePackageManager::getFile - File does not exist or is zero length.");
-                    //::Logger::getInstance()->debug(fileName.c_str());
-                    // igiosWarning("FilePackageManager::getFile - File does not exist or is zero length. (%s)\n",fileName.c_str());
+                if (logNonExisting && mode == FilePackageManager::REQUIRED) {
+                    //TODO proper logging
+                    fprintf(missingFilesLog, "%s\n", fileName.c_str());
+                    fprintf(missingFilesBacktraces, "Missing file: '%s' ", fileName.c_str());
+                    igios_backtrace(missingFilesBacktraces);
                 }
 
                 InputStream inputStream;
@@ -131,8 +151,7 @@ namespace frozenbyte {
 
         FilePackageManager::FilePackageManager()
         {
-            boost::scoped_ptr<FilePackageManagerData> tempData( new FilePackageManagerData() );
-            data.swap(tempData);
+            data.reset(new FilePackageManagerData());
         }
 
         FilePackageManager::~FilePackageManager()
@@ -159,9 +178,9 @@ namespace frozenbyte {
             return result;
         }
 
-        InputStream FilePackageManager::getFile(const std::string &fileName)
+        InputStream FilePackageManager::getFile(const std::string &fileName, FilePackageManager::Mode mode)
         {
-            return data->getFile(fileName);
+            return data->getFile(fileName, mode);
         }
 
         unsigned int FilePackageManager::getCrc(const std::string &fileName)

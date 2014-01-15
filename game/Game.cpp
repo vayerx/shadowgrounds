@@ -4190,7 +4190,7 @@ namespace game
             strcat(savefile, ".dhs");
         }
 
-        filesystem::FB_FILE *f = filesystem::fb_fopen(savefile, "rb");
+        filesystem::FB_FILE *f = filesystem::fb_fopen(savefile, "rbo");
         if (f != NULL) {
             // manually find mission id
             //
