@@ -88,6 +88,8 @@ IF ( NOT INSTALLONLY )
     SET ( INSTALLONLY   shadowgrounds survivor CACHE STRING "Installation tagets, options are: shadowgrounds, survivor" FORCE )
 ENDIF ( NOT INSTALLONLY )
 
+OPTION( FINAL_RELEASE_BUILD "Final release build (grab mouse pointer, suppress signals, etc.)" OFF )
+
 OPTION( ENABLE_PHYSX "Enable NVIDIA PhysX SDK" OFF )
 IF ( ENABLE_PHYSX )
     SET ( SG_MODULES physics ${SG_MODULES} )
@@ -392,12 +394,16 @@ ENDIF( CMAKE_COMPILER_IS_GNUCXX )
 
 # Set default build options
 MACRO( SetShadowgroundsProperties name defines )
+    IF( FINAL_RELEASE_BUILD )
+        SET( FINAL_RELEASE_BUILD_FLAGS ";FINAL_RELEASE_BUILD=1" )
+    ENDIF()
+
     SET_TARGET_PROPERTIES( ${name} PROPERTIES
         COMPILE_FLAGS               "${SG_WARNINGS} -include ${PROJECT_BINARY_DIR}/project_common/configuration.h"
         COMPILE_DEFINITIONS         "${defines};SG_PROG_VERSION=\"${SG_PROG_VERSION}\";SG_PROG_HOST=\"${CMAKE_SYSTEM_NAME}\""
         COMPILE_DEFINITIONS_DEBUG   "_DEBUG=1"
-        COMPILE_DEFINITIONS_RELEASE "NDEBUG=1;FINAL_RELEASE_BUILD=1"
-        COMPILE_DEFINITIONS_GENTOO  "NDEBUG=1;FINAL_RELEASE_BUILD=1"
+        COMPILE_DEFINITIONS_RELEASE "NDEBUG=1${FINAL_RELEASE_BUILD_FLAGS}"
+        COMPILE_DEFINITIONS_GENTOO  "NDEBUG=1${FINAL_RELEASE_BUILD_FLAGS}"
     )
 ENDMACRO( SetShadowgroundsProperties )
 
