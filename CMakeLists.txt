@@ -22,6 +22,7 @@ SET( Boost_USE_STATIC_RUNTIME   OFF )
 FIND_PACKAGE( Boost 1.46 REQUIRED
     program_options
     thread
+    system
 )
 FIND_PACKAGE( SDL REQUIRED )
 FIND_PACKAGE( SDL_sound REQUIRED )
