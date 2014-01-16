@@ -566,8 +566,7 @@ namespace game
         Part *seekPartOfPartType(const PartType *partType) const;
 
         inline Weapon *getWeaponType(unsigned int weapon) const {
-            assert(weapon < UNIT_MAX_WEAPONS);
-            return weaponType[weapon];
+            return (weapon < UNIT_MAX_WEAPONS) ? weaponType[weapon] : NULL;
         }
         void setWeaponType(int weapon, Weapon *weaponType);
         int getWeaponPosition(unsigned int weapon) const;
