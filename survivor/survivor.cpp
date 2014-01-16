@@ -781,7 +781,7 @@ std::string get_path(const std::string &file)
     return "";
 }
 
-#ifdef __GLIBC__
+#if FINAL_RELEASE_BUILD && defined(__GLIBC__)
 
 #  ifndef __USE_GNU
 #    define __USE_GNU
@@ -810,11 +810,11 @@ static void sighandler(int sig, siginfo_t *info, void *secret) {
     // too late to worry about quitting cleanly
     abort();
 }
-#endif
+#endif // FINAL_RELEASE_BUILD && defined(__GLIBC__)
 
 // need this so we can call exit in the case of segfault
 static void setsighandler(void) {
-#ifdef __GLIBC__
+#if FINAL_RELEASE_BUILD && defined(__GLIBC__)
     struct sigaction sa;
 
     sa.sa_sigaction = sighandler;
@@ -823,7 +823,7 @@ static void setsighandler(void) {
 
     sigaction(SIGSEGV, &sa, NULL);
     sigaction(SIGUSR1, &sa, NULL);
-#endif
+#endif // FINAL_RELEASE_BUILD && defined(__GLIBC__)
 }
 
 #if defined WIN32 && defined COMBINE
