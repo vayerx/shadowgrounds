@@ -433,6 +433,7 @@ IF( UNIX ) # both gcc & clang ;)
     SET_SOURCE_FILES_PROPERTIES(
         storm/storm3dv2/Storm3D_Mesh_CollisionTable.cpp
         util/LipsyncManager.cpp
+        game/GameWorldFold.cpp  # FIXME gcc 4.8.2 hangs on it
         PROPERTIES  COMPILE_FLAGS   "-O0"
     )
 ENDIF( UNIX )
