@@ -26,6 +26,7 @@ FIND_PACKAGE( Boost 1.46 REQUIRED
 )
 FIND_PACKAGE( SDL REQUIRED )
 FIND_PACKAGE( SDL_sound REQUIRED )
+FIND_PACKAGE( Vorbis REQUIRED ) # TODO: remove in favour of SDL_sound
 FIND_PACKAGE( SDL_image REQUIRED )
 FIND_PACKAGE( SDL_ttf REQUIRED )
 FIND_PACKAGE( OpenGL REQUIRED )
@@ -39,6 +40,7 @@ SET( GLOBAL_INCLUDE_DIRS
     ${Boost_INCLUDE_DIRS}
     ${SDL_INCLUDE_DIR}
     ${SDL_SOUND_INCLUDE_DIR}
+    ${VORBIS_INCLUDE_DIR}
     ${SDLIMAGE_INCLUDE_DIR}
     ${SDLTTF_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
@@ -53,7 +55,9 @@ SET( GLOBAL_LIBRARIES
     ${Boost_LIBRARIES}
     ${GTK2_LIBRARIES}
     ${SDL_LIBRARY}
+    ${SDLMAIN_LIBRARY}
     ${SDL_SOUND_LIBRARY}
+    ${VORBIS_FILE_LIBRARY} ${OGG_LIBRARY} ${VORBIS_LIBRARY} ###
     ${SDLIMAGE_LIBRARY}
     ${SDLTTF_LIBRARY}
     ${OPENGL_LIBRARIES}
@@ -342,60 +346,96 @@ IF( CMAKE_COMPILER_IS_GNUCXX )
             -floop-strip-mine
         )
     ENDIF ( ENABLE_GRAPHITE )
+ENDIF( CMAKE_COMPILER_IS_GNUCXX )
 
-    CompileList( SG_WARNINGS
-        -Wall
-        -Wextra
-        # -pedantic
-        -Wcast-align
-        -Wcast-qual
-        # -Wconversion
-        -Woverloaded-virtual
-        # -Wnon-virtual-dtor
-        -Wcomment
-        -Wstrict-null-sentinel
-        -Winit-self
-        # -Werror
+IF ( UNIX )
 
-        -Wno-unused-result
-        -Wno-unused-parameter -Wno-unused-variable  # TODO
-    )
+    ADD_DEFINITIONS( -D_FILE_OFFSET_BITS=64 ) # Open files larger than 2 GB
 
-    CompileList( SG_RELEASE_OPT
-        -fcx-limited-range
-        #-ffast-math
-        -ffinite-math-only
-        -fno-math-errno
-        -fno-signaling-nans
-        -fomit-frame-pointer
-        -ftree-loop-distribution
-        -ftree-loop-linear
-        # -funsafe-loop-optimizations
-        -mfpmath=sse
-        -mmmx
-        -msse
-        -msse2
-        -mssse3
-        #-msse4.1
-        ${GRAPHITE_OPTS}
-    )
+    IF( CMAKE_COMPILER_IS_GNUCXX )
+        CompileList( SG_WARNINGS
+            -Wall
+            -Wextra
+            # -pedantic
+            -Wcast-align
+            -Wcast-qual
+            # -Wconversion
+            -Woverloaded-virtual
+            # -Wnon-virtual-dtor
+            -Wcomment
+            -Wstrict-null-sentinel
+            -Winit-self
+            # -Werror
+
+            -Wno-unused-result
+            -Wno-unused-parameter -Wno-unused-variable  # TODO
+        )
+
+        CompileList( SG_RELEASE_OPT
+            -fcx-limited-range
+            #-ffast-math
+            -ffinite-math-only
+            -fno-math-errno
+            -fno-signaling-nans
+            -fomit-frame-pointer
+            -ftree-loop-distribution
+            -ftree-loop-linear
+            # -funsafe-loop-optimizations
+            -mfpmath=sse
+            -mmmx
+            -msse
+            -msse2
+            -mssse3
+            #-msse4.1
+            ${GRAPHITE_OPTS}
+        )
+    ELSE( CMAKE_COMPILER_IS_GNUCXX ) # Clang
+        CompileList( SG_WARNINGS
+            -Wall
+            -Wextra
+            # -pedantic
+            -Wcast-align
+            -Wcast-qual
+            # -Wconversion
+            -Woverloaded-virtual
+            # -Wnon-virtual-dtor
+            -Wcomment
+            -Winit-self
+            # -Werror
+
+            -Wno-unused-result
+            -Wno-unused-parameter -Wno-unused-variable  # TODO
+            -Wno-c++11-extensions
+        )
+
+        CompileList( SG_RELEASE_OPT
+            #-ffast-math
+            -ffinite-math-only
+            -fomit-frame-pointer
+            # -funsafe-loop-optimizations
+            -mmmx
+            -msse
+            -msse2
+            -mssse3
+            #-msse4.1
+        )
+    ENDIF( CMAKE_COMPILER_IS_GNUCXX )
+
     # waiting for COMPILE_OPTIONS_<CONFIG>
     SET( CMAKE_CXX_FLAGS_DEBUG      "-O0 -g" )                  # ( waiting for COMPILE_OPTIONS_<CONFIG> )
     SET( CMAKE_CXX_FLAGS_RELEASE    "-O2 ${SG_RELEASE_OPT}" )
 
     SET( CMAKE_CXX_FLAGS            "-fno-strict-aliasing" )
-ELSE( CMAKE_COMPILER_IS_GNUCXX )
-    MESSAGE( WARNING "Using default options for non-GCC compiler" )
-ENDIF( CMAKE_COMPILER_IS_GNUCXX )
+ENDIF( UNIX )
 
 # some files must be compiled unoptimized (gcc bug?)
-IF( CMAKE_COMPILER_IS_GNUCXX )
-SET_SOURCE_FILES_PROPERTIES(
-    storm/storm3dv2/Storm3D_Mesh_CollisionTable.cpp
-    util/LipsyncManager.cpp
-    PROPERTIES  COMPILE_FLAGS   "-O0"
-)
-ENDIF( CMAKE_COMPILER_IS_GNUCXX )
+IF( UNIX ) # both gcc & clang ;)
+    SET_SOURCE_FILES_PROPERTIES(
+        storm/storm3dv2/Storm3D_Mesh_CollisionTable.cpp
+        util/LipsyncManager.cpp
+        PROPERTIES  COMPILE_FLAGS   "-O0"
+    )
+ENDIF( UNIX )
 
 
 # Set default build options
@@ -413,6 +453,9 @@ MACRO( SetShadowgroundsProperties name defines )
     )
 ENDMACRO( SetShadowgroundsProperties )
 
+IF( APPLE )
+    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework Quartz -framework AudioUnit -framework Carbon -framework Cocoa")
+ENDIF( APPLE )
 
 # ------------------------------------------------
 #  Applications

@@ -37,13 +37,9 @@ namespace {
     {
         if (!name)
             return false;
-
-        filesystem::FB_FILE *fp = filesystem::fb_fopen(name, "rb");
-        if (fp == 0)
-            return false;
-
-        filesystem::fb_fclose(fp);
-        return true;
+        filesystem::InputStream is =
+                filesystem::FilePackageManager::getInstance().getFile(name, filesystem::FilePackageManager::OPTIONAL);
+        return !is.isEof();
     }
 
     struct FileSeeker {
@@ -131,8 +127,10 @@ namespace {
             }
 
             std::map<std::string, std::string>::const_iterator it = fileNames.find(file);
-            if ( it == fileNames.end() )
+            if ( it == fileNames.end() ) {
+                logger->error2("Could not find Texture: %s\n", file_);
                 return file_;
+            }
 
             return it->second;
         }

@@ -16,7 +16,7 @@
 #include <Storm3D_UI.h>
 #include <keyb3.h>
 #include <SDL.h>
-#include "SDL_sound.h"
+#include <SDL_sound.h>
 #include "igios.h"
 
 #include "version.h"
@@ -176,40 +176,6 @@ void set_mouse_borders()
                            (int)(screenInfo.height / mouse_sensitivity) / 2 );
     }
 }
-
-namespace {
-    class StormLogger : public IStorm3D_Logger {
-        Logger &logger;
-
-    public:
-        StormLogger(Logger &logger_)
-            : logger(logger_)
-
-        {
-        }
-
-        void debug(const char *msg)
-        {
-            logger.debug(msg);
-        }
-
-        void info(const char *msg)
-        {
-            logger.info(msg);
-        }
-
-        void warning(const char *msg)
-        {
-            logger.warning(msg);
-        }
-
-        void error(const char *msg)
-        {
-            logger.error(msg);
-        }
-    };
-
-} // unnamed
 
 /* --------------------------------------------------------- */
 
@@ -675,7 +641,7 @@ int main(int argc, char *argv[])
          */
 
         editor::EditorParser main_config;
-        filesystem::InputStream configFile = filesystem::FilePackageManager::getInstance().getFile("Config/main.txt");
+        filesystem::InputStream configFile = filesystem::FilePackageManager::getInstance().getFile("Config/main.txt", filesystem::FilePackageManager::OPTIONAL);
         configFile >> main_config;
 
         GameOptionManager::getInstance()->load();
@@ -715,10 +681,8 @@ int main(int argc, char *argv[])
         //    game::SimpleOptions::setBool(DH_OPT_B_AUTO_SCRIPT_PREPROCESS, false);
         //}
 
-        StormLogger logger( *Logger::getInstance() );
-
         IStorm3D *s3d = IStorm3D::Create_Storm3D_Interface(true,
-                                                           &filesystem::FilePackageManager::getInstance(), &logger);
+                                                           &filesystem::FilePackageManager::getInstance(), Logger::getInstance());
 
         disposable_s3d = s3d;
 

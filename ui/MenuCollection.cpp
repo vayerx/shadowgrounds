@@ -535,12 +535,20 @@ namespace ui {
 
         void closeMenu()
         {
+            // FIXME: had to add a few workarounds because several crashes
+            //        occur when menu is closed.
+            //        Something is wrong earlier in the code.
             openedMenus.pop();
+
             int menu = openedMenus.empty() ? 0 : openedMenus.top();
 
-            activeMenu->applyChanges();
+            // crash #1
+            if(activeMenu)
+            {
+                activeMenu->applyChanges();
 
-            delete activeMenu;
+                delete activeMenu;
+            }
             activeMenu = NULL;
 
             if (hidePreviouslyOpenedMenus) {
@@ -551,8 +559,17 @@ namespace ui {
                     foreground->Raise();
                 }
             } else {
-                activeMenu = openedMenusData.empty() ? NULL : openedMenusData.top();
-                openedMenusData.pop();
+                // crash #2
+                if(!openedMenusData.empty())
+                {
+                    activeMenu = openedMenusData.top();
+                }
+
+                // crash #3
+                if(!openedMenus.empty())
+                {
+                    openedMenusData.pop();
+                }
 
                 if (activeMenu)
                     activeMenu->show();
