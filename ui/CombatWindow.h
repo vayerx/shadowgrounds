@@ -224,6 +224,8 @@ namespace ui
         // screen areas (scene and areas that move/rotate camera)
         OguiButton **areas;
 
+        std::auto_ptr<OguiWindow> win;
+
         std::auto_ptr<CombatMessageWindow> messageWindow;
         std::auto_ptr<CombatMessageWindow> timerWindow;
         std::auto_ptr<CombatMessageWindow> messageWindowRight;
@@ -233,8 +235,6 @@ namespace ui
 
         std::auto_ptr<OffscreenUnitPointers> offscreenUnitPointers;
         std::auto_ptr<CombatRadar> radar;
-
-        std::auto_ptr<OguiWindow> win;
 
         // unused std::auto_ptr<OguiButton> crosshair;
         // unused std::auto_ptr<IOguiImage> crosshairImage;
