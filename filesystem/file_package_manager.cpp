@@ -59,22 +59,26 @@ namespace frozenbyte {
             FILE* missingFilesBacktraces;
 
             FilePackageManagerData()
-                : logNonExisting(true), missingFilesLog(0)
+                : logNonExisting(true)
+                , missingFilesLog(stderr)
+                , missingFilesBacktraces(stderr)
             {
-                const char* filename = tmpnam(0);
+#if !FINAL_RELEASE_BUILD
+                const char* filename = tmpnam(NULL); // tmpfile() can not be used due to automatical deletion of created file
                 printf("Opening missing files log: %s\n", filename);
                 missingFilesLog = fopen(filename, "wb");
                 if (!missingFilesLog) {
                     fprintf(stderr, "Failed to open missing files log!\n");
                     missingFilesLog = stderr;
                 }
-                filename = tmpnam(0);
+                filename = tmpnam(NULL);
                 printf("Opening missing files backtraces: %s\n", filename);
                 missingFilesBacktraces = fopen(filename, "wb");
                 if (!missingFilesBacktraces) {
                     fprintf(stderr, "Failed to open missing files log!\n");
                     missingFilesBacktraces = stderr;
                 }
+#endif // !FINAL_RELEASE_BUILD
             }
 
             ~FilePackageManagerData() {
