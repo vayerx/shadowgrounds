@@ -113,17 +113,11 @@ OguiWindow::OguiWindow(Ogui *ogui, int x, int y, int sizex, int sizey, IOguiImag
     this->fadingOut = false;
     this->movingIn = false;
     this->movingOut = false;
-
-    buttonList = new LinkedList();
 }
 
 OguiWindow::~OguiWindow()
 {
-    while ( !buttonList->isEmpty() ) {
-        OguiButton *b = (OguiButton *)buttonList->popLast();
-        delete b;
-    }
-    delete buttonList;
+    buttons.clear_and_dispose(boost::checked_deleter<OguiButton>());
 
     if (is_only_active) {
         og_set_only_active(NULL);
@@ -139,7 +133,8 @@ OguiWindow::~OguiWindow()
 
 void OguiWindow::buttonDeleted(OguiButton *b)
 {
-    buttonList->remove(b);
+    if (b->window_hook.is_linked())
+        b->window_hook.unlink();
 }
 
 void OguiWindow::Raise()
@@ -325,7 +320,7 @@ OguiButton *OguiWindow::CreateNewButton(int         x,
     og_set_leave_button(but, ogui_button_leave_handler, ob);
     og_set_hold_button(but, ogui_button_hold_handler, ob);
 
-    buttonList->append(ob);
+    buttons.push_front(*ob);
 
     return ob;
 }

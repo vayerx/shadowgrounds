@@ -1,5 +1,4 @@
-#ifndef OGUIBUTTON_H
-#define OGUIBUTTON_H
+#pragma once
 
 //
 // C++ wrapper class for orvgui buttons
@@ -17,6 +16,7 @@
 #include <string>
 #include <memory>
 #include <boost/noncopyable.hpp>
+#include <boost/intrusive/slist.hpp>
 
 // these must be the same as the button event type values
 #define OGUI_EMASK_CLICK      1
@@ -187,6 +187,11 @@ public:
     // internal method, reset stuff (next storm generation)
     void ResetData();
 
+    typedef boost::intrusive::slist_member_hook< boost::intrusive::link_mode<boost::intrusive::auto_unlink>
+        > WindowHook;
+
+    WindowHook  window_hook;
+
 private:
     // some internal hacks
     // (the real button implementation is hidden behind this pointer)
@@ -229,5 +234,3 @@ private:
     // internal method, for figuring out which font is currently in use
     IOguiFont *GetTheFontCurrentlyInUse();
 };
-
-#endif

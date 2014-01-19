@@ -33,7 +33,6 @@
 
 class Ogui;
 struct orvgui_win;
-class LinkedList;
 
 class OguiWindow {
 public:
@@ -139,7 +138,12 @@ private:
 
     IOguiEffectListener *effectListener;
 
-    LinkedList *buttonList;
+    typedef boost::intrusive::slist<OguiButton
+        , boost::intrusive::member_hook<OguiButton, OguiButton::WindowHook, &OguiButton::window_hook>
+        , boost::intrusive::constant_time_size<false>
+    > SList;
+
+    SList buttons;
 
     // some internal hacks
     // (the real orvgui window implementation is hidden behind this pointer)

@@ -55,16 +55,7 @@ Ogui::Ogui()
 
 Ogui::~Ogui()
 {
-    while ( !buttons.empty() ) {
-        // Bad old code: button destructor will remove the button from the list. Do not remove here!
-        delete buttons.back();
-    }
     buttons.clear();
-
-    while ( !windows.empty() ) {
-        // Bad old code: window destructor will remove the window from the list. Do not remove here!
-        delete windows.back();
-    }
     windows.clear();
 
     if (defaultFont != NULL) {
@@ -693,9 +684,7 @@ void Ogui::UpdateEffects(int timeDelta)
             // bool winStillExists = win->buttonList->isEmpty();
 
             bool sendEvent = false;
-            SafeLinkedListIterator i(win->buttonList);
-            while ( i.iterateAvailable() ) {
-                OguiButton *button = (OguiButton *)i.iterateNext();
+            for ( OguiWindow::SList::iterator button = win->buttons.begin(); button != win->buttons.end(); ++button ) {
                 const std::string &text = button->GetText();
                 if ( button->SetText( text.substr(0, static_cast<size_t>(value) * text.size()).c_str() ) )
                     sendEvent = true;
@@ -736,10 +725,8 @@ void Ogui::UpdateEffects(int timeDelta)
             std::map< int, OguiButton * > buttons;
 
             {
-                SafeLinkedListIterator i(win->buttonList);
-                while ( i.iterateAvailable() ) {
-                    OguiButton *button = (OguiButton *)i.iterateNext();
-                    buttons.insert( std::pair< int, OguiButton * >(button->GetY(), button) );
+                for ( OguiWindow::SList::iterator btn = win->buttons.begin(); btn != win->buttons.end(); ++btn ) {
+                    buttons.insert( std::pair< int, OguiButton * >(btn->GetY(), &*btn) );
                     number_of_buttons++;
                 }
             }
