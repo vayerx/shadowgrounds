@@ -2,8 +2,24 @@
 #pragma once
 
 #ifdef _MSC_VER
+
 #pragma warning ( disable: 4786 )
 #pragma warning ( disable: 4103 )
+
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+
+#ifndef snprintf
+#	define snprintf _snprintf
+#endif
+
+#endif // _MSC_VER
+
+// ignore __attribute__ on non-GCC platforms
+#ifndef __GNUC__
+#	ifndef __attribute__
+#		define __attribute__(x)
+#	endif
 #endif
 
 // the new file to include,
@@ -38,19 +54,19 @@
 
   // make memorymanager print extra data (string allocations' contents)
   #define FROZENBYTE_DEBUG_MEMORY_PRINT_DATA 1
-#endif
-	
-	// old external script debug console (?)
-	//#define SCRIPT_DEBUG 1
+#endif // !__GNUC__
 
-  // dump gamescene statistics to log (raytraces, pathfinds, etc.)
-	#define DUMP_GAMESCENE_STATS 1
+// old external script debug console (?)
+//#define SCRIPT_DEBUG 1
 
-#endif
+// dump gamescene statistics to log (raytraces, pathfinds, etc.)
+#define DUMP_GAMESCENE_STATS 1
+
+#endif // _DEBUG
 
 // make debug view map of pathfinding
 // WARNING: greatly affects pathfind efficiency, under no 
-// cicumstances leave this in the final product!!!
+// circumstances leave this in the final product!!!
 #cmakedefine PATHFIND_DEBUG 1
 
 #ifdef PATHFIND_DEBUG

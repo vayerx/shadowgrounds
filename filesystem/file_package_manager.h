@@ -28,7 +28,7 @@ namespace frozenbyte {
             ~FilePackageManager();
 
             enum Mode {
-                REQUIRED = 0, OPTIONAL = 1
+                REQUIRED = 0, NOTREQUIRED = 1,
             };
             void addPackage(boost::shared_ptr<IFilePackage> filePackage, int priority);
             boost::shared_ptr<IFileList> findFiles(const std::string &dir,

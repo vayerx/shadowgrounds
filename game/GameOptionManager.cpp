@@ -736,7 +736,7 @@ namespace game
              igios_mapUserDataPrefix("config/options.txt") );
         options_file >> options_config;
 
-        filesystem::InputStream def_options_config = filesystem::FilePackageManager::getInstance().getFile(
+        filesystem::InputStream def_options_file = filesystem::FilePackageManager::getInstance().getFile(
             "data/misc/default_game_options.txt");
         def_options_file >> def_options_config;
 

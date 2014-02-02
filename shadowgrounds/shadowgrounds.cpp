@@ -641,7 +641,7 @@ int main(int argc, char *argv[])
          */
 
         editor::EditorParser main_config;
-        filesystem::InputStream configFile = filesystem::FilePackageManager::getInstance().getFile("Config/main.txt", filesystem::FilePackageManager::OPTIONAL);
+        filesystem::InputStream configFile = filesystem::FilePackageManager::getInstance().getFile("Config/main.txt", filesystem::FilePackageManager::NOTREQUIRED);
         configFile >> main_config;
 
         GameOptionManager::getInstance()->load();

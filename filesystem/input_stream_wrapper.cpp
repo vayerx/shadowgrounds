@@ -53,7 +53,7 @@ namespace frozenbyte {
 
             FilePackageManager::Mode mode = FilePackageManager::REQUIRED;
             if (strchr(options, 'o')) {
-                mode = FilePackageManager::OPTIONAL;
+                mode = FilePackageManager::NOTREQUIRED;
             }
             InputStream stream = manager.getFile(filename, mode);
 

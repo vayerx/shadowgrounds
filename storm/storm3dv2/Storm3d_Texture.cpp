@@ -38,7 +38,7 @@ namespace {
         if (!name)
             return false;
         filesystem::InputStream is =
-                filesystem::FilePackageManager::getInstance().getFile(name, filesystem::FilePackageManager::OPTIONAL);
+                filesystem::FilePackageManager::getInstance().getFile(name, filesystem::FilePackageManager::NOTREQUIRED);
         return !is.isEof();
     }
 

@@ -51,8 +51,9 @@ bool hiddencommand(const char *command, bool wait_process)
         //int termstat;
         //_cwait( &termstat, pidValue, _WAIT_CHILD );
         if (wait_process) {
-            uint32_t excode = STILL_ACTIVE;
+            DWORD /*uint32_t*/ excode = STILL_ACTIVE;
             int failcount = 0;
+
             while (excode == STILL_ACTIVE) {
                 GetExitCodeProcess(pis.hProcess, &excode);
                 Sleep(100);

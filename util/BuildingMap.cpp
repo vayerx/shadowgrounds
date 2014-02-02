@@ -518,7 +518,6 @@ namespace frozenbyte {
         }
 
         // fill the interior parts of the map that are not reachable.
-        // - jpk
         void floodfillInteriors()
         {
             // first, the collisionmap
@@ -599,8 +598,8 @@ namespace frozenbyte {
                     if (x >= 0 && x < xResolution
                         && y >= 0 && y < yResolution)
                         heightMap[x][y] = 255;
-                    else
 #ifdef BUILDINGMAP_USE_OPTIONS
+                    else
                         Logger::getInstance()->warning(
                             "BuildingMap::floodfillInteriors - Encountered door outside buildingmap area.");
 #endif
@@ -625,7 +624,9 @@ namespace frozenbyte {
 
         bool loadBinary(const std::string &fileName)
         {
+            int tmp = 0;
             filesystem::FB_FILE *fp = filesystem::fb_fopen(fileName.c_str(), "rb");
+
             if (fp == 0)
                 return false;
 
@@ -658,7 +659,6 @@ namespace frozenbyte {
                 }
 #endif
 
-            int tmp = 0;
             if (versionNum >= 1) {
                 filesystem::fb_fread(&tmp, sizeof(int), 1, fp);
                 if (tmp != 0)

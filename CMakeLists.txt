@@ -108,12 +108,15 @@ ELSE ( ENABLE_PHYSX )
     ADD_DEFINITIONS( -DPHYSICS_NONE )
 ENDIF ( ENABLE_PHYSX )
 
+SET ( CMAKE_DATA_PATH         "" CACHE STRING "Path to the top directory containing game data files" )
+SET ( SHADOWGROUNDS_DATA_PATH "" CACHE STRING "Path to Shadowgrounds game data files (overrides CMAKE_DATA_PATH)" )
+SET ( SURVIVOR_DATA_PATH      "" CACHE STRING "Path to Survivor game data files (overrides CMAKE_DATA_PATH)" )
 
 IF ( NOT CMAKE_DATA_PATH )
     IF ( UNIX )
         SET( CMAKE_DATA_PATH "/usr/share/games" )
     ELSEIF ( NOT SHADOWGROUNDS_DATA_PATH OR NOT SURVIVOR_DATA_PATH )
-        MESSAGE( FATAL_ERROR "Neither {SHADOWGROUNDS,SURVIVOR}_DATA_PATH nor CMAKE_DATA_PATH is defined" )
+        MESSAGE( STATUS "WARNING: Neither {SHADOWGROUNDS,SURVIVOR}_DATA_PATH nor CMAKE_DATA_PATH is defined" )
     ENDIF ( UNIX )
 ENDIF ( NOT CMAKE_DATA_PATH)
 
@@ -135,7 +138,7 @@ IF( NOT LIGHT_MAX_AMOUNT )
     SET( LIGHT_MAX_AMOUNT "5" CACHE STRING "Amount of light or what? Integer" FORCE )   # cmake doesn't support integers
 ENDIF( NOT LIGHT_MAX_AMOUNT )
 MARK_AS_ADVANCED( LINKEDLIST_USE_NODE_POOL BUILDINGMAP_SHOW_LOADINGMESSAGE LIGHT_MAX_AMOUNT )
-CONFIGURE_FILE( project_common/configuration.h.in project_common/configuration.h )
+CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/project_common/configuration.h.in ${CMAKE_BINARY_DIR}/project_common/configuration.h )
 
 
 # ------------------------------------------------
@@ -438,15 +441,20 @@ IF( UNIX ) # both gcc & clang ;)
     )
 ENDIF( UNIX )
 
-
 # Set default build options
 MACRO( SetShadowgroundsProperties name defines )
     IF( FINAL_RELEASE_BUILD )
         SET( FINAL_RELEASE_BUILD_FLAGS ";FINAL_RELEASE_BUILD=1" )
     ENDIF()
 
+    IF (MSVC)
+        SET( INCLUDE_FLAG /FI )
+    ELSE ()
+        SET( INCLUDE_FLAG -include )
+    ENDIF ()
+    
     SET_TARGET_PROPERTIES( ${name} PROPERTIES
-        COMPILE_FLAGS               "${SG_WARNINGS} -include ${PROJECT_BINARY_DIR}/project_common/configuration.h"
+        COMPILE_FLAGS               "${SG_WARNINGS} ${INCLUDE_FLAG} ${PROJECT_BINARY_DIR}/project_common/configuration.h"
         COMPILE_DEFINITIONS         "${defines};SG_PROG_VERSION=\"${SG_PROG_VERSION}\";SG_PROG_HOST=\"${CMAKE_SYSTEM_NAME}\""
         COMPILE_DEFINITIONS_DEBUG   "_DEBUG=1"
         COMPILE_DEFINITIONS_RELEASE "NDEBUG=1${FINAL_RELEASE_BUILD_FLAGS}"
