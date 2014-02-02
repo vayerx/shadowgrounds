@@ -12,10 +12,10 @@
 #include <boost/shared_array.hpp>
 #include <boost/thread.hpp>
 
-#if defined _MSC_VER || defined __APPLE__
+#ifdef __APPLE__ // || _MSC_VER
 #  include <al.h>
 #  include <alc.h>
-#else
+#else // OpenAL Soft
 #  include <AL/al.h>
 #  include <AL/alc.h>
 #endif

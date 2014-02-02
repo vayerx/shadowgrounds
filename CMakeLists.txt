@@ -441,20 +441,24 @@ IF( UNIX ) # both gcc & clang ;)
     )
 ENDIF( UNIX )
 
+IF( MSVC )
+ ADD_DEFINITIONS(-D_CRT_SECURE_NO_WARNINGS) # Do not show CRT warnings
+ENDIF( MSVC)
+
 # Set default build options
 MACRO( SetShadowgroundsProperties name defines )
     IF( FINAL_RELEASE_BUILD )
         SET( FINAL_RELEASE_BUILD_FLAGS ";FINAL_RELEASE_BUILD=1" )
     ENDIF()
 
-    IF (MSVC)
-        SET( INCLUDE_FLAG /FI )
+    IF( MSVC )
+        SET( INCLUDE_FLAG "/FI" )
     ELSE ()
-        SET( INCLUDE_FLAG -include )
+        SET( INCLUDE_FLAG "-include " )
     ENDIF ()
     
     SET_TARGET_PROPERTIES( ${name} PROPERTIES
-        COMPILE_FLAGS               "${SG_WARNINGS} ${INCLUDE_FLAG} ${PROJECT_BINARY_DIR}/project_common/configuration.h"
+        COMPILE_FLAGS               "${SG_WARNINGS} ${INCLUDE_FLAG}${PROJECT_BINARY_DIR}/project_common/configuration.h"
         COMPILE_DEFINITIONS         "${defines};SG_PROG_VERSION=\"${SG_PROG_VERSION}\";SG_PROG_HOST=\"${CMAKE_SYSTEM_NAME}\""
         COMPILE_DEFINITIONS_DEBUG   "_DEBUG=1"
         COMPILE_DEFINITIONS_RELEASE "NDEBUG=1${FINAL_RELEASE_BUILD_FLAGS}"
