@@ -461,11 +461,13 @@ namespace ui {
                         IStorm3D_Texture *coneStormTexture = NULL;
                         if (props.coneTextureFilename.empty()
                             && props.coneAlphaMultiplier != 0.0f)
+                        {
                             LOG_WARNING_W_DEBUG(
-
                                 "Spotlight - Spot type has no cone texture filename but non-zero cone alpha multiplier.",
                                 spottype.c_str() );
+                        }
                         else
+                        {
                             if ( !props.coneTextureFilename.empty() ) {
                                 coneStormTexture = storm.CreateNewTexture( props.coneTextureFilename.c_str() );
                                 if (coneStormTexture != NULL) {
@@ -476,6 +478,7 @@ namespace ui {
                                                        props.coneTextureFilename.c_str() );
                                 }
                             }
+                        }
 
                         spot = terrain.getRenderer().createSpot();
                         spot->setProjectionTexture(spotTexture);

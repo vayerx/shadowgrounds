@@ -6,7 +6,10 @@
 #include "igios.h"
 #include "igios3D.h"
 #include "storm3d.h"
-#include <inttypes.h>
+
+#ifndef _MSC_VER
+#	include <inttypes.h>
+#endif
 
 //! Apply FVF vertex format
 /*! buffer must be bound before this
@@ -58,7 +61,9 @@ uintptr_t applyFVF(VxFormat fmt, uintptr_t size) {
     }
 
     if (ptr != size) {
+#ifndef _MSC_VER // FIXME: inttypes.h
         igiosWarning("applyFVF: ptr(%" PRIiPTR ") != size(%" PRIiPTR ")\n", ptr, size);
+#endif // _MSC_VER
         igios_backtrace();
     }
 
@@ -99,7 +104,9 @@ void renderUP(VxFormat fmt, GLenum type, int count, int size, const char *vx) {
     setStreamSource(0, 0, vx, size);
 
     if (ptr != size) {
+#ifndef _MSC_VER // FIXME: inttypes.h
         igiosWarning("strange: ptr(%" PRIiPTR ") != size(%d)\n", ptr, size);
+#endif // _MSC_VER
         igios_backtrace();
     }
 

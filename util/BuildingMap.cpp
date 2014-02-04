@@ -518,7 +518,6 @@ namespace frozenbyte {
         }
 
         // fill the interior parts of the map that are not reachable.
-        // - jpk
         void floodfillInteriors()
         {
             // first, the collisionmap
@@ -599,8 +598,8 @@ namespace frozenbyte {
                     if (x >= 0 && x < xResolution
                         && y >= 0 && y < yResolution)
                         heightMap[x][y] = 255;
-                    else
 #ifdef BUILDINGMAP_USE_OPTIONS
+                    else
                         Logger::getInstance()->warning(
                             "BuildingMap::floodfillInteriors - Encountered door outside buildingmap area.");
 #endif

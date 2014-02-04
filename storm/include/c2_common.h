@@ -43,9 +43,3 @@
 #  define SAFE_DELETE_ARRAY(p) { if (p) { delete[] (p); (p) = NULL; } \
 }
 #endif
-
-#ifndef C2_DO_NOT_DEFINE_DATATYPES
-typedef uint8_t  BYTE;
-typedef uint16_t WORD;
-typedef uint32_t DWORD;
-#endif
