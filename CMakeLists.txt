@@ -117,22 +117,17 @@ IF ( NOT CMAKE_DATA_PATH )
     ENDIF ( UNIX )
 ENDIF ( NOT CMAKE_DATA_PATH)
 
-IF( SHADOWGROUNDS_DATA_PATH )
-    # user-specified path
-    SET( SHADOWGROUNDS_DATA_PATH "${SHADOWGROUNDS_DATA_PATH}" CACHE PATH "Path to Shadowgrounds data files (overrides CMAKE_DATA_PATH)" )
-ELSEIF( CMAKE_DATA_PATH )
+IF( NOT SHADOWGROUNDS_DATA_PATH )
     SET( SHADOWGROUNDS_DATA_PATH "${CMAKE_DATA_PATH}/shadowgrounds" )
 ENDIF()
 
-IF( SURVIVOR_DATA_PATH )
-    # user-specified path
-    SET( SURVIVOR_DATA_PATH "${SURVIVOR_DATA_PATH}" CACHE PATH "Path to Shadowgrounds Survivor data files (overrides CMAKE_DATA_PATH)" )
-ELSEIF( CMAKE_DATA_PATH )
+IF( NOT SURVIVOR_DATA_PATH  )
     SET( SURVIVOR_DATA_PATH "${CMAKE_DATA_PATH}/survivor" )
 ENDIF()
 
 SET( CMAKE_DATA_PATH "${CMAKE_DATA_PATH}" CACHE PATH "Path to the top directory containing game data files" )
-message( "CMAKE_DATA_PATH=${CMAKE_DATA_PATH}\nSHADOWGROUNDS_DATA_PATH=${SHADOWGROUNDS_DATA_PATH}\nSURVIVOR_DATA_PATH=${SURVIVOR_DATA_PATH}")
+SET( SHADOWGROUNDS_DATA_PATH "${SHADOWGROUNDS_DATA_PATH}" CACHE PATH "Path to Shadowgrounds data files (overrides CMAKE_DATA_PATH)" )
+SET( SURVIVOR_DATA_PATH "${SURVIVOR_DATA_PATH}" CACHE PATH "Path to Shadowgrounds Survivor data files (overrides CMAKE_DATA_PATH)" )
 
 
 OPTION( LINKEDLIST_USE_NODE_POOL "Keep linkedlist nodes in pool, less dynamic memory allocations" ON )
