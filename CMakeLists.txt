@@ -455,7 +455,7 @@ MACRO( SetShadowgroundsProperties name defines )
 
     IF( MSVC )
         SET( INCLUDE_FLAG "/FI" )
-    ELSEIF( CMAKE_COMPILER_IS_GNUCXX )
+    ELSEIF( CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" )
          SET( INCLUDE_FLAG "-include " )
     ELSE()
         MESSAGE( FATAL_ERROR "Unsupported compiler: can not specify global include file" )
