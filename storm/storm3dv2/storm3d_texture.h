@@ -146,6 +146,7 @@ class Storm3D_Texture_Video : public Storm3D_Texture {
     // AVI load
     void ReadAVIVideoInfo();
     void LoadAVIVideoFrames();
+    void DoAnimateVideo();
 
 public:
 

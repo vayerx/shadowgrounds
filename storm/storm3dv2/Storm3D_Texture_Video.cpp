@@ -11,6 +11,8 @@
 #include "storm3d_texture.h"
 #include "treader.h"
 
+#include <stdexcept>
+
 namespace {
     int id;
 }
@@ -69,7 +71,7 @@ Storm3D_Texture_Video::~Storm3D_Texture_Video()
 }
 
 //! Animate video
-void Storm3D_Texture_Video::AnimateVideo()
+void Storm3D_Texture_Video::DoAnimateVideo()
 {
     // Calculate time difference
     uint32_t time_now = SDL_GetTicks();
@@ -100,7 +102,7 @@ void Storm3D_Texture_Video::AnimateVideo()
                 switch (loop_params) {
                 case VIDEOLOOP_DEFAULT:
                     frame = 0;
-                    texhandle = frames[frame];
+                    texhandle = frames.at(frame);
                     break;
 
                 case VIDEOLOOP_PINGPONG:
@@ -108,17 +110,17 @@ void Storm3D_Texture_Video::AnimateVideo()
                     frame = frame_amount - 1;
                     framechangetime = -framechangetime;
                     framechangecounter = 0;
-                    texhandle = frames[frame];
+                    texhandle = frames.at(frame);
                     return;
 
                 case VIDEOLOOP_STOP_AT_END:
                     frame = frame_amount - 1;
                     framechangetime = 0;
                     framechangecounter = 0;
-                    texhandle = frames[frame];
+                    texhandle = frames.at(frame);
                     return;
                 }
-            texhandle = frames[frame];
+            texhandle = frames.at(frame);
         }
     else if (framechangetime < 0)
         while (framechangecounter > -framechangetime) {
@@ -131,14 +133,14 @@ void Storm3D_Texture_Video::AnimateVideo()
                 switch (loop_params) {
                 case VIDEOLOOP_DEFAULT:
                     frame = frame_amount - 1;
-                    texhandle = frames[frame];
+                    texhandle = frames.at(frame);
                     break;
 
                 case VIDEOLOOP_PINGPONG:
                     frame = 0;
                     framechangetime = -framechangetime;
                     framechangecounter = 0;
-                    texhandle = frames[frame];
+                    texhandle = frames.at(frame);
                     return;
 
                 case VIDEOLOOP_STOP_AT_END:
@@ -146,11 +148,22 @@ void Storm3D_Texture_Video::AnimateVideo()
                     frame = 0;
                     framechangetime = 0;
                     framechangecounter = 0;
-                    texhandle = frames[frame];
+                    texhandle = frames.at(frame);
                     return;
                 }
-            texhandle = frames[frame];
+            texhandle = frames.at(frame);
         }
+}
+
+void Storm3D_Texture_Video::AnimateVideo()
+{
+    try {
+        DoAnimateVideo();
+    } catch (std::out_of_range &x) {
+        const std::string err = "Storm3D_Texture_Video::DoAnimateVideo: frame range error: " + std::string(x.what());
+        LOG_ERROR(err.c_str());
+        igios_backtrace();
+    }
 }
 
 //! Set frame
@@ -165,7 +178,7 @@ void Storm3D_Texture_Video::VideoSetFrame(int num)
 
     // Set frame
     frame = num;
-    texhandle = frames[frame];
+    texhandle = frames.at(frame);
 }
 
 //! Set frame change speed
@@ -230,8 +243,8 @@ void Storm3D_Texture_Video::LoadAVIVideoFrames()
         return;
 
     // Animation parameters
-    float dwRate = (float)reader->fps_numerator;
-    float dwScale = (float)reader->fps_denominator;
+    const float dwRate = static_cast<float>(reader->fps_numerator);
+    const float dwScale = static_cast<float>(reader->fps_denominator);
     frame = 0;
     framechangecounter = 0;
     framechangetime = (int)( 1000.0f * (dwRate / dwScale) );
@@ -252,7 +265,7 @@ void Storm3D_Texture_Video::LoadAVIVideoFrames()
         frame_amount++;
     }
 
-    if (frames.size() >= (unsigned int)frame)
+    if (frames.size() > static_cast<size_t>(frame))
         texhandle = frames[frame];
 
     reader->finish();
