@@ -98,7 +98,7 @@ IF ( NOT INSTALLONLY )
     SET ( INSTALLONLY   shadowgrounds survivor CACHE STRING "Installation tagets, options are: shadowgrounds, survivor" FORCE )
 ENDIF ( NOT INSTALLONLY )
 
-OPTION( FINAL_RELEASE_BUILD "Final release build (grab mouse pointer, suppress signals, etc.)" OFF )
+OPTION( FINAL_RELEASE_BUILD "Final release build (grab mouse pointer, suppress signals, etc.)" ON )
 
 OPTION( ENABLE_PHYSX "Enable NVIDIA PhysX SDK" OFF )
 IF ( ENABLE_PHYSX )
