@@ -107,22 +107,22 @@ bool VideoBackgroundLoader::init(const char *filename, IStorm3D_StreamBuilder *b
     mContext->videowidth = mContext->videocodecctx->width;
     mContext->videoheight = mContext->videocodecctx->height;
 
-    if ( !( mContext->readframe = avcodec_alloc_frame() ) ) {
+    if ( !( mContext->readframe = av_frame_alloc() ) ) {
         LOG_WARNING("Unable to allocate read frame.");
         return false;
     }
 
-    if ( !( mContext->drawframe = avcodec_alloc_frame() ) ) {
+    if ( !( mContext->drawframe = av_frame_alloc() ) ) {
         LOG_WARNING("Unable to allocate draw frame.");
         return false;
     }
-    unsigned int bytes = avpicture_get_size(PIX_FMT_RGB24, mContext->videowidth, mContext->videoheight);
+    unsigned int bytes = avpicture_get_size(AV_PIX_FMT_RGB24, mContext->videowidth, mContext->videoheight);
     mContext->drawbuffer = new unsigned char[bytes * 4 + 1];
     if (!mContext->drawbuffer) {
         LOG_WARNING("Unable to allocate draw buffer.");
         return false;
     }
-    avpicture_fill( (AVPicture *)mContext->drawframe, mContext->drawbuffer, PIX_FMT_RGB24, mContext->videowidth,
+    avpicture_fill( (AVPicture *)mContext->drawframe, mContext->drawbuffer, AV_PIX_FMT_RGB24, mContext->videowidth,
                     mContext->videoheight );
 
     if (mContext->audioindex != -1 && builder) {
@@ -303,7 +303,7 @@ void VideoBackgroundLoader::startLoadingThread()
                                                  mContext->videowidth, mContext->videoheight,
                                                  mContext->videocodecctx->pix_fmt,
                                                  mContext->videowidth, mContext->videoheight,
-                                                 PIX_FMT_RGB24,
+                                                 AV_PIX_FMT_RGB24,
                                                  sws_flags, NULL, NULL, NULL);
 
                         sws_scale(toRGB_convert_ctx,
@@ -332,8 +332,9 @@ void VideoBackgroundLoader::startLoadingThread()
                     }
                 }
             } else if (packet.stream_index == mContext->audioindex && mContext->audiobuffer) {
-                int size = mContext->audiobuffersize;
-                avcodec_decode_audio3(mContext->audiocodecctx, mContext->audiobuffer, &size, &packet);
+                AVFrame *frame = av_frame_alloc();
+                int size = 0;
+                avcodec_decode_audio4(mContext->audiocodecctx, frame, &size, &packet);
                 if (size) {
                     unsigned long long duration =
                         (unsigned long long)( (double(mContext->audiocodecctx->time_base.num)
@@ -343,6 +344,8 @@ void VideoBackgroundLoader::startLoadingThread()
                                                       duration );
                     mContext->audiotime += duration;
                 }
+
+                av_free(frame);
             }
             av_free_packet(&packet);
         } else { break; }
