@@ -564,7 +564,7 @@ void Storm3D_Spotlight::setConeTexture(boost::shared_ptr<IStorm3D_Texture> textu
  */
 bool Storm3D_Spotlight::hasConeTexture() const
 {
-    return data->coneTexture;
+    return !!data->coneTexture;
 }
 
 //! Set color multiplier

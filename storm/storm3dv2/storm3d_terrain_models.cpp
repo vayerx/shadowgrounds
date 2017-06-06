@@ -1773,7 +1773,7 @@ void Storm3D_TerrainModels::buildTree(const VC3 &size)
  */
 bool Storm3D_TerrainModels::hasTree() const
 {
-    return data->tree;
+    return !!data->tree;
 }
 
 //! Raytrace
