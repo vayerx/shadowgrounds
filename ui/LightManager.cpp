@@ -16,6 +16,7 @@
 #include <IStorm3D_Model.h>
 #include <c2_frustum.h>
 #include <boost/shared_ptr.hpp>
+#include <boost/range/size.hpp>
 #include <vector>
 #include <map>
 #include "../util/SelfIlluminationChanger.h"
@@ -1017,7 +1018,7 @@ namespace ui {
 
         void updateFakeSpots(const VC3 &player, int ms)
         {
-            for (int i = 0; i < LIGHTING_FAKE_SPOT_MAX_AMOUNT; ++i) {
+            for (size_t i = 0; i < boost::size(fakeSpot); ++i) {
                 fakeSpot[i]->enable(false);
             }
 
@@ -1025,13 +1026,13 @@ namespace ui {
                 return;
 
             // Sorted list for closest lights
-            int closestFakeLights[LIGHTING_FAKE_SPOT_MAX_AMOUNT + 1] = { -1 };
-            for (int i = 0; i < LIGHTING_FAKE_SPOT_AMOUNT + 1; ++i) {
+            int closestFakeLights[LIGHTING_FAKE_SPOT_MAX_AMOUNT + 1];
+            for (size_t i = 0; i < boost::size(closestFakeLights); ++i) {
                 closestFakeLights[i] = -1;
             }
 
             // and now a list for their ranges as well to prevent totally excessive calculation. --jpk
-            float closestFakeRanges[LIGHTING_FAKE_SPOT_MAX_AMOUNT + 1] = { 0.0f };
+            float closestFakeRanges[LIGHTING_FAKE_SPOT_MAX_AMOUNT + 1];
 
             // Find lights
             {
@@ -1048,7 +1049,7 @@ namespace ui {
                     //if(range1 > LIGHTING_FAKE_SPOT_CULL_RANGE)
                     //    continue;
 
-                    for (int j = 0; j < LIGHTING_FAKE_SPOT_AMOUNT + 1; ++j) {
+                    for (size_t j = 0; j < std::min<size_t>(LIGHTING_FAKE_SPOT_AMOUNT + 1, boost::size(closestFakeLights)); ++j) {
                         int index = closestFakeLights[j];
                         if (index == -1) {
                             closestFakeLights[j] = i;
@@ -1065,7 +1066,7 @@ namespace ui {
 
                         if (range1 < range2) {
                             // Push current lights back
-                            for (int k = LIGHTING_FAKE_SPOT_AMOUNT; k >= j; --k) {
+                            for (size_t k = LIGHTING_FAKE_SPOT_AMOUNT; k >= j && k > 0 && k < boost::size(closestFakeLights); --k) {
                                 closestFakeLights[k] = closestFakeLights[k - 1];
                                 closestFakeRanges[k] = closestFakeRanges[k - 1];
                             }
@@ -1100,7 +1101,11 @@ namespace ui {
                 //activeFakes[i] = current;
 
                 SpotImp &imp = fakeSpots[current];
-                if (i < LIGHTING_FAKE_SPOT_AMOUNT - 1) {
+                if (i < LIGHTING_FAKE_SPOT_AMOUNT - 1
+                 /* check closestFakeLights range */
+                 || i < 1
+                 || i >= LIGHTING_FAKE_SPOT_MAX_AMOUNT
+                ) {
                     imp.currentColorMul = imp.colorMul;
                 } else {
                     float currentRange = fakeRange(player, camera, imp);
@@ -1141,7 +1146,7 @@ namespace ui {
             }
 
             // Apply
-            for (int i = 0; i < LIGHTING_FAKE_SPOT_AMOUNT; ++i) {
+            for (size_t i = 0; i < std::min<size_t>(LIGHTING_FAKE_SPOT_AMOUNT, boost::size(fakeSpot)); ++i) {
                 IStorm3D_FakeSpotlight *spot = fakeSpot[i].get();
                 if (!spot)
                     continue;
