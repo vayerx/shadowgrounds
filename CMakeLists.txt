@@ -135,7 +135,7 @@ OPTION( LINKEDLIST_USE_NODE_POOL "Keep linkedlist nodes in pool, less dynamic me
 OPTION( CRIMSON_MODE "The new non-rts, pure action game - \"crimson mode\"" ON )
 OPTION( BUILDINGMAP_SHOW_LOADINGMESSAGE "Show rebuilding binaries loading message for buildingmaps" OFF )
 OPTION( BUILDINGMAP_USE_OPTIONS "Make buildingmap use game's options (force/auto recreate, etc.)" ON )
-OPTION( SCRIPT_PREPROCESS "allow script preprocessing - should be disabled for final release!!!" ON )
+OPTION( SCRIPT_PREPROCESS "allow script preprocessing - should be disabled for final release!!!" OFF )
 OPTION( PATHFIND_DEBUG "Make debug view map of pathfinding" OFF )
 IF( NOT LIGHT_MAX_AMOUNT )
     SET( LIGHT_MAX_AMOUNT "5" CACHE STRING "Amount of light or what? Integer" FORCE )   # cmake doesn't support integers
@@ -340,7 +340,32 @@ MACRO( CompileList result )
     ENDFOREACH( item )
 ENDMACRO( CompileList )
 
-IF( CMAKE_COMPILER_IS_GNUCXX )
+IF ( UNIX )
+    ADD_DEFINITIONS( -D_FILE_OFFSET_BITS=64 ) # Open files larger than 2 GB
+ENDIF ()
+
+IF( CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" )
+    CompileList( SG_WARNINGS
+        -Wall
+        -Wextra
+        # -pedantic
+        -Wcast-align
+        -Wcast-qual
+        # -Wconversion
+        -Woverloaded-virtual
+        # -Wnon-virtual-dtor
+        -Wcomment
+        -Wstrict-null-sentinel
+        -Winit-self
+        # -Werror
+
+        -Wno-unused-result
+        -Wno-unused-parameter -Wno-unused-variable  # TODO
+    )
+ENDIF()
+
+IF( CMAKE_CXX_COMPILER_ID MATCHES GNU )
+
     OPTION( ENABLE_GRAPHITE "Enable GCC Graphite" ON )
     IF ( ENABLE_GRAPHITE )
         CompileList( GRAPHITE_OPTS
@@ -351,98 +376,72 @@ IF( CMAKE_COMPILER_IS_GNUCXX )
             -floop-parallelize-all
             -floop-strip-mine
         )
-    ENDIF ( ENABLE_GRAPHITE )
-ENDIF( CMAKE_COMPILER_IS_GNUCXX )
+    ENDIF()
 
-IF ( UNIX )
+    OPTION( ENABLE_ASAN "Enable GCC Address Sanitizer" OFF )
+    OPTION( ENABLE_TSAN "Enable GCC Thread Sanitizer" OFF )
+    IF (ENABLE_ASAN)
+        SET(SANITIZER address)
+    ENDIF()
 
-    ADD_DEFINITIONS( -D_FILE_OFFSET_BITS=64 ) # Open files larger than 2 GB
+    IF (ENABLE_TSAN)
+        SET(SANITIZER thread)
+    ENDIF()
 
-    IF( CMAKE_COMPILER_IS_GNUCXX )
-        CompileList( SG_WARNINGS
-            -Wall
-            -Wextra
-            # -pedantic
-            -Wcast-align
-            -Wcast-qual
-            # -Wconversion
-            -Woverloaded-virtual
-            # -Wnon-virtual-dtor
-            -Wcomment
-            -Wstrict-null-sentinel
-            -Winit-self
-            # -Werror
+    IF (SANITIZER)
+        SET(SANITIZER_FLAG "-fsanitize=${SANITIZER}")
+    ENDIF()
 
-            -Wno-unused-result
-            -Wno-unused-parameter -Wno-unused-variable  # TODO
-        )
+    CompileList( SG_RELEASE_OPT
+        -fcx-limited-range
+        #-ffast-math
+        -ffinite-math-only
+        -fno-math-errno
+        -fno-signaling-nans
+        -fomit-frame-pointer
+        -ftree-loop-distribution
+        -ftree-loop-linear
+        # -funsafe-loop-optimizations
+        -mfpmath=sse
+        -mmmx
+        -msse
+        -msse2
+        -mssse3
+        #-msse4.1
+        ${GRAPHITE_OPTS}
+    )
 
-        CompileList( SG_RELEASE_OPT
-            -fcx-limited-range
-            #-ffast-math
-            -ffinite-math-only
-            -fno-math-errno
-            -fno-signaling-nans
-            -fomit-frame-pointer
-            -ftree-loop-distribution
-            -ftree-loop-linear
-            # -funsafe-loop-optimizations
-            -mfpmath=sse
-            -mmmx
-            -msse
-            -msse2
-            -mssse3
-            #-msse4.1
-            ${GRAPHITE_OPTS}
-        )
-    ELSE( CMAKE_COMPILER_IS_GNUCXX ) # Clang
-        CompileList( SG_WARNINGS
-            -Wall
-            -Wextra
-            # -pedantic
-            -Wcast-align
-            -Wcast-qual
-            # -Wconversion
-            -Woverloaded-virtual
-            # -Wnon-virtual-dtor
-            -Wcomment
-            -Winit-self
-            # -Werror
+ELSEIF( CMAKE_CXX_COMPILER_ID MATCHES Clang)
 
-            -Wno-unused-result
-            -Wno-unused-parameter -Wno-unused-variable  # TODO
-            -Wno-c++11-extensions
-        )
+    SET( SG_WARNINGS "${SG_WARNINGS} -Wno-c++11-extensions")
 
-        CompileList( SG_RELEASE_OPT
-            #-ffast-math
-            -ffinite-math-only
-            -fomit-frame-pointer
-            # -funsafe-loop-optimizations
-            -mmmx
-            -msse
-            -msse2
-            -mssse3
-            #-msse4.1
-        )
-    ENDIF( CMAKE_COMPILER_IS_GNUCXX )
+    CompileList( SG_RELEASE_OPT
+        #-ffast-math
+        -ffinite-math-only
+        -fomit-frame-pointer
+        # -funsafe-loop-optimizations
+        -mmmx
+        -msse
+        -msse2
+        -mssse3
+        #-msse4.1
+    )
+ENDIF()
 
-    # waiting for COMPILE_OPTIONS_<CONFIG>
-    SET( CMAKE_CXX_FLAGS_DEBUG      "-O0 -g" )                  # ( waiting for COMPILE_OPTIONS_<CONFIG> )
+IF( CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" )
+    SET( CMAKE_CXX_FLAGS_DEBUG      "-O0 -g -std=c++11" )                  # ( waiting for COMPILE_OPTIONS_<CONFIG> )
     SET( CMAKE_CXX_FLAGS_RELEASE    "-O2 ${SG_RELEASE_OPT}" )
 
-    SET( CMAKE_CXX_FLAGS            "-fno-strict-aliasing" )
-ENDIF( UNIX )
+    SET( CMAKE_CXX_FLAGS            "-fno-strict-aliasing ${SANITIZER_FLAG}" )
 
-# some files must be compiled unoptimized (gcc bug?)
-IF( UNIX ) # both gcc & clang ;)
+    # some files must be compiled unoptimized (gcc bug?)
     SET_SOURCE_FILES_PROPERTIES(
         storm/storm3dv2/Storm3D_Mesh_CollisionTable.cpp
         util/LipsyncManager.cpp
         game/GameWorldFold.cpp  # FIXME gcc 4.8.2 hangs on it
         PROPERTIES  COMPILE_FLAGS   "-O0"
     )
-ENDIF( UNIX )
+ENDIF()
 
 IF( MSVC )
     ADD_DEFINITIONS(-D_CRT_SECURE_NO_WARNINGS) # Do not show CRT warnings
