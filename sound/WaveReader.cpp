@@ -54,12 +54,12 @@ namespace sfx {
             fileName = file;
             int size = 0;
 
-            filesystem::FB_FILE *fileCont = filesystem::fb_fopen(file.c_str(), "rb");
+            std::unique_ptr<filesystem::FB_FILE, decltype(&filesystem::fb_fclose)> fileCont(
+                filesystem::fb_fopen(file.c_str(), "rb"), &filesystem::fb_fclose);
             if (fileCont) {
-                size = filesystem::fb_fsize(fileCont);
+                size = filesystem::fb_fsize(fileCont.get());
                 fileData.reset(new char[size]);
-                filesystem::fb_fread(fileData.get(), 1, size, fileCont);
-                filesystem::fb_fclose(fileCont);
+                filesystem::fb_fread(fileData.get(), 1, size, fileCont.get());
 
                 SDL_RWops *rw = SDL_RWFromMem(fileData.get(), size);
                 ioHandle = Sound_NewSample(rw, NULL, NULL, size);
