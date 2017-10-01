@@ -528,9 +528,14 @@ namespace ui {
             PLANE frustumPlane;
             frustumPlane.MakeFromNormalAndPosition(frustum.planeNormals[j], frustum.position);
 
-            int n = 0;
+            /// @todo FIXME: currentInput[-1]
+            if (!shadowPlaneVertexAmount) {
+                break;
+            }
 
             // Sutherland-Hodgman -algorithm implementation.
+            int n = 0;
+            assert(shadowPlaneVertexAmount);
             VC3 vS = currentInput[shadowPlaneVertexAmount - 1];
             for (int i = 0; i < shadowPlaneVertexAmount; i++) {
                 VC3 vP = currentInput[i];
