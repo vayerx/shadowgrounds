@@ -389,6 +389,7 @@ std::string get_path(const std::string &file)
 
 #  include <execinfo.h>
 #  include <ucontext.h>
+#  include <signal.h>
 
 static void sighandler(int sig, siginfo_t *info, void *secret) {
     ucontext_t *uc = (ucontext_t *) secret;

@@ -755,6 +755,7 @@ std::string get_path(const std::string &file)
 
 #  include <execinfo.h>
 #  include <ucontext.h>
+#  include <signal.h>
 
 // FIXME: move to system/Miscellaneous.cpp
 static void sighandler(int sig, siginfo_t *info, void *secret) {
