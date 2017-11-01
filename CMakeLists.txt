@@ -13,6 +13,9 @@ SET( CMAKE_VERBOSE_MAKEFILE  OFF )
 SET(SG_CMAKE_DIR "${shadowgrounds_SOURCE_DIR}/cmake")
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${SG_CMAKE_DIR}")
 
+SET(CMAKE_CXX_STANDARD 11)
+SET(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # ------------------------------------------------
 #  Libraries
 # ------------------------------------------------
@@ -429,7 +432,7 @@ ELSEIF( CMAKE_CXX_COMPILER_ID MATCHES Clang)
 ENDIF()
 
 IF( CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" )
-    SET( CMAKE_CXX_FLAGS_DEBUG      "-O0 -g -std=c++11" )                  # ( waiting for COMPILE_OPTIONS_<CONFIG> )
+    SET( CMAKE_CXX_FLAGS_DEBUG      "-O0 -g" )                  # ( waiting for COMPILE_OPTIONS_<CONFIG> )
     SET( CMAKE_CXX_FLAGS_RELEASE    "-O2 ${SG_RELEASE_OPT}" )
 
     SET( CMAKE_CXX_FLAGS            "-fno-strict-aliasing ${SANITIZER_FLAG}" )
