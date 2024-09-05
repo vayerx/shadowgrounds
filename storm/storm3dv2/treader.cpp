@@ -91,11 +91,6 @@ bool VideoBackgroundLoader::init(const char *filename, IStorm3D_StreamBuilder *b
         return false;
     }
 
-#if LIBAVCODEC_VERSION_MAJOR < 60
-    if (mContext->videocodec->capabilities & AV_CODEC_CAP_TRUNCATED)
-        mContext->videocodecctx->flags |= AV_CODEC_FLAG_TRUNCATED;
-#endif
-
     if (avcodec_open2(mContext->videocodecctx, mContext->videocodec, 0) < 0) {
         LOG_WARNING("Unable to open video codec.");
         return false;
@@ -142,7 +137,7 @@ bool VideoBackgroundLoader::init(const char *filename, IStorm3D_StreamBuilder *b
                 if (!mContext->audiobuffer) {
                     LOG_WARNING("Unable to allocate audio buffer.");
                 } else {
-                    builder->setStereo(mContext->audiocodecctx->channels);
+                    builder->setStereo(mContext->audiocodecctx->ch_layout.nb_channels);
                     builder->setFrequency(mContext->audiocodecctx->sample_rate);
                     builder->setBits(16);
                     mContext->audiostream = builder->getStream();
