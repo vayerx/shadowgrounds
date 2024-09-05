@@ -16,6 +16,7 @@
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <libavutil/imgutils.h>
 #include <libavutil/log.h>
 #include <libswscale/swscale.h>
 }
@@ -32,7 +33,6 @@ VideoBackgroundLoader::VideoBackgroundLoader()
 {
     static bool avinit = false;
     if (!avinit) {
-        av_register_all();
         av_log_set_level(AV_LOG_QUIET);
         avinit = true;
     }
@@ -74,25 +74,22 @@ bool VideoBackgroundLoader::init(const char *filename, IStorm3D_StreamBuilder *b
 
     mContext->videoindex = mContext->audioindex = -1;
     for (unsigned int i = 0; i < mContext->formatctx->nb_streams; ++i) {
-        if (mContext->formatctx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO && mContext->videoindex ==
+        if (mContext->formatctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && mContext->videoindex ==
             -1) mContext->videoindex = i;
-        else if (mContext->formatctx->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO && mContext->audioindex ==
+        else if (mContext->formatctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO && mContext->audioindex ==
                  -1) mContext->audioindex = i;
     }
 
     if (mContext->videoindex == -1) {
         LOG_WARNING("No video streams detected.");
         return false;
-    } else { mContext->videocodecctx = mContext->formatctx->streams[mContext->videoindex]->codec; }
+    } else { mContext->videocodecctx = (AVCodecContext *) mContext->formatctx->streams[mContext->videoindex]->codecpar; }
 
-    mContext->videocodec = avcodec_find_decoder(mContext->videocodecctx->codec_id);
+    mContext->videocodec = (AVCodec *) avcodec_find_decoder(mContext->videocodecctx->codec_id);
     if (!mContext->videocodec) {
         LOG_WARNING("Unable to find suitable video codec.");
         return false;
     }
-
-    if (mContext->videocodec->capabilities & CODEC_CAP_TRUNCATED)
-        mContext->videocodecctx->flags |= CODEC_FLAG_TRUNCATED;
 
     if (avcodec_open2(mContext->videocodecctx, mContext->videocodec, 0) < 0) {
         LOG_WARNING("Unable to open video codec.");
@@ -116,18 +113,18 @@ bool VideoBackgroundLoader::init(const char *filename, IStorm3D_StreamBuilder *b
         LOG_WARNING("Unable to allocate draw frame.");
         return false;
     }
-    unsigned int bytes = avpicture_get_size(AV_PIX_FMT_RGB24, mContext->videowidth, mContext->videoheight);
+    unsigned int bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, mContext->videowidth, mContext->videoheight, 1);
     mContext->drawbuffer = new unsigned char[bytes * 4 + 1];
     if (!mContext->drawbuffer) {
         LOG_WARNING("Unable to allocate draw buffer.");
         return false;
     }
-    avpicture_fill( (AVPicture *)mContext->drawframe, mContext->drawbuffer, AV_PIX_FMT_RGB24, mContext->videowidth,
-                    mContext->videoheight );
+    av_image_fill_arrays(mContext->drawframe->data, mContext->drawframe->linesize, mContext->drawbuffer, AV_PIX_FMT_RGB24, mContext->videowidth,
+                    mContext->videoheight, 1);
 
     if (mContext->audioindex != -1 && builder) {
-        mContext->audiocodecctx = mContext->formatctx->streams[mContext->audioindex]->codec;
-        mContext->audiocodec = avcodec_find_decoder(mContext->audiocodecctx->codec_id);
+        mContext->audiocodecctx = (AVCodecContext *) mContext->formatctx->streams[mContext->audioindex]->codecpar;
+        mContext->audiocodec = (AVCodec *) avcodec_find_decoder(mContext->audiocodecctx->codec_id);
         if (!mContext->audiocodec) {
             LOG_WARNING("Unable to find suitable audio codec.");
         } else {
@@ -140,7 +137,7 @@ bool VideoBackgroundLoader::init(const char *filename, IStorm3D_StreamBuilder *b
                 if (!mContext->audiobuffer) {
                     LOG_WARNING("Unable to allocate audio buffer.");
                 } else {
-                    builder->setStereo(mContext->audiocodecctx->channels);
+                    builder->setStereo(mContext->audiocodecctx->ch_layout.nb_channels);
                     builder->setFrequency(mContext->audiocodecctx->sample_rate);
                     builder->setBits(16);
                     mContext->audiostream = builder->getStream();
@@ -294,7 +291,7 @@ void VideoBackgroundLoader::startLoadingThread()
         if (av_read_frame(mContext->formatctx, &packet) >= 0) {
             if (packet.stream_index == mContext->videoindex) {
                 int framedone = 0;
-                avcodec_decode_video2(mContext->videocodecctx, mContext->readframe, &framedone, &packet);
+                avcodec_receive_frame(mContext->videocodecctx, mContext->readframe);
                 if (framedone) {
                     size_t bsize = (mContext->videowidth * mContext->videoheight * 3 + 4);
                     boost::shared_array<unsigned char> buffer(new unsigned char[bsize]);
@@ -334,7 +331,7 @@ void VideoBackgroundLoader::startLoadingThread()
             } else if (packet.stream_index == mContext->audioindex && mContext->audiobuffer) {
                 AVFrame *frame = av_frame_alloc();
                 int size = 0;
-                avcodec_decode_audio4(mContext->audiocodecctx, frame, &size, &packet);
+                avcodec_receive_frame(mContext->audiocodecctx, frame);
                 if (size) {
                     unsigned long long duration =
                         (unsigned long long)( (double(mContext->audiocodecctx->time_base.num)
@@ -344,10 +341,9 @@ void VideoBackgroundLoader::startLoadingThread()
                                                       duration );
                     mContext->audiotime += duration;
                 }
-
                 av_free(frame);
             }
-            av_free_packet(&packet);
+            av_packet_unref(&packet);
         } else { break; }
     }
     {
